@@ -30,7 +30,33 @@ router.get('/my-notices', async (req, res) => {
     );
   }
 
+  // 각 공지에 읽음 여부 추가
+  const noticeIds = notices.map(n => n.id);
+  if (noticeIds.length > 0) {
+    const placeholders = noticeIds.map((_, i) => `$${i + 1}`).join(',');
+    const reads = await getAll(
+      `SELECT notice_id FROM notice_reads WHERE user_id = $${noticeIds.length + 1} AND notice_id IN (${placeholders})`,
+      [...noticeIds, req.user.id]
+    );
+    const readSet = new Set(reads.map(r => r.notice_id));
+    notices = notices.map(n => ({ ...n, is_read: readSet.has(n.id) ? 1 : 0 }));
+  }
+
   res.json(notices);
+});
+
+// 공지 읽음 표시
+router.post('/notices/:id/read', async (req, res) => {
+  try {
+    await runInsert(
+      `INSERT INTO notice_reads (notice_id, user_id) VALUES (?, ?) ON CONFLICT (notice_id, user_id) DO NOTHING`,
+      [req.params.id, req.user.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Notice read error:', err);
+    res.status(500).json({ error: '읽음 처리 실패' });
+  }
 });
 
 // 내 정보 조회
@@ -132,7 +158,7 @@ router.get('/reviews', async (req, res) => {
     [academyId]
   );
 
-  // 이름 익명 처리: 서강인 → 서**
+  // 이름 익명 처리: 홍길동 → 홍**
   const anonymized = reviews.map(r => ({
     ...r,
     display_name: r.student_name.length > 1
@@ -154,6 +180,24 @@ router.get('/my-reviews', async (req, res) => {
     [student.id, academyId]
   );
   res.json(reviews);
+});
+
+// 후기 수정
+router.put('/reviews/:id', async (req, res) => {
+  const academyId = req.academyId;
+  const student = await getOne('SELECT id FROM students WHERE user_id = ? AND academy_id = ?', [req.user.id, academyId]);
+  if (!student) return res.status(404).json({ error: '학생 정보를 찾을 수 없습니다.' });
+
+  const review = await getOne('SELECT * FROM reviews WHERE id = ? AND student_id = ? AND academy_id = ?', [req.params.id, student.id, academyId]);
+  if (!review) return res.status(404).json({ error: '수정할 후기를 찾을 수 없습니다.' });
+
+  const { content } = req.body;
+  if (!content || content.trim().length === 0) {
+    return res.status(400).json({ error: '후기 내용을 입력해주세요.' });
+  }
+
+  await runQuery('UPDATE reviews SET content = ?, status = ? WHERE id = ? AND academy_id = ?', [content.trim(), 'pending', review.id, academyId]);
+  res.json({ message: '후기가 수정되었습니다. 다시 승인 대기 상태로 변경됩니다.' });
 });
 
 // 개인정보 수정 요청 제출
@@ -217,6 +261,113 @@ router.get('/my-edit-requests', async (req, res) => {
     [student.id, academyId]
   );
   res.json(requests);
+});
+
+// === 대시보드 BFF (MyPage 다중 API → 1개 통합) ===
+router.get('/dashboard', async (req, res) => {
+  const academyId = req.academyId;
+  const userId = req.user.id;
+
+  const student = await getOne(
+    `SELECT s.id, s.user_id, s.school, s.grade, s.parent_name, s.parent_phone, s.status,
+            u.name, u.phone, u.username
+     FROM students s JOIN users u ON s.user_id = u.id
+     WHERE s.user_id = ? AND s.academy_id = ?`,
+    [userId, academyId]
+  );
+
+  if (!student) {
+    return res.status(404).json({ error: '학생 정보를 찾을 수 없습니다.' });
+  }
+
+  const [notices, scores, editRequests, bestReviews, character, notifications, upcomingClinics, hallOfFame, myReviews, homework] = await Promise.all([
+    getAll(
+      `SELECT * FROM notices
+       WHERE academy_id = ? AND (
+         target_type = 'all'
+         OR (target_type = 'school' AND target_school = ?)
+         OR (target_type = 'grade' AND target_school = ? AND target_grade = ?)
+         OR (target_type = 'student' AND target_student_id = ?)
+       )
+       ORDER BY created_at DESC LIMIT 3`,
+      [academyId, student.school, student.school, student.grade, student.id]
+    ),
+    getAll(
+      `SELECT sc.score, sc.rank_num, sc.note,
+              e.name as exam_name, e.exam_date, e.exam_type, e.max_score, e.id as exam_id,
+              (SELECT COUNT(*) FROM scores WHERE exam_id = e.id AND academy_id = ?) as total_students
+       FROM scores sc JOIN exams e ON sc.exam_id = e.id
+       WHERE sc.student_id = ? AND sc.academy_id = ?
+       ORDER BY e.exam_date DESC, e.id DESC LIMIT 3`,
+      [academyId, student.id, academyId]
+    ),
+    getAll(
+      'SELECT * FROM profile_edit_requests WHERE student_id = ? AND academy_id = ? ORDER BY created_at DESC',
+      [student.id, academyId]
+    ),
+    getAll(
+      `SELECT r.id, r.content, r.is_best, r.created_at, u.name as student_name, s.school, s.grade
+       FROM reviews r
+       JOIN students s ON r.student_id = s.id
+       JOIN users u ON s.user_id = u.id
+       WHERE r.status = 'approved' AND r.is_best = 1 AND r.academy_id = ?
+       ORDER BY r.created_at DESC`,
+      [academyId]
+    ),
+    getOne(
+      `SELECT sc.*, COALESCE(c.name, '캐릭터') as char_name, COALESCE(c.emoji, '🐯') as emoji, COALESCE(c.description, '') as char_description
+       FROM student_characters sc
+       LEFT JOIN characters c ON sc.character_id = c.id AND (c.academy_id = ? OR c.academy_id = 0)
+       WHERE sc.student_id = ? AND sc.academy_id = ?`,
+      [academyId, student.id, academyId]
+    ),
+    getAll(
+      'SELECT * FROM notifications WHERE user_id = ? AND is_read = 0 ORDER BY created_at DESC LIMIT 20',
+      [userId]
+    ),
+    getAll(
+      `SELECT * FROM clinic_appointments
+       WHERE student_id = ? AND status = 'approved' AND appointment_date >= ? AND academy_id = ?
+       ORDER BY appointment_date ASC, time_slot ASC LIMIT 5`,
+      [student.id, new Date().toISOString().split('T')[0], academyId]
+    ).catch(() => []),
+    getAll(
+      'SELECT * FROM hall_of_fame WHERE is_visible = 1 AND academy_id = ? ORDER BY display_order ASC, created_at DESC',
+      [academyId]
+    ),
+    getAll(
+      'SELECT id FROM reviews WHERE student_id = ? AND academy_id = ? LIMIT 1',
+      [student.id, academyId]
+    ),
+    getAll(
+      'SELECT * FROM homework_records WHERE student_id = ? AND academy_id = ? ORDER BY date DESC LIMIT 50',
+      [student.id, academyId]
+    ).catch(() => []),
+  ]);
+
+  const maskName = (name) => {
+    if (!name || name.length <= 1) return name;
+    if (name.length === 2) return name[0] + '*';
+    return name[0] + '*'.repeat(name.length - 2) + name[name.length - 1];
+  };
+
+  res.json({
+    info: student,
+    notices,
+    scores,
+    editRequests,
+    bestReviews: bestReviews.map(r => ({
+      ...r,
+      display_name: maskName(r.student_name),
+      display_grade: r.grade || '',
+    })),
+    character,
+    notifications,
+    upcomingClinics,
+    hallOfFame,
+    hasWrittenReview: myReviews && myReviews.length > 0,
+    homework: { records: homework },
+  });
 });
 
 module.exports = router;

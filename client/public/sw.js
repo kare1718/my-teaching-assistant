@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kangin-korean-v2';
+const CACHE_NAME = 'my-teaching-assistant-v2';
 const OFFLINE_URL = '/offline.html';
 
 // 설치 시 오프라인 페이지 캐시

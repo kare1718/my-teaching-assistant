@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, apiPost, apiPut, getUser } from '../../api';
-import { SCHOOLS } from '../../config';
+import { useTenantConfig } from '../../contexts/TenantContext';
 import BottomTabBar from '../../components/BottomTabBar';
 import InstallBanner from '../../components/InstallBanner';
 import { quotes } from '../../data/quotes';
@@ -9,9 +9,10 @@ import AvatarSVG from '../../components/AvatarSVG';
 import { getLevelInfo, getStageInfo, getXpPercent, getAllStages } from '../../utils/gamification';
 
 export default function MyPage() {
-  const schools = SCHOOLS;
+  const { config } = useTenantConfig();
+  const schools = config.schools || [];
   const getAllGrades = (schoolName) => {
-    const s = SCHOOLS.find(sc => sc.name === schoolName);
+    const s = (config.schools || []).find(sc => sc.name === schoolName);
     return s ? s.grades : [];
   };
   const navigate = useNavigate();
@@ -169,11 +170,11 @@ export default function MyPage() {
 
   const getCategoryColor = (cat) => {
     switch (cat) {
-      case '1등급 달성': return { bg: '#fef3c7', color: '#92400e', border: '#f59e0b' };
-      case '성적 향상': return { bg: '#dcfce7', color: '#166534', border: '#22c55e' };
-      case '모의고사 우수': return { bg: '#dbeafe', color: '#1e40af', border: '#3b82f6' };
-      case '수능 우수': return { bg: '#fce7f3', color: '#9d174d', border: '#ec4899' };
-      default: return { bg: '#f3f4f6', color: '#374151', border: '#9ca3af' };
+      case '1등급 달성': return { bg: 'var(--warning-light)', color: 'oklch(35% 0.12 75)', border: 'var(--warning)' };
+      case '성적 향상': return { bg: 'var(--success-light)', color: 'oklch(30% 0.12 145)', border: 'var(--success)' };
+      case '모의고사 우수': return { bg: 'var(--info-light)', color: 'oklch(32% 0.12 260)', border: 'var(--info)' };
+      case '수능 우수': return { bg: 'oklch(92% 0.04 340)', color: 'oklch(30% 0.15 340)', border: 'oklch(60% 0.20 340)' };
+      default: return { bg: 'var(--neutral-100)', color: 'var(--neutral-700)', border: 'var(--neutral-400)' };
     }
   };
 
@@ -217,7 +218,7 @@ export default function MyPage() {
             }} />
           ))}
         </div>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(248,250,252,0.7)' }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'oklch(98% 0.01 260 / 0.7)' }} />
       </div>
 
       <div style={{ position: 'relative', zIndex: 1 }}>
@@ -226,15 +227,15 @@ export default function MyPage() {
           {notifications.map(n => (
             <div key={n.id} style={{
               padding: '10px 14px', borderRadius: 10, marginBottom: 4,
-              background: 'linear-gradient(135deg, #dbeafe, #eff6ff)',
-              border: '1px solid #93c5fd', display: 'flex', alignItems: 'center', gap: 10
+              background: 'linear-gradient(135deg, var(--info-light), var(--info-light))',
+              border: '1px solid oklch(72% 0.10 260)', display: 'flex', alignItems: 'center', gap: 10
             }}>
               <span style={{ fontSize: 18 }}>🔔</span>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: 13 }}>{n.title}</div>
                 <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>{n.message}</div>
               </div>
-              <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#94a3b8' }}
+              <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--neutral-400)' }}
                 onClick={() => {
                   apiPut('/auth/notifications/' + n.id + '/read').catch(() => {});
                   setNotifications(prev => prev.filter(x => x.id !== n.id));
@@ -263,8 +264,7 @@ export default function MyPage() {
         {/* 텍스트 콘텐츠 */}
         <div style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ fontSize: 14, opacity: 0.85, marginBottom: 8, lineHeight: 1.6 }}>
-            명확하게 확실하게,<br />그리고<br />
-            <span style={{ fontSize: 18, fontWeight: 800 }}>강인하게 국어하기</span>
+            <span style={{ fontSize: 18, fontWeight: 800 }}>나만의 조교</span>
           </div>
           <h2 style={{ fontWeight: 800, marginBottom: 6 }}>{info.name}님 안녕하세요!</h2>
           <p>언제나 강인쌤이 응원합니다. 👍</p>
@@ -327,7 +327,7 @@ export default function MyPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ fontWeight: 700, fontSize: 14 }}>{charData.nickname || user?.name || charData.char_name}</span>
                 {charData.titleName && (
-                  <span style={{ fontSize: 10, background: '#fef3c7', color: '#92400e', padding: '1px 6px', borderRadius: 8 }}>
+                  <span style={{ fontSize: 10, background: 'var(--warning-light)', color: 'oklch(35% 0.12 75)', padding: '1px 6px', borderRadius: 8 }}>
                     {charData.titleName}
                   </span>
                 )}
@@ -348,8 +348,8 @@ export default function MyPage() {
       {/* 클리닉 일정 */}
       {upcomingClinics.length > 0 && (
         <div className="card floating-card" style={{
-          background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)',
-          border: '1px solid #86efac'
+          background: 'linear-gradient(135deg, var(--success-light), var(--success-light))',
+          border: '1px solid oklch(78% 0.12 150)'
         }}>
           <h2 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             📋 다가오는 클리닉
@@ -361,7 +361,7 @@ export default function MyPage() {
             return (
               <div key={c.id} style={{
                 padding: '10px 14px', borderRadius: 8, marginBottom: 6,
-                background: 'white', border: '1px solid #bbf7d0',
+                background: 'var(--card)', border: '1px solid oklch(90% 0.06 145)',
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center'
               }}>
                 <div>
@@ -370,7 +370,7 @@ export default function MyPage() {
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>{c.topic}</div>
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 600, color: '#166534', background: '#dcfce7', padding: '2px 8px', borderRadius: 8 }}>승인됨</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: 'oklch(30% 0.12 145)', background: 'var(--success-light)', padding: '2px 8px', borderRadius: 8 }}>승인됨</span>
               </div>
             );
           })}
@@ -379,7 +379,7 @@ export default function MyPage() {
 
       {/* 클리닉 신청 바로가기 */}
       <div className="card floating-card" onClick={() => navigate('/student/clinic')}
-        style={{ cursor: 'pointer', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14, background: 'linear-gradient(135deg, #eff6ff, #dbeafe)', border: '1px solid #93c5fd' }}>
+        style={{ cursor: 'pointer', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14, background: 'linear-gradient(135deg, var(--info-light), var(--info-light))', border: '1px solid oklch(72% 0.10 260)' }}>
         <span style={{ fontSize: 28 }}>📝</span>
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 700, fontSize: 14 }}>개별 클리닉 신청</div>
@@ -455,7 +455,7 @@ export default function MyPage() {
 
       <div className="card floating-card">
         <h2 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          🏆 '강인한 국어' 수업 후기
+          🏆 수업 후기
           <button className="btn btn-ghost btn-sm" onClick={() => navigate('/student/reviews')}>
             {bestReviews.length > 0 ? '전체 보기 >' : '후기 작성 >'}
           </button>
@@ -529,11 +529,11 @@ export default function MyPage() {
           <h2>📋 과제 현황</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {homeworkRecords.slice(0, 5).map((r, i) => {
-              const sb = r.submission_status === 'O' ? { bg: '#dcfce7', color: '#166534' }
-                       : r.submission_status === 'X' ? { bg: '#fee2e2', color: '#991b1b' }
-                       : { bg: '#f1f5f9', color: '#64748b' };
+              const sb = r.submission_status === 'O' ? { bg: 'var(--success-light)', color: 'oklch(30% 0.12 145)' }
+                       : r.submission_status === 'X' ? { bg: 'oklch(88% 0.06 25)', color: 'oklch(35% 0.15 25)' }
+                       : { bg: 'var(--secondary)', color: 'var(--muted-foreground)' };
               return (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8, background: '#f8fafc' }}>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8, background: 'var(--background)' }}>
                   <span style={{ fontSize: 12, color: 'var(--muted-foreground)', minWidth: 60 }}>{r.date}</span>
                   <span style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>{r.class_name}</span>
                   <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 4, background: sb.bg, color: sb.color, fontWeight: 700 }}>
@@ -566,10 +566,10 @@ export default function MyPage() {
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8,
                 padding: '6px 10px', borderRadius: 8,
-                background: label === '재학생' ? '#f0fdf4' : '#eff6ff',
+                background: label === '재학생' ? 'var(--success-light)' : 'var(--info-light)',
               }}>
                 <span style={{ fontSize: 14 }}>{emoji}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: label === '재학생' ? '#166534' : '#1e40af' }}>{label}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: label === '재학생' ? 'oklch(30% 0.12 145)' : 'oklch(32% 0.12 260)' }}>{label}</span>
                 <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>({sectionItems.length}명)</span>
               </div>
               <div className="review-rolling-container">
@@ -647,7 +647,7 @@ export default function MyPage() {
         return (
           <div className="card floating-card">
             <h2 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              🏆 '강인한 국어' 명예의 전당
+              🏆 명예의 전당
             </h2>
             {renderHofSection(currentStudents, '재학생', '🎒')}
             {renderHofSection(graduates, '졸업생', '🎓')}

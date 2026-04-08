@@ -44,7 +44,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: '이미 사용 중인 아이디입니다.' });
     }
 
-    const existingPhone = await getOne('SELECT id FROM users WHERE phone = ? AND phone != "" AND academy_id = ?', [phone, academyId]);
+    const existingPhone = await getOne('SELECT id FROM users WHERE phone = ? AND phone IS NOT NULL AND phone <> \'\' AND academy_id = ?', [phone, academyId]);
     if (existingPhone) {
       return res.status(400).json({ error: '이미 등록된 전화번호입니다. 중복 가입은 불가합니다.' });
     }
@@ -88,12 +88,12 @@ router.post('/login', async (req, res) => {
       user = await getOne('SELECT * FROM users WHERE username = ? AND academy_id = ?', [username, academyId]);
       if (!user) {
         // 핸드폰번호로 시도
-        user = await getOne('SELECT * FROM users WHERE phone = ? AND phone != "" AND academy_id = ?', [username, academyId]);
+        user = await getOne('SELECT * FROM users WHERE phone = ? AND phone IS NOT NULL AND phone <> \'\' AND academy_id = ?', [username, academyId]);
       }
     } else {
       user = await getOne('SELECT * FROM users WHERE username = ?', [username]);
       if (!user) {
-        user = await getOne('SELECT * FROM users WHERE phone = ? AND phone != ""', [username]);
+        user = await getOne('SELECT * FROM users WHERE phone = ? AND phone IS NOT NULL AND phone <> \'\'', [username]);
       }
     }
 
@@ -187,9 +187,25 @@ router.put('/change-password', authenticateToken, async (req, res) => {
   }
 });
 
+// 비밀번호 찾기 Rate Limiting (IP 기반, 5회/15분)
+const findPwAttempts = new Map();
+const FIND_PW_MAX = 5;
+const FIND_PW_WINDOW = 15 * 60 * 1000;
+
 // 비밀번호 찾기 (아이디 + 이름 + 전화번호 일치 시 임시 비번 발급)
 router.post('/find-password', async (req, res) => {
   try {
+    // Rate limiting 체크
+    const ip = req.ip || req.connection.remoteAddress;
+    const now = Date.now();
+    const attempts = findPwAttempts.get(ip) || [];
+    const recent = attempts.filter(t => now - t < FIND_PW_WINDOW);
+    if (recent.length >= FIND_PW_MAX) {
+      return res.status(429).json({ error: '너무 많은 시도가 있었습니다. 15분 후 다시 시도해주세요.' });
+    }
+    recent.push(now);
+    findPwAttempts.set(ip, recent);
+
     const { username, name, phone, academySlug } = req.body;
     if (!username || !name || !phone) {
       return res.status(400).json({ error: '아이디, 이름, 전화번호를 모두 입력해주세요.' });
@@ -208,13 +224,13 @@ router.post('/find-password', async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: '일치하는 계정을 찾을 수 없습니다. 정보를 다시 확인해주세요.' });
     }
-    // 임시 비밀번호 생성 (6자리 영숫자)
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    let tempPw = '';
-    for (let i = 0; i < 6; i++) tempPw += chars[Math.floor(Math.random() * chars.length)];
+
+    // 임시 비밀번호 생성 (8자리 암호학적 안전)
+    const crypto = require('crypto');
+    const tempPw = crypto.randomBytes(6).toString('base64url').slice(0, 8);
 
     const hashed = await bcrypt.hash(tempPw, 10);
-    await runQuery('UPDATE users SET password = ? WHERE id = ?', [hashed, user.id]);
+    await runQuery('UPDATE users SET password = ? WHERE id = ? AND academy_id = ?', [hashed, user.id, user.academy_id]);
     res.json({ message: '임시 비밀번호가 발급되었습니다.', tempPassword: tempPw });
   } catch (err) {
     console.error(err);

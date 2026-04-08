@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
-import { SCHOOLS, getAllGrades } from '../../config';
-
-const STU_SCHOOLS = SCHOOLS.filter(s => s.name !== '조교' && s.name !== '선생님');
+import { useTenantConfig } from '../../contexts/TenantContext';
 
 export default function ReportManage() {
+  const { config } = useTenantConfig();
+  const STU_SCHOOLS = (config.schools || []).filter(s => s.name !== '조교' && s.name !== '선생님');
   const navigate = useNavigate();
   const [tab, setTab] = useState('write');
   const [status, setStatus] = useState({ gemini: false, sms: false });
@@ -180,8 +180,8 @@ export default function ReportManage() {
     } catch (e) { alert(e.message); }
   };
 
-  const grades = school ? getAllGrades(school) : [];
-  const histGrades = histSchool ? getAllGrades(histSchool) : [];
+  const grades = school ? ((config.schools || []).find(s => s.name === school)?.grades || []) : [];
+  const histGrades = histSchool ? ((config.schools || []).find(s => s.name === histSchool)?.grades || []) : [];
 
   const TABS = [
     { id: 'write', label: '✍️ 레포트 작성' },
@@ -243,7 +243,7 @@ export default function ReportManage() {
                 <div style={{ display: 'flex', gap: 4 }}>
                   {status.gemini && (
                     <button onClick={generateAllAI} disabled={!!aiLoadingId} style={{
-                      padding: '6px 10px', borderRadius: 6, border: 'none', background: '#7c3aed',
+                      padding: '6px 10px', borderRadius: 6, border: 'none', background: 'oklch(45% 0.22 290)',
                       color: 'white', fontSize: 11, fontWeight: 600, cursor: 'pointer'
                     }}>🤖 전체 AI 생성</button>
                   )}
@@ -257,7 +257,7 @@ export default function ReportManage() {
                 {students.map((s, si) => (
                   <div key={s.id} style={{
                     border: '1px solid var(--border)', borderRadius: 10, padding: 12, marginBottom: 8,
-                    background: s.changed ? '#fffbeb' : 'white',
+                    background: s.changed ? 'var(--warning-light)' : 'var(--card)',
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                       <div>
@@ -265,7 +265,7 @@ export default function ReportManage() {
                         <span style={{ fontSize: 11, color: 'var(--muted-foreground)', marginLeft: 6 }}>{s.school} {s.grade}</span>
                       </div>
                       {s.examData && (
-                        <span style={{ fontSize: 11, background: '#eff6ff', padding: '2px 8px', borderRadius: 4, color: '#1e40af' }}>
+                        <span style={{ fontSize: 11, background: 'var(--info-light)', padding: '2px 8px', borderRadius: 4, color: 'oklch(32% 0.12 260)' }}>
                           최근시험: {s.examData.exam_name} {s.examData.score}점
                         </span>
                       )}
@@ -277,16 +277,16 @@ export default function ReportManage() {
                           <label style={{ fontSize: 10, color: 'var(--muted-foreground)', display: 'block', marginBottom: 2 }}>{f.label}</label>
                           {f.type === 'select' ? (
                             <select value={s.items[f.key] || ''} onChange={e => updateItem(si, f.key, e.target.value)}
-                              style={{ width: '100%', padding: '5px 6px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12 }}>
+                              style={{ width: '100%', padding: '5px 6px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }}>
                               <option value="">-</option>
                               {(f.options || []).map(o => <option key={o} value={o}>{o}</option>)}
                             </select>
                           ) : f.type === 'score' ? (
                             <input value={s.items[f.key] || ''} onChange={e => updateItem(si, f.key, e.target.value)}
-                              placeholder="점수" style={{ width: '100%', padding: '5px 6px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12, boxSizing: 'border-box' }} />
+                              placeholder="점수" style={{ width: '100%', padding: '5px 6px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12, boxSizing: 'border-box' }} />
                           ) : (
                             <input value={s.items[f.key] || ''} onChange={e => updateItem(si, f.key, e.target.value)}
-                              placeholder={f.label} style={{ width: '100%', padding: '5px 6px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12, boxSizing: 'border-box' }} />
+                              placeholder={f.label} style={{ width: '100%', padding: '5px 6px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12, boxSizing: 'border-box' }} />
                           )}
                         </div>
                       ))}
@@ -303,11 +303,11 @@ export default function ReportManage() {
                             return next;
                           });
                         }} rows={2} placeholder="AI 생성 또는 직접 입력..."
-                          style={{ width: '100%', padding: 6, border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12, resize: 'vertical', boxSizing: 'border-box' }} />
+                          style={{ width: '100%', padding: 6, border: '1px solid var(--border)', borderRadius: 6, fontSize: 12, resize: 'vertical', boxSizing: 'border-box' }} />
                       </div>
                       {status.gemini && (
                         <button onClick={() => generateAI(si)} disabled={aiLoadingId === s.id}
-                          style={{ marginTop: 14, padding: '6px 10px', borderRadius: 6, border: 'none', background: '#7c3aed', color: 'white', fontSize: 11, cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                          style={{ marginTop: 14, padding: '6px 10px', borderRadius: 6, border: 'none', background: 'oklch(45% 0.22 290)', color: 'white', fontSize: 11, cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: 600 }}>
                           {aiLoadingId === s.id ? '⏳' : '🤖 AI'}
                         </button>
                       )}
@@ -353,14 +353,14 @@ export default function ReportManage() {
                 {reports.map(r => (
                   <div key={r.id} style={{
                     display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px',
-                    borderBottom: '1px solid #f1f5f9', fontSize: 13,
+                    borderBottom: '1px solid var(--secondary)', fontSize: 13,
                   }}>
                     <span style={{ fontWeight: 700, minWidth: 50 }}>{r.student_name}</span>
                     <span style={{ color: 'var(--muted-foreground)', fontSize: 11 }}>{r.school} {r.grade}</span>
-                    <span style={{ fontSize: 11, color: '#64748b' }}>{r.report_date}</span>
-                    <span style={{ fontSize: 10, background: '#f1f5f9', padding: '2px 6px', borderRadius: 4 }}>{r.template_name}</span>
+                    <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>{r.report_date}</span>
+                    <span style={{ fontSize: 10, background: 'var(--secondary)', padding: '2px 6px', borderRadius: 4 }}>{r.template_name}</span>
                     {r.sms_sent ? (
-                      <span style={{ fontSize: 10, background: '#dcfce7', color: '#166534', padding: '2px 6px', borderRadius: 4 }}>📱 발송완료</span>
+                      <span style={{ fontSize: 10, background: 'var(--success-light)', color: 'oklch(30% 0.12 145)', padding: '2px 6px', borderRadius: 4 }}>📱 발송완료</span>
                     ) : null}
                     <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
                       <button onClick={() => setPreviewId(r.id)} style={{
@@ -370,7 +370,7 @@ export default function ReportManage() {
                       {!r.sms_sent && (
                         <button onClick={() => sendSms(r.id)} style={{
                           padding: '4px 8px', borderRadius: 4, border: 'none',
-                          background: '#2563eb', color: 'white', fontSize: 10, cursor: 'pointer'
+                          background: 'oklch(48% 0.18 260)', color: 'white', fontSize: 10, cursor: 'pointer'
                         }}>📱 SMS</button>
                       )}
                     </div>
@@ -399,16 +399,16 @@ export default function ReportManage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <span style={{ fontWeight: 700, fontSize: 14 }}>{t.name}</span>
-                    {t.is_default ? <span style={{ fontSize: 10, background: '#dbeafe', color: '#1e40af', padding: '2px 6px', borderRadius: 4, marginLeft: 6 }}>기본</span> : null}
+                    {t.is_default ? <span style={{ fontSize: 10, background: 'var(--info-light)', color: 'oklch(32% 0.12 260)', padding: '2px 6px', borderRadius: 4, marginLeft: 6 }}>기본</span> : null}
                     <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginTop: 2 }}>{t.description}</div>
                   </div>
                   <button onClick={() => setEditTmpl({ ...t, fields })} style={{
-                    padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: '#eff6ff', fontSize: 11, cursor: 'pointer'
+                    padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--info-light)', fontSize: 11, cursor: 'pointer'
                   }}>✏️ 수정</button>
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 8 }}>
                   {fields.map((f, i) => (
-                    <span key={i} style={{ fontSize: 11, background: '#f1f5f9', padding: '3px 8px', borderRadius: 4 }}>
+                    <span key={i} style={{ fontSize: 11, background: 'var(--secondary)', padding: '3px 8px', borderRadius: 4 }}>
                       {f.label} ({f.type === 'select' ? '선택' : f.type === 'score' ? '점수' : f.type === 'auto_score' ? '자동' : '텍스트'})
                     </span>
                   ))}
@@ -422,8 +422,8 @@ export default function ReportManage() {
       {/* 템플릿 편집 모달 */}
       {editTmpl && (
         <>
-          <div onClick={() => setEditTmpl(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)', zIndex: 300 }} />
-          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: 'white', borderRadius: 16, padding: 20, width: '90%', maxWidth: 400, maxHeight: '80vh', overflowY: 'auto', zIndex: 301, boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+          <div onClick={() => setEditTmpl(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'oklch(0% 0 0 / 0.4)', zIndex: 300 }} />
+          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: 'var(--card)', borderRadius: 16, padding: 20, width: '90%', maxWidth: 400, maxHeight: '80vh', overflowY: 'auto', zIndex: 301, boxShadow: '0 20px 60px oklch(0% 0 0 / 0.3)' }}>
             <h3 style={{ fontSize: 16, marginBottom: 12 }}>{editTmpl.id === 'new' ? '새 템플릿' : '템플릿 수정'}</h3>
             <input value={editTmpl.name} onChange={e => setEditTmpl({ ...editTmpl, name: e.target.value })}
               placeholder="템플릿 이름" style={{ width: '100%', padding: 8, border: '1px solid var(--border)', borderRadius: 8, marginBottom: 8, fontSize: 13, boxSizing: 'border-box' }} />
@@ -437,12 +437,12 @@ export default function ReportManage() {
                   const fields = [...editTmpl.fields];
                   fields[i] = { ...f, label: e.target.value, key: e.target.value.replace(/\s/g, '_').toLowerCase() };
                   setEditTmpl({ ...editTmpl, fields });
-                }} placeholder="항목명" style={{ flex: 1, padding: 6, border: '1px solid #e2e8f0', borderRadius: 4, fontSize: 12 }} />
+                }} placeholder="항목명" style={{ flex: 1, padding: 6, border: '1px solid var(--border)', borderRadius: 4, fontSize: 12 }} />
                 <select value={f.type} onChange={e => {
                   const fields = [...editTmpl.fields];
                   fields[i] = { ...f, type: e.target.value };
                   setEditTmpl({ ...editTmpl, fields });
-                }} style={{ padding: 6, border: '1px solid #e2e8f0', borderRadius: 4, fontSize: 12 }}>
+                }} style={{ padding: 6, border: '1px solid var(--border)', borderRadius: 4, fontSize: 12 }}>
                   <option value="select">선택형</option>
                   <option value="score">점수형</option>
                   <option value="text">텍스트</option>
@@ -453,16 +453,16 @@ export default function ReportManage() {
                     const fields = [...editTmpl.fields];
                     fields[i] = { ...f, options: e.target.value.split(',').map(s => s.trim()).filter(Boolean) };
                     setEditTmpl({ ...editTmpl, fields });
-                  }} placeholder="옵션1,옵션2,..." style={{ flex: 1, padding: 6, border: '1px solid #e2e8f0', borderRadius: 4, fontSize: 11 }} />
+                  }} placeholder="옵션1,옵션2,..." style={{ flex: 1, padding: 6, border: '1px solid var(--border)', borderRadius: 4, fontSize: 11 }} />
                 )}
                 <button onClick={() => {
                   const fields = editTmpl.fields.filter((_, fi) => fi !== i);
                   setEditTmpl({ ...editTmpl, fields });
-                }} style={{ padding: '4px 8px', border: 'none', background: '#fef2f2', color: '#dc2626', borderRadius: 4, cursor: 'pointer', fontSize: 11 }}>✕</button>
+                }} style={{ padding: '4px 8px', border: 'none', background: 'var(--destructive-light)', color: 'oklch(48% 0.20 25)', borderRadius: 4, cursor: 'pointer', fontSize: 11 }}>✕</button>
               </div>
             ))}
             <button onClick={() => setEditTmpl({ ...editTmpl, fields: [...(editTmpl.fields || []), { key: '', label: '', type: 'select', options: [] }] })}
-              style={{ width: '100%', padding: 8, border: '1px dashed var(--border)', borderRadius: 6, background: '#f8fafc', cursor: 'pointer', fontSize: 12, marginTop: 4, marginBottom: 12 }}>
+              style={{ width: '100%', padding: 8, border: '1px dashed var(--border)', borderRadius: 6, background: 'var(--background)', cursor: 'pointer', fontSize: 12, marginTop: 4, marginBottom: 12 }}>
               + 항목 추가
             </button>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -476,8 +476,8 @@ export default function ReportManage() {
       {/* 미리보기 모달 */}
       {previewId && (
         <>
-          <div onClick={() => setPreviewId(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 300 }} />
-          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: 'white', borderRadius: 16, padding: 16, width: '90%', maxWidth: 650, height: '80vh', zIndex: 301, boxShadow: '0 20px 60px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column' }}>
+          <div onClick={() => setPreviewId(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'oklch(0% 0 0 / 0.5)', zIndex: 300 }} />
+          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: 'var(--card)', borderRadius: 16, padding: 16, width: '90%', maxWidth: 650, height: '80vh', zIndex: 301, boxShadow: '0 20px 60px oklch(0% 0 0 / 0.3)', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexShrink: 0 }}>
               <h3 style={{ fontSize: 16, margin: 0 }}>📄 레포트 미리보기</h3>
               <div style={{ display: 'flex', gap: 6 }}>
@@ -495,9 +495,9 @@ export default function ReportManage() {
       {msg && (
         <div style={{
           padding: '10px 14px', borderRadius: 8, fontSize: 13, fontWeight: 500, marginTop: 4,
-          background: msg.includes('실패') ? '#fef2f2' : '#f0fdf4',
-          color: msg.includes('실패') ? '#dc2626' : '#166534',
-          border: `1px solid ${msg.includes('실패') ? '#fecaca' : '#bbf7d0'}`
+          background: msg.includes('실패') ? 'var(--destructive-light)' : 'var(--success-light)',
+          color: msg.includes('실패') ? 'oklch(48% 0.20 25)' : 'oklch(30% 0.12 145)',
+          border: `1px solid ${msg.includes('실패') ? 'oklch(88% 0.06 25)' : 'oklch(90% 0.06 145)'}`
         }}>{msg}</div>
       )}
 

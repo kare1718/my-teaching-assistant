@@ -12,8 +12,8 @@ function genGroupId() {
 // 수업 일정 목록
 router.get('/', async (req, res) => {
   const { month, year } = req.query;
-  let where = 'WHERE academy_id = ?';
-  const params = [req.academyId];
+  let where = '';
+  const params = [];
 
   if (year && month) {
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
@@ -21,8 +21,11 @@ router.get('/', async (req, res) => {
     const endDate = endMonth > 12
       ? `${parseInt(year) + 1}-01-01`
       : `${year}-${String(endMonth).padStart(2, '0')}-01`;
-    where += ' AND schedule_date >= ? AND schedule_date < ?';
-    params.push(startDate, endDate);
+    where = 'WHERE schedule_date >= ? AND schedule_date < ? AND academy_id = ?';
+    params.push(startDate, endDate, req.academyId);
+  } else {
+    where = 'WHERE academy_id = ?';
+    params.push(req.academyId);
   }
 
   const schedules = await getAll(

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, apiPost } from '../../api';
 import BottomTabBar from '../../components/BottomTabBar';
+import LevelUpNotification from '../../components/LevelUpNotification';
 
 const DEFAULT_TIMER = 20;
 const DAILY_LIMIT = 50;
@@ -102,9 +103,9 @@ export default function KnowledgeQuiz() {
 
   const getTimerColor = () => {
     const pct = timeLeft / timerSeconds;
-    if (pct > 0.5) return '#22c55e';
-    if (pct > 0.25) return '#f59e0b';
-    return '#ef4444';
+    if (pct > 0.5) return 'var(--success)';
+    if (pct > 0.25) return 'var(--warning)';
+    return 'var(--destructive)';
   };
 
   const getTimerGlow = () => {
@@ -126,8 +127,8 @@ export default function KnowledgeQuiz() {
           </p>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 16px',
-            background: todayCount >= DAILY_LIMIT ? '#fee2e2' : '#dbeafe',
-            color: todayCount >= DAILY_LIMIT ? '#991b1b' : '#1e40af',
+            background: todayCount >= DAILY_LIMIT ? 'var(--destructive-light)' : 'var(--info-light)',
+            color: todayCount >= DAILY_LIMIT ? 'oklch(35% 0.15 25)' : 'oklch(32% 0.12 260)',
             borderRadius: 20, fontSize: 13, fontWeight: 700
           }}>
             📅 오늘 {todayCount}/{DAILY_LIMIT}문제
@@ -144,9 +145,9 @@ export default function KnowledgeQuiz() {
               <button key={n} onClick={() => setQuestionCount(n)}
                 style={{
                   flex: 1, padding: '14px 0', borderRadius: 12, fontSize: 18, fontWeight: 800, cursor: 'pointer',
-                  border: questionCount === n ? '2px solid #3b82f6' : '1px solid var(--border)',
-                  background: questionCount === n ? '#dbeafe' : '#f8fafc',
-                  color: questionCount === n ? '#1d4ed8' : 'var(--foreground)',
+                  border: questionCount === n ? '2px solid var(--info)' : '1px solid var(--border)',
+                  background: questionCount === n ? 'var(--info-light)' : 'var(--background)',
+                  color: questionCount === n ? 'oklch(38% 0.14 260)' : 'var(--foreground)',
                   transition: 'all 0.15s',
                 }}>{n}</button>
             ))}
@@ -156,8 +157,8 @@ export default function KnowledgeQuiz() {
           </div>
         </div>
 
-        <div className="card" style={{ padding: 14, background: '#fffbeb', border: '1px solid #fde68a' }}>
-          <div style={{ fontSize: 13, color: '#92400e', lineHeight: 1.7 }}>
+        <div className="card" style={{ padding: 14, background: 'var(--warning-light)', border: '1px solid oklch(92% 0.10 90)' }}>
+          <div style={{ fontSize: 13, color: 'oklch(35% 0.12 75)', lineHeight: 1.7 }}>
             💡 <strong>퀴즈 안내</strong><br />
             • 틀린 문제는 7일 후 다시 출제됩니다<br />
             • 맞힌 문제는 다시 출제되지 않습니다<br />
@@ -194,7 +195,7 @@ export default function KnowledgeQuiz() {
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {q?.category && (
-              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: '#f0f9ff', color: '#0369a1', fontWeight: 600 }}>
+              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: 'var(--info-light)', color: 'var(--info)', fontWeight: 600 }}>
                 {q.category}
               </span>
             )}
@@ -212,7 +213,7 @@ export default function KnowledgeQuiz() {
         {/* 타이머 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
           <div style={{
-            flex: 1, height: 8, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden',
+            flex: 1, height: 8, background: 'var(--secondary)', borderRadius: 4, overflow: 'hidden',
             boxShadow: getTimerGlow(),
           }}>
             <div style={{
@@ -236,16 +237,16 @@ export default function KnowledgeQuiz() {
         {/* 선택지 */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {q?.options.map((opt, i) => {
-            let bg = '#f8fafc', border = '1px solid var(--border)', color = 'var(--foreground)';
+            let bg = 'var(--background)', border = '1px solid var(--border)', color = 'var(--foreground)';
 
             if (showAnswer) {
               if (opt === q.correctAnswer) {
-                bg = '#f0fdf4'; border = '2px solid #22c55e'; color = '#15803d';
+                bg = 'var(--success-light)'; border = '2px solid var(--success)'; color = 'oklch(38% 0.10 150)';
               } else if (opt === selected) {
-                bg = '#fef2f2'; border = '2px solid #ef4444'; color = '#dc2626';
+                bg = 'var(--destructive-light)'; border = '2px solid var(--destructive)'; color = 'oklch(48% 0.20 25)';
               }
             } else if (selected === opt) {
-              bg = '#dbeafe'; border = '2px solid #3b82f6'; color = '#1d4ed8';
+              bg = 'var(--info-light)'; border = '2px solid var(--info)'; color = 'oklch(38% 0.14 260)';
             }
 
             return (
@@ -269,12 +270,12 @@ export default function KnowledgeQuiz() {
 
         {/* 타임아웃 메시지 */}
         {isTimeout && (
-          <div style={{ marginTop: 10, padding: '12px 16px', borderRadius: 12, background: '#fef3c7', border: '1px solid #fde68a' }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#92400e', marginBottom: q?.explanation ? 6 : 0 }}>
+          <div style={{ marginTop: 10, padding: '12px 16px', borderRadius: 12, background: 'var(--warning-light)', border: '1px solid oklch(92% 0.10 90)' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'oklch(35% 0.12 75)', marginBottom: q?.explanation ? 6 : 0 }}>
               ⏰ 시간 초과! 정답: <strong>{q?.correctAnswer}</strong>
             </div>
             {q?.explanation && (
-              <div style={{ fontSize: 13, color: '#374151', lineHeight: 1.7 }}>
+              <div style={{ fontSize: 13, color: 'var(--neutral-700)', lineHeight: 1.7 }}>
                 💡 {q.explanation}
               </div>
             )}
@@ -285,14 +286,14 @@ export default function KnowledgeQuiz() {
         {showAnswer && !isTimeout && (
           <div style={{
             marginTop: 10, padding: '12px 16px', borderRadius: 12,
-            background: isCorrect ? '#f0fdf4' : '#fef2f2',
-            border: isCorrect ? '1px solid #bbf7d0' : '1px solid #fecaca',
+            background: isCorrect ? 'var(--success-light)' : 'var(--destructive-light)',
+            border: isCorrect ? '1px solid oklch(90% 0.06 145)' : '1px solid oklch(88% 0.06 25)',
           }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: isCorrect ? '#15803d' : '#dc2626', marginBottom: q?.explanation ? 6 : 0 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: isCorrect ? 'oklch(38% 0.10 150)' : 'oklch(48% 0.20 25)', marginBottom: q?.explanation ? 6 : 0 }}>
               {isCorrect ? '🎉 정답입니다!' : `❌ 오답! 정답: ${q?.correctAnswer}`}
             </div>
             {q?.explanation && (
-              <div style={{ fontSize: 13, color: '#374151', lineHeight: 1.7 }}>
+              <div style={{ fontSize: 13, color: 'var(--neutral-700)', lineHeight: 1.7 }}>
                 💡 {q.explanation}
               </div>
             )}
@@ -320,7 +321,7 @@ export default function KnowledgeQuiz() {
   if (phase === 'result' && result) {
     const pct = Math.round((result.correct / result.total) * 100);
     const grade = pct >= 90 ? 'S' : pct >= 70 ? 'A' : pct >= 50 ? 'B' : 'C';
-    const gradeColor = { S: '#eab308', A: '#22c55e', B: '#3b82f6', C: '#ef4444' }[grade];
+    const gradeColor = { S: 'var(--warning)', A: 'var(--success)', B: 'var(--info)', C: 'var(--destructive)' }[grade];
     const gradeMsg = { S: '완벽해요! 🏆', A: '잘했어요! 👍', B: '괜찮아요 💪', C: '다시 도전! 🔥' }[grade];
 
     return (
@@ -333,16 +334,12 @@ export default function KnowledgeQuiz() {
           </div>
           <div style={{
             display: 'inline-block', marginTop: 14, padding: '10px 24px',
-            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+            background: 'linear-gradient(135deg, oklch(55% 0.18 270), oklch(45% 0.18 310))',
             color: 'white', borderRadius: 20, fontSize: 18, fontWeight: 800
           }}>
             +{result.xpEarned} XP
           </div>
-          {result.leveledUp && (
-            <div style={{ marginTop: 10, fontSize: 15, fontWeight: 700, color: '#eab308' }}>
-              🎉 레벨 업! Lv.{result.newLevel}
-            </div>
-          )}
+          {result.leveledUp && <LevelUpNotification level={result.newLevel} />}
         </div>
 
         {/* 문제별 결과 */}
@@ -351,21 +348,21 @@ export default function KnowledgeQuiz() {
           {result.details.map((d, i) => (
             <div key={i} style={{
               padding: '12px 14px', marginBottom: 8, borderRadius: 10,
-              background: d.correct ? '#f0fdf4' : '#fef2f2',
-              border: d.correct ? '1px solid #bbf7d0' : '1px solid #fecaca',
+              background: d.correct ? 'var(--success-light)' : 'var(--destructive-light)',
+              border: d.correct ? '1px solid oklch(90% 0.06 145)' : '1px solid oklch(88% 0.06 25)',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: d.explanation ? 6 : 0 }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: d.correct ? '#15803d' : '#dc2626' }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: d.correct ? 'oklch(38% 0.10 150)' : 'oklch(48% 0.20 25)' }}>
                   {d.correct ? '✅' : '❌'} 문제 {i + 1}
                 </span>
                 {!d.correct && d.correctAnswer && (
-                  <span style={{ fontSize: 12, color: '#166534', fontWeight: 600 }}>
+                  <span style={{ fontSize: 12, color: 'oklch(30% 0.12 145)', fontWeight: 600 }}>
                     → 정답: {d.correctAnswer}
                   </span>
                 )}
               </div>
               {d.explanation && (
-                <div style={{ fontSize: 12, color: '#374151', lineHeight: 1.7, borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: 6 }}>
+                <div style={{ fontSize: 12, color: 'var(--neutral-700)', lineHeight: 1.7, borderTop: '1px solid oklch(0% 0 0 / 0.06)', paddingTop: 6 }}>
                   💡 {d.explanation}
                 </div>
               )}

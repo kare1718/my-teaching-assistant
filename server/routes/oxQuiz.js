@@ -1,5 +1,6 @@
 const express = require('express');
 const multer = require('multer');
+const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const { runInsert, getOne, getAll } = require('../db/database');
@@ -18,40 +19,31 @@ if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname));
+    cb(null, crypto.randomUUID() + path.extname(file.originalname));
   }
 });
-const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) cb(null, true);
+  else cb(new Error('이미지 파일만 업로드 가능합니다.'), false);
+};
+const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 }, fileFilter });
 
 // Gemini 응답에서 JSON 파싱
 function parseGeminiJSON(text) {
-  // 마크다운 코드블록 제거
   let cleaned = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
-
   try { return JSON.parse(cleaned); } catch (e) {}
-
-  // 배열 추출 시도
   const arrMatch = cleaned.match(/\[[\s\S]*\]/);
-  if (arrMatch) {
-    try { return JSON.parse(arrMatch[0]); } catch (e) {}
-  }
-
-  // 객체 추출 시도
+  if (arrMatch) { try { return JSON.parse(arrMatch[0]); } catch (e) {} }
   const objMatch = cleaned.match(/\{[\s\S]*\}/);
-  if (objMatch) {
-    try { return JSON.parse(objMatch[0]); } catch (e) {}
-  }
-
+  if (objMatch) { try { return JSON.parse(objMatch[0]); } catch (e) {} }
   return null;
 }
 
 // Gemini API 호출
 async function callGemini(parts, timeoutMs = 30000) {
   if (!GEMINI_API_KEY) throw new Error('Gemini API 키가 설정되지 않았습니다.');
-
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
   try {
     const response = await fetch(GEMINI_URL, {
       method: 'POST',
@@ -63,12 +55,7 @@ async function callGemini(parts, timeoutMs = 30000) {
       signal: controller.signal,
     });
     clearTimeout(timeout);
-
-    if (!response.ok) {
-      const err = await response.text();
-      throw new Error(`Gemini API 오류: ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`Gemini API 오류: ${response.status}`);
     const data = await response.json();
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!text) throw new Error('Gemini 응답이 비어있습니다.');
@@ -108,19 +95,14 @@ router.post('/generate', async (req, res) => {
   try {
     const text = await callGemini([{ text: prompt }]);
     const parsed = parseGeminiJSON(text);
-
     if (!parsed) return res.status(500).json({ error: '문제 생성에 실패했습니다. 다시 시도해주세요.' });
     if (parsed.error) return res.status(400).json({ error: parsed.error });
-
     const questions = Array.isArray(parsed) ? parsed : parsed.questions || [];
     if (questions.length === 0) return res.status(500).json({ error: '문제를 생성할 수 없습니다. 작품명을 확인해주세요.' });
-
     res.json({
-      quizType: 'literature',
-      author, work,
+      quizType: 'literature', author, work,
       questions: questions.slice(0, 10).map((q, i) => ({
-        id: i + 1,
-        statement: q.statement,
+        id: i + 1, statement: q.statement,
         answer: q.answer === true || q.answer === 'true',
         explanation: q.explanation || '',
       }))
@@ -159,17 +141,13 @@ ${text}
   try {
     const responseText = await callGemini([{ text: prompt }]);
     const parsed = parseGeminiJSON(responseText);
-
     if (!parsed) return res.status(500).json({ error: '문제 생성에 실패했습니다. 다시 시도해주세요.' });
-
     const questions = Array.isArray(parsed) ? parsed : parsed.questions || [];
     if (questions.length === 0) return res.status(500).json({ error: '문제를 생성할 수 없습니다. 지문을 확인해주세요.' });
-
     res.json({
       quizType: 'nonfiction',
       questions: questions.slice(0, 10).map((q, i) => ({
-        id: i + 1,
-        statement: q.statement,
+        id: i + 1, statement: q.statement,
         answer: q.answer === true || q.answer === 'true',
         explanation: q.explanation || '',
       }))
@@ -183,7 +161,6 @@ ${text}
 // === 비문학 O/X (이미지) ===
 router.post('/generate-image', upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: '이미지를 업로드해주세요.' });
-
   try {
     const imageBuffer = fs.readFileSync(req.file.path);
     const base64Image = imageBuffer.toString('base64');
@@ -214,21 +191,16 @@ router.post('/generate-image', upload.single('image'), async (req, res) => {
       { inline_data: { mime_type: mimeType, data: base64Image } },
       { text: prompt }
     ];
-
     const responseText = await callGemini(parts, 35000);
     const parsed = parseGeminiJSON(responseText);
-
     if (!parsed) return res.status(500).json({ error: '이미지 인식 또는 문제 생성에 실패했습니다.' });
-
     const questions = parsed.questions || (Array.isArray(parsed) ? parsed : []);
     if (questions.length === 0) return res.status(500).json({ error: '이미지에서 텍스트를 인식할 수 없습니다.' });
-
     res.json({
       quizType: 'nonfiction',
       extractedText: parsed.extractedText || '',
       questions: questions.slice(0, 10).map((q, i) => ({
-        id: i + 1,
-        statement: q.statement,
+        id: i + 1, statement: q.statement,
         answer: q.answer === true || q.answer === 'true',
         explanation: q.explanation || '',
       }))
@@ -237,33 +209,34 @@ router.post('/generate-image', upload.single('image'), async (req, res) => {
     console.error('[OX Quiz] 이미지 생성 오류:', e.message);
     res.status(500).json({ error: e.message || '이미지 처리 중 오류가 발생했습니다.' });
   } finally {
-    // 업로드 이미지 정리
     try { if (req.file) fs.unlinkSync(req.file.path); } catch (e) {}
   }
 });
 
 // === 결과 저장 ===
 router.post('/save-result', async (req, res) => {
+  const academyId = req.academyId;
   const { quizType, inputData, totalQuestions, correctCount, questionsJson } = req.body;
-  const student = await getOne('SELECT id FROM students WHERE user_id = ? AND academy_id = ?', [req.user.id, req.academyId]);
+  const student = await getOne('SELECT id FROM students WHERE user_id = ? AND academy_id = ?', [req.user.id, academyId]);
   if (!student) return res.status(404).json({ error: '학생 정보를 찾을 수 없습니다.' });
 
   const id = await runInsert(
     `INSERT INTO ox_quiz_logs (student_id, quiz_type, input_data, total_questions, correct_count, questions_json, academy_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [student.id, quizType, JSON.stringify(inputData), totalQuestions || 10, correctCount || 0, JSON.stringify(questionsJson), req.academyId]
+    [student.id, quizType, JSON.stringify(inputData), totalQuestions || 10, correctCount || 0, JSON.stringify(questionsJson), academyId]
   );
   res.json({ message: '결과 저장 완료', id });
 });
 
 // === 내 풀이 기록 ===
 router.get('/my-logs', async (req, res) => {
-  const student = await getOne('SELECT id FROM students WHERE user_id = ? AND academy_id = ?', [req.user.id, req.academyId]);
+  const academyId = req.academyId;
+  const student = await getOne('SELECT id FROM students WHERE user_id = ? AND academy_id = ?', [req.user.id, academyId]);
   if (!student) return res.json([]);
 
   const logs = await getAll(
     `SELECT id, quiz_type, input_data, total_questions, correct_count, played_at
      FROM ox_quiz_logs WHERE student_id = ? AND academy_id = ? ORDER BY played_at DESC LIMIT 20`,
-    [student.id, req.academyId]
+    [student.id, academyId]
   );
   res.json(logs.map(l => ({
     ...l,

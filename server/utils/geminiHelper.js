@@ -72,7 +72,7 @@ async function generateReportComment({ studentName, school, grade, items, templa
     return `${f.label}: ${val}`;
   }).filter(Boolean).join('\n');
 
-  const prompt = `당신은 "강인한 국어 연구소"의 전문 국어 강사입니다.
+  const prompt = `당신은 학원의 전문 강사입니다.
 다음은 ${studentName} 학생(${school} ${grade})의 수업 레포트 데이터입니다.
 
 ${fieldDescriptions}

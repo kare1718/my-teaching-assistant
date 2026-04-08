@@ -73,3 +73,16 @@ export function isLoggedIn() {
 export async function apiGet(path) {
   return api(path);
 }
+
+export async function apiRaw(path, options = {}) {
+  const token = getToken();
+  const headers = { ...(options.headers || {}) };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  if (res.status === 401) {
+    logout();
+    window.location.href = '/login';
+    throw new Error('세션이 만료되었습니다. 다시 로그인해주세요.');
+  }
+  return res;
+}

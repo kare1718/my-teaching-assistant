@@ -4,7 +4,7 @@ const { runQuery, runInsert, getOne, getAll } = require('../db/database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 
 // 수업 목록 가져오기 (수업 일정 테이블에서 고유 수업명 추출)
-router.get('/classes', authenticateToken, async (req, res) => {
+router.get('/classes', authenticateToken, requireAdmin, async (req, res) => {
   const classes = await getAll(
     `SELECT DISTINCT title as name FROM class_schedules WHERE status = 'active' AND academy_id = ? ORDER BY title ASC`,
     [req.academyId]
@@ -13,7 +13,7 @@ router.get('/classes', authenticateToken, async (req, res) => {
 });
 
 // 수업+날짜별 학생 목록 + 과제 기록 조회
-router.get('/class/:className/date/:date', authenticateToken, async (req, res) => {
+router.get('/class/:className/date/:date', authenticateToken, requireAdmin, async (req, res) => {
   const { className, date } = req.params;
 
   // 해당 수업에 속하는 학생 조회 (approved + active)
@@ -22,7 +22,8 @@ router.get('/class/:className/date/:date', authenticateToken, async (req, res) =
      FROM students s
      JOIN users u ON s.user_id = u.id
      WHERE u.approved = 1 AND u.role = 'student' AND s.status = 'active'
-       AND s.school NOT IN ('조교', '선생님') AND s.academy_id = ?
+       AND s.school NOT IN ('조교', '선생님')
+       AND s.academy_id = ?
      ORDER BY s.school, s.grade, u.name`,
     [req.academyId]
   );
@@ -34,7 +35,7 @@ router.get('/class/:className/date/:date', authenticateToken, async (req, res) =
   );
 
   const recordMap = {};
-  records.forEach(r => { recordMap[r.student_id] = r; });
+  for (const r of records) { recordMap[r.student_id] = r; }
 
   const result = students.map(s => ({
     studentId: s.id,
@@ -48,7 +49,7 @@ router.get('/class/:className/date/:date', authenticateToken, async (req, res) =
 });
 
 // 일괄 저장
-router.post('/bulk-save', authenticateToken, async (req, res) => {
+router.post('/bulk-save', authenticateToken, requireAdmin, async (req, res) => {
   const { className, date, records } = req.body;
   if (!className || !date || !records || !Array.isArray(records)) {
     return res.status(400).json({ error: '필수 입력값이 부족합니다.' });
@@ -83,7 +84,7 @@ router.post('/bulk-save', authenticateToken, async (req, res) => {
 });
 
 // 학생 개별 누적 기록 (학생용)
-router.get('/student/:studentId', authenticateToken, async (req, res) => {
+router.get('/student/:studentId', authenticateToken, requireAdmin, async (req, res) => {
   const { studentId } = req.params;
 
   const records = await getAll(
@@ -118,7 +119,7 @@ router.get('/my', authenticateToken, async (req, res) => {
 });
 
 // 누적 기록 조회 (관리자 - 수업별)
-router.get('/history/:className', authenticateToken, async (req, res) => {
+router.get('/history/:className', authenticateToken, requireAdmin, async (req, res) => {
   const { className } = req.params;
   const { studentId, school, grade, limit: lim } = req.query;
 
@@ -144,10 +145,13 @@ router.get('/history/:className', authenticateToken, async (req, res) => {
 });
 
 // 특별 포인트 지급
-router.post('/bonus', authenticateToken, async (req, res) => {
+router.post('/bonus', authenticateToken, requireAdmin, async (req, res) => {
   const { studentId, amount, reason, homeworkRecordId } = req.body;
   if (!studentId || !amount) {
     return res.status(400).json({ error: '학생 ID와 포인트 양은 필수입니다.' });
+  }
+  if (amount < 1 || amount > 1000) {
+    return res.status(400).json({ error: '포인트는 1~1000 범위만 가능합니다.' });
   }
 
   const student = await getOne('SELECT id FROM students WHERE id = ? AND academy_id = ?', [studentId, req.academyId]);
@@ -159,17 +163,16 @@ router.post('/bonus', authenticateToken, async (req, res) => {
   // XP + 포인트 지급
   const newXp = sc.xp + amount;
   const newPoints = sc.points + amount;
-  // 레벨 계산
-  const getLevelInfo = (xp) => {
-    let level = 1;
-    let required = 100;
-    let total = 0;
-    while (total + required <= xp) {
-      total += required;
+  // 레벨 계산 (gamification.js와 동일한 공식)
+  const getLevelInfo = (totalXp) => {
+    let level = 1, acc = 0;
+    while (true) {
+      const next = Math.floor(40 * Math.pow(level + 1, 1.4));
+      if (acc + next > totalXp) return { level };
+      acc += next;
       level++;
-      required = Math.floor(100 * Math.pow(1.2, level - 1));
+      if (level >= 100) return { level: 100 };
     }
-    return { level };
   };
   const newLevel = getLevelInfo(newXp).level;
 
@@ -197,6 +200,99 @@ router.post('/bonus', authenticateToken, async (req, res) => {
   }
 
   res.json({ message: `${amount} 포인트 지급 완료`, newXp, newPoints, newLevel });
+});
+
+// 일괄 포인트 지급
+router.post('/bonus/bulk', authenticateToken, requireAdmin, async (req, res) => {
+  const { studentIds, amount, reason } = req.body;
+  if (!studentIds || !Array.isArray(studentIds) || studentIds.length === 0 || !amount) {
+    return res.status(400).json({ error: '학생 목록과 포인트 양은 필수입니다.' });
+  }
+  if (amount < 1 || amount > 1000) {
+    return res.status(400).json({ error: '포인트는 1~1000 범위만 가능합니다.' });
+  }
+  if (studentIds.length > 100) {
+    return res.status(400).json({ error: '한 번에 최대 100명까지 지급할 수 있습니다.' });
+  }
+
+  const getLevelInfo = (totalXp) => {
+    let level = 1, acc = 0;
+    while (true) {
+      const next = Math.floor(40 * Math.pow(level + 1, 1.4));
+      if (acc + next > totalXp) return { level };
+      acc += next;
+      level++;
+      if (level >= 100) return { level: 100 };
+    }
+  };
+
+  let success = 0;
+  const results = [];
+  for (const studentId of studentIds) {
+    const sc = await getOne('SELECT * FROM student_characters WHERE student_id = ? AND academy_id = ?', [studentId, req.academyId]);
+    if (!sc) continue;
+
+    const newXp = sc.xp + amount;
+    const newPoints = sc.points + amount;
+    const newLevel = getLevelInfo(newXp).level;
+
+    await runQuery('UPDATE student_characters SET xp = ?, points = ?, level = ? WHERE student_id = ? AND academy_id = ?',
+      [newXp, newPoints, newLevel, studentId, req.academyId]);
+
+    await runInsert("INSERT INTO xp_logs (student_id, amount, source, description, academy_id) VALUES (?, ?, 'homework_bonus', ?, ?)",
+      [studentId, amount, reason || '일괄 포인트 지급', req.academyId]);
+
+    await runInsert(
+      'INSERT INTO homework_bonus (student_id, homework_record_id, amount, reason, granted_by, academy_id) VALUES (?, ?, ?, ?, ?, ?)',
+      [studentId, null, amount, reason || '일괄 포인트 지급', req.user.id, req.academyId]
+    );
+
+    // 알림
+    const user = await getOne('SELECT user_id FROM students WHERE id = ? AND academy_id = ?', [studentId, req.academyId]);
+    if (user) {
+      await runInsert(
+        'INSERT INTO notifications (user_id, type, title, message, academy_id) VALUES (?, ?, ?, ?, ?)',
+        [user.user_id, 'bonus', '🎉 포인트 지급!',
+         `${amount} 포인트를 받았습니다! ${reason ? '(' + reason + ')' : ''}`, req.academyId]
+      );
+    }
+
+    success++;
+    results.push({ studentId, newXp, newPoints, newLevel });
+  }
+
+  res.json({ message: `${success}명에게 ${amount}pt 지급 완료`, success, results });
+});
+
+// 과제 기록 개별 수정
+router.put('/:id', authenticateToken, requireAdmin, async (req, res) => {
+  const { homeworkStatus, wordTest, retest, submissionStatus, memo } = req.body;
+  const id = parseInt(req.params.id);
+  const record = await getOne('SELECT id FROM homework_records WHERE id = ? AND academy_id = ?', [id, req.academyId]);
+  if (!record) return res.status(404).json({ error: '기록을 찾을 수 없습니다.' });
+
+  await runQuery(
+    `UPDATE homework_records SET homework_status = ?, word_test = ?, retest = ?,
+     submission_status = ?, memo = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND academy_id = ?`,
+    [homeworkStatus || '', wordTest || '', retest || '', submissionStatus || '', memo || '', id, req.academyId]
+  );
+  res.json({ message: '과제 기록이 수정되었습니다.' });
+});
+
+// 과제 기록 삭제
+router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
+  const id = parseInt(req.params.id);
+  // 연결된 보너스도 삭제
+  await runQuery('DELETE FROM homework_bonus WHERE homework_record_id = ? AND academy_id = ?', [id, req.academyId]);
+  await runQuery('DELETE FROM homework_records WHERE id = ? AND academy_id = ?', [id, req.academyId]);
+  res.json({ message: '과제 기록이 삭제되었습니다.' });
+});
+
+// 보너스 기록 삭제
+router.delete('/bonus/:id', authenticateToken, requireAdmin, async (req, res) => {
+  const id = parseInt(req.params.id);
+  await runQuery('DELETE FROM homework_bonus WHERE id = ? AND academy_id = ?', [id, req.academyId]);
+  res.json({ message: '보너스 기록이 삭제되었습니다.' });
 });
 
 module.exports = router;

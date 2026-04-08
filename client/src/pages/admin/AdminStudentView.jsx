@@ -23,7 +23,7 @@ export default function AdminStudentView() {
       </div>
 
       <div style={{
-        background: 'var(--warning)', color: '#92400e', padding: '8px 16px',
+        background: 'var(--warning)', color: 'oklch(35% 0.12 75)', padding: '8px 16px',
         borderRadius: 'var(--radius)', marginBottom: 16, fontSize: 13, fontWeight: 600,
         display: 'flex', alignItems: 'center', gap: 8
       }}>

@@ -35,9 +35,9 @@ function buildAvatarUrl(cfg) {
 }
 
 const MEDAL_COLORS = {
-  gold: { border: '#fbbf24', glow: 'rgba(251,191,36,0.6)', icon: '\u{1F947}' },
-  silver: { border: '#94a3b8', glow: 'rgba(148,163,184,0.5)', icon: '\u{1F948}' },
-  bronze: { border: '#cd7f32', glow: 'rgba(205,127,50,0.5)', icon: '\u{1F949}' },
+  gold: { border: 'oklch(80% 0.14 85)', glow: 'oklch(80% 0.14 85 / 0.6)', icon: '\u{1F947}' },
+  silver: { border: 'var(--neutral-400)', glow: 'oklch(70% 0.01 250 / 0.5)', icon: '\u{1F948}' },
+  bronze: { border: 'oklch(60% 0.10 55)', glow: 'oklch(60% 0.10 55 / 0.5)', icon: '\u{1F949}' },
 };
 
 export default function AvatarSVG({ config = {}, size = 100, style = {}, rankingBadge = null }) {
@@ -69,13 +69,13 @@ export default function AvatarSVG({ config = {}, size = 100, style = {}, ranking
         alt="avatar"
         width={size}
         height={size}
-        style={{ borderRadius: '50%', background: '#f0f4f8', position: 'relative', zIndex: 1 }}
+        style={{ borderRadius: '50%', background: 'var(--muted)', position: 'relative', zIndex: 1 }}
       />
       {mascotEmoji && (
         <span style={{
           position: 'absolute', top: -2, right: -2,
           width: bs, height: bs, borderRadius: '50%',
-          background: 'white', border: '2px solid #fbbf24',
+          background: 'white', border: '2px solid oklch(80% 0.14 85)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: bf, lineHeight: 1,
           boxShadow: '0 2px 6px rgba(251,191,36,0.4)',

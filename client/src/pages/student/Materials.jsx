@@ -2,17 +2,25 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api';
 import BottomTabBar from '../../components/BottomTabBar';
+import { SkeletonPage, ErrorState, EmptyState } from '../../components/StudentStates';
 
 export default function Materials() {
   const [materials, setMaterials] = useState([]);
   const [info, setInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
-  useEffect(() => {
+  const load = () => {
+    setLoading(true);
+    setLoadError('');
     api('/students/my-info').then((data) => {
       setInfo(data);
       return api(`/students/my-materials`);
-    }).then(setMaterials).catch(console.error);
-  }, []);
+    }).then((data) => { setMaterials(data); setLoading(false); })
+      .catch((err) => { setLoading(false); setLoadError(err.message || '데이터를 불러올 수 없습니다.'); });
+  };
+
+  useEffect(() => { load(); }, []);
 
   const getYoutubeEmbedUrl = (url) => {
     if (!url) return null;
@@ -20,16 +28,30 @@ export default function Materials() {
     return match ? `https://www.youtube.com/embed/${match[1]}` : null;
   };
 
+  if (loading) return (
+    <div className="content s-page">
+      <SkeletonPage />
+      <BottomTabBar />
+    </div>
+  );
+
+  if (loadError) return (
+    <div className="content s-page">
+      <ErrorState message={loadError} onRetry={load} />
+      <BottomTabBar />
+    </div>
+  );
+
   return (
-    <div className="content">
+    <div className="content s-page">
       <div className="breadcrumb">
         <Link to="/student">홈</Link> &gt; <span>수업 영상 및 자료</span>
       </div>
 
-      <div className="card">
-        <h2>수업 영상 및 자료 {info && `(${info.school})`}</h2>
+      <div className="s-card">
+        <div className="s-section-title">수업 영상 및 자료 {info && `(${info.school})`}</div>
         {materials.length === 0 ? (
-          <p style={{ color: '#999', textAlign: 'center', padding: 30 }}>등록된 수업 자료가 없습니다.</p>
+          <EmptyState message="등록된 수업 자료가 없습니다." />
         ) : (
           <div>
             {materials.map((m) => (

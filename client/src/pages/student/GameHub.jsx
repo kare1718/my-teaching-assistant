@@ -25,6 +25,40 @@ export default function GameHub() {
   const [nicknameMsg, setNicknameMsg] = useState(null);
   const [levelUpInfo, setLevelUpInfo] = useState(null);
 
+  // 관리자 칭호 부여
+  const isAdmin = getUser()?.role === 'admin';
+  const [grantTitleId, setGrantTitleId] = useState(null);
+  const [grantTitleName, setGrantTitleName] = useState('');
+  const [grantSearch, setGrantSearch] = useState('');
+  const [grantStudentsList, setGrantStudentsList] = useState([]);
+  const [grantedStudents, setGrantedStudents] = useState([]);
+
+  const loadGrantedStudents = async (titleId) => {
+    try {
+      const [students, granted] = await Promise.all([
+        api('/scores/students-list'),
+        api(`/gamification/admin/titles/${titleId}/students`),
+      ]);
+      setGrantStudentsList(students);
+      setGrantedStudents(granted);
+    } catch (e) { console.error(e); }
+  };
+
+  const handleGrantTitle = async (studentId) => {
+    try {
+      await apiPost('/gamification/admin/titles/grant', { studentId, titleId: grantTitleId });
+      loadGrantedStudents(grantTitleId);
+    } catch (e) { alert(e.message); }
+  };
+
+  const handleRevokeTitle = async (studentId) => {
+    if (!confirm('이 학생의 칭호를 회수하시겠습니까?')) return;
+    try {
+      await apiPost('/gamification/admin/titles/revoke', { studentId, titleId: grantTitleId });
+      loadGrantedStudents(grantTitleId);
+    } catch (e) { alert(e.message); }
+  };
+
   const load = () => {
     Promise.all([
       api('/gamification/my-character'),
@@ -141,8 +175,8 @@ export default function GameHub() {
           {nicknameMsg && (
             <div style={{
               fontSize: 12, marginTop: 4, padding: '4px 10px', borderRadius: 6,
-              background: nicknameMsg.type === 'success' ? '#dcfce7' : '#fee2e2',
-              color: nicknameMsg.type === 'success' ? '#166534' : '#991b1b'
+              background: nicknameMsg.type === 'success' ? 'var(--success-light)' : 'var(--destructive-light)',
+              color: nicknameMsg.type === 'success' ? 'oklch(30% 0.12 145)' : 'oklch(35% 0.15 25)'
             }}>{nicknameMsg.text}</div>
           )}
           {!editingNickname && charData.nickname && (
@@ -153,8 +187,8 @@ export default function GameHub() {
           {charData.titleName && (
             <div style={{
               display: 'inline-block', marginTop: 4,
-              background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
-              color: '#78350f', fontSize: 11, fontWeight: 600,
+              background: 'linear-gradient(135deg, oklch(80% 0.14 85), var(--warning))',
+              color: 'oklch(30% 0.10 75)', fontSize: 11, fontWeight: 600,
               padding: '2px 10px', borderRadius: 12
             }}>
               {charData.titleName}
@@ -191,7 +225,7 @@ export default function GameHub() {
           </div>
           <div style={{ width: 1, background: 'var(--border)' }} />
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#f59e0b' }}>{charData.points.toLocaleString()}</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--warning)' }}>{charData.points.toLocaleString()}</div>
             <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>포인트</div>
           </div>
         </div>
@@ -225,8 +259,8 @@ export default function GameHub() {
         {bonusMsg && (
           <div style={{
             marginTop: 8, padding: '8px 12px', borderRadius: 8, fontSize: 13,
-            background: bonusMsg.type === 'success' ? '#dcfce7' : '#fee2e2',
-            color: bonusMsg.type === 'success' ? '#166534' : '#991b1b'
+            background: bonusMsg.type === 'success' ? 'var(--success-light)' : 'var(--destructive-light)',
+            color: bonusMsg.type === 'success' ? 'oklch(30% 0.12 145)' : 'oklch(35% 0.15 25)'
           }}>
             {bonusMsg.text}
           </div>
@@ -260,8 +294,8 @@ export default function GameHub() {
         {codeMsg && (
           <div style={{
             marginTop: 8, padding: '8px 12px', borderRadius: 8, fontSize: 13,
-            background: codeMsg.type === 'success' ? '#dcfce7' : '#fee2e2',
-            color: codeMsg.type === 'success' ? '#166534' : '#991b1b'
+            background: codeMsg.type === 'success' ? 'var(--success-light)' : 'var(--destructive-light)',
+            color: codeMsg.type === 'success' ? 'oklch(30% 0.12 145)' : 'oklch(35% 0.15 25)'
           }}>
             {codeMsg.text}
           </div>
@@ -520,8 +554,8 @@ export default function GameHub() {
                   <div key={t.id} style={{
                     display: 'flex', alignItems: 'center', gap: 10,
                     padding: '8px 12px', borderRadius: 10,
-                    border: t.earned ? '2px solid #f59e0b' : '1px solid var(--border)',
-                    background: t.earned ? '#fef3c720' : 'var(--card)',
+                    border: t.earned ? '2px solid var(--warning)' : '1px solid var(--border)',
+                    background: t.earned ? 'oklch(95% 0.04 90 / 0.12)' : 'var(--card)',
                     opacity: t.earned ? 1 : 0.6
                   }}>
                     <div style={{ fontSize: 22, minWidth: 30, textAlign: 'center' }}>
@@ -530,12 +564,12 @@ export default function GameHub() {
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 600, fontSize: 13 }}>{t.name}</div>
                       <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>{t.description}</div>
-                      <div style={{ fontSize: 10, color: '#f59e0b', marginTop: 2 }}>📋 {condLabel}</div>
+                      <div style={{ fontSize: 10, color: 'var(--warning)', marginTop: 2 }}>📋 {condLabel}</div>
                     </div>
                     {t.earned && (
                       <div style={{
-                        fontSize: 10, fontWeight: 700, color: '#78350f',
-                        background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+                        fontSize: 10, fontWeight: 700, color: 'oklch(30% 0.10 75)',
+                        background: 'linear-gradient(135deg, oklch(80% 0.14 85), var(--warning))',
                         padding: '2px 8px', borderRadius: 8
                       }}>획득</div>
                     )}
@@ -544,14 +578,14 @@ export default function GameHub() {
               })}
             </div>
             {/* 히든 칭호 */}
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#9333ea', marginBottom: 6 }}>🔮 히든 칭호</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'oklch(45% 0.22 295)', marginBottom: 6 }}>🔮 히든 칭호</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {allTitles.filter(t => t.is_hidden).map(t => (
                 <div key={t.id} style={{
                   display: 'flex', alignItems: 'center', gap: 10,
                   padding: '8px 12px', borderRadius: 10,
-                  border: t.earned ? '2px solid #9333ea' : '1px dashed #9333ea44',
-                  background: t.earned ? '#9333ea10' : 'var(--card)',
+                  border: t.earned ? '2px solid oklch(45% 0.22 295)' : '1px dashed oklch(45% 0.22 295 / 0.27)',
+                  background: t.earned ? 'oklch(45% 0.22 295 / 0.06)' : 'var(--card)',
                   opacity: t.earned ? 1 : 0.5
                 }}>
                   <div style={{ fontSize: 22, minWidth: 30, textAlign: 'center' }}>
@@ -565,7 +599,7 @@ export default function GameHub() {
                       {t.earned ? t.description : '조건: ???'}
                     </div>
                     {t.earned && t.condition_type !== 'hidden' && (
-                      <div style={{ fontSize: 10, color: '#9333ea', marginTop: 2 }}>
+                      <div style={{ fontSize: 10, color: 'oklch(45% 0.22 295)', marginTop: 2 }}>
                         📋 {t.condition_type === 'xp_total' ? `총 XP ${t.condition_value.toLocaleString()} 이상`
                           : t.condition_type === 'quiz_count' ? `퀴즈 ${t.condition_value}회 이상`
                           : t.condition_type === 'code_count' ? `코드 ${t.condition_value}회 사용`
@@ -577,9 +611,15 @@ export default function GameHub() {
                   {t.earned && (
                     <div style={{
                       fontSize: 10, fontWeight: 700, color: 'white',
-                      background: 'linear-gradient(135deg, #9333ea, #7c3aed)',
+                      background: 'linear-gradient(135deg, oklch(45% 0.22 295), oklch(45% 0.22 290))',
                       padding: '2px 8px', borderRadius: 8
                     }}>획득</div>
+                  )}
+                  {isAdmin && t.condition_type === 'manual' && (
+                    <button onClick={() => { setGrantTitleId(t.id); setGrantTitleName(t.name); setGrantSearch(''); loadGrantedStudents(t.id); }}
+                      style={{ fontSize: 10, padding: '2px 8px', borderRadius: 8, background: 'var(--info-light)', color: 'oklch(32% 0.12 260)', border: '1px solid oklch(72% 0.10 260)', cursor: 'pointer', fontWeight: 600 }}>
+                      부여
+                    </button>
                   )}
                 </div>
               ))}
@@ -590,6 +630,69 @@ export default function GameHub() {
               <button className="btn btn-outline" onClick={() => setShowAllTitles(false)}
                 style={{ flex: 1 }}>닫기</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 관리자 칭호 부여 모달 */}
+      {grantTitleId && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1500, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+          onClick={() => setGrantTitleId(null)}>
+          <div style={{ background: 'white', borderRadius: '20px 20px 0 0', padding: '20px 16px 30px', maxWidth: 440, width: '100%', maxHeight: '70vh', overflowY: 'auto' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ width: 40, height: 4, background: 'var(--neutral-300)', borderRadius: 2, margin: '0 auto 12px' }} />
+            <h3 style={{ marginBottom: 4, fontSize: 16, fontWeight: 700 }}>"{grantTitleName}" 부여</h3>
+            <p style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 12 }}>학생을 검색해서 칭호를 부여하세요</p>
+
+            <input value={grantSearch} onChange={e => setGrantSearch(e.target.value)}
+              placeholder="학생 이름 검색..."
+              style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 10, fontSize: 13, marginBottom: 8, boxSizing: 'border-box' }} />
+
+            {grantSearch.trim() && (
+              <div style={{ maxHeight: 150, overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 8, marginBottom: 12 }}>
+                {grantStudentsList
+                  .filter(s => s.name.includes(grantSearch.trim()))
+                  .filter(s => !grantedStudents.some(g => g.student_id === s.id))
+                  .slice(0, 10)
+                  .map(s => (
+                    <div key={s.id} style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      padding: '8px 12px', borderBottom: '1px solid var(--secondary)',
+                    }}>
+                      <span style={{ fontSize: 13 }}><strong>{s.name}</strong> <span style={{ color: 'var(--muted-foreground)', fontSize: 11 }}>{s.school} {s.grade}</span></span>
+                      <button onClick={() => handleGrantTitle(s.id)}
+                        style={{ fontSize: 11, padding: '2px 10px', borderRadius: 6, background: 'var(--info-light)', color: 'oklch(32% 0.12 260)', border: '1px solid oklch(72% 0.10 260)', cursor: 'pointer' }}>
+                        부여
+                      </button>
+                    </div>
+                  ))}
+                {grantStudentsList.filter(s => s.name.includes(grantSearch.trim())).filter(s => !grantedStudents.some(g => g.student_id === s.id)).length === 0 && (
+                  <div style={{ padding: 12, textAlign: 'center', color: 'var(--muted-foreground)', fontSize: 12 }}>검색 결과 없음</div>
+                )}
+              </div>
+            )}
+
+            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>부여된 학생 ({grantedStudents.length}명)</div>
+            {grantedStudents.length === 0 ? (
+              <div style={{ fontSize: 12, color: 'var(--muted-foreground)', textAlign: 'center', padding: '12px 0' }}>아직 부여된 학생이 없습니다</div>
+            ) : (
+              <div style={{ maxHeight: 200, overflowY: 'auto' }}>
+                {grantedStudents.map(g => (
+                  <div key={g.grant_id} style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '8px 12px', borderBottom: '1px solid var(--background)', fontSize: 12,
+                  }}>
+                    <span><strong>{g.name}</strong> <span style={{ color: 'var(--muted-foreground)' }}>{g.school} {g.grade}</span></span>
+                    <button onClick={() => handleRevokeTitle(g.student_id)}
+                      style={{ fontSize: 10, padding: '2px 8px', borderRadius: 6, background: 'var(--destructive-light)', color: 'oklch(48% 0.20 25)', border: '1px solid oklch(88% 0.06 25)', cursor: 'pointer' }}>
+                      회수
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button className="btn btn-outline" onClick={() => setGrantTitleId(null)} style={{ width: '100%', marginTop: 12 }}>닫기</button>
           </div>
         </div>
       )}
@@ -609,13 +712,13 @@ export default function GameHub() {
               animation: 'levelUpBounce 0.5s ease-out'
             }} onClick={e => e.stopPropagation()}>
               {/* 빵빠레 장식 */}
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: `linear-gradient(90deg, #ef4444, #f59e0b, #22c55e, #3b82f6, #8b5cf6, #ef4444)` }} />
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: `linear-gradient(90deg, var(--destructive), var(--warning), var(--success), var(--info), oklch(55% 0.20 290), var(--destructive))` }} />
               <div className="confetti-container">
                 {Array.from({ length: 30 }).map((_, i) => (
                   <div key={i} className="confetti-piece" style={{
                     '--x': `${Math.random() * 100}%`,
                     '--delay': `${Math.random() * 0.5}s`,
-                    '--color': ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899'][i % 6],
+                    '--color': ['oklch(55% 0.22 25)', 'oklch(72% 0.16 75)', 'oklch(62% 0.16 145)', 'oklch(55% 0.16 260)', 'oklch(55% 0.20 290)', 'oklch(60% 0.20 350)'][i % 6],
                     '--rot': `${Math.random() * 360}deg`,
                     '--dur': `${1 + Math.random() * 1}s`
                   }} />

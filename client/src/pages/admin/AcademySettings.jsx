@@ -54,8 +54,8 @@ export default function AcademySettings() {
       {message && (
         <div style={{
           padding: '10px 16px', borderRadius: 8, marginBottom: 16,
-          background: message.includes('실패') ? '#fef2f2' : '#f0fdf4',
-          color: message.includes('실패') ? '#dc2626' : '#16a34a', fontSize: 14
+          background: message.includes('실패') ? 'var(--destructive-light)' : 'var(--success-light)',
+          color: message.includes('실패') ? 'oklch(48% 0.20 25)' : 'oklch(52% 0.14 160)', fontSize: 14
         }}>{message}</div>
       )}
 
@@ -86,11 +86,11 @@ export default function AcademySettings() {
               <input value={s.name} onChange={e => updateSchool(i, 'name', e.target.value)}
                 placeholder="학교 이름" style={{ flex: 1 }} />
               <button onClick={() => removeSchool(i)} style={{
-                background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: 6,
+                background: 'var(--destructive-light)', color: 'oklch(48% 0.20 25)', border: 'none', borderRadius: 6,
                 padding: '6px 10px', cursor: 'pointer', fontSize: 12
               }}>삭제</button>
             </div>
-            <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>학년 (쉼표로 구분)</div>
+            <div style={{ fontSize: 12, color: 'var(--neutral-500)', marginBottom: 4 }}>학년 (쉼표로 구분)</div>
             <input value={(s.grades || []).join(', ')}
               onChange={e => updateSchool(i, 'grades', e.target.value.split(',').map(g => g.trim()).filter(Boolean))}
               placeholder="1학년, 2학년, 3학년" style={{ fontSize: 13 }} />
@@ -112,7 +112,7 @@ export default function AcademySettings() {
               setExamTypes(next);
             }} placeholder="시험 유형명" style={{ flex: 1 }} />
             <button onClick={() => removeExamType(i)} style={{
-              background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: 6,
+              background: 'var(--destructive-light)', color: 'oklch(48% 0.20 25)', border: 'none', borderRadius: 6,
               padding: '6px 10px', cursor: 'pointer', fontSize: 12
             }}>삭제</button>
           </div>

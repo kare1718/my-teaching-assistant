@@ -33,8 +33,26 @@ router.put('/members/:id', async (req, res) => {
 });
 
 router.delete('/members/:id', async (req, res) => {
-  await runQuery('DELETE FROM ta_work_logs WHERE ta_member_id = ? AND academy_id = ?', [req.params.id, req.academyId]);
-  await runQuery('DELETE FROM ta_members WHERE id = ? AND academy_id = ?', [req.params.id, req.academyId]);
+  const memberId = parseInt(req.params.id);
+  // 1. 근무 기록 삭제
+  await runQuery('DELETE FROM ta_work_logs WHERE ta_member_id = ? AND academy_id = ?', [memberId, req.academyId]);
+  // 2. 월간 근무표에서 해당 조교 ID 제거
+  const schedRows = await getAll('SELECT id, ta_member_ids FROM ta_regular_schedule WHERE academy_id = ?', [req.academyId]);
+  for (const row of schedRows) {
+    try {
+      const ids = JSON.parse(row.ta_member_ids || '[]');
+      const filtered = ids.filter(id => id !== memberId);
+      if (filtered.length !== ids.length) {
+        if (filtered.length === 0) {
+          await runQuery('DELETE FROM ta_regular_schedule WHERE id = ? AND academy_id = ?', [row.id, req.academyId]);
+        } else {
+          await runQuery('UPDATE ta_regular_schedule SET ta_member_ids = ? WHERE id = ? AND academy_id = ?', [JSON.stringify(filtered), row.id, req.academyId]);
+        }
+      }
+    } catch (e) { /* 파싱 실패 무시 */ }
+  }
+  // 3. 조교 삭제
+  await runQuery('DELETE FROM ta_members WHERE id = ? AND academy_id = ?', [memberId, req.academyId]);
   res.json({ message: '삭제되었습니다.' });
 });
 
@@ -42,39 +60,45 @@ router.delete('/members/:id', async (req, res) => {
 
 router.get('/work-logs', async (req, res) => {
   const { year, month } = req.query;
-  let where = 'WHERE wl.academy_id = ?';
-  const params = [req.academyId];
+  let where = '';
+  const params = [];
   if (year && month) {
     const start = `${year}-${String(month).padStart(2, '0')}-01`;
     const endMonth = parseInt(month) + 1;
     const end = endMonth > 12
       ? `${parseInt(year) + 1}-01-01`
       : `${year}-${String(endMonth).padStart(2, '0')}-01`;
-    where += ' AND wl.work_date >= ? AND wl.work_date < ?';
+    where = 'WHERE wl.work_date >= ? AND wl.work_date < ?';
     params.push(start, end);
   }
   const logs = await getAll(
     `SELECT wl.*, tm.name as ta_name
      FROM ta_work_logs wl
      JOIN ta_members tm ON wl.ta_member_id = tm.id
-     ${where}
+     ${where ? where + ' AND' : 'WHERE'} wl.academy_id = ?
      ORDER BY wl.work_date ASC, wl.check_in ASC`,
-    params
+    [...params, req.academyId]
   );
   res.json(logs);
 });
+
+// 근무시간 계산 (4시간 이상 → 30분 법정 휴게시간 차감)
+function calcWorkHours(checkIn, checkOut, manualHours) {
+  if (manualHours) return manualHours;
+  if (!checkIn || !checkOut) return 0;
+  const [inH, inM] = checkIn.split(':').map(Number);
+  const [outH, outM] = checkOut.split(':').map(Number);
+  let diffMin = (outH * 60 + outM) - (inH * 60 + inM);
+  if (diffMin <= 0) return 0;
+  if (diffMin >= 240) diffMin -= 30; // 4시간 이상 → 30분 차감
+  return Math.round(diffMin / 60 * 10) / 10;
+}
 
 router.post('/work-logs', async (req, res) => {
   const { ta_member_id, work_date, check_in, check_out, hours, is_substitute, substitute_for, memo } = req.body;
   if (!ta_member_id || !work_date) return res.status(400).json({ error: '조교와 날짜는 필수입니다.' });
 
-  // 근무시간 자동 계산
-  let calcHours = hours || 0;
-  if (check_in && check_out && !hours) {
-    const [inH, inM] = check_in.split(':').map(Number);
-    const [outH, outM] = check_out.split(':').map(Number);
-    calcHours = Math.round(((outH * 60 + outM) - (inH * 60 + inM)) / 60 * 10) / 10;
-  }
+  let calcHours = calcWorkHours(check_in, check_out, hours);
 
   const id = await runInsert(
     `INSERT INTO ta_work_logs (ta_member_id, work_date, check_in, check_out, hours, is_substitute, substitute_for, memo, academy_id)
@@ -88,12 +112,7 @@ router.post('/work-logs', async (req, res) => {
 router.put('/work-logs/:id', async (req, res) => {
   const { ta_member_id, work_date, check_in, check_out, hours, is_substitute, substitute_for, memo } = req.body;
 
-  let calcHours = hours || 0;
-  if (check_in && check_out && !hours) {
-    const [inH, inM] = check_in.split(':').map(Number);
-    const [outH, outM] = check_out.split(':').map(Number);
-    calcHours = Math.round(((outH * 60 + outM) - (inH * 60 + inM)) / 60 * 10) / 10;
-  }
+  let calcHours = calcWorkHours(check_in, check_out, hours);
 
   await runQuery(
     `UPDATE ta_work_logs SET ta_member_id = ?, work_date = ?, check_in = ?, check_out = ?,
@@ -124,11 +143,11 @@ router.get('/work-logs/summary', async (req, res) => {
             COALESCE(SUM(wl.hours), 0) as total_hours,
             COUNT(wl.id) as work_days
      FROM ta_members tm
-     LEFT JOIN ta_work_logs wl ON wl.ta_member_id = tm.id AND wl.work_date >= ? AND wl.work_date < ? AND wl.academy_id = ?
+     LEFT JOIN ta_work_logs wl ON wl.ta_member_id = tm.id AND wl.work_date >= ? AND wl.work_date < ?
      WHERE tm.is_active = 1 AND tm.academy_id = ?
      GROUP BY tm.id
      ORDER BY total_hours DESC`,
-    [start, end, req.academyId, req.academyId]
+    [start, end, req.academyId]
   );
   res.json(summary);
 });
@@ -187,8 +206,7 @@ router.post('/work-logs/bulk-generate', async (req, res) => {
       const [lastH, lastM] = lastSlot.split(':').map(Number);
       const endMin = lastH * 60 + lastM + 30;
       const checkOut = `${String(Math.floor(endMin / 60)).padStart(2, '0')}:${String(endMin % 60).padStart(2, '0')}`;
-      const [inH, inM] = checkIn.split(':').map(Number);
-      const hours = Math.round((endMin - (inH * 60 + inM)) / 60 * 10) / 10;
+      const hours = calcWorkHours(checkIn, checkOut, null);
 
       const existing = await getOne(
         'SELECT id FROM ta_work_logs WHERE ta_member_id = ? AND work_date = ? AND academy_id = ?',
@@ -233,11 +251,11 @@ router.get('/work-logs/export-csv', async (req, res) => {
             COALESCE(SUM(wl.hours), 0) as total_hours,
             COUNT(wl.id) as work_days
      FROM ta_members tm
-     LEFT JOIN ta_work_logs wl ON wl.ta_member_id = tm.id AND wl.work_date >= ? AND wl.work_date < ? AND wl.academy_id = ?
+     LEFT JOIN ta_work_logs wl ON wl.ta_member_id = tm.id AND wl.work_date >= ? AND wl.work_date < ?
      WHERE tm.is_active = 1 AND tm.academy_id = ?
      GROUP BY tm.id
      ORDER BY total_hours DESC`,
-    [start, end, req.academyId, req.academyId]
+    [start, end, req.academyId]
   );
 
   let csv = '\uFEFF';

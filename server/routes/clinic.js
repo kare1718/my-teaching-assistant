@@ -5,6 +5,34 @@ const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const router = express.Router();
 router.use(authenticateToken);
 
+// 제한인원 헬퍼
+async function getMaxPerSlot(academyId) {
+  const row = await getOne("SELECT setting_value FROM clinic_settings WHERE setting_key = 'max_per_slot' AND academy_id = ?", [academyId]);
+  return row ? parseInt(row.setting_value) || 0 : 0; // 0이면 무제한
+}
+
+async function getSlotCount(date, slot, academyId) {
+  const row = await getOne(
+    "SELECT COUNT(*) as cnt FROM clinic_appointments WHERE appointment_date = ? AND time_slot = ? AND status != 'rejected' AND academy_id = ?",
+    [date, slot, academyId]
+  );
+  return row?.cnt || 0;
+}
+
+// 특정 날짜의 타임별 신청 현황
+router.get('/slot-counts', async (req, res) => {
+  const { date } = req.query;
+  if (!date) return res.json({ counts: {}, maxPerSlot: 0 });
+  const rows = await getAll(
+    "SELECT time_slot, COUNT(*) as cnt FROM clinic_appointments WHERE appointment_date = ? AND status != 'rejected' AND academy_id = ? GROUP BY time_slot",
+    [date, req.academyId]
+  );
+  const counts = {};
+  rows.forEach(r => { counts[r.time_slot] = r.cnt; });
+  const maxPerSlot = await getMaxPerSlot(req.academyId);
+  res.json({ counts, maxPerSlot });
+});
+
 // === 학생용 ===
 
 // 클리닉 신청
@@ -28,11 +56,14 @@ router.post('/', async (req, res) => {
   );
   if (dup) return res.status(400).json({ error: '이미 같은 날짜와 시간에 신청한 클리닉이 있습니다.' });
 
-  // 같은 시간대에 이미 승인된 다른 클리닉이 있는지 체크
-  const conflict = await getOne(
-    "SELECT id FROM clinic_appointments WHERE appointment_date = ? AND time_slot = ? AND status = 'approved' AND academy_id = ?",
-    [appointment_date, time_slot, req.academyId]
-  );
+  // 제한인원 체크
+  const maxPerSlot = await getMaxPerSlot(req.academyId);
+  if (maxPerSlot > 0) {
+    const currentCount = await getSlotCount(appointment_date, time_slot, req.academyId);
+    if (currentCount >= maxPerSlot) {
+      return res.status(400).json({ error: `해당 시간대의 제한 인원(${maxPerSlot}명)이 다 찼습니다. 다른 시간을 선택해주세요.` });
+    }
+  }
 
   const id = await runInsert(
     'INSERT INTO clinic_appointments (student_id, appointment_date, time_slot, topic, detail, academy_id) VALUES (?, ?, ?, ?, ?, ?)',
@@ -42,7 +73,6 @@ router.post('/', async (req, res) => {
   res.json({
     message: '클리닉 신청이 완료되었습니다. 승인 후 일정이 확정됩니다.',
     id,
-    conflict: !!conflict
   });
 });
 
@@ -131,8 +161,8 @@ router.get('/admin/students', requireAdmin, async (req, res) => {
 // 전체 클리닉 목록 (캘린더용)
 router.get('/admin/all', requireAdmin, async (req, res) => {
   const { month, year } = req.query;
-  let where = 'WHERE ca.academy_id = ?';
-  const params = [req.academyId];
+  let where = '';
+  const params = [];
 
   if (year && month) {
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
@@ -140,8 +170,11 @@ router.get('/admin/all', requireAdmin, async (req, res) => {
     const endDate = endMonth > 12
       ? `${parseInt(year) + 1}-01-01`
       : `${year}-${String(endMonth).padStart(2, '0')}-01`;
-    where += ' AND ca.appointment_date >= ? AND ca.appointment_date < ?';
-    params.push(startDate, endDate);
+    where = 'WHERE ca.appointment_date >= ? AND ca.appointment_date < ? AND ca.academy_id = ?';
+    params.push(startDate, endDate, req.academyId);
+  } else {
+    where = 'WHERE ca.academy_id = ?';
+    params.push(req.academyId);
   }
 
   const appointments = await getAll(
@@ -177,8 +210,7 @@ router.put('/admin/:id/status', requireAdmin, async (req, res) => {
     updateParams.push(admin_note);
   }
 
-  updateParams.push(req.params.id);
-  updateParams.push(req.academyId);
+  updateParams.push(req.params.id, req.academyId);
   await runQuery(`UPDATE clinic_appointments SET ${updates.join(', ')} WHERE id = ? AND academy_id = ?`, updateParams);
 
   // 승인 시 알림 생성
@@ -232,6 +264,31 @@ router.post('/admin/:id/notes', requireAdmin, async (req, res) => {
   res.json({ message: '기록이 추가되었습니다.', id });
 });
 
+// 스태프 목록 (작성자 변경용 - 관리자 + 조교)
+router.get('/admin/staff-list', requireAdmin, async (req, res) => {
+  const staff = await getAll(
+    `SELECT u.id, u.name, s.school as role FROM users u
+     LEFT JOIN students s ON u.id = s.user_id
+     WHERE (u.role = 'admin' OR s.school IN ('조교', '선생님')) AND u.academy_id = ?
+     ORDER BY u.name`,
+    [req.academyId]
+  );
+  res.json(staff);
+});
+
+// 클리닉 기록 수정
+router.put('/admin/notes/:noteId', requireAdmin, async (req, res) => {
+  const { content, authorId } = req.body;
+  if (!content || !content.trim()) return res.status(400).json({ error: '내용을 입력해주세요.' });
+
+  if (authorId) {
+    await runQuery('UPDATE clinic_notes SET content = ?, author_id = ? WHERE id = ? AND academy_id = ?', [content.trim(), authorId, req.params.noteId, req.academyId]);
+  } else {
+    await runQuery('UPDATE clinic_notes SET content = ? WHERE id = ? AND academy_id = ?', [content.trim(), req.params.noteId, req.academyId]);
+  }
+  res.json({ message: '기록이 수정되었습니다.' });
+});
+
 // 클리닉 기록 삭제
 router.delete('/admin/notes/:noteId', requireAdmin, async (req, res) => {
   await runQuery('DELETE FROM clinic_notes WHERE id = ? AND academy_id = ?', [req.params.noteId, req.academyId]);
@@ -263,6 +320,23 @@ router.get('/admin/student/:studentId/history', requireAdmin, async (req, res) =
   }
 
   res.json(result);
+});
+
+// 클리닉 제한인원 설정 조회
+router.get('/admin/settings', requireAdmin, async (req, res) => {
+  const maxPerSlot = await getMaxPerSlot(req.academyId);
+  res.json({ maxPerSlot });
+});
+
+// 클리닉 제한인원 설정 변경
+router.put('/admin/settings', requireAdmin, async (req, res) => {
+  const { maxPerSlot } = req.body;
+  const val = parseInt(maxPerSlot) || 0;
+  await runQuery(
+    "INSERT INTO clinic_settings (setting_key, setting_value, academy_id) VALUES ('max_per_slot', ?, ?) ON CONFLICT (setting_key, academy_id) DO UPDATE SET setting_value = ?",
+    [String(val), req.academyId, String(val)]
+  );
+  res.json({ message: `타임당 제한인원이 ${val === 0 ? '무제한' : val + '명'}으로 설정되었습니다.` });
 });
 
 module.exports = router;

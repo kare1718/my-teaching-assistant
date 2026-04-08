@@ -90,11 +90,11 @@ export default function ClinicApply() {
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case 'pending': return { text: '대기 중', bg: '#fef3c7', color: '#92400e' };
-      case 'approved': return { text: '승인됨', bg: '#dcfce7', color: '#166534' };
-      case 'rejected': return { text: '거절됨', bg: '#fef2f2', color: '#991b1b' };
-      case 'completed': return { text: '완료', bg: '#e0e7ff', color: '#3730a3' };
-      default: return { text: status, bg: '#f3f4f6', color: '#374151' };
+      case 'pending': return { text: '대기 중', bg: 'var(--warning-light)', color: 'oklch(35% 0.12 75)' };
+      case 'approved': return { text: '승인됨', bg: 'var(--success-light)', color: 'oklch(30% 0.12 145)' };
+      case 'rejected': return { text: '거절됨', bg: 'var(--destructive-light)', color: 'oklch(35% 0.15 25)' };
+      case 'completed': return { text: '완료', bg: 'oklch(92% 0.04 270)', color: 'oklch(32% 0.12 270)' };
+      default: return { text: status, bg: 'var(--muted)', color: 'var(--neutral-700)' };
     }
   };
 
@@ -120,8 +120,8 @@ export default function ClinicApply() {
       {msg && (
         <div style={{
           padding: '10px 14px', borderRadius: 10, marginBottom: 8,
-          background: msgType === 'error' ? '#fef2f2' : '#dcfce7',
-          color: msgType === 'error' ? '#991b1b' : '#166534',
+          background: msgType === 'error' ? 'var(--destructive-light)' : 'var(--success-light)',
+          color: msgType === 'error' ? 'oklch(35% 0.15 25)' : 'oklch(30% 0.12 145)',
           fontSize: 13, fontWeight: 600
         }}>{msg}</div>
       )}
@@ -184,7 +184,7 @@ export default function ClinicApply() {
               💬 클리닉 희망 내용
             </label>
             <div style={{
-              fontSize: 11, color: '#d97706', background: '#fffbeb', padding: '6px 10px',
+              fontSize: 11, color: 'oklch(55% 0.14 70)', background: 'var(--warning-light)', padding: '6px 10px',
               borderRadius: 6, marginBottom: 6, lineHeight: 1.5,
             }}>
               💡 클리닉 내용을 자세하게 입력해주면 더 빠르고 자세한 상담이 가능합니다!
@@ -222,7 +222,7 @@ export default function ClinicApply() {
               return (
                 <div key={a.id} style={{
                   border: '1px solid var(--border)', borderRadius: 10, padding: 14,
-                  borderLeft: `4px solid ${a.status === 'approved' ? '#22c55e' : a.status === 'pending' ? '#f59e0b' : a.status === 'rejected' ? '#ef4444' : '#6366f1'}`
+                  borderLeft: `4px solid ${a.status === 'approved' ? 'var(--success)' : a.status === 'pending' ? 'var(--warning)' : a.status === 'rejected' ? 'var(--destructive)' : 'oklch(50% 0.20 280)'}`
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

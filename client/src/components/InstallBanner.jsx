@@ -68,7 +68,7 @@ export default function InstallBanner() {
 
   const bannerStyle = {
     width: '100%', padding: '12px 16px',
-    background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+    background: 'linear-gradient(135deg, var(--neutral-900) 0%, var(--neutral-700) 100%)',
     color: 'white', border: 'none', borderRadius: 12,
     cursor: 'pointer', marginBottom: 12,
     display: 'flex', alignItems: 'center', gap: 12,
@@ -108,7 +108,7 @@ export default function InstallBanner() {
   if (isIOS) {
     return (
       <div style={{
-        background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+        background: 'linear-gradient(135deg, var(--neutral-900) 0%, var(--neutral-700) 100%)',
         color: 'white', borderRadius: 12, padding: '14px 16px',
         marginBottom: 12, position: 'relative'
       }}>

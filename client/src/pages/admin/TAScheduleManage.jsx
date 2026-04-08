@@ -300,7 +300,7 @@ export default function TAScheduleManage() {
         </div>
 
         {showLogForm && (
-          <div className="card" style={{ padding: 16, marginBottom: 12, background: '#f8fafc' }}>
+          <div className="card" style={{ padding: 16, marginBottom: 12, background: 'var(--background)' }}>
             <h4 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700 }}>
               {editingLog ? '근무 수정' : '근무 추가'}
             </h4>
@@ -405,7 +405,7 @@ export default function TAScheduleManage() {
         )}
 
         {Object.keys(grouped).length > 0 && (
-          <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 6, textAlign: 'right' }}>
+          <div style={{ fontSize: 11, color: 'var(--neutral-400)', marginBottom: 6, textAlign: 'right' }}>
             💡 이름을 클릭하면 대타를 교체할 수 있습니다
           </div>
         )}
@@ -433,8 +433,8 @@ export default function TAScheduleManage() {
                       {/* 이름 클릭 → 대타 교체 드롭다운 */}
                       <span style={{
                         fontWeight: 600, fontSize: 13, cursor: 'pointer', padding: '2px 6px', borderRadius: 6,
-                        background: swapLogId === log.id ? '#e0e7ff' : 'transparent',
-                        border: swapLogId === log.id ? '1px solid #818cf8' : '1px solid transparent',
+                        background: swapLogId === log.id ? 'oklch(92% 0.04 280)' : 'transparent',
+                        border: swapLogId === log.id ? '1px solid oklch(58% 0.18 280)' : '1px solid transparent',
                         transition: 'all 0.15s',
                       }}
                         onClick={() => setSwapLogId(swapLogId === log.id ? null : log.id)}
@@ -445,13 +445,13 @@ export default function TAScheduleManage() {
                       {log.is_substitute ? (
                         <span style={{
                           fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 6,
-                          background: '#fef3c7', color: '#92400e'
+                          background: 'var(--warning-light)', color: 'oklch(35% 0.12 75)'
                         }}>대타{log.substitute_for ? ` (${log.substitute_for})` : ''}</span>
                       ) : null}
                       <span style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
                         {log.check_in && log.check_out ? `${log.check_in}~${log.check_out}` : (log.check_in || '')}
                       </span>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: '#2563eb' }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: 'oklch(48% 0.18 260)' }}>
                         {log.hours ? `${log.hours}h` : ''}
                       </span>
                       {log.memo && (
@@ -464,7 +464,7 @@ export default function TAScheduleManage() {
                       <div style={{
                         position: 'absolute', top: '100%', left: 0, zIndex: 10,
                         background: 'white', border: '1px solid var(--border)', borderRadius: 10,
-                        boxShadow: '0 4px 16px rgba(0,0,0,0.12)', padding: 8, minWidth: 200,
+                        boxShadow: '0 4px 16px oklch(0% 0 0 / 0.12)', padding: 8, minWidth: 200,
                       }}>
                         <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 6, fontWeight: 600 }}>
                           {log.ta_name} → 대타 교체
@@ -475,11 +475,11 @@ export default function TAScheduleManage() {
                               onClick={() => handleSwapSubstitute(log, m.id)}
                               style={{
                                 padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border)',
-                                background: '#f8fafc', cursor: 'pointer', fontSize: 13, fontWeight: 500,
+                                background: 'var(--background)', cursor: 'pointer', fontSize: 13, fontWeight: 500,
                                 textAlign: 'left', transition: 'all 0.1s',
                               }}
-                              onMouseEnter={e => { e.target.style.background = '#dbeafe'; e.target.style.borderColor = '#93c5fd'; }}
-                              onMouseLeave={e => { e.target.style.background = '#f8fafc'; e.target.style.borderColor = 'var(--border)'; }}
+                              onMouseEnter={e => { e.target.style.background = 'var(--info-light)'; e.target.style.borderColor = 'oklch(72% 0.10 260)'; }}
+                              onMouseLeave={e => { e.target.style.background = 'var(--background)'; e.target.style.borderColor = 'var(--border)'; }}
                             >
                               {m.name}
                               {m.role_desc ? <span style={{ fontSize: 11, color: 'var(--muted-foreground)', marginLeft: 6 }}>{m.role_desc}</span> : null}
@@ -487,7 +487,7 @@ export default function TAScheduleManage() {
                           ))}
                         </div>
                         <button onClick={() => setSwapLogId(null)}
-                          style={{ marginTop: 6, width: '100%', padding: '5px', borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer', fontSize: 12, color: 'var(--muted-foreground)' }}>
+                          style={{ marginTop: 6, width: '100%', padding: '5px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--card)', cursor: 'pointer', fontSize: 12, color: 'var(--muted-foreground)' }}>
                           취소
                         </button>
                       </div>
@@ -495,11 +495,11 @@ export default function TAScheduleManage() {
 
                     <div style={{ display: 'flex', gap: 4 }}>
                       <button onClick={() => openEditLog(log)}
-                        style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, border: '1px solid var(--border)', background: '#f8fafc', cursor: 'pointer' }}>
+                        style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--background)', cursor: 'pointer' }}>
                         수정
                       </button>
                       <button onClick={() => handleDeleteLog(log.id)}
-                        style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', cursor: 'pointer' }}>
+                        style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, border: '1px solid oklch(88% 0.06 25)', background: 'var(--destructive-light)', color: 'oklch(48% 0.20 25)', cursor: 'pointer' }}>
                         삭제
                       </button>
                     </div>
@@ -519,7 +519,7 @@ export default function TAScheduleManage() {
               {summary.map(s => (
                 <div key={s.id} style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '8px 12px', borderRadius: 8, background: '#f8fafc', border: '1px solid var(--border)'
+                  padding: '8px 12px', borderRadius: 8, background: 'var(--background)', border: '1px solid var(--border)'
                 }}>
                   <div>
                     <span style={{ fontWeight: 600, fontSize: 14 }}>{s.name}</span>
@@ -528,7 +528,7 @@ export default function TAScheduleManage() {
                     )}
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <span style={{ fontSize: 16, fontWeight: 700, color: '#2563eb' }}>{s.total_hours}</span>
+                    <span style={{ fontSize: 16, fontWeight: 700, color: 'oklch(48% 0.18 260)' }}>{s.total_hours}</span>
                     <span style={{ fontSize: 12, color: 'var(--muted-foreground)', marginLeft: 2 }}>시간</span>
                     <span style={{ fontSize: 11, color: 'var(--muted-foreground)', marginLeft: 8 }}>({s.work_days}일)</span>
                   </div>
@@ -668,7 +668,7 @@ export default function TAScheduleManage() {
                       {m.role_desc && <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>{m.role_desc}</span>}
                     </div>
                     <button onClick={() => clearMemberSchedule(m.id)}
-                      style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', cursor: 'pointer' }}>
+                      style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, border: '1px solid oklch(88% 0.06 25)', background: 'var(--destructive-light)', color: 'oklch(48% 0.20 25)', cursor: 'pointer' }}>
                       초기화
                     </button>
                   </div>
@@ -678,14 +678,14 @@ export default function TAScheduleManage() {
                       return (
                         <div key={dayIdx} style={{
                           padding: '8px', borderRadius: 8,
-                          background: t.start ? '#f0f9ff' : '#fafafa',
-                          border: t.start ? '1px solid #bfdbfe' : '1px solid var(--border)',
+                          background: t.start ? 'oklch(97% 0.02 230)' : 'var(--neutral-50)',
+                          border: t.start ? '1px solid oklch(82% 0.06 260)' : '1px solid var(--border)',
                         }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: dayIdx >= 5 ? '#dc2626' : 'var(--foreground)' }}>{dayName}</span>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: dayIdx >= 5 ? 'oklch(48% 0.20 25)' : 'var(--foreground)' }}>{dayName}</span>
                             {t.start && (
                               <button onClick={() => copyToAllDays(m.id, dayIdx)} title="이 시간을 전체 요일에 복사"
-                                style={{ fontSize: 9, padding: '1px 4px', borderRadius: 4, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer', color: '#6366f1' }}>
+                                style={{ fontSize: 9, padding: '1px 4px', borderRadius: 4, border: '1px solid var(--border)', background: 'var(--card)', cursor: 'pointer', color: 'oklch(50% 0.20 280)' }}>
                                 전체적용
                               </button>
                             )}
@@ -724,7 +724,7 @@ export default function TAScheduleManage() {
                     <tr>
                       <th style={{ padding: '10px 12px', borderBottom: '2px solid var(--border)', textAlign: 'left', fontWeight: 700, color: 'var(--primary)' }}>조교</th>
                       {DAY_NAMES.map((day, i) => (
-                        <th key={i} style={{ padding: '10px 6px', borderBottom: '2px solid var(--border)', textAlign: 'center', fontWeight: 700, color: i >= 5 ? '#dc2626' : 'var(--foreground)', minWidth: 70 }}>
+                        <th key={i} style={{ padding: '10px 6px', borderBottom: '2px solid var(--border)', textAlign: 'center', fontWeight: 700, color: i >= 5 ? 'oklch(48% 0.20 25)' : 'var(--foreground)', minWidth: 70 }}>
                           {day}
                         </th>
                       ))}
@@ -747,12 +747,12 @@ export default function TAScheduleManage() {
                               <td key={dayIdx} style={{ padding: '8px 4px', borderBottom: '1px solid var(--border)', textAlign: 'center' }}>
                                 {d ? (
                                   <div>
-                                    <div style={{ fontSize: 12, fontWeight: 600, color: '#1d4ed8' }}>{d.start}</div>
+                                    <div style={{ fontSize: 12, fontWeight: 600, color: 'oklch(42% 0.16 260)' }}>{d.start}</div>
                                     <div style={{ fontSize: 10, color: 'var(--muted-foreground)' }}>~</div>
-                                    <div style={{ fontSize: 12, fontWeight: 600, color: '#1d4ed8' }}>{d.end}</div>
+                                    <div style={{ fontSize: 12, fontWeight: 600, color: 'oklch(42% 0.16 260)' }}>{d.end}</div>
                                   </div>
                                 ) : (
-                                  <span style={{ fontSize: 11, color: '#d1d5db' }}>-</span>
+                                  <span style={{ fontSize: 11, color: 'var(--neutral-300)' }}>-</span>
                                 )}
                               </td>
                             );
@@ -809,7 +809,7 @@ export default function TAScheduleManage() {
       </div>
 
       {showMemberForm && (
-        <div className="card" style={{ padding: 16, marginBottom: 12, background: '#f8fafc' }}>
+        <div className="card" style={{ padding: 16, marginBottom: 12, background: 'var(--background)' }}>
           <h4 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700 }}>
             {editingMember ? '조교 수정' : '조교 추가'}
           </h4>
@@ -857,7 +857,7 @@ export default function TAScheduleManage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontWeight: 700, fontSize: 15 }}>{m.name}</span>
                   {!m.is_active && (
-                    <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 6, background: '#f1f5f9', color: '#64748b', fontWeight: 600 }}>비활성</span>
+                    <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 6, background: 'var(--secondary)', color: 'var(--muted-foreground)', fontWeight: 600 }}>비활성</span>
                   )}
                 </div>
                 {m.phone && <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 2 }}>{m.phone}</div>}
@@ -865,15 +865,15 @@ export default function TAScheduleManage() {
               </div>
               <div style={{ display: 'flex', gap: 4 }}>
                 <button onClick={() => handleToggleActive(m)}
-                  style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: m.is_active ? '#fef3c7' : '#dcfce7', cursor: 'pointer', color: m.is_active ? '#92400e' : '#166534' }}>
+                  style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: m.is_active ? 'var(--warning-light)' : 'var(--success-light)', cursor: 'pointer', color: m.is_active ? 'oklch(35% 0.12 75)' : 'oklch(30% 0.12 145)' }}>
                   {m.is_active ? '비활성' : '활성'}
                 </button>
                 <button onClick={() => { setMemberForm({ name: m.name, phone: m.phone || '', role_desc: m.role_desc || '' }); setEditingMember(m); setShowMemberForm(true); }}
-                  style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: '#f8fafc', cursor: 'pointer' }}>
+                  style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--background)', cursor: 'pointer' }}>
                   수정
                 </button>
                 <button onClick={() => handleDeleteMember(m.id)}
-                  style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', cursor: 'pointer' }}>
+                  style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, border: '1px solid oklch(88% 0.06 25)', background: 'var(--destructive-light)', color: 'oklch(48% 0.20 25)', cursor: 'pointer' }}>
                   삭제
                 </button>
               </div>
@@ -896,7 +896,7 @@ export default function TAScheduleManage() {
             style={{
               flex: 1, padding: '10px 0', fontSize: 13, fontWeight: tab === i ? 700 : 500,
               border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-              background: tab === i ? 'var(--primary)' : '#f8fafc',
+              background: tab === i ? 'var(--primary)' : 'var(--background)',
               color: tab === i ? 'white' : 'var(--foreground)',
               borderRight: i < 2 ? '1px solid var(--border)' : 'none',
               transition: 'all 0.15s',

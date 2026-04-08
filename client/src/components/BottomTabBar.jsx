@@ -10,7 +10,10 @@ const OXIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
 
 const tabs = [
   { path: '/student', label: '홈', Icon: HomeIcon },
-  { path: '/student/scores', label: '성적', Icon: ChartIcon },
+  {
+    path: '/student/scores', label: '성적', Icon: ChartIcon,
+    matchPaths: ['/student/scores', '/student/attendance'],
+  },
   { path: '/student/qna', label: '질문', Icon: QuestionIcon },
   { path: '/student/ox-quiz', label: 'O/X', Icon: OXIcon },
   { path: '/student/notices', label: '안내', Icon: BellIcon },
@@ -25,7 +28,9 @@ export default function BottomTabBar() {
   return (
     <div className="bottom-tab-bar">
       {tabs.map((tab) => {
-        const isActive = location.pathname === tab.path;
+        const isActive = tab.matchPaths
+          ? tab.matchPaths.some(p => location.pathname.startsWith(p))
+          : location.pathname === tab.path;
         return (
           <button
             key={tab.path}

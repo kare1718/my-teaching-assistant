@@ -5,10 +5,10 @@ import { api, apiPost, apiPut, apiDelete } from '../../api';
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
 
 const STATUS_MAP = {
-  pending: { text: '대기', bg: '#fef3c7', color: '#92400e', border: '#f59e0b' },
-  approved: { text: '승인', bg: '#dcfce7', color: '#166534', border: '#22c55e' },
-  rejected: { text: '거절', bg: '#fef2f2', color: '#991b1b', border: '#ef4444' },
-  completed: { text: '완료', bg: '#e0e7ff', color: '#3730a3', border: '#6366f1' },
+  pending: { text: '대기', bg: 'var(--warning-light)', color: 'oklch(35% 0.12 75)', border: 'var(--warning)' },
+  approved: { text: '승인', bg: 'var(--success-light)', color: 'oklch(30% 0.12 145)', border: 'var(--success)' },
+  rejected: { text: '거절', bg: 'var(--destructive-light)', color: 'oklch(35% 0.15 25)', border: 'var(--destructive)' },
+  completed: { text: '완료', bg: 'oklch(92% 0.04 280)', color: 'oklch(28% 0.10 280)', border: 'oklch(50% 0.20 280)' },
 };
 
 const TIME_SLOTS = [
@@ -244,11 +244,11 @@ export default function ClinicManage() {
     return (
       <div style={{
         position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-        background: 'rgba(0,0,0,0.5)', zIndex: 1000,
+        background: 'oklch(0% 0 0 / 0.5)', zIndex: 1000,
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
       }} onClick={() => setDetailAppt(null)}>
         <div style={{
-          background: 'white', borderRadius: 16, width: '100%', maxWidth: 520,
+          background: 'var(--card)', borderRadius: 16, width: '100%', maxWidth: 520,
           maxHeight: '90vh', overflow: 'auto', padding: 20
         }} onClick={e => e.stopPropagation()}>
           {/* 헤더 */}
@@ -261,7 +261,7 @@ export default function ClinicManage() {
 
           {/* 기본 정보 */}
           <div style={{
-            background: '#f8fafc', borderRadius: 10, padding: 14, marginBottom: 16,
+            background: 'var(--background)', borderRadius: 10, padding: 14, marginBottom: 16,
             borderLeft: `4px solid ${st.border}`
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -296,7 +296,7 @@ export default function ClinicManage() {
             )}
             {a.status === 'approved' && (
               <button className="btn btn-sm" onClick={() => handleStatus(a.id, 'completed')}
-                style={{ background: '#6366f1', color: 'white', border: 'none' }}>완료 처리</button>
+                style={{ background: 'oklch(50% 0.20 280)', color: 'white', border: 'none' }}>완료 처리</button>
             )}
             <button className="btn btn-outline btn-sm" onClick={() => handleDelete(a.id)} style={{ fontSize: 11 }}>삭제</button>
             <button className="btn btn-outline btn-sm" onClick={() => loadStudentHistory(a.student_id)}
@@ -315,7 +315,7 @@ export default function ClinicManage() {
               <div style={{ marginBottom: 12 }}>
                 {apptNotes.map(n => (
                   <div key={n.id} style={{
-                    background: '#f1f5f9', borderRadius: 8, padding: 10, marginBottom: 6,
+                    background: 'var(--secondary)', borderRadius: 8, padding: 10, marginBottom: 6,
                     fontSize: 13, position: 'relative'
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
@@ -325,7 +325,7 @@ export default function ClinicManage() {
                           {new Date(n.created_at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </span>
                         <button onClick={() => deleteNote(n.id)} style={{
-                          background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#ef4444', padding: 0
+                          background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--destructive)', padding: 0
                         }}>✕</button>
                       </div>
                     </div>
@@ -360,7 +360,7 @@ export default function ClinicManage() {
               📊 {a.student_name} 누적 클리닉 이력
               <span style={{
                 fontSize: 12, fontWeight: 700, padding: '2px 10px', borderRadius: 20,
-                background: '#e0e7ff', color: '#3730a3'
+                background: 'oklch(92% 0.04 280)', color: 'oklch(28% 0.10 280)'
               }}>총 {detailStudentHistory.length}회</span>
             </h4>
 
@@ -375,15 +375,15 @@ export default function ClinicManage() {
                   const isCurrent = h.id === a.id;
                   return (
                     <div key={h.id} style={{
-                      border: isCurrent ? '2px solid #3b82f6' : '1px solid var(--border)',
+                      border: isCurrent ? '2px solid var(--info)' : '1px solid var(--border)',
                       borderRadius: 8, padding: 10, marginBottom: 6,
                       borderLeft: `4px solid ${hst.border}`,
-                      background: isCurrent ? '#eff6ff' : 'white',
+                      background: isCurrent ? 'var(--info-light)' : 'var(--card)',
                     }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
                         <span style={{ fontWeight: 600, fontSize: 13 }}>
                           📅 {formatDate(h.appointment_date)} {h.time_slot}
-                          {isCurrent && <span style={{ fontSize: 10, color: '#3b82f6', marginLeft: 6, fontWeight: 700 }}>← 현재</span>}
+                          {isCurrent && <span style={{ fontSize: 10, color: 'var(--info)', marginLeft: 6, fontWeight: 700 }}>← 현재</span>}
                         </span>
                         <span style={{
                           fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 8,
@@ -401,7 +401,7 @@ export default function ClinicManage() {
                         <div style={{ marginTop: 4, paddingTop: 4, borderTop: '1px dashed var(--border)' }}>
                           <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: 2 }}>📝 기록 {h.notes.length}건</div>
                           {h.notes.map(n => (
-                            <div key={n.id} style={{ fontSize: 11, background: '#f8fafc', borderRadius: 4, padding: 4, marginBottom: 2 }}>
+                            <div key={n.id} style={{ fontSize: 11, background: 'var(--background)', borderRadius: 4, padding: 4, marginBottom: 2 }}>
                               <span style={{ fontWeight: 600 }}>{n.author_name}</span>
                               <span style={{ color: 'var(--muted-foreground)', marginLeft: 4, fontSize: 10 }}>
                                 {new Date(n.created_at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
@@ -434,7 +434,7 @@ export default function ClinicManage() {
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
       }} onClick={() => setSelectedStudent(null)}>
         <div style={{
-          background: 'white', borderRadius: 16, width: '100%', maxWidth: 560,
+          background: 'var(--card)', borderRadius: 16, width: '100%', maxWidth: 560,
           maxHeight: '90vh', overflow: 'auto', padding: 20
         }} onClick={e => e.stopPropagation()}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -470,7 +470,7 @@ export default function ClinicManage() {
                       <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4, color: 'var(--muted-foreground)' }}>📋 기록 ({h.notes.length}건)</div>
                       {h.notes.map(n => (
                         <div key={n.id} style={{
-                          background: '#f8fafc', borderRadius: 6, padding: 8, marginBottom: 4, fontSize: 12
+                          background: 'var(--background)', borderRadius: 6, padding: 8, marginBottom: 4, fontSize: 12
                         }}>
                           <span style={{ fontWeight: 600 }}>{n.author_name}</span>
                           <span style={{ color: 'var(--muted-foreground)', marginLeft: 6 }}>
@@ -507,7 +507,7 @@ export default function ClinicManage() {
         <button className={`btn ${view === 'students' ? 'btn-primary' : 'btn-outline'}`}
           onClick={() => setView('students')}>👤 학생별</button>
         <button className="btn" onClick={() => setShowCreateForm(!showCreateForm)}
-          style={{ background: '#059669', color: 'white', border: 'none', fontWeight: 700 }}>
+          style={{ background: 'oklch(52% 0.14 160)', color: 'white', border: 'none', fontWeight: 700 }}>
           ✏️ 클리닉 입력
         </button>
         {pendingCount > 0 && (
@@ -520,7 +520,7 @@ export default function ClinicManage() {
 
       {/* 클리닉 입력 폼 */}
       {showCreateForm && (
-        <div className="card" style={{ padding: 16, marginBottom: 12, border: '2px solid #059669' }}>
+        <div className="card" style={{ padding: 16, marginBottom: 12, border: '2px solid oklch(52% 0.14 160)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <h3 style={{ margin: 0, fontSize: 15 }}>✏️ 클리닉 입력 (학생 대신 등록)</h3>
             <button onClick={() => setShowCreateForm(false)} style={{
@@ -540,7 +540,7 @@ export default function ClinicManage() {
             {createForm.student_id ? (
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px',
-                background: '#dcfce7', borderRadius: 6, fontSize: 13
+                background: 'var(--success-light)', borderRadius: 6, fontSize: 13
               }}>
                 <span style={{ fontWeight: 600 }}>
                   ✅ {allStudents.find(s => s.id === createForm.student_id)?.name}
@@ -560,7 +560,7 @@ export default function ClinicManage() {
                       padding: '6px 10px', cursor: 'pointer', fontSize: 13, borderBottom: '1px solid var(--border)',
                       transition: 'background 0.15s'
                     }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--secondary)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'white'}
                   >
                     <span style={{ fontWeight: 600 }}>{s.name}</span>
@@ -602,8 +602,8 @@ export default function ClinicManage() {
                 <button key={t} onClick={() => setCreateForm({ ...createForm, topic: t })}
                   style={{
                     padding: '5px 10px', borderRadius: 6, fontSize: 12, cursor: 'pointer',
-                    border: createForm.topic === t ? '2px solid #059669' : '1px solid var(--border)',
-                    background: createForm.topic === t ? '#dcfce7' : 'white',
+                    border: createForm.topic === t ? '2px solid oklch(52% 0.14 160)' : '1px solid var(--border)',
+                    background: createForm.topic === t ? 'var(--success-light)' : 'var(--card)',
                     fontWeight: createForm.topic === t ? 700 : 400,
                   }}>{t}</button>
               ))}
@@ -623,7 +623,7 @@ export default function ClinicManage() {
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
             <button className="btn btn-outline" onClick={() => setShowCreateForm(false)}>취소</button>
             <button className="btn" onClick={handleCreate} disabled={creating}
-              style={{ background: '#059669', color: 'white', border: 'none', fontWeight: 700 }}>
+              style={{ background: 'oklch(52% 0.14 160)', color: 'white', border: 'none', fontWeight: 700 }}>
               {creating ? '등록 중...' : '클리닉 등록'}
             </button>
           </div>
@@ -644,7 +644,7 @@ export default function ClinicManage() {
             {DAY_NAMES.map(d => (
               <div key={d} style={{
                 textAlign: 'center', fontSize: 12, fontWeight: 700,
-                color: d === '일' ? '#ef4444' : d === '토' ? '#3b82f6' : 'var(--muted-foreground)',
+                color: d === '일' ? 'var(--destructive)' : d === '토' ? 'var(--info)' : 'var(--muted-foreground)',
                 padding: '4px 0'
               }}>{d}</div>
             ))}
@@ -664,13 +664,13 @@ export default function ClinicManage() {
                   style={{
                     minHeight: 70, padding: '3px', borderRadius: 6, cursor: dayAppts.length > 0 ? 'pointer' : 'default',
                     border: isToday ? '2px solid var(--primary)' : '1px solid var(--border)',
-                    background: dayAppts.length > 0 ? '#f8fafc' : 'white',
+                    background: dayAppts.length > 0 ? 'var(--background)' : 'var(--card)',
                     overflow: 'hidden',
                     transition: 'all 0.2s',
                   }}>
                   <div style={{
                     fontSize: 11, fontWeight: isToday ? 800 : 500, textAlign: 'center', marginBottom: 2,
-                    color: dayOfWeek === 0 ? '#ef4444' : dayOfWeek === 6 ? '#3b82f6' : 'var(--foreground)'
+                    color: dayOfWeek === 0 ? 'var(--destructive)' : dayOfWeek === 6 ? 'var(--info)' : 'var(--foreground)'
                   }}>{day}</div>
                   {dayAppts.sort((a, b) => a.time_slot.localeCompare(b.time_slot)).slice(0, 3).map(a => {
                     const st = STATUS_MAP[a.status] || STATUS_MAP.pending;
@@ -750,8 +750,8 @@ export default function ClinicManage() {
                 padding: '12px 14px', borderRadius: 8, border: '1px solid var(--border)',
                 marginBottom: 6, cursor: 'pointer', transition: 'background 0.2s'
               }}
-                onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-                onMouseLeave={e => e.currentTarget.style.background = 'white'}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--background)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'var(--card)'}
               >
                 <div>
                   <span style={{ fontWeight: 700, fontSize: 14 }}>{s.name}</span>
@@ -759,7 +759,7 @@ export default function ClinicManage() {
                 </div>
                 <span style={{
                   fontSize: 12, fontWeight: 600, padding: '2px 10px', borderRadius: 10,
-                  background: '#e0e7ff', color: '#3730a3'
+                  background: 'oklch(92% 0.04 280)', color: 'oklch(28% 0.10 280)'
                 }}>{s.count}회</span>
               </div>
             ))

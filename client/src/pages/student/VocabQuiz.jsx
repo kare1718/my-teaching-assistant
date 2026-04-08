@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, apiPost } from '../../api';
 import BottomTabBar from '../../components/BottomTabBar';
+import LevelUpNotification from '../../components/LevelUpNotification';
 
 const DEFAULT_TIMER = 10;
 
@@ -28,6 +29,7 @@ export default function VocabQuiz() {
   const timerRef = useRef(null);
   const startTimeRef = useRef(null);
   const animFrameRef = useRef(null);
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     api('/gamification/my-character').then(data => {
@@ -123,6 +125,8 @@ export default function VocabQuiz() {
 
   const handleConfirmAnswer = () => {
     if (showAnswer || !selected) return;
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setShowAnswer(true);
     setTimerActive(false);
     const q = questions[currentIdx];
@@ -130,6 +134,7 @@ export default function VocabQuiz() {
   };
 
   const nextQuestion = () => {
+    submittingRef.current = false;
     setSelected(null);
     setShowAnswer(false);
     if (currentIdx + 1 < questions.length) {
@@ -155,9 +160,9 @@ export default function VocabQuiz() {
   // 타이머 바 색상 계산
   const getTimerColor = () => {
     const pct = timeLeft / timerSeconds;
-    if (pct > 0.5) return '#22c55e';  // 초록
-    if (pct > 0.25) return '#f59e0b'; // 주황
-    return '#ef4444';                  // 빨강
+    if (pct > 0.5) return 'var(--success)';  // 초록
+    if (pct > 0.25) return 'var(--warning)'; // 주황
+    return 'var(--destructive)';                  // 빨강
   };
 
   const getTimerGlow = () => {
@@ -176,8 +181,8 @@ export default function VocabQuiz() {
           <p style={{ fontSize: 13, color: 'var(--muted-foreground)' }}>카테고리를 선택하고 퀴즈를 시작하세요!</p>
           <div style={{
             display: 'inline-block', marginTop: 8, padding: '4px 14px',
-            background: todayQuizCount >= dailyQuizLimit ? '#fee2e2' : '#dbeafe',
-            color: todayQuizCount >= dailyQuizLimit ? '#991b1b' : '#1e40af',
+            background: todayQuizCount >= dailyQuizLimit ? 'var(--destructive-light)' : 'var(--info-light)',
+            color: todayQuizCount >= dailyQuizLimit ? 'oklch(35% 0.15 25)' : 'oklch(32% 0.12 260)',
             borderRadius: 12, fontSize: 12, fontWeight: 600
           }}>
             오늘 {todayQuizCount}/{dailyQuizLimit}문제 풀었음
@@ -281,7 +286,7 @@ export default function VocabQuiz() {
         {showAnswer && selected === null && (
           <div style={{
             textAlign: 'center', padding: '8px 0', marginBottom: 4,
-            color: '#ef4444', fontWeight: 700, fontSize: 14,
+            color: 'var(--destructive)', fontWeight: 700, fontSize: 14,
             animation: 'fadeIn 0.3s ease'
           }}>
             ⏰ 시간 초과! 오답 처리됩니다.
@@ -292,7 +297,7 @@ export default function VocabQuiz() {
         <div className="card" style={{
           padding: 24, textAlign: 'center', minHeight: 120,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          border: isUrgent ? '2px solid #ef4444' : undefined,
+          border: isUrgent ? '2px solid var(--destructive)' : undefined,
           animation: isUrgent ? 'urgentPulse 0.5s ease-in-out infinite' : undefined,
           transition: 'border 0.3s'
         }}>
@@ -308,12 +313,12 @@ export default function VocabQuiz() {
             let borderColor = 'var(--border)';
 
             if (selected === opt && !showAnswer) {
-              bg = '#dbeafe';
-              borderColor = '#3b82f6';
+              bg = 'var(--info-light)';
+              borderColor = 'var(--info)';
             }
             if (showAnswer && selected === opt) {
-              bg = '#dbeafe';
-              borderColor = '#3b82f6';
+              bg = 'var(--info-light)';
+              borderColor = 'var(--info)';
             }
             if (showAnswer && selected === null) {
               bg = 'var(--muted)';
@@ -401,30 +406,12 @@ export default function VocabQuiz() {
           </div>
           <div style={{
             display: 'inline-block', padding: '8px 20px', borderRadius: 12,
-            background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
-            color: '#78350f', fontWeight: 700, fontSize: 16
+            background: 'linear-gradient(135deg, oklch(80% 0.14 85), var(--warning))',
+            color: 'oklch(30% 0.10 75)', fontWeight: 700, fontSize: 16
           }}>
             +{result.xpEarned} XP 획득!
           </div>
-          {result.leveledUp && (
-            <div style={{
-              marginTop: 16, padding: '14px 20px', borderRadius: 14,
-              background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
-              color: 'white', animation: 'levelUpBounce 0.5s ease-out'
-            }}>
-              <div style={{ fontSize: 24 }}>🎉🎊🎉</div>
-              <div style={{ fontSize: 18, fontWeight: 900, marginTop: 4 }}>LEVEL UP!</div>
-              <div style={{ fontSize: 28, fontWeight: 900 }}>Lv.{result.newLevel}</div>
-              <div style={{ fontSize: 12, opacity: 0.9, marginTop: 2 }}>축하합니다! 레벨이 올랐습니다!</div>
-            </div>
-          )}
-          <style>{`
-            @keyframes levelUpBounce {
-              0% { transform: scale(0.3); opacity: 0; }
-              50% { transform: scale(1.05); }
-              100% { transform: scale(1); opacity: 1; }
-            }
-          `}</style>
+          {result.leveledUp && <LevelUpNotification level={result.newLevel} />}
         </div>
 
         {/* 상세 결과 */}
@@ -434,17 +421,17 @@ export default function VocabQuiz() {
             {result.details.map((d, i) => (
               <div key={i} style={{
                 padding: '10px 12px', borderRadius: 8, marginBottom: 6,
-                background: d.correct ? '#f0fdf4' : '#fef2f2',
-                border: `1px solid ${d.correct ? '#bbf7d0' : '#fecaca'}`,
+                background: d.correct ? 'var(--success-light)' : 'var(--destructive-light)',
+                border: `1px solid ${d.correct ? 'oklch(90% 0.06 145)' : 'oklch(88% 0.06 25)'}`,
                 fontSize: 13
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span>{d.correct ? '✅' : '❌'}</span>
                   <span style={{ fontWeight: 600 }}>문제 {i + 1}</span>
-                  {d.timeout && <span style={{ fontSize: 10, color: '#ef4444' }}>⏰ 시간초과</span>}
+                  {d.timeout && <span style={{ fontSize: 10, color: 'var(--destructive)' }}>⏰ 시간초과</span>}
                 </div>
                 {!d.correct && d.correctAnswer && (
-                  <div style={{ marginTop: 4, color: '#166534', fontSize: 12 }}>
+                  <div style={{ marginTop: 4, color: 'oklch(30% 0.12 145)', fontSize: 12 }}>
                     정답: {d.correctAnswer}
                   </div>
                 )}

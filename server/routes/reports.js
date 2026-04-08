@@ -9,7 +9,7 @@ router.use(authenticateToken);
 router.use(requireAdmin);
 
 // === 설정 상태 ===
-router.get('/status', (req, res) => {
+router.get('/status', async (req, res) => {
   res.json({ gemini: isGeminiConfigured(), sms: isSmsConfigured() });
 });
 
@@ -107,8 +107,7 @@ router.put('/:id', async (req, res) => {
   if (aiComment !== undefined) { updates.push('ai_comment = ?'); params.push(aiComment); }
   if (status) { updates.push('status = ?'); params.push(status); }
   if (updates.length === 0) return res.status(400).json({ error: '수정할 내용이 없습니다.' });
-  params.push(req.params.id);
-  params.push(req.academyId);
+  params.push(req.params.id, req.academyId);
   await runQuery(`UPDATE student_reports SET ${updates.join(', ')} WHERE id = ? AND academy_id = ?`, params);
   res.json({ message: '레포트 수정됨' });
 });
@@ -203,6 +202,9 @@ router.get('/:id/preview', async (req, res) => {
   const report = await getOne('SELECT * FROM student_reports WHERE id = ? AND academy_id = ?', [req.params.id, req.academyId]);
   if (!report) return res.status(404).json({ error: '레포트를 찾을 수 없습니다.' });
 
+  const academyInfo = await getOne('SELECT name FROM academies WHERE id = ?', [req.academyId]);
+  const academyName = academyInfo?.name || '나만의 조교';
+
   const student = await getOne(
     `SELECT u.name, s.school, s.grade FROM students s JOIN users u ON s.user_id = u.id WHERE s.id = ? AND s.academy_id = ?`,
     [report.student_id, req.academyId]);
@@ -244,7 +246,7 @@ router.get('/:id/preview', async (req, res) => {
 </style></head><body>
 <div class="report">
   <div class="header">
-    <h1>강인한 국어 연구소</h1>
+    <h1>${academyName}</h1>
     <p>수업 레포트</p>
   </div>
   <div class="student-info">
@@ -262,7 +264,7 @@ router.get('/:id/preview', async (req, res) => {
     <div class="comment-box">${report.ai_comment}</div>
   </div>` : ''}
   <div class="footer">
-    강인한 국어 연구소 | ${new Date().getFullYear()}
+    ${academyName} | ${new Date().getFullYear()}
   </div>
 </div></body></html>`;
 
@@ -276,6 +278,9 @@ router.post('/:id/send-sms', async (req, res) => {
 
   const report = await getOne('SELECT * FROM student_reports WHERE id = ? AND academy_id = ?', [req.params.id, req.academyId]);
   if (!report) return res.status(404).json({ error: '레포트를 찾을 수 없습니다.' });
+
+  const academyInfo = await getOne('SELECT name FROM academies WHERE id = ?', [req.academyId]);
+  const academyName = academyInfo?.name || '나만의 조교';
 
   const student = await getOne(
     `SELECT u.name, s.parent_phone, s.school, s.grade FROM students s JOIN users u ON s.user_id = u.id WHERE s.id = ? AND s.academy_id = ?`,
@@ -296,7 +301,7 @@ router.post('/:id/send-sms', async (req, res) => {
       return `${f.label}: ${val}`;
     }).filter(Boolean).join('\n');
 
-    smsText = `[강인한 국어] ${student.name} 학생 수업 레포트 (${report.report_date})\n\n${summary}`;
+    smsText = `[${academyName}] ${student.name} 학생 수업 레포트 (${report.report_date})\n\n${summary}`;
     if (report.ai_comment) smsText += `\n\n${report.ai_comment}`;
   }
 
@@ -333,7 +338,9 @@ router.post('/bulk-send-sms', async (req, res) => {
         return `${f.label}: ${val}`;
       }).filter(Boolean).join('\n');
 
-      let msg = `[강인한 국어] ${student.name} 학생 수업 레포트 (${report.report_date})\n\n${summary}`;
+      const bulkAcademyInfo = await getOne('SELECT name FROM academies WHERE id = ?', [req.academyId]);
+      const bulkAcademyName = bulkAcademyInfo?.name || '나만의 조교';
+      let msg = `[${bulkAcademyName}] ${student.name} 학생 수업 레포트 (${report.report_date})\n\n${summary}`;
       if (report.ai_comment) msg += `\n\n${report.ai_comment}`;
 
       await sendSMS(student.parent_phone, msg);

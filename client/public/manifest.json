@@ -1,7 +1,7 @@
 {
-  "name": "강인한 국어 연구소",
-  "short_name": "강인한 국어",
-  "description": "강인한 국어 연구소 - 학생 관리 시스템",
+  "name": "나만의 조교 - 학원 관리 플랫폼",
+  "short_name": "나만의 조교",
+  "description": "나만의 조교로 학원 운영을 더욱 편리하게",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1e293b",

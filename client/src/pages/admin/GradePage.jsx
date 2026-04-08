@@ -81,10 +81,10 @@ export default function GradePage() {
           <span style={{
             fontSize: 13, fontWeight: 500, minHeight: 28,
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            color: msg ? '#166534' : 'transparent',
-            background: msg ? '#f0fdf4' : 'transparent',
+            color: msg ? 'oklch(30% 0.12 145)' : 'transparent',
+            background: msg ? 'var(--success-light)' : 'transparent',
             padding: '4px 14px', borderRadius: 'var(--radius)',
-            border: msg ? '1px solid #bbf7d0' : '1px solid transparent',
+            border: msg ? '1px solid oklch(90% 0.06 145)' : '1px solid transparent',
             transition: 'all 0.3s'
           }}>{msg || '\u00A0'}</span>
         </h2>

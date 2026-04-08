@@ -4,7 +4,7 @@ import { apiGet, isLoggedIn } from '../api';
 const TenantContext = createContext(null);
 
 export function TenantProvider({ children }) {
-  const [config, setConfig] = useState(null);
+  const [config, setConfig] = useState(getDefaultConfig());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

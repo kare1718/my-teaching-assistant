@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { api, apiUpload } from '../../api';
 import BottomTabBar from '../../components/BottomTabBar';
+import { useTenantConfig } from '../../contexts/TenantContext';
 
 // 간단한 마크다운 볼드(**text**) 처리
 function renderAnswer(text) {
@@ -16,6 +17,7 @@ function renderAnswer(text) {
 }
 
 export default function QnA() {
+  const { config } = useTenantConfig();
   const [questions, setQuestions] = useState([]);
   const [newQuestion, setNewQuestion] = useState('');
   const [sending, setSending] = useState(false);
@@ -219,14 +221,14 @@ export default function QnA() {
           />
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--primary)', marginBottom: 4 }}>
-              강인쌤
+              {config.academyName || '선생님'}
             </div>
             <div style={{
               background: 'var(--muted)',
               padding: '12px 16px', borderRadius: '4px 16px 16px 16px',
               fontSize: 14, lineHeight: 1.8, whiteSpace: 'pre-wrap'
             }}>
-              {"안녕하세요 강인한 국어연구소 강인쌤입니다.\n국어 관련된 모든 질문들을 편하게 물어보세요.\n문제에 대한 질문은 '지문'과 '문제'를 모두 입력해주셔야 합니다.\n사진 캡처할 경우에는 잘 보이도록 찍어서 올려주세요."}
+              {`안녕하세요 ${config.academyName || '나만의 조교'} 선생님입니다.\n관련된 모든 질문들을 편하게 물어보세요.\n문제에 대한 질문은 '지문'과 '문제'를 모두 입력해주셔야 합니다.\n사진 캡처할 경우에는 잘 보이도록 찍어서 올려주세요.`}
             </div>
           </div>
         </div>
@@ -341,7 +343,7 @@ export default function QnA() {
               style={{
                 position: 'absolute', top: -6, right: -6,
                 width: 20, height: 20, borderRadius: '50%',
-                background: '#ef4444', color: 'white', border: 'none',
+                background: 'var(--destructive)', color: 'white', border: 'none',
                 cursor: 'pointer', fontSize: 12,
                 display: 'flex', alignItems: 'center', justifyContent: 'center'
               }}

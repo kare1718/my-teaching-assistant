@@ -71,13 +71,13 @@ export default function Rankings() {
       <div style={{
         display: 'flex', alignItems: 'center', gap: 10,
         padding: '10px 14px',
-        background: highlight ? 'linear-gradient(135deg, #eff6ff, #dbeafe)' : 'transparent',
+        background: highlight ? 'linear-gradient(135deg, var(--info-light), var(--info-light))' : 'transparent',
         borderRadius: highlight ? 10 : 0,
         border: highlight ? '2px solid var(--primary)' : 'none'
       }}>
         <div style={{
           width: 28, fontWeight: 700, fontSize: 14, textAlign: 'center',
-          color: r.rank <= 3 ? '#f59e0b' : 'var(--muted-foreground)'
+          color: r.rank <= 3 ? 'var(--warning)' : 'var(--muted-foreground)'
         }}>
           {r.rank <= 3 ? getRankEmoji(r.rank) : r.rank}
         </div>
@@ -96,13 +96,13 @@ export default function Rankings() {
             </span>
             {r.rankingBadge && r.rankingBadge.title && new Date(r.rankingBadge.expires) > new Date() && (
               <span style={{
-                color: '#1e40af', background: 'linear-gradient(135deg, #dbeafe, #93c5fd)',
+                color: 'oklch(32% 0.12 260)', background: 'linear-gradient(135deg, var(--info-light), oklch(72% 0.10 260))',
                 fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 6
               }}>{r.rankingBadge.medal === 'gold' ? '👑' : r.rankingBadge.medal === 'silver' ? '🥈' : '🥉'} {r.rankingBadge.title}</span>
             )}
             {r.title_name && (
               <span style={{
-                color: '#78350f', background: 'linear-gradient(135deg, #fde68a, #fbbf24)',
+                color: 'oklch(30% 0.10 75)', background: 'linear-gradient(135deg, oklch(92% 0.10 90), oklch(80% 0.14 85))',
                 fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 6
               }}>{r.title_icon} {r.title_name}</span>
             )}
@@ -131,8 +131,8 @@ export default function Rankings() {
     const isWeekly = tab === 'weekly';
     return (
       <div style={{
-        background: 'linear-gradient(180deg, #eff6ff, #dbeafe)', borderRadius: 'var(--radius)',
-        border: '1px solid #93c5fd', padding: 12, fontSize: 11, lineHeight: 1.9,
+        background: 'linear-gradient(180deg, var(--info-light), var(--info-light))', borderRadius: 'var(--radius)',
+        border: '1px solid oklch(72% 0.10 260)', padding: 12, fontSize: 11, lineHeight: 1.9,
       }}>
         <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--primary)', marginBottom: 6, textAlign: 'center' }}>
           🎁 {isWeekly ? '주간' : '월간'} 보상
@@ -188,10 +188,10 @@ export default function Rankings() {
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6,
             padding: '4px 12px', borderRadius: 10,
-            background: tab === 'weekly' ? '#eff6ff' : '#f0fdf4',
-            border: `1px solid ${tab === 'weekly' ? '#93c5fd' : '#86efac'}`,
+            background: tab === 'weekly' ? 'var(--info-light)' : 'var(--success-light)',
+            border: `1px solid ${tab === 'weekly' ? 'oklch(72% 0.10 260)' : 'oklch(72% 0.12 155)'}`,
           }}>
-            <span style={{ fontSize: 11, color: tab === 'weekly' ? '#1d4ed8' : '#15803d', fontWeight: 700 }}>
+            <span style={{ fontSize: 11, color: tab === 'weekly' ? 'oklch(38% 0.14 260)' : 'oklch(38% 0.10 150)', fontWeight: 700 }}>
               {tab === 'weekly' ? '📅 이번 주' : '📆 이번 달'}
             </span>
             <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
@@ -202,7 +202,7 @@ export default function Rankings() {
         {myRank && (
           <div style={{
             display: 'inline-block', marginTop: 8, padding: '6px 16px',
-            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+            background: 'linear-gradient(135deg, var(--info), oklch(48% 0.18 260))',
             color: 'white', borderRadius: 12, fontWeight: 600, fontSize: 14
           }}>
             내 순위: {myRank}위
@@ -280,8 +280,8 @@ export default function Rankings() {
                           </div>
                           {r.title_name && (
                             <div style={{
-                              display: 'inline-block', fontSize: 8, color: '#78350f',
-                              background: 'linear-gradient(135deg, #fde68a, #fbbf24)',
+                              display: 'inline-block', fontSize: 8, color: 'oklch(30% 0.10 75)',
+                              background: 'linear-gradient(135deg, oklch(92% 0.10 90), oklch(80% 0.14 85))',
                               padding: '1px 5px', borderRadius: 4, fontWeight: 600, marginTop: 2
                             }}>{r.title_icon} {r.title_name}</div>
                           )}
@@ -305,30 +305,30 @@ export default function Rankings() {
                   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', gap: 0, marginTop: 8 }}>
                     <div style={{
                       flex: 1, height: 55, maxWidth: 130,
-                      background: 'linear-gradient(180deg, #e2e8f0, #cbd5e1)',
+                      background: 'linear-gradient(180deg, var(--border), oklch(80% 0.01 250))',
                       borderRadius: '8px 0 0 0',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontWeight: 900, fontSize: 22, color: '#94a3b8',
+                      fontWeight: 900, fontSize: 22, color: 'var(--neutral-400)',
                       boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.1)',
-                      borderTop: '3px solid #c0c0c0',
+                      borderTop: '3px solid oklch(80% 0.01 250)',
                     }}>2</div>
                     <div style={{
                       flex: 1, height: 90, maxWidth: 130,
-                      background: 'linear-gradient(180deg, #fde68a, #fbbf24, #f59e0b)',
+                      background: 'linear-gradient(180deg, oklch(92% 0.10 90), oklch(80% 0.14 85), var(--warning))',
                       borderRadius: '8px 8px 0 0',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontWeight: 900, fontSize: 28, color: '#92400e',
+                      fontWeight: 900, fontSize: 28, color: 'oklch(35% 0.12 75)',
                       boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.5), inset 0 -2px 4px rgba(0,0,0,0.1), 0 -4px 12px rgba(251,191,36,0.3)',
-                      borderTop: '3px solid #fbbf24',
+                      borderTop: '3px solid oklch(80% 0.14 85)',
                     }}>1</div>
                     <div style={{
                       flex: 1, height: 38, maxWidth: 130,
-                      background: 'linear-gradient(180deg, #fed7aa, #fb923c)',
+                      background: 'linear-gradient(180deg, oklch(85% 0.08 55), oklch(65% 0.16 45))',
                       borderRadius: '0 8px 0 0',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontWeight: 900, fontSize: 18, color: '#9a3412',
+                      fontWeight: 900, fontSize: 18, color: 'oklch(38% 0.12 40)',
                       boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.1)',
-                      borderTop: '3px solid #cd7f32',
+                      borderTop: '3px solid oklch(60% 0.10 55)',
                     }}>3</div>
                   </div>
                 </div>

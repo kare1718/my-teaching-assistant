@@ -55,7 +55,7 @@ const STUDENTS = buildStudents();
 
 const EXAMS = [
   { examType: '학력평가 모의고사', name: '3월 학력평가', examDate: '2026-03-05', school: null, grade: null, maxScore: 100 },
-  { examType: '서강인T 자체 모의고사', name: '제1회 자체 모의고사', examDate: '2026-02-20', school: null, grade: null, maxScore: 100 },
+  { examType: '자체 모의고사', name: '제1회 자체 모의고사', examDate: '2026-02-20', school: null, grade: null, maxScore: 100 },
   { examType: '정규반 내신 테스트', name: '2월 정규반 테스트', examDate: '2026-02-15', school: null, grade: null, maxScore: 50 },
   { examType: '정규반 내신 테스트', name: '3월 정규반 테스트', examDate: '2026-03-08', school: null, grade: null, maxScore: 50 },
   { examType: '내신 파이널', name: '1학기 중간 파이널', examDate: '2026-03-10', school: null, grade: null, maxScore: 100 },

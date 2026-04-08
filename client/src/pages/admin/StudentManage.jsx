@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { api, apiPut } from '../../api';
-import { SCHOOLS, getAllGrades, EXAM_TYPES } from '../../config';
+import { useTenantConfig } from '../../contexts/TenantContext';
 import {
   LineChart, Line, BarChart, Bar, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -9,6 +9,7 @@ import {
 } from 'recharts';
 
 export default function StudentManage() {
+  const { config } = useTenantConfig();
   const { id } = useParams();
   const navigate = useNavigate();
   const [student, setStudent] = useState(null);
@@ -140,17 +141,14 @@ export default function StudentManage() {
     );
   };
 
-  const regularScores = scores.filter(s => s.exam_type === '정규반 내신 테스트');
-  const mockExamScores = scores.filter(s => s.exam_type === '학력평가 모의고사');
-  const selfMockScores = scores.filter(s => s.exam_type === '서강인T 자체 모의고사');
-  const finalScores = scores.filter(s => s.exam_type === '내신 파이널');
-
-  const trendSections = [
-    { key: 'regular', title: '정규반 내신 테스트 성적 추이', data: regularScores, color: '#f59e0b' },
-    { key: 'mock', title: '학력평가 모의고사 성적 추이', data: mockExamScores, color: '#3b82f6' },
-    { key: 'self', title: '서강인T 자체 모의고사 성적 추이', data: selfMockScores, color: '#8b5cf6' },
-    { key: 'final', title: '내신 파이널 성적 추이', data: finalScores, color: '#ef4444' },
-  ];
+  const trendColors = ['var(--warning)', 'var(--info)', 'oklch(55% 0.20 290)', 'var(--destructive)', 'var(--success)', 'oklch(58% 0.20 350)', 'oklch(62% 0.16 200)', 'var(--muted-foreground)'];
+  const examTypeSet = [...new Set(scores.map(s => s.exam_type))];
+  const trendSections = examTypeSet.map((type, i) => ({
+    key: type,
+    title: `${type} 성적 추이`,
+    data: scores.filter(s => s.exam_type === type),
+    color: trendColors[i % trendColors.length],
+  }));
   const visibleTrends = trendSections.filter(t => t.data.length >= 2);
 
   const distData = distribution ? Object.entries(distribution.distribution).map(([range, count]) => ({
@@ -159,14 +157,14 @@ export default function StudentManage() {
   })) : [];
   const normalData = distribution ? generateNormalDistribution(distribution) : [];
 
-  const grades = editForm.school ? getAllGrades(editForm.school) : [];
+  const grades = editForm.school ? ((config.schools || []).find(s => s.name === editForm.school)?.grades || []) : [];
 
   if (!student) return <div className="content"><p>로딩 중...</p></div>;
 
   const getExamBadgeClass = (type) => {
     if (type === '학력평가 모의고사') return 'badge badge-info';
-    if (type === '서강인T 자체 모의고사') return 'badge badge-purple';
-    if (type === '내신 파이널') return 'badge badge-danger';
+    if (type?.includes('파이널')) return 'badge badge-danger';
+    if (type?.includes('모의고사')) return 'badge badge-purple';
     return 'badge badge-warning';
   };
 
@@ -186,11 +184,11 @@ export default function StudentManage() {
           {student.name} 학생 정보
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
             {student.blocked ? (
-              <span style={{ fontSize: 11, color: '#dc2626', fontWeight: 700, padding: '2px 8px', background: '#fef2f2', borderRadius: 6 }}>🚫 차단됨</span>
+              <span style={{ fontSize: 11, color: 'oklch(48% 0.20 25)', fontWeight: 700, padding: '2px 8px', background: 'var(--destructive-light)', borderRadius: 6 }}>🚫 차단됨</span>
             ) : null}
             <button
               className={`btn btn-sm ${student.blocked ? 'btn-primary' : 'btn-outline'}`}
-              style={!student.blocked ? { color: '#dc2626', borderColor: '#dc2626' } : {}}
+              style={!student.blocked ? { color: 'oklch(48% 0.20 25)', borderColor: 'oklch(48% 0.20 25)' } : {}}
               onClick={async () => {
                 const action = student.blocked ? '해제' : '차단';
                 if (!confirm(`${student.name} 학생의 접속을 ${action}하시겠습니까?`)) return;
@@ -248,7 +246,7 @@ export default function StudentManage() {
               <div className="form-group">
                 <label>학교 *</label>
                 <select value={editForm.school} onChange={(e) => setEditForm({ ...editForm, school: e.target.value, grade: '' })}>
-                  {SCHOOLS.map((s) => <option key={s.name} value={s.name}>{s.name}</option>)}
+                  {(config.schools || []).map((s) => <option key={s.name} value={s.name}>{s.name}</option>)}
                 </select>
               </div>
               <div className="form-group">
@@ -307,16 +305,16 @@ export default function StudentManage() {
           📋 클리닉 이력
           <span style={{
             fontSize: 13, fontWeight: 700, padding: '3px 12px', borderRadius: 20,
-            background: clinicHistory.length > 0 ? '#e0e7ff' : '#f3f4f6',
-            color: clinicHistory.length > 0 ? '#3730a3' : '#9ca3af'
+            background: clinicHistory.length > 0 ? 'oklch(92% 0.04 280)' : 'var(--neutral-100)',
+            color: clinicHistory.length > 0 ? 'oklch(28% 0.10 280)' : 'var(--neutral-400)'
           }}>총 {clinicHistory.length}회</span>
         </h2>
         {clinicHistory.length === 0 ? (
-          <p style={{ color: '#999' }}>클리닉 이력이 없습니다.</p>
+          <p style={{ color: 'var(--neutral-400)' }}>클리닉 이력이 없습니다.</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {clinicHistory.map(h => {
-              const stMap = { pending: { text: '대기', bg: '#fef3c7', color: '#92400e', border: '#f59e0b' }, approved: { text: '승인', bg: '#dcfce7', color: '#166534', border: '#22c55e' }, rejected: { text: '거절', bg: '#fef2f2', color: '#991b1b', border: '#ef4444' }, completed: { text: '완료', bg: '#e0e7ff', color: '#3730a3', border: '#6366f1' } };
+              const stMap = { pending: { text: '대기', bg: 'var(--warning-light)', color: 'oklch(35% 0.12 75)', border: 'var(--warning)' }, approved: { text: '승인', bg: 'var(--success-light)', color: 'oklch(30% 0.12 145)', border: 'var(--success)' }, rejected: { text: '거절', bg: 'var(--destructive-light)', color: 'oklch(35% 0.15 25)', border: 'var(--destructive)' }, completed: { text: '완료', bg: 'oklch(92% 0.04 280)', color: 'oklch(28% 0.10 280)', border: 'oklch(50% 0.20 280)' } };
               const st = stMap[h.status] || stMap.pending;
               const d = new Date(h.appointment_date + 'T00:00:00');
               const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
@@ -344,7 +342,7 @@ export default function StudentManage() {
                     <div style={{ marginTop: 6, paddingTop: 6, borderTop: '1px dashed var(--border)' }}>
                       <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: 4 }}>📝 기록 ({h.notes.length}건)</div>
                       {h.notes.map(n => (
-                        <div key={n.id} style={{ background: '#f8fafc', borderRadius: 6, padding: 6, marginBottom: 3, fontSize: 12 }}>
+                        <div key={n.id} style={{ background: 'var(--background)', borderRadius: 6, padding: 6, marginBottom: 3, fontSize: 12 }}>
                           <span style={{ fontWeight: 600 }}>{n.author_name}</span>
                           <span style={{ color: 'var(--muted-foreground)', marginLeft: 6, fontSize: 11 }}>
                             {new Date(n.created_at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
@@ -364,7 +362,7 @@ export default function StudentManage() {
       <div className="card">
         <h2>성적 현황</h2>
         {scores.length === 0 ? (
-          <p style={{ color: '#999' }}>등록된 성적이 없습니다.</p>
+          <p style={{ color: 'var(--neutral-400)' }}>등록된 성적이 없습니다.</p>
         ) : (
           <table>
             <thead>
@@ -398,10 +396,10 @@ export default function StudentManage() {
             <button className="btn btn-outline btn-sm" onClick={() => { setShowDist(null); setDistribution(null); }}>닫기</button>
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10, marginBottom: 20 }}>
-            {distribution.myScore !== null && (<div className="stat-card" style={{ borderColor: '#3b82f6' }}><span className="stat-label">학생 점수</span><span className="stat-value" style={{ color: '#3b82f6' }}>{distribution.myScore}<span className="stat-unit">점</span></span></div>)}
+            {distribution.myScore !== null && (<div className="stat-card" style={{ borderColor: 'var(--info)' }}><span className="stat-label">학생 점수</span><span className="stat-value" style={{ color: 'var(--info)' }}>{distribution.myScore}<span className="stat-unit">점</span></span></div>)}
             <div className="stat-card"><span className="stat-label">평균</span><span className="stat-value">{distribution.average}<span className="stat-unit">점</span></span></div>
-            <div className="stat-card" style={{ borderColor: '#22c55e' }}><span className="stat-label">최고점</span><span className="stat-value" style={{ color: '#22c55e' }}>{distribution.highest}<span className="stat-unit">점</span></span></div>
-            <div className="stat-card" style={{ borderColor: '#ef4444' }}><span className="stat-label">최저점</span><span className="stat-value" style={{ color: '#ef4444' }}>{distribution.lowest}<span className="stat-unit">점</span></span></div>
+            <div className="stat-card" style={{ borderColor: 'var(--success)' }}><span className="stat-label">최고점</span><span className="stat-value" style={{ color: 'var(--success)' }}>{distribution.highest}<span className="stat-unit">점</span></span></div>
+            <div className="stat-card" style={{ borderColor: 'var(--destructive)' }}><span className="stat-label">최저점</span><span className="stat-value" style={{ color: 'var(--destructive)' }}>{distribution.lowest}<span className="stat-unit">점</span></span></div>
             <div className="stat-card"><span className="stat-label">응시인원</span><span className="stat-value">{distribution.totalStudents}<span className="stat-unit">명</span></span></div>
           </div>
 
@@ -411,8 +409,8 @@ export default function StudentManage() {
               <XAxis dataKey="score" fontSize={11} stroke="var(--muted-foreground)" label={{ value: '점수', position: 'insideBottomRight', offset: -5, fill: 'var(--muted-foreground)', fontSize: 12 }} />
               <YAxis hide />
               <Tooltip formatter={(v, n) => n === 'density' ? [v, '밀도'] : [v, n]} labelFormatter={(v) => `${v}점`} contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13 }} />
-              <Area type="monotone" dataKey="density" stroke="#1e3a5f" fill="#1e3a5f" fillOpacity={0.1} strokeWidth={2} />
-              {distribution.myScore !== null && (<ReferenceLine x={distribution.myScore} stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5" label={{ value: `학생 ${distribution.myScore}`, fill: '#ef4444', fontSize: 12, position: 'top' }} />)}
+              <Area type="monotone" dataKey="density" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.1} strokeWidth={2} />
+              {distribution.myScore !== null && (<ReferenceLine x={distribution.myScore} stroke="var(--destructive)" strokeWidth={2} strokeDasharray="5 5" label={{ value: `학생 ${distribution.myScore}`, fill: 'var(--destructive)', fontSize: 12, position: 'top' }} />)}
               <ReferenceLine x={distribution.average} stroke="var(--foreground)" strokeWidth={1.5} strokeDasharray="3 3" label={{ value: `평균 ${distribution.average}`, fill: 'var(--foreground)', fontSize: 11, position: 'insideTopRight' }} />
             </AreaChart></ResponsiveContainer></div>)}
 
@@ -423,7 +421,7 @@ export default function StudentManage() {
             <YAxis allowDecimals={false} stroke="var(--muted-foreground)" />
             <Tooltip contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13 }} />
             <Bar dataKey="학생수" radius={[4, 4, 0, 0]}>
-              {distData.map((entry, index) => (<Cell key={index} fill={entry.isStudentRange ? '#ef4444' : '#1e3a5f'} />))}
+              {distData.map((entry, index) => (<Cell key={index} fill={entry.isStudentRange ? 'var(--destructive)' : 'var(--primary)'} />))}
             </Bar>
           </BarChart></ResponsiveContainer>
         </div>

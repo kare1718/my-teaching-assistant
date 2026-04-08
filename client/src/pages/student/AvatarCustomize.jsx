@@ -148,8 +148,8 @@ export default function AvatarCustomize() {
       {/* 성별 선택 */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         {[
-          { id: 'male', label: '🧑 남캐', color: '#3b82f6' },
-          { id: 'female', label: '👩 여캐', color: '#ec4899' },
+          { id: 'male', label: '🧑 남캐', color: 'var(--info)' },
+          { id: 'female', label: '👩 여캐', color: 'oklch(60% 0.20 350)' },
         ].map(g => (
           <button key={g.id} onClick={() => {
             setGender(g.id);
@@ -200,8 +200,8 @@ export default function AvatarCustomize() {
       {msg && (
         <div style={{
           padding: '10px 14px', borderRadius: 8, marginTop: 8, fontSize: 14, fontWeight: 600, textAlign: 'center',
-          background: msg.type === 'success' ? '#dcfce7' : '#fee2e2',
-          color: msg.type === 'success' ? '#166534' : '#991b1b'
+          background: msg.type === 'success' ? 'var(--success-light)' : 'var(--destructive-light)',
+          color: msg.type === 'success' ? 'oklch(30% 0.12 145)' : 'oklch(35% 0.15 25)'
         }}>
           {msg.text}
         </div>

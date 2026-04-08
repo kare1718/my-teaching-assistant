@@ -54,8 +54,8 @@ export default function Shop() {
         <h2 style={{ fontSize: 20, marginBottom: 4 }}>🛒 포인트 상점</h2>
         <div style={{
           display: 'inline-block', padding: '6px 16px', marginTop: 6,
-          background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
-          color: '#78350f', borderRadius: 12, fontWeight: 700, fontSize: 16
+          background: 'linear-gradient(135deg, oklch(80% 0.14 85), var(--warning))',
+          color: 'oklch(30% 0.10 75)', borderRadius: 12, fontWeight: 700, fontSize: 16
         }}>
           💰 {charData?.points?.toLocaleString() || 0} P
         </div>
@@ -96,7 +96,7 @@ export default function Shop() {
                 {/* 상품 이미지/아이콘 */}
                 <div style={{
                   height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)',
+                  background: 'linear-gradient(135deg, var(--secondary), var(--border))',
                   position: 'relative', overflow: 'hidden'
                 }}>
                   {item.image_url ? (
@@ -135,7 +135,7 @@ export default function Shop() {
                     </div>
                   )}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
-                    <span style={{ fontWeight: 700, color: '#f59e0b', fontSize: 15 }}>
+                    <span style={{ fontWeight: 700, color: 'var(--warning)', fontSize: 15 }}>
                       {item.price.toLocaleString()} P
                     </span>
                     <button
@@ -179,12 +179,12 @@ export default function Shop() {
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#f59e0b' }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--warning)' }}>
                   {p.price_paid?.toLocaleString()} P
                 </div>
                 <div style={{
                   fontSize: 10, fontWeight: 600,
-                  color: p.status === 'completed' ? '#16a34a' : '#f59e0b'
+                  color: p.status === 'completed' ? 'var(--success)' : 'var(--warning)'
                 }}>
                   {p.status === 'completed' ? '수령 완료' : '대기 중'}
                 </div>
@@ -202,13 +202,13 @@ export default function Shop() {
       {/* 포인트 만료 안내 */}
       <div style={{
         marginTop: 12, padding: '12px 14px', borderRadius: 10,
-        background: 'linear-gradient(135deg, #fef3c7, #fde68a)',
-        border: '1px solid #fbbf24',
-        fontSize: 12, color: '#92400e', lineHeight: 1.6
+        background: 'linear-gradient(135deg, var(--warning-light), oklch(92% 0.10 90))',
+        border: '1px solid oklch(80% 0.14 85)',
+        fontSize: 12, color: 'oklch(35% 0.12 75)', lineHeight: 1.6
       }}>
         <div style={{ fontWeight: 700, marginBottom: 4 }}>⚠️ 포인트 만료 안내</div>
         <div>포인트는 <b>6개월 이내</b>에 사용하지 않으면 자동으로 소멸됩니다.</div>
-        <div style={{ fontSize: 11, marginTop: 2, color: '#b45309' }}>
+        <div style={{ fontSize: 11, marginTop: 2, color: 'oklch(45% 0.12 70)' }}>
           퀴즈 풀기, 코드 입력, 상품 구매 등 활동이 6개월간 없으면 보유 포인트가 초기화됩니다.
         </div>
       </div>

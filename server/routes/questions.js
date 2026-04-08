@@ -1,5 +1,6 @@
 const express = require('express');
 const multer = require('multer');
+const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const { runQuery, runInsert, getOne, getAll } = require('../db/database');
@@ -19,12 +20,18 @@ if (!fs.existsSync(uploadDir)) {
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => {
-    const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const uniqueName = crypto.randomUUID();
     const ext = path.extname(file.originalname);
     cb(null, uniqueName + ext);
   }
 });
-const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } }); // 10MB
+const allowedTypes = /jpeg|jpg|png|gif|webp|pdf/;
+const fileFilter = (req, file, cb) => {
+  const ext = path.extname(file.originalname).toLowerCase().slice(1);
+  if (allowedTypes.test(ext) || file.mimetype.startsWith('image/')) cb(null, true);
+  else cb(new Error('이미지 또는 PDF만 업로드 가능합니다.'), false);
+};
+const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 }, fileFilter }); // 10MB
 
 const TEACHER_PROMPT = `너는 국어 전문 강사야. 학생들의 국어 관련 질문에 답변하는 역할이야.
 
@@ -82,48 +89,80 @@ async function getGeminiAnswer(question, imagePath, studentName) {
 
     const body = JSON.stringify({
       contents: [{ parts }],
-      generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
+      // thinking 비활성화 → 응답 속도 향상
+      generationConfig: { temperature: 0.7, maxOutputTokens: 2048, thinkingConfig: { thinkingBudget: 0 } }
     });
 
-    // AbortController로 25초 타임아웃
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25000);
+    // 최대 2회 시도 (재시도 1회)
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 50000); // 50초 타임아웃
 
-    console.log('[Gemini] API 호출 시작...');
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body,
-        signal: controller.signal,
+        console.log(`[Gemini] API 호출 시작 (시도 ${attempt}/2)...`);
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body,
+            signal: controller.signal,
+          }
+        );
+        clearTimeout(timeout);
+
+        console.log('[Gemini] 응답 상태:', response.status);
+
+        if (response.status === 429 || response.status === 503) {
+          console.error(`[Gemini] ${response.status} - ${attempt < 2 ? '재시도...' : '포기'}`);
+          if (attempt < 2) { await new Promise(r => setTimeout(r, 2000)); continue; }
+          return FALLBACK;
+        }
+
+        if (!response.ok) {
+          const errText = await response.text();
+          console.error('[Gemini] API 에러:', response.status, errText.substring(0, 300));
+          return FALLBACK;
+        }
+
+        const json = await response.json();
+
+        // 안전 필터 차단 체크
+        if (json.candidates?.[0]?.finishReason === 'SAFETY') {
+          console.error('[Gemini] 안전 필터 차단');
+          return FALLBACK;
+        }
+        if (json.promptFeedback?.blockReason) {
+          console.error('[Gemini] 프롬프트 차단:', json.promptFeedback.blockReason);
+          return FALLBACK;
+        }
+
+        // 정상 응답 파싱 (여러 parts 중 텍스트 찾기)
+        if (json.candidates?.[0]?.content?.parts) {
+          const textParts = json.candidates[0].content.parts.filter(p => p.text);
+          const answer = textParts.map(p => p.text).join('').trim();
+          if (answer) {
+            console.log('[Gemini] 답변 생성 완료 (길이:', answer.length, ')');
+            return answer;
+          }
+        }
+
+        console.error('[Gemini] 응답 형식 오류:', JSON.stringify(json).substring(0, 500));
+        if (attempt < 2) continue;
+        return FALLBACK;
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          console.error(`[Gemini] 타임아웃 (50초, 시도 ${attempt})`);
+        } else {
+          console.error(`[Gemini] 오류 (시도 ${attempt}):`, err.message);
+        }
+        if (attempt < 2) { await new Promise(r => setTimeout(r, 1000)); continue; }
+        return FALLBACK;
       }
-    );
-    clearTimeout(timeout);
-
-    console.log('[Gemini] 응답 상태:', response.status);
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error('[Gemini] API 에러:', response.status, errText.substring(0, 300));
-      return FALLBACK;
     }
-
-    const json = await response.json();
-    if (json.candidates && json.candidates[0] && json.candidates[0].content) {
-      const answer = json.candidates[0].content.parts[0].text;
-      console.log('[Gemini] 답변 생성 완료 (길이:', answer.length, ')');
-      return answer;
-    } else {
-      console.error('[Gemini] 응답 형식 오류:', JSON.stringify(json).substring(0, 500));
-      return FALLBACK;
-    }
-  } catch (err) {
-    if (err.name === 'AbortError') {
-      console.error('[Gemini] 타임아웃 (25초)');
-    } else {
-      console.error('[Gemini] 오류:', err.message);
-    }
+    return FALLBACK;
+  } catch (outerErr) {
+    console.error('[Gemini] 외부 오류:', outerErr.message);
     return FALLBACK;
   }
 }
@@ -159,7 +198,7 @@ router.post('/', upload.single('image'), async (req, res) => {
 
   const FALLBACK_MSG = '잠시 답변이 어려운 상황이에요. 선생님이 직접 답변드릴게요!';
 
-  // 안전장치: 30초 후에도 답변이 없으면 fallback 저장
+  // 안전장치: 60초 후에도 답변이 없으면 fallback 저장
   const safetyTimer = setTimeout(async () => {
     try {
       const q = await getOne('SELECT answer FROM questions WHERE id = ? AND academy_id = ?', [questionId, req.academyId]);
@@ -173,7 +212,7 @@ router.post('/', upload.single('image'), async (req, res) => {
     } catch (e) {
       console.error('[QnA] 안전장치 오류:', e.message);
     }
-  }, 30000);
+  }, 60000);
 
   // AI 자동 답변 백그라운드 처리
   getGeminiAnswer((question || '').trim(), imagePath, student.name)
@@ -251,7 +290,7 @@ router.get('/summary', requireAdmin, async (req, res) => {
      FROM students s
      JOIN users u ON s.user_id = u.id
      JOIN questions q ON q.student_id = s.id
-     WHERE q.academy_id = ?
+     WHERE s.academy_id = ?
      GROUP BY s.id
      ORDER BY last_question_at DESC`,
     [req.academyId]

@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { api, apiPost, apiDelete, apiUpload } from '../../api';
-import { getSchoolConfig, EXAM_TYPES } from '../../config';
+import { useTenantConfig } from '../../contexts/TenantContext';
 
 export default function SchoolPage() {
+  const { config } = useTenantConfig();
   const { school } = useParams();
   const navigate = useNavigate();
   const schoolName = decodeURIComponent(school);
-  const schoolConfig = getSchoolConfig(schoolName);
+  const schoolConfig = (config.schools || []).find(s => s.name === schoolName) || null;
   const grades = schoolConfig ? schoolConfig.grades : ['1학년', '2학년'];
 
   const [gradeCounts, setGradeCounts] = useState({});
@@ -96,8 +97,8 @@ export default function SchoolPage() {
 
   const getExamBadgeClass = (type) => {
     if (type === '학력평가 모의고사') return 'badge badge-info';
-    if (type === '서강인T 자체 모의고사') return 'badge badge-purple';
-    if (type === '내신 파이널') return 'badge badge-danger';
+    if (type?.includes('파이널')) return 'badge badge-danger';
+    if (type?.includes('모의고사')) return 'badge badge-purple';
     return 'badge badge-warning';
   };
 
@@ -149,12 +150,12 @@ export default function SchoolPage() {
           </h2>
 
           {showExamForm && (
-            <form onSubmit={createExam} style={{ background: '#f8f9fa', padding: 16, borderRadius: 8, marginBottom: 16 }}>
+            <form onSubmit={createExam} style={{ background: 'var(--neutral-50)', padding: 16, borderRadius: 8, marginBottom: 16 }}>
               <div className="form-row">
                 <div className="form-group">
                   <label>시험 분류 *</label>
                   <select value={newExam.examType} onChange={(e) => setNewExam({ ...newExam, examType: e.target.value })}>
-                    {EXAM_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                    {(config.examTypes || []).map((t) => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
                 <div className="form-group">
@@ -184,7 +185,7 @@ export default function SchoolPage() {
           )}
 
           {exams.length === 0 ? (
-            <p style={{ color: '#999', textAlign: 'center', padding: 20 }}>등록된 시험이 없습니다.</p>
+            <p style={{ color: 'var(--neutral-400)', textAlign: 'center', padding: 20 }}>등록된 시험이 없습니다.</p>
           ) : (
             <table>
               <thead>
@@ -226,7 +227,7 @@ export default function SchoolPage() {
           </h2>
 
           {showMaterialForm && (
-            <form onSubmit={createMaterial} style={{ background: '#f8f9fa', padding: 16, borderRadius: 8, marginBottom: 16 }}>
+            <form onSubmit={createMaterial} style={{ background: 'var(--neutral-50)', padding: 16, borderRadius: 8, marginBottom: 16 }}>
               <div className="form-row">
                 <div className="form-group">
                   <label>제목 *</label>
@@ -259,24 +260,24 @@ export default function SchoolPage() {
           )}
 
           {materials.length === 0 ? (
-            <p style={{ color: '#999', textAlign: 'center', padding: 20 }}>등록된 수업 자료가 없습니다.</p>
+            <p style={{ color: 'var(--neutral-400)', textAlign: 'center', padding: 20 }}>등록된 수업 자료가 없습니다.</p>
           ) : (
             <div>
               {materials.map((m) => (
                 <div key={m.id} style={{
                   border: '1px solid #eee', borderRadius: 10, padding: 16, marginBottom: 12,
-                  background: '#fafbfc'
+                  background: 'var(--neutral-50)'
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: 16, color: '#2c3e50', marginBottom: 4 }}>
+                      <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--foreground)', marginBottom: 4 }}>
                         {m.title}
                       </div>
-                      <div style={{ fontSize: 12, color: '#999', marginBottom: 8 }}>
+                      <div style={{ fontSize: 12, color: 'var(--neutral-400)', marginBottom: 8 }}>
                         {m.class_date || '날짜 미지정'} | 등록: {m.created_at}
                       </div>
                       {m.description && (
-                        <p style={{ fontSize: 14, color: '#555', marginBottom: 8, whiteSpace: 'pre-wrap' }}>{m.description}</p>
+                        <p style={{ fontSize: 14, color: 'var(--neutral-600)', marginBottom: 8, whiteSpace: 'pre-wrap' }}>{m.description}</p>
                       )}
                     </div>
                     <button className="btn btn-danger btn-sm" onClick={() => deleteMaterial(m.id)}>삭제</button>

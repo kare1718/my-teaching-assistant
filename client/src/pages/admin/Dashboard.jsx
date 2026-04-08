@@ -1,74 +1,86 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, apiPut } from '../../api';
-import { SCHOOLS, SITE_TITLE, MAIN_TITLE } from '../../config';
+import { useTenantConfig } from '../../contexts/TenantContext';
+import useResizableGrid from '../../hooks/useResizableGrid';
+import { GridResizeHandle } from '../../components/ResizeHandle';
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
-const STATUS_STYLE = {
-  pending: { text: '대기', bg: '#fef3c7', color: '#92400e' },
-  approved: { text: '승인', bg: '#dcfce7', color: '#166534' },
-  completed: { text: '완료', bg: '#e0e7ff', color: '#3730a3' },
+
+const STATUS_LABEL = {
+  pending:   { text: '대기',  bg: 'var(--warning-light)', color: 'oklch(35% 0.12 75)' },
+  approved:  { text: '승인',  bg: 'var(--success-light)', color: 'oklch(30% 0.12 145)' },
+  completed: { text: '완료',  bg: 'var(--info-light)', color: 'oklch(32% 0.12 260)' },
 };
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const [schoolCounts, setSchoolCounts] = useState({});
-  const [pendingCount, setPendingCount] = useState(0);
+  const { config } = useTenantConfig();
+  const SCHOOLS = config.schools || [];
+  const [schoolCounts, setSchoolCounts]       = useState({});
+  const [gradeDetails, setGradeDetails]       = useState({});
+  const [pendingCount, setPendingCount]       = useState(0);
   const [editRequestCount, setEditRequestCount] = useState(0);
-  const [reviewCount, setReviewCount] = useState(0);
-  const [qnaCount, setQnaCount] = useState(0);
-  const [showPwModal, setShowPwModal] = useState(false);
+  const [reviewCount, setReviewCount]         = useState(0);
+  const [qnaCount, setQnaCount]               = useState(0);
+  const [clinicCount, setClinicCount]         = useState(0);
+  const [upcomingClinic, setUpcomingClinic]   = useState([]);
+  const [upcomingExams, setUpcomingExams]     = useState([]);
+  const [upcomingClasses, setUpcomingClasses] = useState([]);
+  const [showPwModal, setShowPwModal]         = useState(false);
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [pwMsg, setPwMsg] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
+  const [academyName, setAcademyName] = useState('');
 
-  // 일정 데이터
-  const [upcomingClinic, setUpcomingClinic] = useState([]);
-  const [upcomingExams, setUpcomingExams] = useState([]);
-  const [upcomingClasses, setUpcomingClasses] = useState([]);
-  const [clinicCount, setClinicCount] = useState(0);
-
-  const today = new Date();
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const today    = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
   useEffect(() => {
-    api('/admin/schools').then((data) => {
+    api('/admin/schools').then(data => {
       const counts = {};
-      data.forEach((s) => { counts[s.school] = s.student_count; });
+      data.forEach(s => { counts[s.school] = s.student_count; });
       setSchoolCounts(counts);
-    }).catch(console.error);
-
-    api('/admin/pending-users').then((data) => setPendingCount(data.length)).catch(console.error);
-    api('/admin/edit-requests').then((data) => setEditRequestCount(data.length)).catch(console.error);
-    api('/admin/reviews').then((data) => setReviewCount(data.filter(r => r.status === 'pending').length)).catch(console.error);
-    api('/questions/all').then((data) => setQnaCount(data.filter(q => q.status === 'pending').length)).catch(console.error);
-
-    // 클리닉 일정 (이번 달 + 다음 달)
-    const month = today.getMonth() + 1;
-    const year = today.getFullYear();
-    api(`/clinic/admin/all?year=${year}&month=${month}`).then(data => {
-      const upcoming = data
-        .filter(a => a.appointment_date >= todayStr && (a.status === 'approved' || a.status === 'pending'))
-        .sort((a, b) => a.appointment_date.localeCompare(b.appointment_date) || a.time_slot.localeCompare(b.time_slot));
-      setUpcomingClinic(upcoming.slice(0, 8));
-      setClinicCount(data.filter(a => a.status === 'pending').length);
-    }).catch(console.error);
-
-    // 다음 달도 가져오기
-    const nextMonth = month === 12 ? 1 : month + 1;
-    const nextYear = month === 12 ? year + 1 : year;
-    api(`/clinic/admin/all?year=${nextYear}&month=${nextMonth}`).then(data => {
-      const upcoming = data
-        .filter(a => a.appointment_date >= todayStr && (a.status === 'approved' || a.status === 'pending'))
-        .sort((a, b) => a.appointment_date.localeCompare(b.appointment_date) || a.time_slot.localeCompare(b.time_slot));
-      setUpcomingClinic(prev => {
-        const merged = [...prev, ...upcoming].sort((a, b) =>
-          a.appointment_date.localeCompare(b.appointment_date) || a.time_slot.localeCompare(b.time_slot)
-        );
-        return merged.slice(0, 8);
+      const excludeSchools = ['조교', '선생님'];
+      data.filter(s => !excludeSchools.includes(s.school)).forEach(s => {
+        api(`/admin/schools/${encodeURIComponent(s.school)}/grades`).then(grades => {
+          setGradeDetails(prev => ({ ...prev, [s.school]: grades }));
+        }).catch(() => {});
       });
     }).catch(console.error);
 
-    // 시험 일정
+    api('/auth/my-invite-code').then(data => {
+      if (data.inviteCode) setInviteCode(data.inviteCode);
+      if (data.academyName) setAcademyName(data.academyName);
+    }).catch(() => {});
+
+    api('/admin/badge-counts').then(c => {
+      setPendingCount(c.pending_users || 0);
+      setEditRequestCount(c.edit_requests || 0);
+      setClinicCount(c.pending_clinic || 0);
+      setQnaCount(c.pending_questions || 0);
+      setReviewCount(c.pending_reviews || 0);
+    }).catch(() => {});
+
+    const month = today.getMonth() + 1;
+    const year  = today.getFullYear();
+    const fetchClinic = (y, m) =>
+      api(`/clinic/admin/all?year=${y}&month=${m}`).then(data => {
+        return data
+          .filter(a => a.appointment_date >= todayStr && (a.status === 'approved' || a.status === 'pending'))
+          .sort((a, b) => a.appointment_date.localeCompare(b.appointment_date) || a.time_slot.localeCompare(b.time_slot));
+      }).catch(() => []);
+
+    Promise.all([
+      fetchClinic(year, month),
+      fetchClinic(month === 12 ? year+1 : year, month === 12 ? 1 : month+1),
+    ]).then(([cur, next]) => {
+      const merged = [...cur, ...next]
+        .sort((a, b) => a.appointment_date.localeCompare(b.appointment_date) || a.time_slot.localeCompare(b.time_slot))
+        .slice(0, 10);
+      setUpcomingClinic(merged);
+    });
+
     api('/scores/exams').then(data => {
       const upcoming = data
         .filter(e => e.exam_date && e.exam_date >= todayStr)
@@ -76,14 +88,13 @@ export default function AdminDashboard() {
       setUpcomingExams(upcoming.slice(0, 5));
     }).catch(console.error);
 
-    // 수업 일정 (이번 주)
     api('/schedules/week').then(data => setUpcomingClasses(data.schedules || [])).catch(console.error);
   }, []);
 
   const handleChangePassword = async () => {
     if (!pwForm.currentPassword || !pwForm.newPassword) { setPwMsg('모든 항목을 입력해주세요.'); return; }
-    if (pwForm.newPassword !== pwForm.confirmPassword) { setPwMsg('새 비밀번호가 일치하지 않습니다.'); return; }
-    if (pwForm.newPassword.length < 4) { setPwMsg('비밀번호는 최소 4자 이상이어야 합니다.'); return; }
+    if (pwForm.newPassword !== pwForm.confirmPassword)  { setPwMsg('새 비밀번호가 일치하지 않습니다.'); return; }
+    if (pwForm.newPassword.length < 4)                  { setPwMsg('비밀번호는 최소 4자 이상이어야 합니다.'); return; }
     try {
       await apiPut('/auth/change-password', { currentPassword: pwForm.currentPassword, newPassword: pwForm.newPassword });
       setPwMsg('비밀번호가 변경되었습니다!');
@@ -91,228 +102,74 @@ export default function AdminDashboard() {
     } catch (e) { setPwMsg(e.message); }
   };
 
-  const formatDate = (dateStr) => {
-    const d = new Date(dateStr + 'T00:00:00');
-    return `${d.getMonth() + 1}/${d.getDate()}(${DAY_NAMES[d.getDay()]})`;
+  const formatDate  = (d) => { const x = new Date(d + 'T00:00:00'); return `${x.getMonth()+1}/${x.getDate()}(${DAY_NAMES[x.getDay()]})`; };
+  const isToday     = (d) => d === todayStr;
+  const daysUntil   = (d) => Math.ceil((new Date(d + 'T00:00:00') - today) / 86400000);
+
+  const totalStudents = SCHOOLS
+    .filter(s => !['조교', '선생님', '중학생'].includes(s.name))
+    .reduce((sum, s) => sum + (schoolCounts[s.name] || 0), 0);
+
+  const todayClinic = upcomingClinic.filter(a => isToday(a.appointment_date)).length;
+  const nextExam    = upcomingExams[0];
+
+  const actionItems = [
+    pendingCount     > 0 && { path: '/admin/pending',       label: '가입 승인 대기',   count: pendingCount,     urgent: true },
+    qnaCount         > 0 && { path: '/admin/qna',           label: '미답변 질문',      count: qnaCount,         urgent: true },
+    clinicCount      > 0 && { path: '/admin/clinic',        label: '클리닉 승인 대기', count: clinicCount,      urgent: false },
+    editRequestCount > 0 && { path: '/admin/edit-requests', label: '정보 수정 요청',   count: editRequestCount, urgent: false },
+    reviewCount      > 0 && { path: '/admin/reviews',       label: '후기 검토 대기',   count: reviewCount,      urgent: false },
+  ].filter(Boolean);
+
+  /* ─── grouped schedule helpers ─── */
+  const groupedClasses = (() => {
+    const g = {};
+    upcomingClasses.forEach(s => { if (!g[s.schedule_date]) g[s.schedule_date] = []; g[s.schedule_date].push(s); });
+    return g;
+  })();
+
+  /* ─── resizable grid hooks ─── */
+  const kpiResize = useResizableGrid('admin-dashboard-kpi', [1, 1, 1, 1]);
+  const mainResize = useResizableGrid('admin-dashboard-main', [3, 1]);
+  const scheduleResize = useResizableGrid('admin-dashboard-schedule', [1, 1]);
+
+  const hasCustomLayout = kpiResize.sizes.some((s, i) => Math.abs(s - [1,1,1,1][i]) > 0.01) ||
+    mainResize.sizes.some((s, i) => Math.abs(s - [3,1][i]) > 0.01) ||
+    scheduleResize.sizes.some((s, i) => Math.abs(s - [1,1][i]) > 0.01);
+
+  const resetAllLayouts = () => {
+    kpiResize.resetSizes();
+    mainResize.resetSizes();
+    scheduleResize.resetSizes();
   };
-
-  const isToday = (dateStr) => dateStr === todayStr;
-
-  // 일정 사이드 패널
-  const renderSchedulePanel = () => (
-    <div className="schedule-side-panel" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {/* 클리닉 일정 */}
-      <div className="card" style={{ padding: 14 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--primary)' }}>🩺 클리닉 일정</h3>
-          {clinicCount > 0 && (
-            <span style={{
-              fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10,
-              background: '#fef3c7', color: '#92400e'
-            }}>대기 {clinicCount}</span>
-          )}
-        </div>
-        {upcomingClinic.length === 0 ? (
-          <p style={{ fontSize: 12, color: 'var(--muted-foreground)', textAlign: 'center', padding: '8px 0', margin: 0 }}>
-            예정된 클리닉이 없습니다
-          </p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {upcomingClinic.map(a => {
-              const st = STATUS_STYLE[a.status] || STATUS_STYLE.pending;
-              return (
-                <div key={a.id} onClick={() => navigate('/admin/clinic')} style={{
-                  padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
-                  background: isToday(a.appointment_date) ? '#eff6ff' : '#f8fafc',
-                  border: isToday(a.appointment_date) ? '1px solid #93c5fd' : '1px solid var(--border)',
-                  transition: 'background 0.15s',
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: isToday(a.appointment_date) ? '#2563eb' : 'var(--foreground)' }}>
-                      {isToday(a.appointment_date) ? '오늘' : formatDate(a.appointment_date)} {a.time_slot}
-                    </span>
-                    <span style={{
-                      fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 6,
-                      background: st.bg, color: st.color
-                    }}>{st.text}</span>
-                  </div>
-                  <div style={{ fontSize: 12, color: 'var(--foreground)' }}>
-                    <span style={{ fontWeight: 600 }}>{a.student_name}</span>
-                    <span style={{ color: 'var(--muted-foreground)', marginLeft: 4, fontSize: 11 }}>{a.topic}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-        <div style={{ textAlign: 'right', marginTop: 6 }}>
-          <span onClick={() => navigate('/admin/clinic')} style={{
-            fontSize: 11, color: 'var(--muted-foreground)', cursor: 'pointer', fontWeight: 500,
-          }}>관리 →</span>
-        </div>
-      </div>
-
-      {/* 수업 일정 (이번 주) */}
-      <div className="card" style={{ padding: 14 }}>
-        <h3 style={{ margin: '0 0 10px 0', fontSize: 14, fontWeight: 700, color: 'var(--primary)' }}>📚 이번 주 수업</h3>
-        {upcomingClasses.length === 0 ? (
-          <p style={{ fontSize: 12, color: 'var(--muted-foreground)', textAlign: 'center', padding: '8px 0', margin: 0 }}>
-            이번 주 수업이 없습니다
-          </p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {(() => {
-              const grouped = {};
-              upcomingClasses.forEach(s => {
-                if (!grouped[s.schedule_date]) grouped[s.schedule_date] = [];
-                grouped[s.schedule_date].push(s);
-              });
-              return Object.keys(grouped).sort().map(date => {
-                const items = grouped[date];
-                const isTodayDate = isToday(date);
-                return (
-                  <div key={date}>
-                    <div style={{
-                      fontSize: 11, fontWeight: 700, padding: '3px 0',
-                      color: isTodayDate ? '#2563eb' : 'var(--muted-foreground)',
-                    }}>
-                      {isTodayDate ? '오늘' : formatDate(date)}
-                    </div>
-                    {items.map(s => {
-                      const cancelled = s.status === 'cancelled';
-                      return (
-                        <div key={s.id} onClick={() => navigate('/admin/schedules')} style={{
-                          padding: '4px 8px', borderRadius: 6, cursor: 'pointer', marginBottom: 2,
-                          borderLeft: `3px solid ${cancelled ? '#d1d5db' : (s.color || '#3b82f6')}`,
-                          background: cancelled ? '#fef2f2' : isTodayDate ? '#f0fdf4' : '#f8fafc',
-                          opacity: cancelled ? 0.6 : 1,
-                        }}>
-                          <div style={{ fontSize: 11 }}>
-                            {cancelled && <span style={{ color: '#ef4444', fontWeight: 700, marginRight: 2 }}>휴강</span>}
-                            <span style={{ fontWeight: 600, textDecoration: cancelled ? 'line-through' : 'none' }}>{s.time_slot || ''}</span>
-                            <span style={{ marginLeft: 4, textDecoration: cancelled ? 'line-through' : 'none' }}>{s.title}</span>
-                            {s.target_school && <span style={{ color: 'var(--muted-foreground)', fontSize: 10 }}> ({s.target_school})</span>}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              });
-            })()}
-          </div>
-        )}
-        <div style={{ textAlign: 'right', marginTop: 6 }}>
-          <span onClick={() => navigate('/admin/schedules')} style={{
-            fontSize: 11, color: 'var(--muted-foreground)', cursor: 'pointer', fontWeight: 500,
-          }}>관리 →</span>
-        </div>
-      </div>
-
-      {/* 시험 일정 */}
-      <div className="card" style={{ padding: 14 }}>
-        <h3 style={{ margin: '0 0 10px 0', fontSize: 14, fontWeight: 700, color: 'var(--primary)' }}>📝 시험 일정</h3>
-        {upcomingExams.length === 0 ? (
-          <p style={{ fontSize: 12, color: 'var(--muted-foreground)', textAlign: 'center', padding: '8px 0', margin: 0 }}>
-            예정된 시험이 없습니다
-          </p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {upcomingExams.map(e => (
-              <div key={e.id} onClick={() => navigate('/admin/scores')} style={{
-                padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
-                background: isToday(e.exam_date) ? '#fef3c7' : '#f8fafc',
-                border: isToday(e.exam_date) ? '1px solid #f59e0b' : '1px solid var(--border)',
-              }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: isToday(e.exam_date) ? '#92400e' : 'var(--foreground)' }}>
-                  {isToday(e.exam_date) ? '오늘' : formatDate(e.exam_date)}
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--foreground)', marginTop: 2 }}>
-                  {e.name}
-                  {e.school && <span style={{ color: 'var(--muted-foreground)', marginLeft: 4, fontSize: 11 }}>({e.school})</span>}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        <div style={{ textAlign: 'right', marginTop: 6 }}>
-          <span onClick={() => navigate('/admin/scores')} style={{
-            fontSize: 11, color: 'var(--muted-foreground)', cursor: 'pointer', fontWeight: 500,
-          }}>관리 →</span>
-        </div>
-      </div>
-    </div>
-  );
-
-  // 모바일 최상단 클리닉 카드
-  const renderMobileClinicTop = () => (
-    <div className="dashboard-clinic-mobile-top" style={{ display: 'none' }}>
-      <div className="card" style={{ padding: 14 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--primary)' }}>🩺 클리닉 일정</h3>
-          {clinicCount > 0 && (
-            <span style={{
-              fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10,
-              background: '#fef3c7', color: '#92400e'
-            }}>대기 {clinicCount}</span>
-          )}
-        </div>
-        {upcomingClinic.length === 0 ? (
-          <p style={{ fontSize: 12, color: 'var(--muted-foreground)', textAlign: 'center', padding: '8px 0', margin: 0 }}>
-            예정된 클리닉이 없습니다
-          </p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {upcomingClinic.map(a => {
-              const st = STATUS_STYLE[a.status] || STATUS_STYLE.pending;
-              return (
-                <div key={a.id} onClick={() => navigate('/admin/clinic')} style={{
-                  padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
-                  background: isToday(a.appointment_date) ? '#eff6ff' : '#f8fafc',
-                  border: isToday(a.appointment_date) ? '1px solid #93c5fd' : '1px solid var(--border)',
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: isToday(a.appointment_date) ? '#2563eb' : 'var(--foreground)' }}>
-                      {isToday(a.appointment_date) ? '오늘' : formatDate(a.appointment_date)} {a.time_slot}
-                    </span>
-                    <span style={{
-                      fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 6,
-                      background: st.bg, color: st.color
-                    }}>{st.text}</span>
-                  </div>
-                  <div style={{ fontSize: 12, color: 'var(--foreground)' }}>
-                    <span style={{ fontWeight: 600 }}>{a.student_name}</span>
-                    <span style={{ color: 'var(--muted-foreground)', marginLeft: 4, fontSize: 11 }}>{a.topic}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-        <div style={{ textAlign: 'right', marginTop: 6 }}>
-          <span onClick={() => navigate('/admin/clinic')} style={{
-            fontSize: 11, color: 'var(--muted-foreground)', cursor: 'pointer', fontWeight: 500,
-          }}>관리 →</span>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <div className="content">
+
+      {/* ── Password Modal ─────────────────── */}
       {showPwModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          onClick={() => setShowPwModal(false)}>
-          <div className="card" style={{ width: 340, maxWidth: '90vw', padding: 24 }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ marginBottom: 16 }}>🔒 비밀번호 변경</h3>
-            {pwMsg && <div className="alert" style={{ marginBottom: 12, padding: '8px 12px', background: pwMsg.includes('변경되었습니다') ? '#dcfce7' : '#fef2f2', borderRadius: 8, fontSize: 13 }}>{pwMsg}</div>}
+        <div onClick={() => setShowPwModal(false)} style={{
+          position: 'fixed', inset: 0, background: 'oklch(0% 0 0 / 0.45)',
+          zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div className="card" onClick={e => e.stopPropagation()} style={{
+            width: 340, maxWidth: '90vw', padding: 24, margin: 0,
+          }}>
+            <h3 style={{ marginBottom: 16, fontSize: 16, fontWeight: 700 }}>비밀번호 변경</h3>
+            {pwMsg && (
+              <div className={`alert ${pwMsg.includes('변경') ? 'alert-success' : 'alert-error'}`}
+                style={{ marginBottom: 12 }}>{pwMsg}</div>
+            )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <input type="password" placeholder="현재 비밀번호" value={pwForm.currentPassword}
-                onChange={e => setPwForm({...pwForm, currentPassword: e.target.value})} />
-              <input type="password" placeholder="새 비밀번호 (4자 이상)" value={pwForm.newPassword}
-                onChange={e => setPwForm({...pwForm, newPassword: e.target.value})} />
-              <input type="password" placeholder="새 비밀번호 확인" value={pwForm.confirmPassword}
-                onChange={e => setPwForm({...pwForm, confirmPassword: e.target.value})} />
+              <input type="password" placeholder="현재 비밀번호"
+                value={pwForm.currentPassword}
+                onChange={e => setPwForm({ ...pwForm, currentPassword: e.target.value })} />
+              <input type="password" placeholder="새 비밀번호 (4자 이상)"
+                value={pwForm.newPassword}
+                onChange={e => setPwForm({ ...pwForm, newPassword: e.target.value })} />
+              <input type="password" placeholder="새 비밀번호 확인"
+                value={pwForm.confirmPassword}
+                onChange={e => setPwForm({ ...pwForm, confirmPassword: e.target.value })} />
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleChangePassword}>변경</button>
                 <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setShowPwModal(false)}>취소</button>
@@ -322,318 +179,372 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      <div className="card" style={{ textAlign: 'center', padding: '24px 16px' }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--foreground)', marginBottom: 4, letterSpacing: '-0.025em' }}>
-          {MAIN_TITLE}
+      {/* ── Page Header ────────────────────── */}
+      <div style={{ marginBottom: 24, paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
+        <p style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 6, letterSpacing: '0.01em' }}>
+          {today.getFullYear()}년 {today.getMonth()+1}월 {today.getDate()}일 ({DAY_NAMES[today.getDay()]})
+        </p>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.03em', margin: 0 }}>
+          대시보드
         </h1>
-        <p style={{ fontSize: 14, color: 'var(--muted-foreground)', marginBottom: 0 }}>{SITE_TITLE}</p>
+        {actionItems.length > 0 && (
+          <p style={{ fontSize: 13, color: 'var(--destructive)', marginTop: 6, fontWeight: 500 }}>
+            처리가 필요한 항목이 {actionItems.length}개 있습니다
+          </p>
+        )}
       </div>
 
-      {/* 모바일: 클리닉 일정 최상단 */}
-      {renderMobileClinicTop()}
+      {/* ── 학생 초대 코드 ─────────────────── */}
+      {inviteCode && (
+        <div style={{
+          marginBottom: 24, padding: '16px 20px', borderRadius: 12,
+          background: 'var(--muted)', display: 'flex', alignItems: 'center', gap: 16,
+          border: '1px solid var(--border)'
+        }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 4, fontWeight: 600 }}>
+              {academyName ? `${academyName} ` : ''}학생 초대 코드
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: 4, fontFamily: 'monospace', color: 'var(--primary)' }}>
+              {inviteCode}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginTop: 4 }}>
+              학생 가입 시 이 코드를 입력하면 자동으로 연결됩니다
+            </div>
+          </div>
+          <button
+            onClick={() => { navigator.clipboard.writeText(inviteCode); alert('초대 코드가 복사되었습니다!'); }}
+            style={{
+              padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border)',
+              background: 'var(--card)', cursor: 'pointer', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap'
+            }}
+          >
+            복사
+          </button>
+        </div>
+      )}
 
-      {/* 메인 레이아웃: 메뉴 70% + 일정 30% */}
-      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+      {/* ── Action Required ─────────────────── */}
+      {actionItems.length > 0 && (
+        <div style={{ marginBottom: 24 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-foreground)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            처리 필요
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {actionItems.map((item, i) => (
+              <button key={i} onClick={() => navigate(item.path)} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '11px 16px', borderRadius: 10,
+                border: `1px solid ${item.urgent ? 'oklch(90% 0.06 25)' : 'var(--border)'}`,
+                background: item.urgent ? 'var(--destructive-light)' : 'var(--card)',
+                cursor: 'pointer', fontFamily: 'inherit', transition: 'transform 0.1s, box-shadow 0.1s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
+              >
+                <span style={{ fontSize: 20, fontWeight: 800, color: item.urgent ? 'var(--destructive)' : 'var(--primary)', lineHeight: 1 }}>
+                  {item.count}
+                </span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>{item.label}</span>
+                <span style={{ fontSize: 14, color: 'var(--muted-foreground)', marginLeft: 2 }}>→</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
-        {/* 왼쪽: 메뉴 (70%) */}
-        <div className="dashboard-menu-area" style={{ flex: '0 0 68%', minWidth: 0 }}>
-
-          {/* 1. 메인 화면 - 전체 현황 */}
-          <div className="card" style={{ padding: '16px' }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--primary)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 16 }}>🏠</span> 전체 현황
-            </h3>
-            {/* 알림 배지 */}
-            {(pendingCount > 0 || qnaCount > 0 || clinicCount > 0 || editRequestCount > 0 || reviewCount > 0) && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-                {pendingCount > 0 && (
-                  <span onClick={() => navigate('/admin/pending')} style={{ cursor: 'pointer', fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 12, background: '#fee2e2', color: '#991b1b' }}>
-                    🔴 가입 대기 {pendingCount}건
-                  </span>
-                )}
-                {qnaCount > 0 && (
-                  <span onClick={() => navigate('/admin/qna')} style={{ cursor: 'pointer', fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 12, background: '#fef3c7', color: '#92400e' }}>
-                    🟡 미답변 질문 {qnaCount}건
-                  </span>
-                )}
-                {clinicCount > 0 && (
-                  <span onClick={() => navigate('/admin/clinic')} style={{ cursor: 'pointer', fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 12, background: '#dbeafe', color: '#1d4ed8' }}>
-                    🔵 클리닉 대기 {clinicCount}건
-                  </span>
-                )}
-                {editRequestCount > 0 && (
-                  <span onClick={() => navigate('/admin/edit-requests')} style={{ cursor: 'pointer', fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 12, background: '#e0e7ff', color: '#3730a3' }}>
-                    🟣 정보 수정 {editRequestCount}건
-                  </span>
-                )}
-                {reviewCount > 0 && (
-                  <span onClick={() => navigate('/admin/reviews')} style={{ cursor: 'pointer', fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 12, background: '#dcfce7', color: '#166534' }}>
-                    🟢 후기 대기 {reviewCount}건
-                  </span>
-                )}
+      {/* ── KPI Row ─────────────────────────── */}
+      {hasCustomLayout && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 6 }}>
+          <button onClick={resetAllLayouts} style={{
+            fontSize: 11, color: 'var(--muted-foreground)', background: 'none', border: '1px solid var(--border)',
+            borderRadius: 4, padding: '2px 8px', cursor: 'pointer', fontFamily: 'inherit',
+          }}>레이아웃 초기화</button>
+        </div>
+      )}
+      <div className="dash-kpi-row" ref={kpiResize.containerRef} style={{ marginBottom: 24 }}>
+        {[
+          { label: '재원생', value: totalStudents, unit: '명', sub: '재학 중', color: 'var(--primary)' },
+          { label: '오늘 클리닉', value: todayClinic, unit: '건', sub: todayClinic === 0 ? '오늘 일정 없음' : '오늘 진행', color: todayClinic > 0 ? 'oklch(48% 0.22 295)' : 'var(--muted-foreground)' },
+          { label: '이번 주 수업', value: upcomingClasses.length, unit: '회', sub: '남은 수업', color: 'var(--success)' },
+          { label: '다음 시험', value: nextExam ? `D-${daysUntil(nextExam.exam_date)}` : '—', unit: '', sub: nextExam ? nextExam.name : '예정 없음', color: nextExam && daysUntil(nextExam.exam_date) <= 7 ? 'var(--warning)' : 'var(--foreground)' },
+        ].flatMap((kpi, i, arr) => [
+          <div key={`kpi-${i}`} style={{ flex: kpiResize.sizes[i], minWidth: 0 }}>
+            <div className="card" style={{ margin: 0, padding: '20px 22px', height: '100%', boxSizing: 'border-box' }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {kpi.label}
+              </p>
+              <div style={{ fontSize: 30, fontWeight: 800, color: kpi.color, lineHeight: 1, marginBottom: 5 }}>
+                {kpi.value}
+                {kpi.unit && <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--muted-foreground)', marginLeft: 3 }}>{kpi.unit}</span>}
               </div>
-            )}
-            {/* 총원 */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, padding: '8px 12px', borderRadius: 8, background: 'linear-gradient(135deg, #eff6ff, #dbeafe)' }}>
-              <span style={{ fontSize: 15 }}>👥</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#1e40af' }}>총원 {Object.values(schoolCounts).reduce((a, b) => a + b, 0)}명</span>
+              <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: 0 }}>{kpi.sub}</p>
             </div>
-            {/* 학교별 현황 */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 6 }}>
-              {SCHOOLS.map((s) => (
-                <div key={s.name} onClick={() => navigate(`/admin/school/${encodeURIComponent(s.name)}`)}
-                  style={{
-                    padding: '10px 8px', borderRadius: 8, textAlign: 'center', cursor: 'pointer',
-                    background: '#f8fafc', border: '1px solid var(--border)', transition: 'all 0.15s',
-                  }}>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>{s.name}</div>
-                  <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 2 }}>{schoolCounts[s.name] || 0}명</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 2. 수업 및 연구소 운영 */}
-          <div className="card" style={{ padding: '16px' }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--primary)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 16 }}>📚</span> 수업 및 연구소 운영
-            </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <button className="btn btn-outline" onClick={() => navigate('/admin/schedules')}>
-                📅 수업 일정 관리
-              </button>
-              <button className="btn btn-outline" onClick={() => navigate('/admin/scores')}>
-                📊 시험 성적 관리
-              </button>
-              <button className="btn btn-outline" onClick={() => navigate('/admin/clinic')} style={{ position: 'relative' }}>
-                🩺 클리닉 관리
-                {clinicCount > 0 && (
-                  <span style={{
-                    position: 'absolute', top: -6, right: -6,
-                    background: 'var(--destructive)', color: 'white',
-                    borderRadius: '9999px', width: 20, height: 20,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, fontWeight: 600
-                  }}>{clinicCount}</span>
-                )}
-              </button>
-              <button className="btn btn-outline" onClick={() => navigate('/admin/ta-schedule')}>
-                📋 조교 근무표
-              </button>
-              <button className="btn btn-outline" onClick={() => navigate('/admin/homework')}>
-                📝 과제 관리
-              </button>
-              <button className="btn btn-outline" onClick={() => navigate('/admin/reports')}>
-                📄 수업 레포트
-              </button>
-            </div>
-          </div>
-
-          {/* 3. 소통 및 승인 */}
-          <div className="card" style={{ padding: '16px' }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--primary)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 16 }}>💬</span> 소통 및 승인
-            </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <button className="btn btn-outline" onClick={() => navigate('/admin/pending')} style={{ position: 'relative' }}>
-                ✅ 가입 승인
-                {pendingCount > 0 && (
-                  <span style={{
-                    position: 'absolute', top: -6, right: -6,
-                    background: 'var(--destructive)', color: 'white',
-                    borderRadius: '9999px', width: 20, height: 20,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, fontWeight: 600
-                  }}>{pendingCount}</span>
-                )}
-              </button>
-              <button className="btn btn-outline" onClick={() => navigate('/admin/qna')} style={{ position: 'relative' }}>
-                ❓ 질문 관리
-                {qnaCount > 0 && (
-                  <span style={{
-                    position: 'absolute', top: -6, right: -6,
-                    background: 'var(--destructive)', color: 'white',
-                    borderRadius: '9999px', width: 20, height: 20,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, fontWeight: 600
-                  }}>{qnaCount}</span>
-                )}
-              </button>
-              <button className="btn btn-outline" onClick={() => navigate('/admin/sms')}>
-                💬 문자 발송
-              </button>
-              <button className="btn btn-outline" onClick={() => navigate('/admin/edit-requests')} style={{ position: 'relative' }}>
-                ✏️ 정보 수정 요청
-                {editRequestCount > 0 && (
-                  <span style={{
-                    position: 'absolute', top: -6, right: -6,
-                    background: 'var(--destructive)', color: 'white',
-                    borderRadius: '9999px', width: 20, height: 20,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, fontWeight: 600
-                  }}>{editRequestCount}</span>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* 4. 학습 및 콘텐츠 관리 */}
-          <div className="card" style={{ padding: '16px' }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--primary)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 16 }}>📖</span> 학습 및 콘텐츠 관리
-            </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <button className="btn btn-outline" onClick={() => navigate('/admin/notices')}>
-                📢 안내사항 관리
-              </button>
-              <button className="btn btn-outline" onClick={() => navigate('/admin/reviews')} style={{ position: 'relative' }}>
-                ⭐ 후기 관리
-                {reviewCount > 0 && (
-                  <span style={{
-                    position: 'absolute', top: -6, right: -6,
-                    background: 'var(--destructive)', color: 'white',
-                    borderRadius: '9999px', width: 20, height: 20,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, fontWeight: 600
-                  }}>{reviewCount}</span>
-                )}
-              </button>
-              <button className="btn btn-outline" onClick={() => navigate('/admin/hall-of-fame')}>
-                🏆 '강인한 국어' 명예의 전당
-              </button>
-              <button className="btn btn-outline" onClick={() => navigate('/admin/gamification')}>
-                🎮 게임 관리
-              </button>
-            </div>
-          </div>
-
-          {/* 5. 시스템 설정 */}
-          <div className="card" style={{ padding: '16px' }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--primary)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 16 }}>⚙️</span> 시스템 설정
-            </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <button className="btn btn-outline" onClick={() => navigate('/student')}>
-                👀 학생 페이지 보기
-              </button>
-              <button className="btn btn-outline" onClick={() => setShowPwModal(true)}>
-                🔒 비밀번호 변경
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* 오른쪽: 일정 패널 (30%) - 데스크탑 */}
-        <div className="dashboard-schedule-desktop" style={{ flex: '0 0 30%', position: 'sticky', top: 68 }}>
-          {renderSchedulePanel()}
-        </div>
+          </div>,
+          i < arr.length - 1 ? <GridResizeHandle key={`kpi-h-${i}`} onMouseDown={e => kpiResize.handleMouseDown(i, e)} /> : null,
+        ]).filter(Boolean)}
       </div>
 
-      {/* 모바일: 수업 일정 + 시험 일정 (클리닉은 최상단에 별도 표시) */}
-      <div className="dashboard-schedule-mobile-bottom" style={{ display: 'none', flexDirection: 'column', gap: 12 }}>
-        {/* 수업 일정 */}
-        <div className="card" style={{ padding: 14 }}>
-          <h3 style={{ margin: '0 0 10px 0', fontSize: 14, fontWeight: 700, color: 'var(--primary)' }}>📚 이번 주 수업</h3>
-          {upcomingClasses.length === 0 ? (
-            <p style={{ fontSize: 12, color: 'var(--muted-foreground)', textAlign: 'center', padding: '8px 0', margin: 0 }}>
-              이번 주 수업이 없습니다
-            </p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {(() => {
-                const grouped = {};
-                upcomingClasses.forEach(s => {
-                  if (!grouped[s.schedule_date]) grouped[s.schedule_date] = [];
-                  grouped[s.schedule_date].push(s);
-                });
-                return Object.keys(grouped).sort().map(date => {
-                  const items = grouped[date];
-                  const isTodayDate = isToday(date);
+      {/* ── Main Grid ───────────────────────── */}
+      <div className="dash-main-grid" ref={mainResize.containerRef}>
+
+        {/* Left: Schedules */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: mainResize.sizes[0], minWidth: 0 }}>
+
+          {/* Clinic */}
+          <div className="card" style={{ margin: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <h2 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>클리닉 일정</h2>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                {clinicCount > 0 && (
+                  <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10, background: 'var(--warning-light)', color: 'oklch(35% 0.12 75)' }}>
+                    승인 대기 {clinicCount}
+                  </span>
+                )}
+                <span onClick={() => navigate('/admin/clinic')} style={{ fontSize: 12, color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}>
+                  관리 →
+                </span>
+              </div>
+            </div>
+            {upcomingClinic.length === 0 ? (
+              <p style={{ fontSize: 13, color: 'var(--muted-foreground)', textAlign: 'center', padding: '20px 0', margin: 0 }}>
+                예정된 클리닉이 없습니다
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {upcomingClinic.map(a => {
+                  const st     = STATUS_LABEL[a.status] || STATUS_LABEL.pending;
+                  const isTod  = isToday(a.appointment_date);
                   return (
-                    <div key={date}>
-                      <div style={{ fontSize: 11, fontWeight: 700, padding: '3px 0', color: isTodayDate ? '#2563eb' : 'var(--muted-foreground)' }}>
-                        {isTodayDate ? '오늘' : formatDate(date)}
+                    <div key={a.id} onClick={() => navigate('/admin/clinic')} style={{
+                      padding: '10px 14px', borderRadius: 8, cursor: 'pointer',
+                      background: isTod ? 'var(--info-light)' : 'var(--neutral-50)',
+                      border: isTod ? '1px solid oklch(72% 0.10 260)' : '1px solid var(--border)',
+                      transition: 'background 0.1s',
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: isTod ? 'var(--primary)' : 'var(--foreground)' }}>
+                            {isTod ? '오늘' : formatDate(a.appointment_date)} {a.time_slot}
+                          </span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>{a.student_name}</span>
+                          <span style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>{a.topic}</span>
+                        </div>
+                        <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 7px', borderRadius: 5, background: st.bg, color: st.color }}>
+                          {st.text}
+                        </span>
                       </div>
-                      {items.map(s => {
-                        const cancelled = s.status === 'cancelled';
-                        return (
-                          <div key={s.id} onClick={() => navigate('/admin/schedules')} style={{
-                            padding: '4px 8px', borderRadius: 6, cursor: 'pointer', marginBottom: 2,
-                            borderLeft: `3px solid ${cancelled ? '#d1d5db' : (s.color || '#3b82f6')}`,
-                            background: cancelled ? '#fef2f2' : isTodayDate ? '#f0fdf4' : '#f8fafc',
-                            opacity: cancelled ? 0.6 : 1,
-                          }}>
-                            <div style={{ fontSize: 11 }}>
-                              {cancelled && <span style={{ color: '#ef4444', fontWeight: 700, marginRight: 2 }}>휴강</span>}
-                              <span style={{ fontWeight: 600, textDecoration: cancelled ? 'line-through' : 'none' }}>{s.time_slot || ''}</span>
-                              <span style={{ marginLeft: 4, textDecoration: cancelled ? 'line-through' : 'none' }}>{s.title}</span>
-                              {s.target_school && <span style={{ color: 'var(--muted-foreground)', fontSize: 10 }}> ({s.target_school})</span>}
-                            </div>
-                          </div>
-                        );
-                      })}
                     </div>
                   );
-                });
-              })()}
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Classes + Exams */}
+          <div className="dash-schedule-row" ref={scheduleResize.containerRef}>
+
+            {/* Classes */}
+            <div className="card" style={{ margin: 0, flex: scheduleResize.sizes[0], minWidth: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <h2 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>이번 주 수업</h2>
+                <span onClick={() => navigate('/admin/schedules')} style={{ fontSize: 12, color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}>관리 →</span>
+              </div>
+              {Object.keys(groupedClasses).length === 0 ? (
+                <p style={{ fontSize: 13, color: 'var(--muted-foreground)', textAlign: 'center', padding: '16px 0', margin: 0 }}>이번 주 수업이 없습니다</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {Object.keys(groupedClasses).sort().map(date => {
+                    const items     = groupedClasses[date];
+                    const isTodDate = isToday(date);
+                    return (
+                      <div key={date}>
+                        <p style={{ fontSize: 11, fontWeight: 700, marginBottom: 4, color: isTodDate ? 'var(--primary)' : 'var(--muted-foreground)' }}>
+                          {isTodDate ? '오늘' : formatDate(date)}
+                        </p>
+                        {items.map(s => {
+                          const cancelled = s.status === 'cancelled';
+                          return (
+                            <div key={s.id} onClick={() => navigate('/admin/schedules')} style={{
+                              padding: '5px 8px', borderRadius: 6, cursor: 'pointer', marginBottom: 2,
+                              borderLeft: `3px solid ${cancelled ? 'var(--neutral-300)' : (s.color || 'var(--primary-light)')}`,
+                              background: cancelled ? 'var(--destructive-light)' : isTodDate ? 'var(--success-light)' : 'var(--neutral-50)',
+                              opacity: cancelled ? 0.7 : 1, fontSize: 12,
+                            }}>
+                              {cancelled && <span style={{ color: 'var(--destructive)', fontWeight: 700, marginRight: 3 }}>휴강</span>}
+                              <span style={{ fontWeight: 600 }}>{s.time_slot || ''}</span>
+                              <span style={{ marginLeft: 4 }}>{s.title}</span>
+                              {s.target_school && <span style={{ color: 'var(--muted-foreground)', fontSize: 11 }}> ({s.target_school})</span>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          )}
-          <div style={{ textAlign: 'right', marginTop: 6 }}>
-            <span onClick={() => navigate('/admin/schedules')} style={{ fontSize: 11, color: 'var(--muted-foreground)', cursor: 'pointer', fontWeight: 500 }}>관리 →</span>
+
+            <GridResizeHandle onMouseDown={e => scheduleResize.handleMouseDown(0, e)} />
+
+            {/* Exams */}
+            <div className="card" style={{ margin: 0, flex: scheduleResize.sizes[1], minWidth: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <h2 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>예정 시험</h2>
+                <span onClick={() => navigate('/admin/scores')} style={{ fontSize: 12, color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}>관리 →</span>
+              </div>
+              {upcomingExams.length === 0 ? (
+                <p style={{ fontSize: 13, color: 'var(--muted-foreground)', textAlign: 'center', padding: '16px 0', margin: 0 }}>예정된 시험이 없습니다</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {upcomingExams.map(e => {
+                    const dl = daysUntil(e.exam_date);
+                    return (
+                      <div key={e.id} onClick={() => navigate('/admin/scores')} style={{
+                        padding: '10px 12px', borderRadius: 8, cursor: 'pointer',
+                        background: isToday(e.exam_date) ? 'var(--warning-light)' : 'var(--neutral-50)',
+                        border: isToday(e.exam_date) ? '1px solid var(--warning)' : '1px solid var(--border)',
+                        transition: 'background 0.1s',
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                          <div style={{ minWidth: 0 }}>
+                            <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {e.name}
+                            </p>
+                            {e.school && <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: '2px 0 0' }}>{e.school}</p>}
+                          </div>
+                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                            <p style={{ fontSize: 13, fontWeight: 800, margin: 0, color: dl <= 3 ? 'var(--destructive)' : dl <= 7 ? 'var(--warning)' : 'var(--muted-foreground)' }}>
+                              {isToday(e.exam_date) ? '오늘' : `D-${dl}`}
+                            </p>
+                            <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: '2px 0 0' }}>{formatDate(e.exam_date)}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-        {/* 시험 일정 */}
-        <div className="card" style={{ padding: 14 }}>
-          <h3 style={{ margin: '0 0 10px 0', fontSize: 14, fontWeight: 700, color: 'var(--primary)' }}>📝 시험 일정</h3>
-          {upcomingExams.length === 0 ? (
-            <p style={{ fontSize: 12, color: 'var(--muted-foreground)', textAlign: 'center', padding: '8px 0', margin: 0 }}>
-              예정된 시험이 없습니다
-            </p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {upcomingExams.map(e => (
-                <div key={e.id} onClick={() => navigate('/admin/scores')} style={{
-                  padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
-                  background: isToday(e.exam_date) ? '#fef3c7' : '#f8fafc',
-                  border: isToday(e.exam_date) ? '1px solid #f59e0b' : '1px solid var(--border)',
-                }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: isToday(e.exam_date) ? '#92400e' : 'var(--foreground)' }}>
-                    {isToday(e.exam_date) ? '오늘' : formatDate(e.exam_date)}
+
+        <GridResizeHandle onMouseDown={e => mainResize.handleMouseDown(0, e)} />
+
+        {/* Right: Student Overview + Quick Actions */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: mainResize.sizes[1], minWidth: 0 }}>
+
+          {/* Student counts */}
+          <div className="card" style={{ margin: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <h2 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>학교별 현황</h2>
+              <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--primary)' }}>{totalStudents}명</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              {SCHOOLS.filter(s => !['조교', '선생님', '중학생'].includes(s.name)).map(s => (
+                <div key={s.name}>
+                  <div onClick={() => navigate(`/admin/school/${encodeURIComponent(s.name)}`)} style={{
+                    padding: '8px 12px', borderRadius: 8, cursor: 'pointer',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    background: 'var(--neutral-50)', border: '1px solid var(--border)',
+                    transition: 'border-color 0.12s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--primary)'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                  >
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>{s.name}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)' }}>{schoolCounts[s.name] || 0}명</span>
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--foreground)', marginTop: 2 }}>
-                    {e.name}
-                    {e.school && <span style={{ color: 'var(--muted-foreground)', marginLeft: 4, fontSize: 11 }}>({e.school})</span>}
-                  </div>
+                  {gradeDetails[s.name]?.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginTop: 3, paddingLeft: 8 }}>
+                      {gradeDetails[s.name].map(g => (
+                        <span key={g.grade} style={{ fontSize: 11, color: 'var(--muted-foreground)', background: 'var(--neutral-100)', padding: '1px 6px', borderRadius: 4 }}>
+                          {g.grade} {g.student_count}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
+              {['조교', '선생님'].some(r => (schoolCounts[r] || 0) > 0) && (
+                <div style={{ display: 'flex', gap: 8, marginTop: 4, paddingTop: 4, borderTop: '1px solid var(--border)' }}>
+                  {['조교', '선생님'].map(role => (schoolCounts[role] || 0) > 0 && (
+                    <span key={role} onClick={() => navigate(`/admin/school/${encodeURIComponent(role)}`)}
+                      style={{ fontSize: 11, color: 'var(--muted-foreground)', cursor: 'pointer' }}>
+                      {role} {schoolCounts[role]}명
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-          <div style={{ textAlign: 'right', marginTop: 6 }}>
-            <span onClick={() => navigate('/admin/scores')} style={{ fontSize: 11, color: 'var(--muted-foreground)', cursor: 'pointer', fontWeight: 500 }}>관리 →</span>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="card" style={{ margin: 0 }}>
+            <h2 style={{ margin: '0 0 12px 0', fontSize: 14, fontWeight: 700 }}>빠른 실행</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              {[
+                { path: '/admin/scores',  icon: '📊', label: '성적 입력' },
+                { path: '/admin/notices', icon: '📢', label: '공지 작성' },
+                { path: '/admin/sms',     icon: '💬', label: '문자 발송' },
+                { path: '/admin/attendance', icon: '📋', label: '출결 관리' },
+                { path: '/admin/tuition',    icon: '💰', label: '수납 관리' },
+                { path: '/admin/consultations', icon: '🗨️', label: '상담 일지' },
+                { path: '/admin/portfolios', icon: '📁', label: '포트폴리오' },
+                { path: '/admin/sms-credits', icon: '📱', label: 'SMS 충전' },
+                { path: '/admin/subscription', icon: '🔔', label: '구독 관리' },
+                { action: () => setShowPwModal(true), icon: '🔒', label: '비밀번호 변경' },
+              ].map((item, i) => (
+                <button key={i} onClick={item.action || (() => navigate(item.path))} style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '10px 14px', borderRadius: 8,
+                  border: '1px solid var(--border)', background: 'var(--card)',
+                  cursor: 'pointer', fontFamily: 'inherit',
+                  fontSize: 13, fontWeight: 500, textAlign: 'left', width: '100%',
+                  color: 'var(--foreground)', transition: 'background 0.1s, border-color 0.1s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--neutral-50)'; e.currentTarget.style.borderColor = 'var(--border-hover)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'var(--card)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+                >
+                  <span>{item.icon}</span>
+                  <span>{item.label}</span>
+                  <span style={{ marginLeft: 'auto', color: 'var(--muted-foreground)', fontSize: 14 }}>→</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
+      {/* ── Responsive styles ───────────────── */}
       <style>{`
-        @media (max-width: 768px) {
-          .dashboard-menu-area { flex: 1 !important; }
-          .dashboard-schedule-desktop { display: none !important; }
-          .dashboard-clinic-mobile-top { display: block !important; }
-          .dashboard-schedule-mobile-bottom { display: flex !important; }
+        .dash-kpi-row {
+          display: flex;
+          gap: 10px;
+          align-items: stretch;
         }
-        .btn-outline {
-          transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+        .dash-main-grid {
+          display: flex;
+          gap: 0;
+          align-items: flex-start;
         }
-        .btn-outline:hover {
-          background: var(--primary) !important;
-          color: white !important;
-          border-color: var(--primary) !important;
+        .dash-schedule-row {
+          display: flex;
+          gap: 0;
+          align-items: stretch;
         }
-        .btn-outline:active {
-          background: #1d4ed8 !important;
-          color: white !important;
-          border-color: #1d4ed8 !important;
-          transform: scale(0.97);
+        @media (max-width: 900px) {
+          .dash-main-grid { flex-direction: column; gap: 12px; }
+          .dash-main-grid > div { flex: 1 !important; }
+          .dash-main-grid > .resize-handle { display: none !important; }
+        }
+        @media (max-width: 600px) {
+          .dash-kpi-row { flex-wrap: wrap; }
+          .dash-kpi-row > div:not(.resize-handle) { flex: 0 0 calc(50% - 9px) !important; }
+          .dash-kpi-row > .resize-handle { display: none !important; }
+          .dash-schedule-row { flex-direction: column; gap: 10px; }
+          .dash-schedule-row > .card { flex: 1 !important; }
+          .dash-schedule-row > .resize-handle { display: none !important; }
         }
       `}</style>
     </div>
