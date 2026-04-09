@@ -22,13 +22,13 @@ types.setTypeParser(1700, (val) => parseFloat(val));     // numeric
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
-  max: 10,
+  max: 5,
   min: 1,
-  idleTimeoutMillis: 60000,
+  idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 15000,
   keepAlive: true,
   keepAliveInitialDelayMillis: 10000,
-  allowExitOnIdle: false,
+  allowExitOnIdle: true,
 });
 
 // ── 연속 연결 에러 추적 ──
@@ -38,7 +38,8 @@ pool.on('error', (err) => {
   console.error('[DB Pool] 예기치 않은 에러:', err.message);
 });
 
-// ── 5분 주기 헬스체크 ──
+// ── 헬스체크 (production: 3분, dev: 5분) ──
+const healthCheckInterval = process.env.NODE_ENV === 'production' ? 3 * 60 * 1000 : 5 * 60 * 1000;
 setInterval(async () => {
   try {
     await pool.query('SELECT 1');
@@ -46,7 +47,7 @@ setInterval(async () => {
   } catch (err) {
     console.error('[DB Health] 연결 실패:', err.message);
   }
-}, 5 * 60 * 1000);
+}, healthCheckInterval);
 
 // ── 연결 에러 판별 ──
 function isConnectionError(err) {

@@ -25,7 +25,9 @@ const PORT = process.env.PORT || 3001;
 // ── 보안 미들웨어 ──
 const corsOrigin = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
-  : ['http://localhost:5173', 'http://localhost:3002'];
+  : process.env.NODE_ENV === 'production'
+    ? true
+    : ['http://localhost:5173', 'http://localhost:3002'];
 app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json({ limit: '1mb' }));
 
@@ -243,11 +245,11 @@ function gracefulShutdown(signal) {
       process.exit(0);
     });
     setTimeout(() => {
-      console.error('[서버] 강제 종료 (10초 타임아웃)');
-      process.exit(1);
-    }, 10000);
+      console.error('[서버] 강제 종료 (5초 타임아웃)');
+      process.exit(0);
+    }, 5000);
   } else {
-    process.exit(1);
+    process.exit(0);
   }
 }
 
