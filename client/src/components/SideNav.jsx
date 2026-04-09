@@ -425,9 +425,9 @@ export default function SideNav() {
 
         {/* Push content right */}
         <style>{`
-          .content { margin-left: ${sidebarOpen ? '230px' : '0'} !important; transition: margin-left 0.22s cubic-bezier(0.16,1,0.3,1); }
-          @media (max-width: 1024px) { .content { margin-left: ${sidebarOpen ? '200px' : '0'} !important; } }
-          @media (max-width: 768px) { .content { margin-left: 0 !important; } }
+          .content, .main-content { margin-left: ${sidebarOpen ? '230px' : '0'} !important; transition: margin-left 0.22s cubic-bezier(0.16,1,0.3,1); }
+          @media (max-width: 1024px) { .content, .main-content { margin-left: ${sidebarOpen ? '200px' : '0'} !important; } }
+          @media (max-width: 768px) { .content, .main-content { margin-left: 0 !important; } }
           @keyframes badgePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
         `}</style>
       </>

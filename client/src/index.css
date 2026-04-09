@@ -846,7 +846,7 @@ a { text-decoration: none; color: inherit; }
 .navbar button:hover { background: oklch(30% 0.025 250); }
 
 /* ─── Content ─── */
-.content { flex: 1; padding: var(--space-4) var(--space-5); max-width: 100%; width: auto; padding-bottom: 80px; box-sizing: border-box; }
+.content, .main-content { flex: 1; padding: var(--space-4) var(--space-5); max-width: 100%; width: auto; padding-bottom: 80px; box-sizing: border-box; }
 
 /* Admin layout utilities */
 .admin-grid-2col { display: grid; grid-template-columns: min(380px, 35%) 1fr; gap: var(--space-3); align-items: start; }
