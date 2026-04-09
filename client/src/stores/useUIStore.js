@@ -2,9 +2,9 @@ import { create } from 'zustand';
 
 function getInitialTheme() {
   try {
-    return localStorage.getItem('theme') || 'system';
+    return localStorage.getItem('theme') || 'light';
   } catch {
-    return 'system';
+    return 'light';
   }
 }
 
@@ -19,8 +19,12 @@ function applyTheme(theme) {
   }
 }
 
+// 앱 로드 시 즉시 테마 적용 (다크 모드 깜빡임 방지)
+const initialTheme = getInitialTheme();
+applyTheme(initialTheme);
+
 export const useUIStore = create((set) => ({
-  theme: getInitialTheme(),
+  theme: initialTheme,
 
   setTheme: (theme) => {
     localStorage.setItem('theme', theme);
