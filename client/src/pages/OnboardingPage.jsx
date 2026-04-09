@@ -50,7 +50,7 @@ export default function OnboardingPage() {
   const [form, setForm] = useState({
     academyName: '', slug: '', subject: '',
     adminUsername: '', adminPassword: '', adminPasswordConfirm: '',
-    adminName: '', adminPhone: ''
+    adminName: '', adminPhone: '', adminPhone2: ''
   });
   const [slugAvailable, setSlugAvailable] = useState(null);
   const [error, setError] = useState('');
@@ -105,7 +105,8 @@ export default function OnboardingPage() {
 
     setLoading(true);
     try {
-      await apiPost('/onboarding/create-academy', form);
+      const submitForm = { ...form, adminPhone: form.adminPhone.trim() || '000-0000-0000' };
+      await apiPost('/onboarding/create-academy', submitForm);
       setStep(4);
     } catch (err) {
       setError(err.message);
@@ -220,6 +221,10 @@ export default function OnboardingPage() {
             <div>
               <label style={labelStyle}>학원 전용 URL *</label>
               <p style={{ fontSize: 12, color: C.textTertiary, marginBottom: 8 }}>학생들이 이 주소로 가입합니다</p>
+              <div style={{ marginBottom: 8, padding: '10px 14px', background: C.surface, borderRadius: 10, fontSize: 13, color: C.textSecondary, fontFamily: 'monospace' }}>
+                <span style={{ color: C.textTertiary }}>...myteachingassistant.com/register?academy=</span>
+                <span style={{ fontWeight: 700, color: C.accent }}>{form.slug || 'my-academy'}</span>
+              </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <input style={{ ...inputBase, flex: 1 }} value={form.slug} onChange={update('slug')} onBlur={checkSlug} placeholder="my-academy" onFocus={focusHandler} />
                 <button type="button" onClick={autoSlug} style={{
@@ -231,12 +236,6 @@ export default function OnboardingPage() {
                   onMouseOut={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSecondary; }}
                 >자동 생성</button>
               </div>
-              {form.slug && (
-                <div style={{ marginTop: 8, padding: '10px 14px', background: C.surface, borderRadius: 10, fontSize: 13, color: C.textSecondary, fontFamily: 'monospace' }}>
-                  <span style={{ color: C.textTertiary }}>...myteachingassistant.com/register?academy=</span>
-                  <span style={{ fontWeight: 700, color: C.accent }}>{form.slug}</span>
-                </div>
-              )}
               {slugAvailable === true && (
                 <p style={{ color: C.success, fontSize: 12, marginTop: 6, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.success} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
@@ -305,8 +304,13 @@ export default function OnboardingPage() {
               )}
             </div>
             <div>
-              <label style={labelStyle}>연락처 <span style={{ fontWeight: 400, color: C.textTertiary }}>(선택)</span></label>
+              <label style={labelStyle}>대표 연락처 *</label>
+              <p style={{ fontSize: 12, color: C.textTertiary, marginBottom: 8 }}>학부모·학생 문의 시 안내되는 번호입니다</p>
               <input style={inputBase} value={form.adminPhone} onChange={update('adminPhone')} placeholder="010-0000-0000" onFocus={focusHandler} onBlur={blurHandler} />
+            </div>
+            <div>
+              <label style={labelStyle}>보조 연락처 <span style={{ fontWeight: 400, color: C.textTertiary }}>(선택)</span></label>
+              <input style={inputBase} value={form.adminPhone2} onChange={update('adminPhone2')} placeholder="학원 유선 번호 등" onFocus={focusHandler} onBlur={blurHandler} />
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
               <button style={outlineBtn} onClick={() => setStep(1)}
@@ -349,9 +353,21 @@ export default function OnboardingPage() {
               </div>
               <div style={{ height: 1, background: C.border, margin: '16px 0' }} />
               <div style={{ fontSize: 12, fontWeight: 700, color: C.textTertiary, marginBottom: 14, textTransform: 'uppercase', letterSpacing: 1 }}>관리자</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
-                <span style={{ color: C.textSecondary }}>이름 (아이디)</span>
-                <span style={{ fontWeight: 700, color: C.textPrimary }}>{form.adminName} ({form.adminUsername})</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                  <span style={{ color: C.textSecondary }}>이름 (아이디)</span>
+                  <span style={{ fontWeight: 700, color: C.textPrimary }}>{form.adminName} ({form.adminUsername})</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                  <span style={{ color: C.textSecondary }}>대표 연락처</span>
+                  <span style={{ color: C.textPrimary }}>{form.adminPhone || '000-0000-0000'}</span>
+                </div>
+                {form.adminPhone2 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                    <span style={{ color: C.textSecondary }}>보조 연락처</span>
+                    <span style={{ color: C.textPrimary }}>{form.adminPhone2}</span>
+                  </div>
+                )}
               </div>
             </div>
 
