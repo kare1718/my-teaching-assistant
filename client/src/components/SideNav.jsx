@@ -118,6 +118,8 @@ const studentPages = [
 const STORAGE_KEY   = 'menuFabY';
 const SIDEBAR_KEY   = 'adminSidebarOpen';
 const COLLAPSED_KEY = 'adminNavCollapsed';
+const PINNED_KEY    = 'adminSidebarPinned';
+const FONT = "'Paperlogy', 'Noto Sans KR', system-ui, sans-serif";
 
 export default function SideNav() {
   const navigate  = useNavigate();
@@ -129,10 +131,14 @@ export default function SideNav() {
   const isAdminUser = user.role === 'admin' || user.school === '조교';
 
   /* ── Admin sidebar state ── */
+  const [pinned, setPinned] = useState(() => {
+    const saved = localStorage.getItem(PINNED_KEY);
+    return saved !== null ? saved === 'true' : false;
+  });
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     if (!isAdminPage) return false;
-    const saved = localStorage.getItem(SIDEBAR_KEY);
-    return saved !== null ? saved === 'true' : true;
+    const saved = localStorage.getItem(PINNED_KEY);
+    return saved === 'true'; // 고정이면 열림, 아니면 닫힘
   });
 
   const toggleSidebar = () => {
@@ -141,10 +147,33 @@ export default function SideNav() {
     localStorage.setItem(SIDEBAR_KEY, String(next));
   };
 
+  const togglePin = () => {
+    const next = !pinned;
+    setPinned(next);
+    localStorage.setItem(PINNED_KEY, String(next));
+    if (next) { setSidebarOpen(true); localStorage.setItem(SIDEBAR_KEY, 'true'); }
+  };
+
+  // 다른 곳 클릭 시 닫기 (고정 안 된 경우)
+  useEffect(() => {
+    if (!isAdminPage || pinned || !sidebarOpen) return;
+    const handleClick = (e) => {
+      const sidebar = document.getElementById('admin-sidebar');
+      const openBtn = document.getElementById('sidebar-open-btn');
+      if (sidebar && !sidebar.contains(e.target) && openBtn && !openBtn.contains(e.target)) {
+        setSidebarOpen(false);
+        localStorage.setItem(SIDEBAR_KEY, 'false');
+      }
+    };
+    const timer = setTimeout(() => document.addEventListener('click', handleClick), 100);
+    return () => { clearTimeout(timer); document.removeEventListener('click', handleClick); };
+  }, [isAdminPage, pinned, sidebarOpen]);
+
   useEffect(() => {
     if (isAdminPage) {
-      const saved = localStorage.getItem(SIDEBAR_KEY);
-      setSidebarOpen(saved !== null ? saved === 'true' : true);
+      const isPinned = localStorage.getItem(PINNED_KEY) === 'true';
+      setPinned(isPinned);
+      setSidebarOpen(isPinned);
     }
   }, [isAdminPage]);
 
@@ -364,13 +393,14 @@ export default function SideNav() {
     return (
       <>
         {/* Sidebar panel */}
-        <div style={{
+        <div id="admin-sidebar" style={{
           position: 'fixed', top: 52, left: 0, bottom: 0,
           width: sidebarOpen ? 230 : 0,
           background: 'var(--card)', zIndex: 180,
           borderRight: sidebarOpen ? '1px solid var(--border)' : 'none',
           transition: 'width 0.22s cubic-bezier(0.16,1,0.3,1)',
           overflow: 'hidden', display: 'flex', flexDirection: 'column',
+          fontFamily: FONT,
         }}>
           <div style={{ width: 230, minWidth: 230, display: 'flex', flexDirection: 'column', height: '100%' }}>
             {/* Sidebar header */}
@@ -379,7 +409,7 @@ export default function SideNav() {
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted-foreground)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted-foreground)', margin: 0, letterSpacing: '0.02em' }}>
                   관리자 메뉴
                 </span>
                 {totalBadge > 0 && (
@@ -394,13 +424,24 @@ export default function SideNav() {
                   </span>
                 )}
               </div>
-              <button onClick={toggleSidebar} style={{
-                background: 'none', border: 'none', cursor: 'pointer', padding: 4,
-                color: 'var(--neutral-400)', display: 'flex', alignItems: 'center',
-                borderRadius: 5,
-              }}>
-                {Icons.chevronLeft}
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <button onClick={togglePin} title={pinned ? '메뉴 고정 해제' : '메뉴 고정'} style={{
+                  background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+                  color: pinned ? 'var(--primary)' : 'var(--neutral-400)', display: 'flex', alignItems: 'center',
+                  borderRadius: 5, transition: 'color 0.2s',
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill={pinned ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16h14v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V5a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2z"/>
+                  </svg>
+                </button>
+                <button onClick={toggleSidebar} style={{
+                  background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+                  color: 'var(--neutral-400)', display: 'flex', alignItems: 'center',
+                  borderRadius: 5,
+                }}>
+                  {Icons.chevronLeft}
+                </button>
+              </div>
             </div>
             {renderAdminMenu()}
             {renderSwitchButton(navigate)}
@@ -423,10 +464,10 @@ export default function SideNav() {
           </button>
         )}
 
-        {/* Push content right */}
+        {/* Push content right — only when pinned */}
         <style>{`
-          .content, .main-content { margin-left: ${sidebarOpen ? '230px' : '0'} !important; transition: margin-left 0.22s cubic-bezier(0.16,1,0.3,1); }
-          @media (max-width: 1024px) { .content, .main-content { margin-left: ${sidebarOpen ? '200px' : '0'} !important; } }
+          .content, .main-content { margin-left: ${pinned && sidebarOpen ? '230px' : '0'} !important; transition: margin-left 0.22s cubic-bezier(0.16,1,0.3,1); }
+          @media (max-width: 1024px) { .content, .main-content { margin-left: ${pinned && sidebarOpen ? '200px' : '0'} !important; } }
           @media (max-width: 768px) { .content, .main-content { margin-left: 0 !important; } }
           @keyframes badgePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
         `}</style>
