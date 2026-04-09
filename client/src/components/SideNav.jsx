@@ -131,14 +131,23 @@ export default function SideNav() {
   const isAdminUser = user.role === 'admin' || user.school === '조교';
 
   /* ── Admin sidebar state ── */
+  const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' && window.innerWidth > 768);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 769px)');
+    const handler = (e) => setIsDesktop(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
   const [pinned, setPinned] = useState(() => {
     const saved = localStorage.getItem(PINNED_KEY);
     return saved !== null ? saved === 'true' : false;
   });
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     if (!isAdminPage) return false;
+    if (typeof window !== 'undefined' && window.innerWidth > 768) return true; // 데스크톱은 항상 열림
     const saved = localStorage.getItem(PINNED_KEY);
-    return saved === 'true'; // 고정이면 열림, 아니면 닫힘
+    return saved === 'true';
   });
 
   const toggleSidebar = () => {
@@ -154,9 +163,16 @@ export default function SideNav() {
     if (next) { setSidebarOpen(true); localStorage.setItem(SIDEBAR_KEY, 'true'); }
   };
 
-  // 다른 곳 클릭 시 닫기 (고정 안 된 경우)
+  // 데스크톱 전환 시 자동 열기
   useEffect(() => {
-    if (!isAdminPage || pinned || !sidebarOpen) return;
+    if (isAdminPage && isDesktop) {
+      setSidebarOpen(true);
+    }
+  }, [isDesktop, isAdminPage]);
+
+  // 다른 곳 클릭 시 닫기 (모바일에서만, 고정 안 된 경우)
+  useEffect(() => {
+    if (!isAdminPage || isDesktop || pinned || !sidebarOpen) return;
     const handleClick = (e) => {
       const sidebar = document.getElementById('admin-sidebar');
       const openBtn = document.getElementById('sidebar-open-btn');
@@ -167,15 +183,30 @@ export default function SideNav() {
     };
     const timer = setTimeout(() => document.addEventListener('click', handleClick), 100);
     return () => { clearTimeout(timer); document.removeEventListener('click', handleClick); };
-  }, [isAdminPage, pinned, sidebarOpen]);
+  }, [isAdminPage, isDesktop, pinned, sidebarOpen]);
 
   useEffect(() => {
     if (isAdminPage) {
-      const isPinned = localStorage.getItem(PINNED_KEY) === 'true';
-      setPinned(isPinned);
-      setSidebarOpen(isPinned);
+      if (isDesktop) {
+        setSidebarOpen(true);
+      } else {
+        const isPinned = localStorage.getItem(PINNED_KEY) === 'true';
+        setPinned(isPinned);
+        setSidebarOpen(isPinned);
+      }
     }
   }, [isAdminPage]);
+
+  // 설정 페이지에서 사이드바 고정 변경 시 즉시 반영
+  useEffect(() => {
+    const onPinChange = () => {
+      const next = localStorage.getItem(PINNED_KEY) === 'true';
+      setPinned(next);
+      setSidebarOpen(next);
+    };
+    window.addEventListener('sidebarPinChanged', onPinChange);
+    return () => window.removeEventListener('sidebarPinChanged', onPinChange);
+  }, []);
 
   /* ── Category collapse state ── */
   const [collapsedCats, setCollapsedCats] = useState(() => {
@@ -424,32 +455,35 @@ export default function SideNav() {
                   </span>
                 )}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <button onClick={togglePin} title={pinned ? '메뉴 고정 해제' : '메뉴 고정'} style={{
-                  background: 'none', border: 'none', cursor: 'pointer', padding: 4,
-                  color: pinned ? 'var(--primary)' : 'var(--neutral-400)', display: 'flex', alignItems: 'center',
-                  borderRadius: 5, transition: 'color 0.2s',
-                }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill={pinned ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16h14v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V5a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2z"/>
-                  </svg>
-                </button>
-                <button onClick={toggleSidebar} style={{
-                  background: 'none', border: 'none', cursor: 'pointer', padding: 4,
-                  color: 'var(--neutral-400)', display: 'flex', alignItems: 'center',
-                  borderRadius: 5,
-                }}>
-                  {Icons.chevronLeft}
-                </button>
-              </div>
+              {/* 모바일에서만 닫기/고정 버튼 표시 */}
+              {!isDesktop && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <button onClick={togglePin} title={pinned ? '메뉴 고정 해제' : '메뉴 고정'} style={{
+                    background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+                    color: pinned ? 'var(--primary)' : 'var(--neutral-400)', display: 'flex', alignItems: 'center',
+                    borderRadius: 5, transition: 'color 0.2s',
+                  }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill={pinned ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16h14v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V5a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2z"/>
+                    </svg>
+                  </button>
+                  <button onClick={toggleSidebar} style={{
+                    background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+                    color: 'var(--neutral-400)', display: 'flex', alignItems: 'center',
+                    borderRadius: 5,
+                  }}>
+                    {Icons.chevronLeft}
+                  </button>
+                </div>
+              )}
             </div>
             {renderAdminMenu()}
             {renderSwitchButton(navigate)}
           </div>
         </div>
 
-        {/* Collapsed: open button */}
-        {!sidebarOpen && (
+        {/* Collapsed: open button — 모바일에서만 */}
+        {!sidebarOpen && !isDesktop && (
           <button onClick={toggleSidebar} style={{
             position: 'fixed', top: 62, left: 8, zIndex: 180,
             width: 32, height: 32, borderRadius: 7,
@@ -464,11 +498,10 @@ export default function SideNav() {
           </button>
         )}
 
-        {/* Push content right — only when pinned */}
+        {/* Push content right — 데스크톱은 항상, 모바일은 고정 시만 */}
         <style>{`
-          .content, .main-content { margin-left: ${pinned && sidebarOpen ? '230px' : '0'} !important; transition: margin-left 0.22s cubic-bezier(0.16,1,0.3,1); }
-          @media (max-width: 1024px) { .content, .main-content { margin-left: ${pinned && sidebarOpen ? '200px' : '0'} !important; } }
-          @media (max-width: 768px) { .content, .main-content { margin-left: 0 !important; } }
+          .content, .main-content { margin-left: ${sidebarOpen ? '230px' : '0'} !important; transition: margin-left 0.22s cubic-bezier(0.16,1,0.3,1); }
+          @media (max-width: 768px) { .content, .main-content { margin-left: ${pinned && sidebarOpen ? '230px' : '0'} !important; } }
           @keyframes badgePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
         `}</style>
       </>

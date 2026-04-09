@@ -45,7 +45,7 @@ export default function AttendanceManage() {
   const late = summary.late || 0;
 
   return (
-    <div className="main-content" style={{ padding: 20, maxWidth: 900, margin: '0 auto' }}>
+    <div className="main-content" style={{ padding: 20, maxWidth: 1100, margin: '0 auto' }}>
       <h2 style={{ fontSize: '1.5em', fontWeight: 800, marginBottom: 20 }}>출결 관리</h2>
 
       {/* 날짜 선택 */}

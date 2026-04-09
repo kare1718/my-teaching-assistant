@@ -1,15 +1,22 @@
 import { useState, useEffect } from 'react';
 import { api, apiPut } from '../../api';
 import { useTenantConfig } from '../../contexts/TenantContext';
+import { useUIStore } from '../../stores/useUIStore';
 
 export default function AcademySettings() {
   const { config, setConfig } = useTenantConfig();
+  const { theme, setTheme } = useUIStore();
   const [schools, setSchools] = useState([]);
   const [examTypes, setExamTypes] = useState([]);
   const [siteTitle, setSiteTitle] = useState('');
   const [mainTitle, setMainTitle] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [sidebarPinned, setSidebarPinned] = useState(
+    () => localStorage.getItem('adminSidebarPinned') === 'true'
+  );
 
   useEffect(() => {
     if (config) {
@@ -17,6 +24,8 @@ export default function AcademySettings() {
       setExamTypes(config.examTypes || []);
       setSiteTitle(config.siteTitle || '');
       setMainTitle(config.mainTitle || '');
+      setPhone(config.academyInfo?.phone || '');
+      setAddress(config.academyInfo?.address || '');
     }
   }, [config]);
 
@@ -24,7 +33,10 @@ export default function AcademySettings() {
     setSaving(true);
     setMessage('');
     try {
-      const result = await apiPut('/academies/settings', { schools, examTypes, siteTitle, mainTitle });
+      const result = await apiPut('/academies/settings', {
+        schools, examTypes, siteTitle, mainTitle,
+        academyInfo: { phone, address },
+      });
       setMessage('설정이 저장되었습니다.');
       if (setConfig && result.settings) {
         setConfig(prev => ({ ...prev, ...result.settings }));
@@ -47,8 +59,27 @@ export default function AcademySettings() {
   const addExamType = () => setExamTypes([...examTypes, '']);
   const removeExamType = (idx) => setExamTypes(examTypes.filter((_, i) => i !== idx));
 
+  const handleToggleSidebarPin = () => {
+    const next = !sidebarPinned;
+    setSidebarPinned(next);
+    localStorage.setItem('adminSidebarPinned', String(next));
+    if (next) localStorage.setItem('adminSidebarOpen', 'true');
+    window.dispatchEvent(new Event('sidebarPinChanged'));
+  };
+
+  const themeOptions = [
+    { value: 'light', label: '라이트', icon: '\u2600\uFE0F' },
+    { value: 'dark', label: '다크', icon: '\uD83C\uDF19' },
+    { value: 'system', label: '시스템', icon: '\uD83D\uDCBB' },
+  ];
+
+  const sectionStyle = {
+    background: 'var(--card)', borderRadius: 12, padding: 20,
+    marginBottom: 20, border: '1px solid var(--border)',
+  };
+
   return (
-    <div className="main-content" style={{ padding: 20, maxWidth: 800, margin: '0 auto' }}>
+    <div className="main-content" style={{ padding: 20, maxWidth: 1100, margin: '0 auto' }}>
       <h2 style={{ fontSize: '1.5em', fontWeight: 800, marginBottom: 24 }}>학원 설정</h2>
 
       {message && (
@@ -59,8 +90,52 @@ export default function AcademySettings() {
         }}>{message}</div>
       )}
 
+      {/* 테마 설정 */}
+      <section style={sectionStyle}>
+        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>테마 설정</h3>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {themeOptions.map(opt => (
+            <button key={opt.value} onClick={() => setTheme(opt.value)} style={{
+              flex: 1, padding: '12px 16px', borderRadius: 10, cursor: 'pointer',
+              border: theme === opt.value ? '2px solid var(--primary)' : '2px solid var(--border)',
+              background: theme === opt.value ? 'var(--primary-light, oklch(95% 0.03 250))' : 'var(--muted)',
+              color: 'var(--foreground)', fontFamily: 'inherit', fontSize: 14, fontWeight: 600,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+              transition: 'all 0.15s ease',
+            }}>
+              <span style={{ fontSize: 24 }}>{opt.icon}</span>
+              <span>{opt.label}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* 사이드바 설정 */}
+      <section style={sectionStyle}>
+        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>사이드바 설정</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>사이드바 고정</div>
+            <div style={{ fontSize: 13, color: 'var(--muted-foreground)', marginTop: 2 }}>
+              고정하면 사이드바가 항상 펼쳐져 있습니다
+            </div>
+          </div>
+          <button onClick={handleToggleSidebarPin} style={{
+            width: 52, height: 28, borderRadius: 14, border: 'none', cursor: 'pointer',
+            background: sidebarPinned ? 'var(--primary)' : 'var(--neutral-300, oklch(75% 0 0))',
+            position: 'relative', transition: 'background 0.2s ease',
+          }}>
+            <span style={{
+              position: 'absolute', top: 3, left: sidebarPinned ? 27 : 3,
+              width: 22, height: 22, borderRadius: '50%', background: 'white',
+              transition: 'left 0.2s ease', boxShadow: '0 1px 3px oklch(0% 0 0 / 0.2)',
+            }} />
+          </button>
+        </div>
+      </section>
+
       {/* 기본 정보 */}
-      <section style={{ background: 'var(--card)', borderRadius: 12, padding: 20, marginBottom: 20, border: '1px solid var(--border)' }}>
+      <section style={sectionStyle}>
         <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>기본 정보</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
@@ -71,11 +146,19 @@ export default function AcademySettings() {
             <label style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, display: 'block' }}>메인 슬로건</label>
             <input value={mainTitle} onChange={e => setMainTitle(e.target.value)} placeholder="슬로건 문구" />
           </div>
+          <div>
+            <label style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, display: 'block' }}>전화번호</label>
+            <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="02-1234-5678" />
+          </div>
+          <div>
+            <label style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, display: 'block' }}>주소</label>
+            <input value={address} onChange={e => setAddress(e.target.value)} placeholder="학원 주소" />
+          </div>
         </div>
       </section>
 
       {/* 학교 관리 */}
-      <section style={{ background: 'var(--card)', borderRadius: 12, padding: 20, marginBottom: 20, border: '1px solid var(--border)' }}>
+      <section style={sectionStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h3 style={{ fontSize: 16, fontWeight: 700 }}>학교/학년 관리</h3>
           <button className="btn btn-primary" onClick={addSchool} style={{ fontSize: 13, padding: '6px 14px' }}>+ 학교 추가</button>
@@ -99,7 +182,7 @@ export default function AcademySettings() {
       </section>
 
       {/* 시험 유형 */}
-      <section style={{ background: 'var(--card)', borderRadius: 12, padding: 20, marginBottom: 20, border: '1px solid var(--border)' }}>
+      <section style={sectionStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h3 style={{ fontSize: 16, fontWeight: 700 }}>시험 유형 관리</h3>
           <button className="btn btn-primary" onClick={addExamType} style={{ fontSize: 13, padding: '6px 14px' }}>+ 유형 추가</button>

@@ -137,7 +137,7 @@ export default function TuitionManage() {
   const cycleLabels = { monthly: '월납', quarterly: '분기납', yearly: '연납', once: '일시납' };
 
   return (
-    <div className="main-content" style={{ padding: 20, maxWidth: 900, margin: '0 auto' }}>
+    <div className="main-content" style={{ padding: 20, maxWidth: 1100, margin: '0 auto' }}>
       <h2 style={{ fontSize: '1.5em', fontWeight: 800, marginBottom: 20 }}>수납 관리</h2>
 
       {msg && (

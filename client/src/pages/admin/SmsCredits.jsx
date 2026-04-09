@@ -59,7 +59,7 @@ export default function SmsCredits() {
   };
 
   return (
-    <div className="main-content" style={{ padding: 20, maxWidth: 800, margin: '0 auto' }}>
+    <div className="main-content" style={{ padding: 20, maxWidth: 1100, margin: '0 auto' }}>
       <h2 style={{ fontSize: '1.5em', fontWeight: 800, marginBottom: 20 }}>SMS 크레딧</h2>
 
       {msg.text && (

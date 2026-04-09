@@ -80,7 +80,7 @@ export default function ConsultationLog() {
   if (loading) return <div className="main-content" style={{ padding: 20 }}>로딩 중...</div>;
 
   return (
-    <div className="main-content" style={{ padding: 20, maxWidth: 900, margin: '0 auto' }}>
+    <div className="main-content" style={{ padding: 20, maxWidth: 1100, margin: '0 auto' }}>
       <h2 style={{ fontSize: '1.5em', fontWeight: 800, marginBottom: 20 }}>상담 일지</h2>
 
       {msg && (
