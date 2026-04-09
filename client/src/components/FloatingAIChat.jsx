@@ -3,7 +3,7 @@ import { apiPost } from '../api';
 
 const EXAMPLES = [
   '3월 학력평가 등록해줘',
-  '계성고 학생 목록 보여줘',
+  '학생 목록 보여줘',
   '공지사항 등록: 내일 휴원',
   '히든코드 SPRING 200XP',
 ];

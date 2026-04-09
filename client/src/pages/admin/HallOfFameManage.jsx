@@ -212,7 +212,7 @@ export default function HallOfFameManage() {
               <div>
                 <label style={labelStyle}>학교</label>
                 <input value={form.school} onChange={e => setForm({ ...form, school: e.target.value })}
-                  placeholder="계성고" style={inputStyle} />
+                  placeholder="예: OO고등학교" style={inputStyle} />
               </div>
               <div>
                 <label style={labelStyle}>달성 학년</label>

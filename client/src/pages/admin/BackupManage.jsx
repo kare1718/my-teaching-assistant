@@ -196,7 +196,7 @@ export default function BackupManage() {
       <div className="card" style={{ padding: 'var(--space-4)', marginTop: 'var(--space-2)' }}>
         <h4 style={{ fontSize: 'var(--text-sm)', marginBottom: 'var(--space-2)' }}>👥 테스트 학생 데이터</h4>
         <p style={{ fontSize: 'var(--text-xs)', color: 'var(--muted-foreground)', marginBottom: 'var(--space-3)' }}>
-          학교별 20명씩 (계성고, 경신고, 용문고, 대일외고, 중3) 총 100명의 테스트 학생을 생성합니다.<br/>
+          학교별 20명씩 총 100명의 테스트 학생을 생성합니다.<br/>
           이미 존재하는 아이디는 건너뜁니다. 비밀번호: 1234
         </p>
         <button onClick={handleSeedStudents} disabled={loading} style={{

@@ -8,7 +8,8 @@ const { runQuery, runInsert, getOne, getAll } = require('../db/database');
 // AI Admin Assistant - Gemini 기반 자연어 명령 + 대화
 // ============================================================
 
-const SCHOOL_LIST = ['계성고', '경신고', '용문고', '대일외고', '중학생'];
+// 학교 목록은 DB에서 동적으로 가져옴 (하드코딩 제거)
+let SCHOOL_LIST = [];
 
 const ACTION_TYPES = {
   create_exam: { description: '시험 등록', params: ['name', 'exam_type', 'max_score', 'exam_date', 'school', 'grade'] },
@@ -240,7 +241,7 @@ async function buildSystemPrompt(academyId) {
 ## 💬 최근 수업 후기
   ${reviewList}
 
-## 학교 목록: ${SCHOOL_LIST.join(', ')}
+## 학교 목록: ${ctx.students?.map(s => s.school).join(', ') || '등록된 학교 없음'}
 
 ## 🔧 응답 형식 (반드시 JSON만 출력!)
 
