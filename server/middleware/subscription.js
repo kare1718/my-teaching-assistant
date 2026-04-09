@@ -1,9 +1,9 @@
 const { getOne } = require('../db/database');
 
 // 구독 티어별 기능 제한
-// Basic(4.9만): 핵심 기능 — 성적, 게이미피케이션(퀴즈4종/아바타/상점/랭킹), 공지, 수업자료, 브랜딩(학원명/강사명)
-// Standard(9.9만): + AI, SMS, 출결알림, 클리닉, 과제, 공부타이머, OMR, 상세리포트, 로고/컬러
-// Pro(19.9만): + 커스텀퀴즈(AI생성), 조교관리, 성적분석그래프, PDF리포트+학부모발송, 수납관리, 전체테마, API내보내기
+// Basic(7.9만): 핵심 기능 — 성적, 게이미피케이션(퀴즈4종/아바타/상점/랭킹), 공지, 수업자료, 브랜딩(학원명/강사명)
+// Standard(15.9만): + AI, SMS, 출결알림, 클리닉, 과제, 공부타이머, OMR, 상세리포트, 로고/컬러
+// Pro(별도 문의): + 커스텀퀴즈(AI생성), 조교관리, 성적분석그래프, PDF리포트+학부모발송, 수납관리, 전체테마, API내보내기
 const TIER_FEATURES = {
   free: ['scores', 'gamification', 'rankings', 'shop', 'titles', 'notices', 'materials', 'reviews', 'qna', 'quiz', 'ox_quiz', 'reading_quiz', 'knowledge_quiz', 'attendance'],
   basic: ['scores', 'gamification', 'rankings', 'shop', 'titles', 'notices', 'materials', 'reviews', 'qna', 'quiz', 'ox_quiz', 'reading_quiz', 'knowledge_quiz', 'attendance'],
@@ -13,18 +13,18 @@ const TIER_FEATURES = {
 };
 
 const TIER_LIMITS = {
-  free: { maxStudents: 5, price: 0, smsIncluded: 0 },
-  basic: { maxStudents: 50, price: 49000, smsIncluded: 0 },
-  standard: { maxStudents: 150, price: 99000, smsIncluded: 0 },
-  pro: { maxStudents: 9999, price: 199000, smsIncluded: 0 },
-  trial: { maxStudents: 15, price: 0, smsIncluded: 0 },
+  free: { maxStudents: 10, price: 0, smsIncluded: 0 },
+  basic: { maxStudents: 50, price: 79000, smsIncluded: 0 },
+  standard: { maxStudents: 100, price: 159000, smsIncluded: 0 },
+  pro: { maxStudents: 9999, price: 0, smsIncluded: 0 },
+  trial: { maxStudents: 10, price: 0, smsIncluded: 0 },
 };
 
 // 연간 결제 시 할인 (20%)
+// 연간 결제 시 할인 (15%)
 const YEARLY_PRICES = {
-  basic: 39000,   // 월환산 3.9만 (연 46.8만)
-  standard: 79000, // 월환산 7.9만 (연 94.8만)
-  pro: 159000,     // 월환산 15.9만 (연 190.8만)
+  basic: 67000,     // 월환산 6.7만 (연 80.4만, 15% 할인)
+  standard: 135000, // 월환산 13.5만 (연 162만, 15% 할인)
 };
 
 function requireFeature(feature) {

@@ -36,11 +36,25 @@ export default function ClinicApply() {
   const [msg, setMsg] = useState('');
   const [msgType, setMsgType] = useState('success');
   const [loading, setLoading] = useState(false);
+  const [slotCounts, setSlotCounts] = useState({});
+  const [maxPerSlot, setMaxPerSlot] = useState(0);
 
   const load = () => {
     api('/clinic/my').then(setMyAppointments).catch(console.error);
   };
   useEffect(() => { load(); }, []);
+
+  // 날짜 선택 시 잔여석 로드
+  useEffect(() => {
+    if (form.appointment_date) {
+      api(`/clinic/slot-counts?date=${form.appointment_date}`)
+        .then(data => { setSlotCounts(data.counts || {}); setMaxPerSlot(data.maxPerSlot || 0); })
+        .catch(console.error);
+    } else {
+      setSlotCounts({});
+      setMaxPerSlot(0);
+    }
+  }, [form.appointment_date]);
 
   // 최소 날짜: 내일
   const tomorrow = new Date();
@@ -148,17 +162,37 @@ export default function ClinicApply() {
 
           {/* 시간 선택 */}
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, display: 'block' }}>⏰ 시간 선택</label>
+            <label style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, display: 'block' }}>
+              ⏰ 시간 선택
+              {maxPerSlot > 0 && <span style={{ fontSize: 11, color: 'var(--muted-foreground)', fontWeight: 400, marginLeft: 6 }}>
+                (타임당 최대 {maxPerSlot}명)
+              </span>}
+            </label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 6 }}>
-              {TIME_SLOTS.map(slot => (
-                <button key={slot} onClick={() => setForm({ ...form, time_slot: slot })} style={{
-                  padding: '8px 0', borderRadius: 8, border: '1px solid var(--border)', cursor: 'pointer',
-                  fontWeight: 600, fontSize: 13,
-                  background: form.time_slot === slot ? 'var(--primary)' : 'white',
-                  color: form.time_slot === slot ? 'white' : 'var(--foreground)',
-                  transition: 'all 0.2s'
-                }}>{slot}</button>
-              ))}
+              {TIME_SLOTS.map(slot => {
+                const count = slotCounts[slot] || 0;
+                const isFull = maxPerSlot > 0 && count >= maxPerSlot;
+                const isSelected = form.time_slot === slot;
+                return (
+                  <button key={slot} onClick={() => !isFull && setForm({ ...form, time_slot: slot })}
+                    disabled={isFull}
+                    style={{
+                      padding: '6px 0', borderRadius: 8, border: '1px solid var(--border)', cursor: isFull ? 'not-allowed' : 'pointer',
+                      fontWeight: 600, fontSize: 13,
+                      background: isSelected ? 'var(--primary)' : isFull ? 'var(--muted)' : 'white',
+                      color: isSelected ? 'white' : isFull ? 'var(--muted-foreground)' : 'var(--foreground)',
+                      opacity: isFull ? 0.5 : 1,
+                      transition: 'all 0.2s'
+                    }}>
+                    {slot}
+                    {maxPerSlot > 0 && form.appointment_date && (
+                      <div style={{ fontSize: 9, fontWeight: 400, color: isSelected ? 'oklch(90% 0 0)' : isFull ? 'var(--destructive)' : 'var(--muted-foreground)' }}>
+                        {isFull ? '마감' : `${count}/${maxPerSlot}`}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -225,7 +259,7 @@ export default function ClinicApply() {
                   borderLeft: `4px solid ${a.status === 'approved' ? 'var(--success)' : a.status === 'pending' ? 'var(--warning)' : a.status === 'rejected' ? 'var(--destructive)' : 'oklch(50% 0.20 280)'}`
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                       <span style={{ fontWeight: 700, fontSize: 15 }}>
                         {formatDate(a.appointment_date)} {a.time_slot}
                       </span>
@@ -233,6 +267,12 @@ export default function ClinicApply() {
                         fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10,
                         background: badge.bg, color: badge.color
                       }}>{badge.text}</span>
+                      {a.attended === true && (
+                        <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 8, background: 'var(--success-light)', color: 'oklch(30% 0.12 145)' }}>출석</span>
+                      )}
+                      {a.attended === false && (
+                        <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 8, background: 'var(--destructive-light)', color: 'oklch(35% 0.15 25)' }}>결석</span>
+                      )}
                     </div>
                     {(a.status === 'pending' || a.status === 'approved') && (
                       <button

@@ -1,7 +1,7 @@
 const API_BASE = '/api';
 
 function getToken() {
-  return localStorage.getItem('token');
+  return localStorage.getItem('token') || sessionStorage.getItem('token');
 }
 
 function getHeaders() {
@@ -49,25 +49,56 @@ export async function apiUpload(path, formData) {
   return data;
 }
 
-export function saveAuth(token, user) {
-  localStorage.setItem('token', token);
-  localStorage.setItem('user', JSON.stringify(user));
+export function saveAuth(token, user, rememberMe = false) {
+  if (rememberMe) {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+    localStorage.setItem('rememberMe', 'true');
+    // sessionStorage 쪽 클리어
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
+  } else {
+    sessionStorage.setItem('token', token);
+    sessionStorage.setItem('user', JSON.stringify(user));
+    // localStorage 쪽 클리어
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('rememberMe');
+  }
   window.dispatchEvent(new Event('auth-changed'));
 }
 
 export function getUser() {
-  const user = localStorage.getItem('user');
+  const user = localStorage.getItem('user') || sessionStorage.getItem('user');
   return user ? JSON.parse(user) : null;
 }
 
 export function logout() {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
+  localStorage.removeItem('rememberMe');
+  sessionStorage.removeItem('token');
+  sessionStorage.removeItem('user');
   window.dispatchEvent(new Event('auth-changed'));
 }
 
 export function isLoggedIn() {
   return !!getToken();
+}
+
+// JWT 만료 체크 — 앱 로드 시 호출
+export function checkTokenExpiry() {
+  const token = getToken();
+  if (!token) return;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    if (payload.exp * 1000 < Date.now()) {
+      logout();
+      window.location.href = '/login';
+    }
+  } catch {
+    // 토큰 파싱 실패 시 무시 (서버에서 401로 처리)
+  }
 }
 
 export async function apiGet(path) {

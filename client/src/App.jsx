@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { getUser, logout, isLoggedIn } from './api';
+import { getUser, logout, isLoggedIn, checkTokenExpiry } from './api';
 import { TenantProvider, useTenantConfig } from './contexts/TenantContext';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -50,6 +50,10 @@ import SmsCredits from './pages/admin/SmsCredits';
 import AIAssistant from './pages/admin/AIAssistant';
 import BackupManage from './pages/admin/BackupManage';
 import BackupSecurity from './pages/admin/BackupSecurity';
+import SuperDashboard from './pages/superadmin/Dashboard';
+import AcademyDetail from './pages/superadmin/AcademyDetail';
+import AcademyCreate from './pages/superadmin/AcademyCreate';
+import SuperBackupSecurity from './pages/superadmin/BackupSecurity';
 import PreRegistered from './pages/admin/PreRegistered';
 import ProfileManage from './pages/admin/ProfileManage';
 import AttendanceCheck from './pages/student/AttendanceCheck';
@@ -78,12 +82,12 @@ function Navbar() {
     <nav className="navbar">
       <h1
         style={{ cursor: 'pointer' }}
-        onClick={() => navigate((user.role === 'admin' || user.school === '조교' || user.school === '선생님') ? '/admin' : '/student')}
+        onClick={() => navigate(user.role === 'superadmin' ? '/superadmin' : (user.role === 'admin' || user.school === '조교' || user.school === '선생님') ? '/admin' : '/student')}
       >
         {config?.siteTitle || '나만의 조교'}
       </h1>
       <div className="nav-right">
-        <span>{user.name}님 ({user.role === 'admin' ? '관리자' : user.school === '조교' ? '조교' : user.school === '선생님' ? '선생님' : '학생'})</span>
+        <span>{user.name}님 ({user.role === 'superadmin' ? '플랫폼 관리자' : user.role === 'admin' ? '관리자' : user.school === '조교' ? '조교' : user.school === '선생님' ? '선생님' : '학생'})</span>
         <button onClick={handleLogout}>로그아웃</button>
       </div>
     </nav>
@@ -94,6 +98,7 @@ function ProtectedRoute({ children, role }) {
   const user = getUser();
   if (!isLoggedIn() || !user) return <Navigate to="/login" />;
   const isAssistant = user.school === '조교';
+  if (user.role === 'superadmin') return children;
   if (role && user.role !== role) {
     if (user.role === 'admin' && role === 'student') return children;
     if (isAssistant && (role === 'admin' || role === 'student')) return children;
@@ -105,6 +110,7 @@ function ProtectedRoute({ children, role }) {
 function RedirectIfLoggedIn({ children }) {
   const user = getUser();
   if (isLoggedIn() && user) {
+    if (user.role === 'superadmin') return <Navigate to="/superadmin" />;
     const isAssistant = user.school === '조교';
     return <Navigate to={(user.role === 'admin' || isAssistant) ? '/admin' : '/student'} />;
   }
@@ -113,6 +119,10 @@ function RedirectIfLoggedIn({ children }) {
 
 function App() {
   const [authKey, setAuthKey] = useState(0);
+
+  useEffect(() => {
+    checkTokenExpiry();
+  }, []);
 
   useEffect(() => {
     const handler = () => setAuthKey(k => k + 1);
@@ -197,6 +207,11 @@ function AppLayout() {
             <Route path="/student/info" element={<ProtectedRoute role="student"><InfoHub /></ProtectedRoute>} />
             <Route path="/student/timer" element={<ProtectedRoute role="student"><StudyTimer /></ProtectedRoute>} />
             <Route path="/student/study-rankings" element={<ProtectedRoute role="student"><StudyRankings /></ProtectedRoute>} />
+
+            <Route path="/superadmin" element={<ProtectedRoute role="superadmin"><SuperDashboard /></ProtectedRoute>} />
+            <Route path="/superadmin/academy/new" element={<ProtectedRoute role="superadmin"><AcademyCreate /></ProtectedRoute>} />
+            <Route path="/superadmin/academy/:id" element={<ProtectedRoute role="superadmin"><AcademyDetail /></ProtectedRoute>} />
+            <Route path="/superadmin/backup-security" element={<ProtectedRoute role="superadmin"><SuperBackupSecurity /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

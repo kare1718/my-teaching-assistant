@@ -158,11 +158,11 @@ router.get('/admin/students', requireAdmin, async (req, res) => {
   res.json(students);
 });
 
-// 전체 클리닉 목록 (캘린더용)
+// 전체 클리닉 목록 (캘린더용) — 학교/학년 필터 지원
 router.get('/admin/all', requireAdmin, async (req, res) => {
-  const { month, year } = req.query;
-  let where = '';
-  const params = [];
+  const { month, year, school, grade } = req.query;
+  const conditions = ['ca.academy_id = ?'];
+  const params = [req.academyId];
 
   if (year && month) {
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
@@ -170,13 +170,20 @@ router.get('/admin/all', requireAdmin, async (req, res) => {
     const endDate = endMonth > 12
       ? `${parseInt(year) + 1}-01-01`
       : `${year}-${String(endMonth).padStart(2, '0')}-01`;
-    where = 'WHERE ca.appointment_date >= ? AND ca.appointment_date < ? AND ca.academy_id = ?';
-    params.push(startDate, endDate, req.academyId);
-  } else {
-    where = 'WHERE ca.academy_id = ?';
-    params.push(req.academyId);
+    conditions.push('ca.appointment_date >= ?', 'ca.appointment_date < ?');
+    params.push(startDate, endDate);
   }
 
+  if (school) {
+    conditions.push('s.school = ?');
+    params.push(school);
+  }
+  if (grade) {
+    conditions.push('s.grade = ?');
+    params.push(grade);
+  }
+
+  const where = 'WHERE ' + conditions.join(' AND ');
   const appointments = await getAll(
     `SELECT ca.*, u.name as student_name, s.school, s.grade
      FROM clinic_appointments ca
@@ -337,6 +344,68 @@ router.put('/admin/settings', requireAdmin, async (req, res) => {
     [String(val), req.academyId, String(val)]
   );
   res.json({ message: `타임당 제한인원이 ${val === 0 ? '무제한' : val + '명'}으로 설정되었습니다.` });
+});
+
+// === 출석 체크 ===
+
+router.put('/admin/:id/attendance', requireAdmin, async (req, res) => {
+  const { attended } = req.body;
+  if (typeof attended !== 'boolean') {
+    return res.status(400).json({ error: '출석 여부를 true/false로 입력해주세요.' });
+  }
+
+  const appt = await getOne('SELECT * FROM clinic_appointments WHERE id = ? AND academy_id = ?', [req.params.id, req.academyId]);
+  if (!appt) return res.status(404).json({ error: '클리닉을 찾을 수 없습니다.' });
+
+  // 출석 시 approved 상태면 자동 완료 처리
+  if (attended && appt.status === 'approved') {
+    await runQuery('UPDATE clinic_appointments SET attended = ?, status = ?, approved_at = COALESCE(approved_at, CURRENT_TIMESTAMP) WHERE id = ? AND academy_id = ?',
+      [attended, 'completed', req.params.id, req.academyId]);
+  } else {
+    await runQuery('UPDATE clinic_appointments SET attended = ? WHERE id = ? AND academy_id = ?',
+      [attended, req.params.id, req.academyId]);
+  }
+
+  res.json({ message: attended ? '출석 처리되었습니다.' : '결석 처리되었습니다.' });
+});
+
+// === 상담 일지 연동 ===
+
+// 클리닉에서 상담 기록 생성 후 연결
+router.post('/admin/:id/link-consultation', requireAdmin, async (req, res) => {
+  const { content, tags } = req.body;
+  if (!content || !content.trim()) return res.status(400).json({ error: '상담 내용을 입력해주세요.' });
+
+  const appt = await getOne(
+    `SELECT ca.*, u.name as student_name FROM clinic_appointments ca
+     JOIN students s ON ca.student_id = s.id JOIN users u ON s.user_id = u.id
+     WHERE ca.id = ? AND ca.academy_id = ?`,
+    [req.params.id, req.academyId]
+  );
+  if (!appt) return res.status(404).json({ error: '클리닉을 찾을 수 없습니다.' });
+
+  // 상담 기록 생성
+  const counselorName = req.user.name || '관리자';
+  const tagsStr = tags || '클리닉상담';
+  const consultationId = await runInsert(
+    'INSERT INTO consultations (academy_id, student_id, counselor_name, content, tags) VALUES (?, ?, ?, ?, ?)',
+    [req.academyId, appt.student_id, counselorName, content.trim(), tagsStr]
+  );
+
+  // 클리닉에 연결
+  await runQuery('UPDATE clinic_appointments SET consultation_log_id = ? WHERE id = ? AND academy_id = ?',
+    [consultationId, req.params.id, req.academyId]);
+
+  res.json({ message: '상담 기록이 생성되고 연결되었습니다.', consultationId });
+});
+
+// 연결된 상담 기록 조회
+router.get('/admin/:id/linked-consultation', requireAdmin, async (req, res) => {
+  const appt = await getOne('SELECT consultation_log_id FROM clinic_appointments WHERE id = ? AND academy_id = ?', [req.params.id, req.academyId]);
+  if (!appt || !appt.consultation_log_id) return res.json(null);
+
+  const consultation = await getOne('SELECT * FROM consultations WHERE id = ? AND academy_id = ?', [appt.consultation_log_id, req.academyId]);
+  res.json(consultation);
 });
 
 module.exports = router;

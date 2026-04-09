@@ -46,6 +46,7 @@ export default function LoginPage() {
   const [findForm, setFindForm] = useState({ username: '', name: '', phone: '' });
   const [findResult, setFindResult] = useState(null);
   const [findError, setFindError] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [academyConfig, setAcademyConfig] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
@@ -71,8 +72,9 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     try {
-      const data = await apiPost('/auth/login', { ...form, academySlug });
-      saveAuth(data.token, data.user);
+      const data = await apiPost('/auth/login', { ...form, academySlug, rememberMe });
+      saveAuth(data.token, data.user, rememberMe);
+      if (data.user.role === 'superadmin') { navigate('/superadmin'); return; }
       const isAssistant = data.user.school === '조교';
       navigate((data.user.role === 'admin' || isAssistant) ? '/admin' : '/student');
     } catch (err) {
@@ -284,7 +286,7 @@ export default function LoginPage() {
                 onBlur={e => { e.target.style.borderColor = C.border; e.target.style.boxShadow = 'none'; }}
               />
             </div>
-            <div style={{ marginBottom: 24 }}>
+            <div style={{ marginBottom: 16 }}>
               <label style={labelStyle}>비밀번호</label>
               <input
                 style={inputStyle}
@@ -297,6 +299,15 @@ export default function LoginPage() {
                 onBlur={e => { e.target.style.borderColor = C.border; e.target.style.boxShadow = 'none'; }}
               />
             </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, cursor: 'pointer', userSelect: 'none' }}>
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                style={{ width: 18, height: 18, accentColor: C.accent, cursor: 'pointer' }}
+              />
+              <span style={{ fontSize: 14, color: C.textSecondary, fontWeight: 500 }}>자동 로그인</span>
+            </label>
             <button type="submit" style={primaryBtn}
               onMouseOver={e => { e.currentTarget.style.background = C.accentDark; e.currentTarget.style.boxShadow = '0 4px 12px oklch(55% 0.15 250 / 0.25)'; }}
               onMouseOut={e => { e.currentTarget.style.background = C.accent; e.currentTarget.style.boxShadow = 'none'; }}

@@ -23,14 +23,32 @@ const TOPICS = [
   '진도 점검', '오답 분석', '보충 수업', '시험 대비', '재시험', '기타'
 ];
 
+const NOTE_GUIDE = {
+  good: [
+    '학생이 비문학 과학 지문의 논증 구조 파악에 어려움을 보임. 전제-결론 분리 연습을 진행했고, 3번째 연습에서 스스로 구조를 파악함. 다음 시간에 기술 지문으로 확장 연습 필요.',
+    '모의고사 30번 문항 오답 분석. 선지 ③과 ④를 혼동한 원인: 지문의 조건절을 간과함. 조건절 밑줄 긋기 습관 형성이 필요. 유사 문항 3개 추가 제공함.',
+  ],
+  bad: [
+    '문법 질문 답변함',
+    '모의고사 분석했음. 잘 이해함.',
+  ],
+  template: '1. 학생 질문/문제 영역:\n2. 진행한 내용:\n3. 학생 이해도 (상/중/하):\n4. 다음 클리닉 권장사항:',
+};
+
+const CONSULT_TAGS = ['클리닉상담', '학습상담', '진로상담', '학부모상담', '생활지도', '성적관리'];
+
 export default function ClinicManage() {
   const [appointments, setAppointments] = useState([]);
-  const [view, setView] = useState('calendar'); // calendar | list | students
+  const [view, setView] = useState('calendar');
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [selectedDate, setSelectedDate] = useState(null);
   const [msg, setMsg] = useState('');
   const [noteForm, setNoteForm] = useState({});
+
+  // 필터
+  const [filterSchool, setFilterSchool] = useState('');
+  const [filterGrade, setFilterGrade] = useState('');
 
   // 클리닉 입력 폼
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -46,16 +64,36 @@ export default function ClinicManage() {
   const [apptNotes, setApptNotes] = useState([]);
   const [newNote, setNewNote] = useState('');
   const [loadingNotes, setLoadingNotes] = useState(false);
+  const [showNoteGuide, setShowNoteGuide] = useState(false);
 
   // 학생별 히스토리
   const [studentList, setStudentList] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [studentHistory, setStudentHistory] = useState([]);
 
+  // 상담 연동
+  const [linkedConsultation, setLinkedConsultation] = useState(null);
+  const [showConsultForm, setShowConsultForm] = useState(false);
+  const [consultContent, setConsultContent] = useState('');
+  const [consultTag, setConsultTag] = useState('클리닉상담');
+
   const load = () => {
     api(`/clinic/admin/all?year=${currentYear}&month=${currentMonth}`).then(setAppointments).catch(console.error);
   };
   useEffect(() => { load(); }, [currentYear, currentMonth]);
+
+  // 필터 옵션 계산
+  const schools = [...new Set(appointments.map(a => a.school).filter(Boolean))].sort();
+  const grades = [...new Set(
+    appointments.filter(a => !filterSchool || a.school === filterSchool).map(a => a.grade).filter(Boolean)
+  )].sort();
+
+  // 필터 적용된 appointments
+  const filteredAppointments = appointments.filter(a => {
+    if (filterSchool && a.school !== filterSchool) return false;
+    if (filterGrade && a.grade !== filterGrade) return false;
+    return true;
+  });
 
   // 클리닉 입력 폼 열 때 학생 목록 로드
   useEffect(() => {
@@ -124,6 +162,18 @@ export default function ClinicManage() {
     } catch (e) { setMsg(e.message); }
   };
 
+  const handleAttendance = async (id, attended) => {
+    try {
+      await apiPut(`/clinic/admin/${id}/attendance`, { attended });
+      setMsg(attended ? '출석 처리되었습니다.' : '결석 처리되었습니다.');
+      load();
+      if (detailAppt && detailAppt.id === id) {
+        setDetailAppt({ ...detailAppt, attended, status: attended && detailAppt.status === 'approved' ? 'completed' : detailAppt.status });
+      }
+      setTimeout(() => setMsg(''), 2000);
+    } catch (e) { setMsg(e.message); }
+  };
+
   const handleDelete = async (id) => {
     if (!confirm('이 클리닉 신청을 삭제하시겠습니까?')) return;
     await apiDelete(`/clinic/admin/${id}`);
@@ -141,8 +191,12 @@ export default function ClinicManage() {
   const openDetail = async (appt) => {
     setDetailAppt(appt);
     setNewNote('');
+    setShowNoteGuide(false);
     setLoadingNotes(true);
     setLoadingHistory(true);
+    setLinkedConsultation(null);
+    setShowConsultForm(false);
+    setConsultContent('');
     try {
       const notes = await api(`/clinic/admin/${appt.id}/notes`);
       setApptNotes(notes);
@@ -153,6 +207,11 @@ export default function ClinicManage() {
       setDetailStudentHistory(history);
     } catch (e) { setDetailStudentHistory([]); }
     setLoadingHistory(false);
+    // 연결된 상담 기록 로드
+    try {
+      const consultation = await api(`/clinic/admin/${appt.id}/linked-consultation`);
+      setLinkedConsultation(consultation);
+    } catch (e) { setLinkedConsultation(null); }
   };
 
   const addNote = async () => {
@@ -170,6 +229,21 @@ export default function ClinicManage() {
     try {
       await apiDelete(`/clinic/admin/notes/${noteId}`);
       setApptNotes(prev => prev.filter(n => n.id !== noteId));
+    } catch (e) { setMsg(e.message); }
+  };
+
+  const handleLinkConsultation = async () => {
+    if (!consultContent.trim() || !detailAppt) return;
+    try {
+      await apiPost(`/clinic/admin/${detailAppt.id}/link-consultation`, {
+        content: consultContent.trim(), tags: consultTag
+      });
+      setMsg('상담 기록이 연결되었습니다.');
+      const consultation = await api(`/clinic/admin/${detailAppt.id}/linked-consultation`);
+      setLinkedConsultation(consultation);
+      setShowConsultForm(false);
+      setConsultContent('');
+      setTimeout(() => setMsg(''), 2000);
     } catch (e) { setMsg(e.message); }
   };
 
@@ -192,20 +266,27 @@ export default function ClinicManage() {
   const getDateAppts = (day) => {
     if (!day) return [];
     const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return appointments.filter(a => a.appointment_date === dateStr);
+    return filteredAppointments.filter(a => a.appointment_date === dateStr);
   };
 
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  const pendingCount = appointments.filter(a => a.status === 'pending').length;
+  const pendingCount = filteredAppointments.filter(a => a.status === 'pending').length;
 
   const formatDate = (dateStr) => {
     const d = new Date(dateStr + 'T00:00:00');
     return `${d.getMonth() + 1}/${d.getDate()}(${DAY_NAMES[d.getDay()]})`;
   };
 
+  const getAttendanceBadge = (a) => {
+    if (a.attended === true) return { text: '출석', bg: 'var(--success-light)', color: 'oklch(30% 0.12 145)' };
+    if (a.attended === false) return { text: '결석', bg: 'var(--destructive-light)', color: 'oklch(35% 0.15 25)' };
+    return null;
+  };
+
   const renderAppointmentCard = (a, showDate = true) => {
     const st = STATUS_MAP[a.status] || STATUS_MAP.pending;
+    const attBadge = getAttendanceBadge(a);
     return (
       <div key={a.id} style={{
         border: '1px solid var(--border)', borderRadius: 10, padding: 14, marginBottom: 8,
@@ -216,13 +297,21 @@ export default function ClinicManage() {
             <span style={{ fontWeight: 700, fontSize: 15 }}>{a.student_name}</span>
             <span style={{ fontSize: 12, color: 'var(--muted-foreground)', marginLeft: 6 }}>{a.school} {a.grade}</span>
           </div>
-          <span style={{
-            fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10,
-            background: st.bg, color: st.color
-          }}>{st.text}</span>
+          <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+            {attBadge && (
+              <span style={{
+                fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 8,
+                background: attBadge.bg, color: attBadge.color
+              }}>{attBadge.text}</span>
+            )}
+            <span style={{
+              fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10,
+              background: st.bg, color: st.color
+            }}>{st.text}</span>
+          </div>
         </div>
         <div style={{ fontSize: 13, marginBottom: 4 }}>
-          <span style={{ fontWeight: 600 }}>📅 {showDate ? `${formatDate(a.appointment_date)} ` : ''}{a.time_slot}</span>
+          <span style={{ fontWeight: 600 }}>{showDate ? `${formatDate(a.appointment_date)} ` : ''}{a.time_slot}</span>
         </div>
         <div style={{ fontSize: 13 }}>
           <span style={{ fontWeight: 600 }}>{a.topic}</span>
@@ -281,7 +370,7 @@ export default function ClinicManage() {
           </div>
 
           {/* 상태 변경 버튼 */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
             {a.status === 'pending' && (
               <>
                 <input
@@ -302,6 +391,33 @@ export default function ClinicManage() {
             <button className="btn btn-outline btn-sm" onClick={() => loadStudentHistory(a.student_id)}
               style={{ fontSize: 11, marginLeft: 'auto' }}>📊 학생 이력</button>
           </div>
+
+          {/* 출석 체크 */}
+          {(a.status === 'approved' || a.status === 'completed') && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16,
+              padding: '10px 14px', background: 'var(--background)', borderRadius: 10
+            }}>
+              <span style={{ fontSize: 13, fontWeight: 600, marginRight: 4 }}>출석 확인:</span>
+              <button onClick={() => handleAttendance(a.id, true)} style={{
+                padding: '5px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                border: a.attended === true ? '2px solid var(--success)' : '1px solid var(--border)',
+                background: a.attended === true ? 'var(--success-light)' : 'white',
+                color: a.attended === true ? 'oklch(30% 0.12 145)' : 'var(--muted-foreground)',
+                transition: 'all 0.2s'
+              }}>출석</button>
+              <button onClick={() => handleAttendance(a.id, false)} style={{
+                padding: '5px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                border: a.attended === false ? '2px solid var(--destructive)' : '1px solid var(--border)',
+                background: a.attended === false ? 'var(--destructive-light)' : 'white',
+                color: a.attended === false ? 'oklch(35% 0.15 25)' : 'var(--muted-foreground)',
+                transition: 'all 0.2s'
+              }}>결석</button>
+              {a.attended == null && (
+                <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>미확인</span>
+              )}
+            </div>
+          )}
 
           {/* 이번 클리닉 기록(노트) */}
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
@@ -335,16 +451,51 @@ export default function ClinicManage() {
               </div>
             )}
 
+            {/* 작성 가이드 토글 */}
+            <button onClick={() => setShowNoteGuide(!showNoteGuide)} style={{
+              background: 'none', border: 'none', cursor: 'pointer', fontSize: 12,
+              color: 'var(--info)', fontWeight: 600, padding: 0, marginBottom: 8, display: 'block'
+            }}>
+              {showNoteGuide ? '▼ 작성 가이드 닫기' : '▶ 작성 가이드 보기'}
+            </button>
+
+            {showNoteGuide && (
+              <div style={{
+                background: 'var(--info-light)', border: '1px solid oklch(70% 0.10 240)',
+                borderRadius: 10, padding: 14, marginBottom: 12, fontSize: 12, lineHeight: 1.6
+              }}>
+                <div style={{ fontWeight: 700, marginBottom: 8, color: 'oklch(30% 0.10 240)' }}>좋은 기록 예시</div>
+                {NOTE_GUIDE.good.map((g, i) => (
+                  <div key={i} style={{
+                    background: 'oklch(96% 0.02 145)', borderRadius: 6, padding: '8px 10px',
+                    marginBottom: 6, borderLeft: '3px solid var(--success)'
+                  }}>{g}</div>
+                ))}
+                <div style={{ fontWeight: 700, marginBottom: 8, marginTop: 10, color: 'oklch(35% 0.15 25)' }}>나쁜 기록 예시</div>
+                {NOTE_GUIDE.bad.map((b, i) => (
+                  <div key={i} style={{
+                    background: 'oklch(96% 0.02 25)', borderRadius: 6, padding: '8px 10px',
+                    marginBottom: 6, borderLeft: '3px solid var(--destructive)',
+                    textDecoration: 'line-through', color: 'var(--muted-foreground)'
+                  }}>{b}</div>
+                ))}
+                <button onClick={() => setNewNote(NOTE_GUIDE.template)} style={{
+                  marginTop: 6, padding: '6px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600,
+                  background: 'oklch(50% 0.14 240)', color: 'white', border: 'none', cursor: 'pointer'
+                }}>템플릿 사용하기</button>
+              </div>
+            )}
+
             {/* 기록 추가 */}
             <div style={{ display: 'flex', gap: 6 }}>
               <textarea
                 value={newNote}
                 onChange={e => setNewNote(e.target.value)}
                 placeholder="클리닉 내용을 기록하세요..."
-                rows={2}
+                rows={3}
                 style={{
                   flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)',
-                  fontSize: 13, resize: 'vertical', fontFamily: 'inherit'
+                  fontSize: 13, resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5
                 }}
               />
               <button className="btn btn-primary btn-sm" onClick={addNote}
@@ -352,6 +503,72 @@ export default function ClinicManage() {
                 기록 추가
               </button>
             </div>
+          </div>
+
+          {/* 상담 일지 연동 */}
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14, marginTop: 14 }}>
+            <h4 style={{ margin: '0 0 10px 0', fontSize: 14 }}>📝 상담 기록 연동</h4>
+
+            {linkedConsultation ? (
+              <div style={{
+                background: 'var(--secondary)', borderRadius: 10, padding: 12, fontSize: 13
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ fontWeight: 600, color: 'var(--primary)' }}>
+                    {linkedConsultation.counselor_name}
+                  </span>
+                  <span style={{
+                    fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 8,
+                    background: 'oklch(92% 0.04 200)', color: 'oklch(35% 0.10 200)'
+                  }}>{linkedConsultation.tags}</span>
+                </div>
+                <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{linkedConsultation.content}</div>
+                <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginTop: 6 }}>
+                  {new Date(linkedConsultation.created_at).toLocaleString('ko-KR')}
+                </div>
+              </div>
+            ) : showConsultForm ? (
+              <div style={{
+                border: '1px solid var(--border)', borderRadius: 10, padding: 12
+              }}>
+                <div style={{ marginBottom: 8 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>상담 유형</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                    {CONSULT_TAGS.map(tag => (
+                      <button key={tag} onClick={() => setConsultTag(tag)} style={{
+                        padding: '4px 10px', borderRadius: 6, fontSize: 11, cursor: 'pointer',
+                        border: consultTag === tag ? '2px solid var(--primary)' : '1px solid var(--border)',
+                        background: consultTag === tag ? 'oklch(92% 0.04 250)' : 'white',
+                        fontWeight: consultTag === tag ? 700 : 400
+                      }}>{tag}</button>
+                    ))}
+                  </div>
+                </div>
+                <textarea
+                  value={consultContent}
+                  onChange={e => setConsultContent(e.target.value)}
+                  placeholder="상담 내용을 작성하세요..."
+                  rows={3}
+                  style={{
+                    width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)',
+                    fontSize: 13, resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5, marginBottom: 8
+                  }}
+                />
+                <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                  <button className="btn btn-outline btn-sm" onClick={() => setShowConsultForm(false)}>취소</button>
+                  <button className="btn btn-primary btn-sm" onClick={handleLinkConsultation}
+                    disabled={!consultContent.trim()}>상담 기록 저장</button>
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => setShowConsultForm(true)} style={{
+                width: '100%', padding: '10px', borderRadius: 8, border: '1px dashed var(--border)',
+                background: 'var(--background)', cursor: 'pointer', fontSize: 13, color: 'var(--muted-foreground)',
+                transition: 'all 0.2s'
+              }}>
+                + 상담 기록 작성
+              </button>
+            )}
           </div>
 
           {/* 학생 누적 클리닉 이력 */}
@@ -364,6 +581,24 @@ export default function ClinicManage() {
               }}>총 {detailStudentHistory.length}회</span>
             </h4>
 
+            {/* 출석 통계 */}
+            {detailStudentHistory.length > 0 && (() => {
+              const attended = detailStudentHistory.filter(h => h.attended === true).length;
+              const absent = detailStudentHistory.filter(h => h.attended === false).length;
+              const rate = detailStudentHistory.length > 0
+                ? Math.round((attended / detailStudentHistory.length) * 100) : 0;
+              return (
+                <div style={{
+                  display: 'flex', gap: 12, marginBottom: 10, padding: '8px 12px',
+                  background: 'var(--background)', borderRadius: 8, fontSize: 12, fontWeight: 600
+                }}>
+                  <span style={{ color: 'oklch(30% 0.12 145)' }}>출석 {attended}회</span>
+                  <span style={{ color: 'oklch(35% 0.15 25)' }}>결석 {absent}회</span>
+                  <span style={{ color: 'var(--primary)' }}>출석률 {rate}%</span>
+                </div>
+              );
+            })()}
+
             {loadingHistory ? (
               <p style={{ color: 'var(--muted-foreground)', fontSize: 13 }}>로딩 중...</p>
             ) : detailStudentHistory.length === 0 ? (
@@ -373,6 +608,7 @@ export default function ClinicManage() {
                 {detailStudentHistory.map(h => {
                   const hst = STATUS_MAP[h.status] || STATUS_MAP.pending;
                   const isCurrent = h.id === a.id;
+                  const hAtt = getAttendanceBadge(h);
                   return (
                     <div key={h.id} style={{
                       border: isCurrent ? '2px solid var(--info)' : '1px solid var(--border)',
@@ -385,10 +621,18 @@ export default function ClinicManage() {
                           📅 {formatDate(h.appointment_date)} {h.time_slot}
                           {isCurrent && <span style={{ fontSize: 10, color: 'var(--info)', marginLeft: 6, fontWeight: 700 }}>← 현재</span>}
                         </span>
-                        <span style={{
-                          fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 8,
-                          background: hst.bg, color: hst.color
-                        }}>{hst.text}</span>
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          {hAtt && (
+                            <span style={{
+                              fontSize: 9, fontWeight: 600, padding: '1px 5px', borderRadius: 6,
+                              background: hAtt.bg, color: hAtt.color
+                            }}>{hAtt.text}</span>
+                          )}
+                          <span style={{
+                            fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 8,
+                            background: hst.bg, color: hst.color
+                          }}>{hst.text}</span>
+                        </div>
                       </div>
                       <div style={{ fontSize: 12 }}>
                         <span style={{ fontWeight: 600 }}>{h.topic}</span>
@@ -449,6 +693,7 @@ export default function ClinicManage() {
           ) : (
             studentHistory.map(h => {
               const st = STATUS_MAP[h.status] || STATUS_MAP.pending;
+              const hAtt = getAttendanceBadge(h);
               return (
                 <div key={h.id} style={{
                   border: '1px solid var(--border)', borderRadius: 10, padding: 12, marginBottom: 10,
@@ -456,15 +701,22 @@ export default function ClinicManage() {
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                     <span style={{ fontWeight: 600, fontSize: 14 }}>📅 {formatDate(h.appointment_date)} {h.time_slot}</span>
-                    <span style={{
-                      fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10,
-                      background: st.bg, color: st.color
-                    }}>{st.text}</span>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      {hAtt && (
+                        <span style={{
+                          fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 8,
+                          background: hAtt.bg, color: hAtt.color
+                        }}>{hAtt.text}</span>
+                      )}
+                      <span style={{
+                        fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10,
+                        background: st.bg, color: st.color
+                      }}>{st.text}</span>
+                    </div>
                   </div>
                   <div style={{ fontSize: 13, marginBottom: 4 }}>{h.topic}{h.detail ? ` — ${h.detail}` : ''}</div>
                   {h.admin_note && <div style={{ fontSize: 12, color: 'var(--primary)', marginBottom: 4 }}>💬 {h.admin_note}</div>}
 
-                  {/* 누적 노트 */}
                   {h.notes && h.notes.length > 0 && (
                     <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px dashed var(--border)' }}>
                       <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4, color: 'var(--muted-foreground)' }}>📋 기록 ({h.notes.length}건)</div>
@@ -499,7 +751,7 @@ export default function ClinicManage() {
       {msg && <div className="alert alert-success">{msg}</div>}
 
       {/* 뷰 전환 */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap', alignItems: 'center' }}>
         <button className={`btn ${view === 'calendar' ? 'btn-primary' : 'btn-outline'}`}
           onClick={() => { setView('calendar'); setSelectedDate(null); }}>📅 캘린더</button>
         <button className={`btn ${view === 'list' ? 'btn-primary' : 'btn-outline'}`}
@@ -517,6 +769,35 @@ export default function ClinicManage() {
           }}>대기 {pendingCount}건</span>
         )}
       </div>
+
+      {/* 학교/학년 필터 */}
+      {schools.length > 0 && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted-foreground)' }}>필터:</span>
+          <select
+            value={filterSchool}
+            onChange={e => { setFilterSchool(e.target.value); setFilterGrade(''); }}
+            style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 12 }}
+          >
+            <option value="">전체 학교</option>
+            {schools.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <select
+            value={filterGrade}
+            onChange={e => setFilterGrade(e.target.value)}
+            style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 12 }}
+          >
+            <option value="">전체 학년</option>
+            {grades.map(g => <option key={g} value={g}>{g}</option>)}
+          </select>
+          {(filterSchool || filterGrade) && (
+            <button onClick={() => { setFilterSchool(''); setFilterGrade(''); }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--destructive)', fontWeight: 600 }}>
+              초기화
+            </button>
+          )}
+        </div>
+      )}
 
       {/* 클리닉 입력 폼 */}
       {showCreateForm && (
@@ -650,7 +931,7 @@ export default function ClinicManage() {
             ))}
           </div>
 
-          {/* 날짜 그리드 - 가시적 시간/이름 표시 */}
+          {/* 날짜 그리드 */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
             {calendarDays.map((day, idx) => {
               if (!day) return <div key={`empty-${idx}`} />;
@@ -681,6 +962,8 @@ export default function ClinicManage() {
                         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                       }}>
                         {a.time_slot.slice(0, 5)} {a.student_name}
+                        {a.attended === true && ' ✓'}
+                        {a.attended === false && ' ✗'}
                       </div>
                     );
                   })}
@@ -710,10 +993,10 @@ export default function ClinicManage() {
             <h2 style={{ margin: 0, fontSize: 16 }}>📅 {formatDate(selectedDate)} 클리닉</h2>
             <button className="btn btn-outline btn-sm" onClick={() => setSelectedDate(null)}>← 캘린더</button>
           </div>
-          {appointments.filter(a => a.appointment_date === selectedDate)
+          {filteredAppointments.filter(a => a.appointment_date === selectedDate)
             .sort((a, b) => a.time_slot.localeCompare(b.time_slot))
             .map(a => renderAppointmentCard(a, false))}
-          {appointments.filter(a => a.appointment_date === selectedDate).length === 0 && (
+          {filteredAppointments.filter(a => a.appointment_date === selectedDate).length === 0 && (
             <p style={{ textAlign: 'center', color: 'var(--muted-foreground)', padding: 20 }}>이 날짜에 클리닉 신청이 없습니다.</p>
           )}
         </div>
@@ -727,10 +1010,10 @@ export default function ClinicManage() {
             <h2 style={{ margin: 0, fontSize: 16 }}>{currentYear}년 {currentMonth}월</h2>
             <button className="btn btn-outline btn-sm" onClick={nextMonth}>다음달 &gt;</button>
           </div>
-          {appointments.length === 0 ? (
+          {filteredAppointments.length === 0 ? (
             <p style={{ textAlign: 'center', color: 'var(--muted-foreground)', padding: 30 }}>이번 달 클리닉 신청이 없습니다.</p>
           ) : (
-            appointments
+            filteredAppointments
               .sort((a, b) => a.appointment_date.localeCompare(b.appointment_date) || a.time_slot.localeCompare(b.time_slot))
               .map(a => renderAppointmentCard(a))
           )}

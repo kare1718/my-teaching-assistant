@@ -130,11 +130,11 @@ export default function AdminDashboard() {
 
   /* ─── resizable grid hooks ─── */
   const kpiResize = useResizableGrid('admin-dashboard-kpi', [1, 1, 1, 1]);
-  const mainResize = useResizableGrid('admin-dashboard-main', [3, 1]);
+  const mainResize = useResizableGrid('admin-dashboard-main', [2, 1]);
   const scheduleResize = useResizableGrid('admin-dashboard-schedule', [1, 1]);
 
   const hasCustomLayout = kpiResize.sizes.some((s, i) => Math.abs(s - [1,1,1,1][i]) > 0.01) ||
-    mainResize.sizes.some((s, i) => Math.abs(s - [3,1][i]) > 0.01) ||
+    mainResize.sizes.some((s, i) => Math.abs(s - [2,1][i]) > 0.01) ||
     scheduleResize.sizes.some((s, i) => Math.abs(s - [1,1][i]) > 0.01);
 
   const resetAllLayouts = () => {
@@ -180,15 +180,17 @@ export default function AdminDashboard() {
       )}
 
       {/* ── Page Header ────────────────────── */}
-      <div style={{ marginBottom: 24, paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
-        <p style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 6, letterSpacing: '0.01em' }}>
-          {today.getFullYear()}년 {today.getMonth()+1}월 {today.getDate()}일 ({DAY_NAMES[today.getDay()]})
-        </p>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.03em', margin: 0 }}>
-          대시보드
-        </h1>
+      <div style={{ marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.03em', margin: 0 }}>
+            대시보드
+          </h1>
+          <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: 0 }}>
+            {today.getFullYear()}년 {today.getMonth()+1}월 {today.getDate()}일 ({DAY_NAMES[today.getDay()]})
+          </p>
+        </div>
         {actionItems.length > 0 && (
-          <p style={{ fontSize: 13, color: 'var(--destructive)', marginTop: 6, fontWeight: 500 }}>
+          <p style={{ fontSize: 12, color: 'var(--destructive)', marginTop: 4, fontWeight: 500 }}>
             처리가 필요한 항목이 {actionItems.length}개 있습니다
           </p>
         )}
@@ -197,26 +199,24 @@ export default function AdminDashboard() {
       {/* ── 학생 초대 코드 ─────────────────── */}
       {inviteCode && (
         <div style={{
-          marginBottom: 24, padding: '16px 20px', borderRadius: 12,
-          background: 'var(--muted)', display: 'flex', alignItems: 'center', gap: 16,
+          marginBottom: 14, padding: '10px 16px', borderRadius: 10,
+          background: 'var(--muted)', display: 'flex', alignItems: 'center', gap: 12,
           border: '1px solid var(--border)'
         }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 4, fontWeight: 600 }}>
-              {academyName ? `${academyName} ` : ''}학생 초대 코드
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ fontSize: 11, color: 'var(--muted-foreground)', fontWeight: 600, whiteSpace: 'nowrap' }}>
+              {academyName ? `${academyName} ` : ''}초대 코드
             </div>
-            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: 4, fontFamily: 'monospace', color: 'var(--primary)' }}>
+            <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: 3, fontFamily: 'monospace', color: 'var(--primary)' }}>
               {inviteCode}
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginTop: 4 }}>
-              학생 가입 시 이 코드를 입력하면 자동으로 연결됩니다
             </div>
           </div>
           <button
             onClick={() => { navigator.clipboard.writeText(inviteCode); alert('초대 코드가 복사되었습니다!'); }}
             style={{
-              padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border)',
-              background: 'var(--card)', cursor: 'pointer', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap'
+              padding: '5px 12px', borderRadius: 6, border: '1px solid var(--border)',
+              background: 'var(--card)', cursor: 'pointer', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
+              fontFamily: 'inherit',
             }}
           >
             복사
@@ -226,15 +226,12 @@ export default function AdminDashboard() {
 
       {/* ── Action Required ─────────────────── */}
       {actionItems.length > 0 && (
-        <div style={{ marginBottom: 24 }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-foreground)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            처리 필요
-          </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {actionItems.map((item, i) => (
               <button key={i} onClick={() => navigate(item.path)} style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '11px 16px', borderRadius: 10,
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '8px 14px', borderRadius: 8,
                 border: `1px solid ${item.urgent ? 'oklch(90% 0.06 25)' : 'var(--border)'}`,
                 background: item.urgent ? 'var(--destructive-light)' : 'var(--card)',
                 cursor: 'pointer', fontFamily: 'inherit', transition: 'transform 0.1s, box-shadow 0.1s',
@@ -242,11 +239,11 @@ export default function AdminDashboard() {
               onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
               onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
               >
-                <span style={{ fontSize: 20, fontWeight: 800, color: item.urgent ? 'var(--destructive)' : 'var(--primary)', lineHeight: 1 }}>
+                <span style={{ fontSize: 16, fontWeight: 800, color: item.urgent ? 'var(--destructive)' : 'var(--primary)', lineHeight: 1 }}>
                   {item.count}
                 </span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>{item.label}</span>
-                <span style={{ fontSize: 14, color: 'var(--muted-foreground)', marginLeft: 2 }}>→</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)' }}>{item.label}</span>
+                <span style={{ fontSize: 13, color: 'var(--muted-foreground)', marginLeft: 2 }}>→</span>
               </button>
             ))}
           </div>
@@ -262,23 +259,23 @@ export default function AdminDashboard() {
           }}>레이아웃 초기화</button>
         </div>
       )}
-      <div className="dash-kpi-row" ref={kpiResize.containerRef} style={{ marginBottom: 24 }}>
+      <div className="dash-kpi-row" ref={kpiResize.containerRef} style={{ marginBottom: 14 }}>
         {[
           { label: '재원생', value: totalStudents, unit: '명', sub: '재학 중', color: 'var(--primary)' },
-          { label: '오늘 클리닉', value: todayClinic, unit: '건', sub: todayClinic === 0 ? '오늘 일정 없음' : '오늘 진행', color: todayClinic > 0 ? 'oklch(48% 0.22 295)' : 'var(--muted-foreground)' },
+          { label: '오늘 클리닉', value: todayClinic, unit: '건', sub: todayClinic === 0 ? '일정 없음' : '오늘 진행', color: todayClinic > 0 ? 'oklch(48% 0.22 295)' : 'var(--muted-foreground)' },
           { label: '이번 주 수업', value: upcomingClasses.length, unit: '회', sub: '남은 수업', color: 'var(--success)' },
           { label: '다음 시험', value: nextExam ? `D-${daysUntil(nextExam.exam_date)}` : '—', unit: '', sub: nextExam ? nextExam.name : '예정 없음', color: nextExam && daysUntil(nextExam.exam_date) <= 7 ? 'var(--warning)' : 'var(--foreground)' },
         ].flatMap((kpi, i, arr) => [
           <div key={`kpi-${i}`} style={{ flex: kpiResize.sizes[i], minWidth: 0 }}>
-            <div className="card" style={{ margin: 0, padding: '20px 22px', height: '100%', boxSizing: 'border-box' }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div className="card" style={{ margin: 0, padding: '14px 16px', height: '100%', boxSizing: 'border-box' }}>
+              <p style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 {kpi.label}
               </p>
-              <div style={{ fontSize: 30, fontWeight: 800, color: kpi.color, lineHeight: 1, marginBottom: 5 }}>
+              <div style={{ fontSize: 24, fontWeight: 800, color: kpi.color, lineHeight: 1, marginBottom: 3 }}>
                 {kpi.value}
-                {kpi.unit && <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--muted-foreground)', marginLeft: 3 }}>{kpi.unit}</span>}
+                {kpi.unit && <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--muted-foreground)', marginLeft: 2 }}>{kpi.unit}</span>}
               </div>
-              <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: 0 }}>{kpi.sub}</p>
+              <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: 0 }}>{kpi.sub}</p>
             </div>
           </div>,
           i < arr.length - 1 ? <GridResizeHandle key={`kpi-h-${i}`} onMouseDown={e => kpiResize.handleMouseDown(i, e)} /> : null,
@@ -289,12 +286,12 @@ export default function AdminDashboard() {
       <div className="dash-main-grid" ref={mainResize.containerRef}>
 
         {/* Left: Schedules */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: mainResize.sizes[0], minWidth: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: mainResize.sizes[0], minWidth: 0 }}>
 
           {/* Clinic */}
           <div className="card" style={{ margin: 0 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <h2 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>클리닉 일정</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <h2 style={{ margin: 0, fontSize: 13, fontWeight: 700 }}>클리닉 일정</h2>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 {clinicCount > 0 && (
                   <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10, background: 'var(--warning-light)', color: 'oklch(35% 0.12 75)' }}>
@@ -307,7 +304,7 @@ export default function AdminDashboard() {
               </div>
             </div>
             {upcomingClinic.length === 0 ? (
-              <p style={{ fontSize: 13, color: 'var(--muted-foreground)', textAlign: 'center', padding: '20px 0', margin: 0 }}>
+              <p style={{ fontSize: 13, color: 'var(--muted-foreground)', textAlign: 'center', padding: '12px 0', margin: 0 }}>
                 예정된 클리닉이 없습니다
               </p>
             ) : (
@@ -351,7 +348,7 @@ export default function AdminDashboard() {
                 <span onClick={() => navigate('/admin/schedules')} style={{ fontSize: 12, color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}>관리 →</span>
               </div>
               {Object.keys(groupedClasses).length === 0 ? (
-                <p style={{ fontSize: 13, color: 'var(--muted-foreground)', textAlign: 'center', padding: '16px 0', margin: 0 }}>이번 주 수업이 없습니다</p>
+                <p style={{ fontSize: 13, color: 'var(--muted-foreground)', textAlign: 'center', padding: '10px 0', margin: 0 }}>이번 주 수업이 없습니다</p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {Object.keys(groupedClasses).sort().map(date => {
@@ -394,7 +391,7 @@ export default function AdminDashboard() {
                 <span onClick={() => navigate('/admin/scores')} style={{ fontSize: 12, color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}>관리 →</span>
               </div>
               {upcomingExams.length === 0 ? (
-                <p style={{ fontSize: 13, color: 'var(--muted-foreground)', textAlign: 'center', padding: '16px 0', margin: 0 }}>예정된 시험이 없습니다</p>
+                <p style={{ fontSize: 13, color: 'var(--muted-foreground)', textAlign: 'center', padding: '10px 0', margin: 0 }}>예정된 시험이 없습니다</p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {upcomingExams.map(e => {
@@ -432,19 +429,19 @@ export default function AdminDashboard() {
         <GridResizeHandle onMouseDown={e => mainResize.handleMouseDown(0, e)} />
 
         {/* Right: Student Overview + Quick Actions */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: mainResize.sizes[1], minWidth: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: mainResize.sizes[1], minWidth: 0 }}>
 
           {/* Student counts */}
           <div className="card" style={{ margin: 0 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <h2 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>학교별 현황</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <h2 style={{ margin: 0, fontSize: 13, fontWeight: 700 }}>학교별 현황</h2>
               <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--primary)' }}>{totalStudents}명</span>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {SCHOOLS.filter(s => !['조교', '선생님', '중학생'].includes(s.name)).map(s => (
                 <div key={s.name}>
                   <div onClick={() => navigate(`/admin/school/${encodeURIComponent(s.name)}`)} style={{
-                    padding: '8px 12px', borderRadius: 8, cursor: 'pointer',
+                    padding: '7px 10px', borderRadius: 7, cursor: 'pointer',
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                     background: 'var(--neutral-50)', border: '1px solid var(--border)',
                     transition: 'border-color 0.12s',
@@ -452,8 +449,8 @@ export default function AdminDashboard() {
                   onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--primary)'}
                   onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
                   >
-                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>{s.name}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)' }}>{schoolCounts[s.name] || 0}명</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)' }}>{s.name}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--primary)' }}>{schoolCounts[s.name] || 0}명</span>
                   </div>
                   {gradeDetails[s.name]?.length > 0 && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginTop: 3, paddingLeft: 8 }}>
@@ -479,40 +476,6 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="card" style={{ margin: 0 }}>
-            <h2 style={{ margin: '0 0 12px 0', fontSize: 14, fontWeight: 700 }}>빠른 실행</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-              {[
-                { path: '/admin/scores',  icon: '📊', label: '성적 입력' },
-                { path: '/admin/notices', icon: '📢', label: '공지 작성' },
-                { path: '/admin/sms',     icon: '💬', label: '문자 발송' },
-                { path: '/admin/attendance', icon: '📋', label: '출결 관리' },
-                { path: '/admin/tuition',    icon: '💰', label: '수납 관리' },
-                { path: '/admin/consultations', icon: '🗨️', label: '상담 일지' },
-                { path: '/admin/portfolios', icon: '📁', label: '포트폴리오' },
-                { path: '/admin/sms-credits', icon: '📱', label: 'SMS 충전' },
-                { path: '/admin/subscription', icon: '🔔', label: '구독 관리' },
-                { action: () => setShowPwModal(true), icon: '🔒', label: '비밀번호 변경' },
-              ].map((item, i) => (
-                <button key={i} onClick={item.action || (() => navigate(item.path))} style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '10px 14px', borderRadius: 8,
-                  border: '1px solid var(--border)', background: 'var(--card)',
-                  cursor: 'pointer', fontFamily: 'inherit',
-                  fontSize: 13, fontWeight: 500, textAlign: 'left', width: '100%',
-                  color: 'var(--foreground)', transition: 'background 0.1s, border-color 0.1s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'var(--neutral-50)'; e.currentTarget.style.borderColor = 'var(--border-hover)'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'var(--card)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
-                >
-                  <span>{item.icon}</span>
-                  <span>{item.label}</span>
-                  <span style={{ marginLeft: 'auto', color: 'var(--muted-foreground)', fontSize: 14 }}>→</span>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
 
@@ -520,7 +483,7 @@ export default function AdminDashboard() {
       <style>{`
         .dash-kpi-row {
           display: flex;
-          gap: 10px;
+          gap: 8px;
           align-items: stretch;
         }
         .dash-main-grid {
@@ -528,21 +491,24 @@ export default function AdminDashboard() {
           gap: 0;
           align-items: flex-start;
         }
+        .dash-main-grid .card {
+          padding: 14px 16px;
+        }
         .dash-schedule-row {
           display: flex;
           gap: 0;
           align-items: stretch;
         }
         @media (max-width: 900px) {
-          .dash-main-grid { flex-direction: column; gap: 12px; }
+          .dash-main-grid { flex-direction: column; gap: 10px; }
           .dash-main-grid > div { flex: 1 !important; }
           .dash-main-grid > .resize-handle { display: none !important; }
         }
         @media (max-width: 600px) {
-          .dash-kpi-row { flex-wrap: wrap; }
-          .dash-kpi-row > div:not(.resize-handle) { flex: 0 0 calc(50% - 9px) !important; }
+          .dash-kpi-row { flex-wrap: wrap; gap: 6px; }
+          .dash-kpi-row > div:not(.resize-handle) { flex: 0 0 calc(50% - 6px) !important; }
           .dash-kpi-row > .resize-handle { display: none !important; }
-          .dash-schedule-row { flex-direction: column; gap: 10px; }
+          .dash-schedule-row { flex-direction: column; gap: 8px; }
           .dash-schedule-row > .card { flex: 1 !important; }
           .dash-schedule-row > .resize-handle { display: none !important; }
         }

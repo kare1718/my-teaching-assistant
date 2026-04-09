@@ -24,8 +24,8 @@ router.get('/', async (req, res) => {
     );
 
     const studentCount = await getOne(
-      'SELECT COUNT(*) as count FROM students WHERE academy_id = ? AND (status IS NULL OR status = ?)',
-      [req.academyId, 'active']
+      'SELECT COUNT(*) as count FROM students s JOIN users u ON s.user_id = u.id WHERE s.academy_id = ? AND (s.status IS NULL OR s.status = ?) AND u.role = ?',
+      [req.academyId, 'active', 'student']
     );
 
     res.json({

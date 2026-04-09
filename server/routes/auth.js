@@ -70,7 +70,7 @@ router.post('/register', async (req, res) => {
 // 로그인
 router.post('/login', async (req, res) => {
   try {
-    const { username, password, academySlug } = req.body;
+    const { username, password, academySlug, rememberMe } = req.body;
 
     // 학원 슬러그로 academy 조회
     let academyId = null;
@@ -107,7 +107,7 @@ router.post('/login', async (req, res) => {
     }
 
     // 관리자는 항상 승인 상태, 학생은 승인 체크
-    if (user.role !== 'admin' && !user.approved) {
+    if (user.role !== 'admin' && user.role !== 'superadmin' && !user.approved) {
       return res.status(403).json({ error: '관리자 승인 대기 중입니다. 승인 후 로그인할 수 있습니다.' });
     }
 
@@ -134,7 +134,7 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign(
       { id: user.id, username: user.username, name: user.name, role: user.role, school, academy_id: user.academy_id },
       JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: rememberMe ? '30d' : '1d' }
     );
 
     res.json({

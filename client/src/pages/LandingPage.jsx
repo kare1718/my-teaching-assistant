@@ -128,9 +128,9 @@ const testimonials2 = [
 ];
 
 const plans = [
-  { name: 'Basic', price: '3만원', students: '30명', features: ['성적 관리', '게이미피케이션', '랭킹/상점', '안내사항/자료'], color: 'var(--info)' },
-  { name: 'Standard', price: '5만원', students: '50명', features: ['Basic 전체', 'AI 리포트', '퀴즈 전체', 'OX/독해/지식 퀴즈'], color: 'oklch(55% 0.20 290)', popular: true },
-  { name: 'Pro', price: '8만원', students: '100명', features: ['Standard 전체', 'SMS 발송', '클리닉/숙제', '명예의 전당'], color: 'var(--warning)' },
+  { name: 'Basic', price: '7.9만원', students: '50명', features: ['성적 관리', '게이미피케이션', '랭킹/상점', '안내사항/자료'], color: 'var(--info)' },
+  { name: 'Standard', price: '15.9만원', students: '100명', features: ['Basic 전체', 'AI 리포트', 'SMS 발송', '클리닉/숙제'], color: 'oklch(55% 0.20 290)', popular: true },
+  { name: 'Pro', price: '별도 문의', students: '100명 이상', features: ['Standard 전체', '조교 관리', '수납 관리', 'API 내보내기'], color: 'var(--warning)' },
 ];
 
 const comparisonRows = [

@@ -95,6 +95,15 @@ const adminPages = [
   { path: '/admin/settings', label: '학원 설정', desc: '학원 기본 설정', icon: Icons.settings },
 ];
 
+/* ─── Super admin nav ────────────────────────────────────────────── */
+const superadminPages = [
+  { path: '/superadmin', label: '대시보드', desc: '플랫폼 전체 현황', icon: Icons.home },
+  { path: '/superadmin/academy/new', label: '학원 생성', desc: '새 학원 등록', icon: Icons.userPlus },
+  { path: '/superadmin/backup-security', label: '백업/보안', desc: '데이터 백업 및 보안', icon: Icons.save },
+  { divider: true, label: '학원 관리 바로가기' },
+  { path: '/admin', label: '관리자 페이지', desc: '학원 관리 화면으로', icon: Icons.settings },
+];
+
 /* ─── Student nav (FAB) ───────────────────────────────────────────── */
 const studentPages = [
   { path: '/student', label: '홈', icon: Icons.home },
@@ -127,8 +136,9 @@ export default function SideNav() {
   const user      = getUser();
   if (!user) return null;
 
-  const isAdminPage = location.pathname.startsWith('/admin');
-  const isAdminUser = user.role === 'admin' || user.school === '조교';
+  const isSuperAdminPage = location.pathname.startsWith('/superadmin');
+  const isAdminPage = location.pathname.startsWith('/admin') || isSuperAdminPage;
+  const isAdminUser = user.role === 'admin' || user.role === 'superadmin' || user.school === '조교';
 
   /* ── Admin sidebar state ── */
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' && window.innerWidth > 768);
@@ -368,6 +378,47 @@ export default function SideNav() {
     );
   };
 
+  const renderSuperAdminMenu = () => (
+    <div style={{ flex: 1, overflowY: 'auto', padding: '8px 10px' }}>
+      {superadminPages.map((item, idx) => {
+        if (item.divider) {
+          return (
+            <div key={idx} style={{
+              fontSize: 11, fontWeight: 700, color: 'var(--neutral-400)',
+              padding: '16px 10px 6px', letterSpacing: '0.04em',
+            }}>
+              {item.label}
+            </div>
+          );
+        }
+        const isActive = location.pathname === item.path;
+        return (
+          <button key={item.path} onClick={() => navigate(item.path)} style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            width: '100%', padding: '8px 10px', borderRadius: 7,
+            border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+            fontSize: 14, fontWeight: isActive ? 600 : 400,
+            background: isActive ? 'var(--primary-lighter)' : 'transparent',
+            color: isActive ? 'var(--primary)' : 'var(--foreground)',
+            transition: 'background 0.12s', marginBottom: 1, textAlign: 'left',
+          }}
+          onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--neutral-50)'; }}
+          onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+          >
+            <span style={{ color: isActive ? 'var(--primary)' : 'var(--neutral-500)', display: 'flex' }}>
+              {item.icon}
+            </span>
+            <div style={{ flex: 1 }}>
+              <span>{item.label}</span>
+              {item.desc && <div style={{ fontSize: 11, color: 'var(--neutral-400)', fontWeight: 400, marginTop: 2 }}>{item.desc}</div>}
+            </div>
+            {isActive && <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--primary)' }} />}
+          </button>
+        );
+      })}
+    </div>
+  );
+
   const renderStudentMenu = (onNavigate) => (
     <div style={{ flex: 1, overflowY: 'auto', padding: '8px 10px' }}>
       {studentPages.map(item => {
@@ -399,6 +450,20 @@ export default function SideNav() {
       <div style={{ padding: '8px 14px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'center' }}>
         <ThemeToggle />
       </div>
+      {user.role === 'superadmin' && !isSuperAdminPage && (
+        <div style={{ padding: '10px 14px', borderTop: '1px solid var(--border)' }}>
+          <button onClick={() => onNavigate('/superadmin')} style={{
+            width: '100%', padding: '9px', borderRadius: 8,
+            border: '1px solid var(--border)', cursor: 'pointer',
+            fontFamily: 'inherit', fontSize: 13, fontWeight: 600,
+            background: 'var(--warning-light)', color: 'var(--foreground)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            transition: 'background 0.12s',
+          }}>
+            플랫폼 관리로
+          </button>
+        </div>
+      )}
       {isAdminUser && (
         <div style={{ padding: '10px 14px', borderTop: '1px solid var(--border)' }}>
           <button onClick={() => onNavigate(isAdminPage ? '/student' : '/admin')} style={{
@@ -441,7 +506,7 @@ export default function SideNav() {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--muted-foreground)', margin: 0, letterSpacing: '0.02em' }}>
-                  관리자 메뉴
+                  {isSuperAdminPage ? '플랫폼 관리' : '관리자 메뉴'}
                 </span>
                 {totalBadge > 0 && (
                   <span style={{
@@ -477,7 +542,7 @@ export default function SideNav() {
                 </div>
               )}
             </div>
-            {renderAdminMenu()}
+            {isSuperAdminPage ? renderSuperAdminMenu() : renderAdminMenu()}
             {renderSwitchButton(navigate)}
           </div>
         </div>
