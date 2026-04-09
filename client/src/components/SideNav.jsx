@@ -264,8 +264,8 @@ export default function SideNav() {
             return (
               <button key={idx} onClick={() => toggleCategory(item.label)} style={{
                 display: 'flex', alignItems: 'center', gap: 6, width: '100%',
-                fontSize: 10, fontWeight: 700, color: 'var(--neutral-400)',
-                padding: '14px 10px 4px', textTransform: 'uppercase', letterSpacing: '0.08em',
+                fontSize: 11, fontWeight: 700, color: 'var(--neutral-400)',
+                padding: '16px 10px 6px', letterSpacing: '0.04em',
                 margin: 0, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
               }}>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
@@ -300,7 +300,7 @@ export default function SideNav() {
               display: 'flex', alignItems: 'center', gap: 10,
               width: '100%', padding: '8px 10px', borderRadius: 7,
               border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-              fontSize: 13, fontWeight: isActive ? 600 : 400,
+              fontSize: 14, fontWeight: isActive ? 600 : 400,
               background: isActive ? 'var(--primary-lighter)' : 'transparent',
               color: isActive ? 'var(--primary)' : 'var(--foreground)',
               transition: 'background 0.12s', marginBottom: 1, textAlign: 'left',
@@ -313,7 +313,7 @@ export default function SideNav() {
               </span>
               <div style={{ flex: 1 }}>
                 <span>{item.label}</span>
-                {item.desc && <div style={{ fontSize: 10, color: 'var(--neutral-400)', fontWeight: 400, marginTop: 1 }}>{item.desc}</div>}
+                {item.desc && <div style={{ fontSize: 11, color: 'var(--neutral-400)', fontWeight: 400, marginTop: 2 }}>{item.desc}</div>}
               </div>
               {badgeCount > 0 && (
                 <span style={{
@@ -409,7 +409,7 @@ export default function SideNav() {
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted-foreground)', margin: 0, letterSpacing: '0.02em' }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--muted-foreground)', margin: 0, letterSpacing: '0.02em' }}>
                   관리자 메뉴
                 </span>
                 {totalBadge > 0 && (
