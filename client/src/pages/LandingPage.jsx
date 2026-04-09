@@ -280,7 +280,7 @@ export default function LandingPage() {
       <section style={{ paddingTop: 128, paddingBottom: 80 }}>
         <div className="lp-hero-grid" style={{ maxWidth: 1152, margin: '0 auto', padding: '0 24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center' }}>
           <div>
-            <div ref={addRef} style={revealStyle}>
+            <div ref={addRef} style={{ opacity: 1, transition: 'opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1)' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 500, background: C.accentBg, color: C.accent, marginBottom: 24 }}>
                 <Shield /> 현재 2,800명+ 학생이 사용 중
               </span>
