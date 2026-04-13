@@ -1,30 +1,27 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, apiPost, apiDelete } from '../../api';
+import { useTenantConfig } from '../../contexts/TenantContext';
 import BottomTabBar from '../../components/BottomTabBar';
 
-const TIME_SLOTS = [
+const DEFAULT_TIME_SLOTS = [
   '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
   '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
   '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
   '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30'
 ];
 
-const TOPICS = [
-  '수업 내용 질문',
-  '모의고사 분석',
-  '문법/어법 질문',
-  '문학 작품 분석',
-  '비문학 독해 전략',
-  '시험 준비 상담',
-  '학습 방법 상담',
-  '재시험',
-  '기타',
+const DEFAULT_TOPICS = [
+  '수업 내용 질문', '시험 분석', '학습 방법 상담',
+  '진도 점검', '오답 분석', '보충 수업', '시험 대비', '재시험', '기타',
 ];
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
 
 export default function ClinicApply() {
+  const { config } = useTenantConfig();
+  const TIME_SLOTS = config.clinicSettings?.timeSlots || DEFAULT_TIME_SLOTS;
+  const TOPICS = config.clinicSettings?.topics || DEFAULT_TOPICS;
   const navigate = useNavigate();
   const [myAppointments, setMyAppointments] = useState([]);
   const [form, setForm] = useState({

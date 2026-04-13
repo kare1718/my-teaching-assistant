@@ -275,7 +275,7 @@ message 안에서 줄바꿈은 \\n으로, 강조는 **텍스트**로 표시.
 {"type": "clarification", "message": "구체적 질문"}
 
 ## 사용 가능한 액션
-- **create_exam**: params = {name, exam_type(학력평가 모의고사/수능 모의고사/자체 모의고사/내신 파이널/기타), max_score(기본100), exam_date(YYYY-MM-DD), school, grade}
+- **create_exam**: params = {name, exam_type(학원 설정의 시험 유형 사용, 없으면 자유 입력), max_score(기본100), exam_date(YYYY-MM-DD), school, grade}
 - **input_scores**: params = {exam_id 또는 exam_name, scores:[{student_name, score, note}]}
 - **create_code**: params = {code, xp_amount, max_uses(기본50), description, expires_days(기본7)}
 - **adjust_xp**: params = {student_name, xp_amount, points_amount, reason}

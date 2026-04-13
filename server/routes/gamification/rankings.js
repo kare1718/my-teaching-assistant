@@ -17,7 +17,7 @@ router.get('/rankings', authenticateToken, async (req, res) => {
     } catch(e) { console.error('랭킹: 학생 조회 오류', e.message); }
 
     const isAdmin = req.user.role === 'admin';
-    const isStaff = isAdmin || ['조교', '선생님'].includes(req.user.school);
+    const isStaff = isAdmin || req.user.role === 'assistant' || ['조교', '선생님'].includes(req.user.school);
     // 관리자/조교/선생님은 "내 순위" 표시하지 않음
     const showMyRank = student && !isAdmin && !['조교', '선생님'].includes(student.school);
 
@@ -344,11 +344,11 @@ router.post('/admin/ranking-rewards', authenticateToken, requireAdmin, async (re
      JOIN students s ON sc.student_id = s.id
      JOIN users u ON s.user_id = u.id
      LEFT JOIN (
-       SELECT student_id, SUM(amount) as total_xp FROM xp_logs WHERE created_at >= ? AND amount > 0 AND source NOT IN ('admin_ranking_reward', 'admin_adjust', 'admin_ranking', 'admin_edit') GROUP BY student_id
+       SELECT student_id, SUM(amount) as total_xp FROM xp_logs WHERE academy_id = ? AND created_at >= ? AND amount > 0 AND source NOT IN ('admin_ranking_reward', 'admin_adjust', 'admin_ranking', 'admin_edit') GROUP BY student_id
      ) xp_agg ON xp_agg.student_id = sc.student_id
      WHERE u.role != 'admin' AND u.approved = 1 AND s.school NOT IN ('조교', '선생님') AND COALESCE(xp_agg.total_xp, 0) > 0 AND sc.academy_id = ?
      ORDER BY period_xp DESC LIMIT 10`,
-    [since, req.academyId]
+    [req.academyId, since, req.academyId]
   );
 
   const rewarded = [];
@@ -460,11 +460,11 @@ router.post('/admin/ranking-rewards', authenticateToken, requireAdmin, async (re
            FROM student_characters sc
            JOIN students s ON sc.student_id = s.id JOIN users u ON s.user_id = u.id
            LEFT JOIN (
-             SELECT student_id, SUM(amount) as total_xp FROM xp_logs WHERE created_at >= ? AND amount > 0 AND source NOT IN ('admin_ranking_reward', 'admin_adjust', 'admin_ranking', 'admin_edit') GROUP BY student_id
+             SELECT student_id, SUM(amount) as total_xp FROM xp_logs WHERE academy_id = ? AND created_at >= ? AND amount > 0 AND source NOT IN ('admin_ranking_reward', 'admin_adjust', 'admin_ranking', 'admin_edit') GROUP BY student_id
            ) xp_agg ON xp_agg.student_id = sc.student_id
            WHERE u.role != 'admin' AND s.school = ? AND COALESCE(xp_agg.total_xp, 0) > 0 AND sc.academy_id = ?
            ORDER BY pxp DESC LIMIT 3`,
-          [monthSince, school, req.academyId]
+          [req.academyId, monthSince, school, req.academyId]
         );
 
         for (let idx = 0; idx < schoolRanks.length; idx++) {

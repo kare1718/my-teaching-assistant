@@ -45,6 +45,24 @@ export default function SubscriptionPage() {
     setTimeout(() => setMsg({ text: '', type: '' }), 4000);
   };
 
+  const [couponCode, setCouponCode] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+
+  const handleRedeemCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    try {
+      const result = await apiPost('/notifications/redeem-coupon', { code: couponCode.trim() });
+      showMsg(result.message || '쿠폰이 적용되었습니다.');
+      setCouponCode('');
+      loadData();
+    } catch (e) {
+      showMsg(e.message, 'error');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
   const currentTier = subInfo?.academy?.subscription_tier || 'trial';
   const subscription = subInfo?.subscription;
   const status = subscription?.status || (currentTier === 'trial' ? 'trial' : 'active');
@@ -132,7 +150,7 @@ export default function SubscriptionPage() {
 
   const getPlanAction = (plan) => {
     if (plan.inquiry) {
-      return { label: '도입 문의', disabled: false, style: 'inquiry', action: () => window.open('mailto:support@kangin-korean.com?subject=Pro 플랜 도입 문의', '_blank') };
+      return { label: '도입 문의', disabled: false, style: 'inquiry', action: () => window.open('mailto:support@najogyo.com?subject=Pro 플랜 도입 문의', '_blank') };
     }
     const currentIdx = TIER_ORDER.indexOf(currentTier === 'trial' ? 'free' : currentTier);
     const planIdx = TIER_ORDER.indexOf(plan.id);
@@ -159,7 +177,7 @@ export default function SubscriptionPage() {
   const isYearly = billingCycle === 'yearly';
 
   return (
-    <div className="main-content" style={{ padding: 20, maxWidth: 1100, margin: '0 auto' }}>
+    <div className="main-content" style={{ padding: 20, maxWidth: 1200, margin: '0 auto' }}>
       <h2 style={{ fontSize: '1.5em', fontWeight: 800, marginBottom: 24 }}>구독 관리</h2>
 
       {msg.text && (
@@ -170,13 +188,43 @@ export default function SubscriptionPage() {
         }}>{msg.text}</div>
       )}
 
+      {/* 쿠폰 코드 입력 */}
+      <div style={{
+        background: 'var(--card)', borderRadius: 12, padding: '16px 20px', marginBottom: 20,
+        border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 12,
+      }}>
+        <span style={{ fontSize: 18 }}>🎁</span>
+        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)', whiteSpace: 'nowrap' }}>쿠폰 코드</span>
+        <input
+          placeholder="쿠폰 코드를 입력하세요"
+          value={couponCode}
+          onChange={e => setCouponCode(e.target.value.toUpperCase())}
+          onKeyDown={e => e.key === 'Enter' && handleRedeemCoupon()}
+          style={{
+            flex: 1, padding: '10px 14px', border: '1.5px solid var(--border)', borderRadius: 10,
+            fontSize: 14, fontFamily: 'monospace', outline: 'none',
+            background: 'var(--background)', color: 'var(--foreground)',
+          }}
+        />
+        <button
+          onClick={handleRedeemCoupon}
+          disabled={!couponCode.trim() || couponLoading}
+          style={{
+            padding: '10px 20px', background: 'var(--primary)', color: 'white',
+            border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700,
+            cursor: couponCode.trim() && !couponLoading ? 'pointer' : 'default',
+            opacity: couponCode.trim() && !couponLoading ? 1 : 0.5, whiteSpace: 'nowrap',
+          }}
+        >{couponLoading ? '적용 중...' : '적용'}</button>
+      </div>
+
       {/* 2단 레이아웃: 좌측 현재구독 + 우측 플랜 */}
-      <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 24 }}>
+      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 24 }}>
 
         {/* 좌: 현재 플랜 카드 */}
         <section style={{
           background: 'linear-gradient(135deg, var(--primary) 0%, oklch(48% 0.18 260) 100%)',
-          borderRadius: 16, padding: 24, color: 'white', flex: '0 0 300px', minWidth: 280,
+          borderRadius: 16, padding: 24, color: 'white', flex: '0 0 280px', minWidth: 260,
         }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
@@ -293,7 +341,7 @@ export default function SubscriptionPage() {
           )}
 
           {/* 플랜 카드 2x2 */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20 }}>
             {PLANS.map(plan => {
               const isCurrent = plan.id === currentTier || (currentTier === 'trial' && plan.id === 'free');
               const price = isYearly ? plan.yearlyPrice : plan.price;
@@ -304,7 +352,7 @@ export default function SubscriptionPage() {
 
               return (
                 <div key={plan.id} style={{
-                  background: 'var(--card)', borderRadius: 14, padding: 18, textAlign: 'center',
+                  background: 'var(--card)', borderRadius: 16, padding: '28px 24px', textAlign: 'center',
                   border: plan.popular ? '2px solid var(--primary)' : isCurrent ? '2px solid oklch(48% 0.18 260)' : '1px solid var(--border)',
                   position: 'relative', display: 'flex', flexDirection: 'column',
                   boxShadow: plan.popular ? '0 4px 16px oklch(48% 0.18 260 / 0.15)' : 'none',
@@ -312,41 +360,41 @@ export default function SubscriptionPage() {
                   {/* 인기 배지 */}
                   {plan.popular && !isCurrent && (
                     <div style={{
-                      position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)',
-                      background: 'var(--primary)', color: 'white', padding: '3px 16px', borderRadius: 10,
-                      fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap',
+                      position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)',
+                      background: 'var(--primary)', color: 'white', padding: '4px 18px', borderRadius: 12,
+                      fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
                     }}>BEST</div>
                   )}
                   {/* 현재 플랜 배지 */}
                   {isCurrent && (
                     <div style={{
-                      position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)',
-                      background: 'oklch(48% 0.18 260)', color: 'white', padding: '3px 16px', borderRadius: 10,
-                      fontSize: 11, fontWeight: 700,
+                      position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)',
+                      background: 'oklch(48% 0.18 260)', color: 'white', padding: '4px 18px', borderRadius: 12,
+                      fontSize: 12, fontWeight: 700,
                     }}>현재 플랜</div>
                   )}
 
-                  <h4 style={{ fontWeight: 800, fontSize: 16, marginBottom: 2, marginTop: (isCurrent || plan.popular) ? 8 : 0 }}>{plan.name}</h4>
-                  <p style={{ fontSize: 11, color: 'var(--neutral-500)', marginBottom: 10 }}>{plan.desc}</p>
+                  <h4 style={{ fontWeight: 800, fontSize: 18, marginBottom: 4, marginTop: (isCurrent || plan.popular) ? 10 : 0 }}>{plan.name}</h4>
+                  <p style={{ fontSize: 12, color: 'var(--neutral-500)', marginBottom: 16 }}>{plan.desc}</p>
 
                   {/* 가격 영역 */}
-                  <div style={{ minHeight: 52 }}>
+                  <div style={{ minHeight: 64, marginBottom: 8 }}>
                     {plan.inquiry ? (
-                      <p style={{ fontSize: 22, fontWeight: 900, color: 'var(--primary)' }}>별도 문의</p>
+                      <p style={{ fontSize: 24, fontWeight: 900, color: 'var(--primary)' }}>별도 문의</p>
                     ) : price === 0 ? (
-                      <p style={{ fontSize: 26, fontWeight: 900, color: 'var(--primary)' }}>무료</p>
+                      <p style={{ fontSize: 28, fontWeight: 900, color: 'var(--primary)' }}>무료</p>
                     ) : (
                       <>
                         {showDiscount && (
                           <p style={{
-                            fontSize: 13, color: 'var(--neutral-400)', textDecoration: 'line-through',
-                            fontWeight: 500, marginBottom: 2,
+                            fontSize: 14, color: 'var(--neutral-400)', textDecoration: 'line-through',
+                            fontWeight: 500, marginBottom: 4,
                           }}>{originalPrice.toLocaleString()}원</p>
                         )}
-                        <p style={{ fontSize: 24, fontWeight: 900, color: 'var(--primary)', lineHeight: 1.1 }}>
-                          {price.toLocaleString()}<span style={{ fontSize: 14, fontWeight: 600 }}>원</span>
+                        <p style={{ fontSize: 26, fontWeight: 900, color: 'var(--primary)', lineHeight: 1.1 }}>
+                          {price.toLocaleString()}<span style={{ fontSize: 15, fontWeight: 600 }}>원</span>
                         </p>
-                        <p style={{ fontSize: 11, color: 'var(--neutral-500)', marginTop: 3 }}>/월 (부가세 포함)</p>
+                        <p style={{ fontSize: 12, color: 'var(--neutral-500)', marginTop: 4 }}>/월 (부가세 포함)</p>
                       </>
                     )}
                   </div>
@@ -354,23 +402,23 @@ export default function SubscriptionPage() {
                   {/* 연간 절약액 */}
                   {showDiscount && yearlySaving > 0 && (
                     <div style={{
-                      margin: '8px 0 4px', padding: '4px 10px', borderRadius: 6,
-                      background: 'oklch(95% 0.05 25)', fontSize: 11, fontWeight: 700,
+                      margin: '0 0 8px', padding: '5px 12px', borderRadius: 8,
+                      background: 'oklch(95% 0.05 25)', fontSize: 12, fontWeight: 700,
                       color: 'oklch(50% 0.18 25)',
                     }}>
                       연 {yearlySaving.toLocaleString()}원 절약
                     </div>
                   )}
 
-                  <p style={{ fontSize: 13, color: 'var(--neutral-500)', marginTop: 6, fontWeight: 700 }}>최대 {plan.maxStudents}</p>
+                  <p style={{ fontSize: 14, color: 'var(--neutral-500)', marginTop: 4, marginBottom: 12, fontWeight: 700 }}>최대 {plan.maxStudents}</p>
 
                   {/* 구분선 */}
-                  <div style={{ height: 1, background: 'var(--border)', margin: '10px 0' }} />
+                  <div style={{ height: 1, background: 'var(--border)', margin: '0 0 14px' }} />
 
-                  <ul style={{ textAlign: 'left', margin: '0 0 12px', padding: '0 0 0 4px', fontSize: 12, color: 'var(--neutral-600)', flex: 1, listStyle: 'none' }}>
+                  <ul style={{ textAlign: 'left', margin: '0 0 16px', padding: '0 0 0 4px', fontSize: 13, color: 'var(--neutral-600)', flex: 1, listStyle: 'none' }}>
                     {plan.features.map((f, i) => (
-                      <li key={i} style={{ marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ color: 'oklch(55% 0.16 160)', fontSize: 13, flexShrink: 0 }}>&#10003;</span>
+                      <li key={i} style={{ marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ color: 'oklch(55% 0.16 160)', fontSize: 14, flexShrink: 0 }}>&#10003;</span>
                         {f}
                       </li>
                     ))}
@@ -380,8 +428,8 @@ export default function SubscriptionPage() {
                     onClick={action.action || undefined}
                     disabled={action.disabled || actionLoading}
                     style={{
-                      width: '100%', padding: '10px 0', borderRadius: 10, cursor: action.disabled ? 'default' : 'pointer',
-                      fontFamily: 'inherit', fontSize: 13, fontWeight: 700, transition: 'all 0.15s',
+                      width: '100%', padding: '12px 0', borderRadius: 12, cursor: action.disabled ? 'default' : 'pointer',
+                      fontFamily: 'inherit', fontSize: 14, fontWeight: 700, transition: 'all 0.15s',
                       background: action.style === 'upgrade' ? 'var(--primary)'
                         : action.style === 'inquiry' ? 'linear-gradient(135deg, oklch(55% 0.14 75), oklch(50% 0.14 55))'
                         : action.style === 'current' ? 'var(--muted)' : 'white',

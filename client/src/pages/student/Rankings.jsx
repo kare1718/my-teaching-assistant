@@ -5,6 +5,7 @@ import { getUser } from '../../api';
 import { getLevelInfo, getStageInfo } from '../../utils/gamification';
 import AvatarSVG from '../../components/AvatarSVG';
 import BottomTabBar from '../../components/BottomTabBar';
+import { useTenantConfig } from '../../contexts/TenantContext';
 
 const TABS = [
   { key: 'all', label: '🏆 전체', desc: '역대 누적 XP' },
@@ -15,6 +16,8 @@ const TABS = [
 
 export default function Rankings() {
   const navigate = useNavigate();
+  const { config } = useTenantConfig();
+  const subject = config.subject;
   const [tab, setTab] = useState('all');
   const [rankings, setRankings] = useState([]);
   const [myRank, setMyRank] = useState(null);
@@ -66,7 +69,7 @@ export default function Rankings() {
   const RankRow = ({ r, highlight }) => {
     const totalXp = tab === 'all' ? r.xp : (r.totalXp || r.xp || 0);
     const lvl = getLevelInfo(totalXp);
-    const stage = getStageInfo(lvl.level);
+    const stage = getStageInfo(lvl.level, subject);
     return (
       <div style={{
         display: 'flex', alignItems: 'center', gap: 10,
@@ -250,7 +253,7 @@ export default function Rankings() {
                       if (!r) return null;
                       const totalXp = tab === 'all' ? r.xp : (r.totalXp || r.xp || 0);
                       const lvl = getLevelInfo(totalXp);
-                      const stage = getStageInfo(lvl.level);
+                      const stage = getStageInfo(lvl.level, subject);
                       const isFirst = idx === 0;
                       const isSecond = idx === 1;
                       const avatarSize = isFirst ? 60 : isSecond ? 46 : 38;

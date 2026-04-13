@@ -9,7 +9,7 @@ router.use(authenticateToken);
 router.get('/my-notices', async (req, res) => {
   const academyId = req.academyId;
   const student = await getOne('SELECT * FROM students WHERE user_id = ? AND academy_id = ?', [req.user.id, academyId]);
-  const isAdminLike = req.user.role === 'admin' || req.user.school === '조교' || req.user.school === '선생님';
+  const isAdminLike = ['admin', 'assistant'].includes(req.user.role) || req.user.school === '조교' || req.user.school === '선생님';
   if (!student && !isAdminLike) {
     return res.status(404).json({ error: '학생 정보를 찾을 수 없습니다.' });
   }
@@ -59,12 +59,26 @@ router.post('/notices/:id/read', async (req, res) => {
   }
 });
 
+// 마케팅 동의 토글
+router.put('/marketing-consent', async (req, res) => {
+  try {
+    const { agree } = req.body;
+    await runQuery(
+      'UPDATE users SET agree_marketing = ?, agree_marketing_at = ? WHERE id = ?',
+      [agree ? 1 : 0, agree ? new Date().toISOString() : null, req.user.id]
+    );
+    res.json({ message: agree ? '마케팅 정보 수신에 동의했습니다.' : '마케팅 정보 수신 동의를 철회했습니다.' });
+  } catch (err) {
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
 // 내 정보 조회
 router.get('/my-info', async (req, res) => {
   const academyId = req.academyId;
   const student = await getOne(
     `SELECT s.id, s.user_id, s.school, s.grade, s.parent_name, s.parent_phone, s.status,
-            u.name, u.phone, u.username
+            u.name, u.phone, u.username, u.agree_marketing, u.agree_marketing_at
      FROM students s JOIN users u ON s.user_id = u.id
      WHERE s.user_id = ? AND s.academy_id = ?`,
     [req.user.id, academyId]

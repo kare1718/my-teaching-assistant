@@ -84,11 +84,11 @@ export default function AcademyCreate() {
           <h3 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 20px', color: 'var(--foreground)' }}>학원 정보</h3>
           <div style={{ marginBottom: 16 }}>
             <label style={labelStyle}>학원 이름 *</label>
-            <input style={inputStyle} value={form.name} onChange={e => { set('name', e.target.value); handleSlug(e.target.value); }} placeholder="예: 강인한 국어" />
+            <input style={inputStyle} value={form.name} onChange={e => { set('name', e.target.value); handleSlug(e.target.value); }} placeholder="예: 우리 학원" />
           </div>
           <div style={{ marginBottom: 16 }}>
             <label style={labelStyle}>슬러그 (URL) *</label>
-            <input style={inputStyle} value={form.slug} onChange={e => set('slug', e.target.value)} placeholder="예: kangin-korean" />
+            <input style={inputStyle} value={form.slug} onChange={e => set('slug', e.target.value)} placeholder="예: my-academy" />
             <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 4 }}>najogyo.com/login?academy={form.slug || '...'}</div>
           </div>
           <div>

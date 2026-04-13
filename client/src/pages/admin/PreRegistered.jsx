@@ -12,6 +12,7 @@ export default function PreRegistered() {
   const [editId, setEditId] = useState(null);
   const [linkTarget, setLinkTarget] = useState(null); // { preRegId, studentId }
   const [msg, setMsg] = useState('');
+  const [msgType, setMsgType] = useState('success');
   const [filter, setFilter] = useState('all'); // all | pending | linked
 
   const load = () => {
@@ -30,15 +31,17 @@ export default function PreRegistered() {
     try {
       if (editId) {
         await apiPut(`/admin/pre-registered/${editId}`, form);
+        setMsgType('success');
         setMsg('수정되었습니다.');
       } else {
         await apiPost('/admin/pre-registered', form);
+        setMsgType('success');
         setMsg('사전등록이 완료되었습니다.');
       }
       resetForm();
       load();
       setTimeout(() => setMsg(''), 2000);
-    } catch (err) { setMsg(err.message); }
+    } catch (err) { setMsgType('error'); setMsg(err.message); }
   };
 
   const startEdit = (item) => {
@@ -86,7 +89,7 @@ export default function PreRegistered() {
         <Link to="/admin">대시보드</Link> &gt; <span>학생 사전등록</span>
       </div>
 
-      {msg && <div className="alert alert-success" style={{ marginBottom: 'var(--space-3)' }}>{msg}</div>}
+      {msg && <div className={`alert ${msgType === 'error' ? 'alert-error' : 'alert-success'}`} style={{ marginBottom: 'var(--space-3)' }}>{msg}</div>}
 
       <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: 14, alignItems: 'start' }}>
         {/* 왼쪽: 등록/수정 폼 */}

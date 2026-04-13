@@ -23,8 +23,8 @@ const stageStyles = {
   },
 };
 
-export default function CharacterDisplay({ emoji, level, size = 64, showBadge = true }) {
-  const stage = getStageInfo(level);
+export default function CharacterDisplay({ emoji, level, size = 64, showBadge = true, subject }) {
+  const stage = getStageInfo(level, subject);
   const glowStyle = stageStyles[stage.glow] || {};
 
   return (

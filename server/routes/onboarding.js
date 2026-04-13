@@ -35,7 +35,7 @@ router.post('/create-academy', async (req, res) => {
     // 기본 설정
     const defaultSettings = {
       schools: [{ name: '고등학교', grades: ['1학년', '2학년', '3학년'] }],
-      examTypes: ['학력평가 모의고사', '정규반 테스트', '1학기 중간고사', '1학기 기말고사', '2학기 중간고사', '2학기 기말고사'],
+      examTypes: [],
       siteTitle: academyName,
       mainTitle: subject ? `${subject} 전문 학원` : '',
       branding: {},

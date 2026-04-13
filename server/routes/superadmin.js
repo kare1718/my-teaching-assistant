@@ -57,7 +57,7 @@ router.post('/academies', async (req, res) => {
 
     const defaultSettings = {
       schools: [{ name: '고등학교', grades: ['1학년', '2학년', '3학년'] }],
-      examTypes: ['학력평가 모의고사', '정규반 테스트', '1학기 중간고사', '1학기 기말고사', '2학기 중간고사', '2학기 기말고사'],
+      examTypes: [],
       siteTitle: name,
       mainTitle: '',
       branding: {},
@@ -114,7 +114,7 @@ router.put('/academies/:id/tier', async (req, res) => {
   }
 });
 
-// 플랫폼 통계
+// 플랫폼 통계 (강화)
 router.get('/stats', async (req, res) => {
   try {
     const totalAcademies = await getOne('SELECT COUNT(*) as count FROM academies WHERE is_active = 1');
@@ -131,15 +131,450 @@ router.get('/stats', async (req, res) => {
       'SELECT subscription_tier, COUNT(*) as count FROM academies WHERE is_active = 1 GROUP BY subscription_tier'
     );
 
+    // MRR 계산 (active subscriptions)
+    const mrr = await getOne(
+      `SELECT COALESCE(SUM(CASE
+        WHEN a.subscription_tier = 'basic' THEN 77000
+        WHEN a.subscription_tier = 'standard' THEN 149000
+        ELSE 0
+      END), 0) as total
+      FROM academies a WHERE a.is_active = 1 AND a.subscription_tier NOT IN ('free', 'trial')`
+    );
+
+    // 이번달 신규 학원
+    const newThisMonth = await getOne(
+      "SELECT COUNT(*) as count FROM academies WHERE to_char(created_at, 'YYYY-MM') = ?",
+      [month]
+    );
+
+    // 실패한 결제 수
+    const failedPayments = await getOne(
+      "SELECT COUNT(*) as count FROM payments WHERE status = 'failed' AND to_char(created_at, 'YYYY-MM') = ?",
+      [month]
+    );
+
+    // 체험 만료 임박 (7일 내)
+    const expiringTrials = await getAll(
+      `SELECT a.id, a.name, a.slug, s.expires_at
+       FROM academies a
+       LEFT JOIN subscriptions s ON s.academy_id = a.id AND s.status = 'active'
+       WHERE a.subscription_tier = 'trial' AND a.is_active = 1
+       AND s.expires_at IS NOT NULL AND s.expires_at < NOW() + INTERVAL '7 days'
+       ORDER BY s.expires_at ASC LIMIT 10`
+    );
+
+    // 6개월 매출 트렌드
+    const revenueTrend = await getAll(
+      `SELECT to_char(paid_at, 'YYYY-MM') as month, COALESCE(SUM(amount), 0) as total
+       FROM payments WHERE status = 'paid' AND paid_at > NOW() - INTERVAL '6 months'
+       GROUP BY to_char(paid_at, 'YYYY-MM') ORDER BY month ASC`
+    );
+
     res.json({
       totalAcademies: totalAcademies?.count || 0,
       totalStudents: totalStudents?.count || 0,
       totalUsers: totalUsers?.count || 0,
       monthlyRevenue: monthlyPayments?.total || 0,
+      mrr: mrr?.total || 0,
+      newThisMonth: newThisMonth?.count || 0,
+      failedPayments: failedPayments?.count || 0,
+      expiringTrials,
+      revenueTrend,
       tierDistribution,
     });
   } catch (err) {
     console.error(err);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// ======================== 활동 로그 ========================
+
+async function logActivity(actorId, action, targetType, targetId, details) {
+  try {
+    await runInsert(
+      'INSERT INTO platform_activity_logs (actor_id, action, target_type, target_id, details) VALUES (?, ?, ?, ?, ?)',
+      [actorId, action, targetType, targetId, JSON.stringify(details || {})]
+    );
+  } catch (e) { console.error('Activity log error:', e.message); }
+}
+
+router.get('/activity', async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 30, 100);
+    const logs = await getAll(
+      `SELECT l.*, u.name as actor_name
+       FROM platform_activity_logs l
+       LEFT JOIN users u ON u.id = l.actor_id
+       ORDER BY l.created_at DESC LIMIT ?`,
+      [limit]
+    );
+    res.json(logs);
+  } catch (err) {
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// ======================== 프로모션 시스템 ========================
+
+// 프로모션 목록
+router.get('/promotions', async (req, res) => {
+  try {
+    const promos = await getAll(
+      `SELECT p.*, u.name as creator_name,
+        (SELECT COUNT(*) FROM promotion_grants WHERE promotion_id = p.id) as grant_count
+       FROM promotions p
+       LEFT JOIN users u ON u.id = p.created_by
+       ORDER BY p.created_at DESC`
+    );
+    res.json(promos);
+  } catch (err) {
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// 프로모션 생성
+router.post('/promotions', async (req, res) => {
+  try {
+    const { name, type, value, code, max_uses, expires_at } = req.body;
+    if (!name || !type || !value) return res.status(400).json({ error: '필수 항목을 입력해주세요.' });
+
+    const validTypes = ['free_month', 'tier_upgrade', 'sms_credits', 'discount_coupon', 'trial_extension', 'feature_unlock'];
+    if (!validTypes.includes(type)) return res.status(400).json({ error: '유효하지 않은 프로모션 타입입니다.' });
+
+    if (code) {
+      const existing = await getOne('SELECT id FROM promotions WHERE code = ?', [code]);
+      if (existing) return res.status(400).json({ error: '이미 사용 중인 코드입니다.' });
+    }
+
+    const id = await runInsert(
+      'INSERT INTO promotions (name, type, value, code, max_uses, expires_at, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [name, type, JSON.stringify(value), code || null, max_uses || null, expires_at || null, req.user.id]
+    );
+
+    await logActivity(req.user.id, 'promotion_create', 'promotion', id, { name, type });
+    res.json({ message: '프로모션이 생성되었습니다.', id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// 프로모션 수정
+router.put('/promotions/:id', async (req, res) => {
+  try {
+    const { name, value, code, max_uses, expires_at, is_active } = req.body;
+    const promoId = parseInt(req.params.id);
+    const promo = await getOne('SELECT * FROM promotions WHERE id = ?', [promoId]);
+    if (!promo) return res.status(404).json({ error: '프로모션을 찾을 수 없습니다.' });
+
+    await runQuery(
+      `UPDATE promotions SET
+        name = COALESCE(?, name),
+        value = COALESCE(?, value),
+        code = COALESCE(?, code),
+        max_uses = COALESCE(?, max_uses),
+        expires_at = COALESCE(?, expires_at),
+        is_active = COALESCE(?, is_active)
+      WHERE id = ?`,
+      [name || null, value ? JSON.stringify(value) : null, code || null, max_uses || null, expires_at || null, is_active !== undefined ? (is_active ? 1 : 0) : null, promoId]
+    );
+
+    res.json({ message: '프로모션이 수정되었습니다.' });
+  } catch (err) {
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// 프로모션 삭제
+router.delete('/promotions/:id', async (req, res) => {
+  try {
+    const promoId = parseInt(req.params.id);
+    await runQuery('DELETE FROM promotion_grants WHERE promotion_id = ?', [promoId]);
+    await runQuery('DELETE FROM promotions WHERE id = ?', [promoId]);
+    res.json({ message: '프로모션이 삭제되었습니다.' });
+  } catch (err) {
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// 프로모션 지급 내역
+router.get('/promotions/:id/grants', async (req, res) => {
+  try {
+    const grants = await getAll(
+      `SELECT g.*, a.name as academy_name, a.slug as academy_slug, u.name as grantor_name
+       FROM promotion_grants g
+       LEFT JOIN academies a ON a.id = g.academy_id
+       LEFT JOIN users u ON u.id = g.granted_by
+       WHERE g.promotion_id = ?
+       ORDER BY g.created_at DESC`,
+      [parseInt(req.params.id)]
+    );
+    res.json(grants);
+  } catch (err) {
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// 핵심: 특정 학원에 프로모션 지급
+router.post('/promotions/:id/grant', async (req, res) => {
+  try {
+    const promoId = parseInt(req.params.id);
+    const { academy_id, note } = req.body;
+    if (!academy_id) return res.status(400).json({ error: '학원을 선택해주세요.' });
+
+    const promo = await getOne('SELECT * FROM promotions WHERE id = ?', [promoId]);
+    if (!promo) return res.status(404).json({ error: '프로모션을 찾을 수 없습니다.' });
+    if (!promo.is_active) return res.status(400).json({ error: '비활성 프로모션입니다.' });
+    if (promo.max_uses && promo.used_count >= promo.max_uses) return res.status(400).json({ error: '사용 한도를 초과했습니다.' });
+
+    const academy = await getOne('SELECT * FROM academies WHERE id = ?', [academy_id]);
+    if (!academy) return res.status(404).json({ error: '학원을 찾을 수 없습니다.' });
+
+    const value = typeof promo.value === 'string' ? JSON.parse(promo.value) : promo.value;
+
+    // 프로모션 타입별 즉시 적용
+    let appliedMessage = '';
+    let grantExpires = null;
+    switch (promo.type) {
+      case 'free_month': {
+        const months = value.months || 1;
+        const sub = await getOne("SELECT * FROM subscriptions WHERE academy_id = ? AND status = 'active' ORDER BY id DESC LIMIT 1", [academy_id]);
+        if (sub) {
+          const newExpiry = new Date(sub.expires_at || Date.now());
+          newExpiry.setMonth(newExpiry.getMonth() + months);
+          await runQuery('UPDATE subscriptions SET expires_at = ? WHERE id = ?', [newExpiry.toISOString(), sub.id]);
+        }
+        appliedMessage = `${months}개월 무료 이용권이 적용되었습니다.`;
+        break;
+      }
+      case 'tier_upgrade': {
+        const days = value.days || 30;
+        grantExpires = new Date(Date.now() + days * 86400000).toISOString();
+        await runQuery('UPDATE academies SET subscription_tier = ?, max_students = ? WHERE id = ?',
+          [value.tier, TIER_LIMITS[value.tier]?.maxStudents || 9999, academy_id]);
+        appliedMessage = `${TIER_LIMITS[value.tier] ? value.tier : 'pro'} 티어로 ${days}일간 업그레이드되었습니다.`;
+        break;
+      }
+      case 'sms_credits': {
+        const amount = value.amount || 0;
+        const existing = await getOne('SELECT * FROM sms_credits WHERE academy_id = ?', [academy_id]);
+        if (existing) {
+          await runQuery('UPDATE sms_credits SET balance = balance + ? WHERE academy_id = ?', [amount, academy_id]);
+        } else {
+          await runInsert('INSERT INTO sms_credits (academy_id, balance) VALUES (?, ?)', [academy_id, amount]);
+        }
+        appliedMessage = `SMS 크레딧 ${amount}건이 충전되었습니다.`;
+        break;
+      }
+      case 'discount_coupon': {
+        appliedMessage = `${value.percent || 0}% 할인 쿠폰이 지급되었습니다.`;
+        break;
+      }
+      case 'trial_extension': {
+        const days = value.days || 14;
+        const sub = await getOne("SELECT * FROM subscriptions WHERE academy_id = ? AND status = 'active' ORDER BY id DESC LIMIT 1", [academy_id]);
+        if (sub) {
+          const newExpiry = new Date(sub.expires_at || Date.now());
+          newExpiry.setDate(newExpiry.getDate() + days);
+          await runQuery('UPDATE subscriptions SET expires_at = ? WHERE id = ?', [newExpiry.toISOString(), sub.id]);
+        }
+        appliedMessage = `체험 기간이 ${days}일 연장되었습니다.`;
+        break;
+      }
+      case 'feature_unlock': {
+        const days = value.days || 30;
+        grantExpires = new Date(Date.now() + days * 86400000).toISOString();
+        appliedMessage = `${(value.features || []).join(', ')} 기능이 ${days}일간 해제되었습니다.`;
+        break;
+      }
+    }
+
+    // 지급 기록 생성
+    const grantId = await runInsert(
+      'INSERT INTO promotion_grants (promotion_id, academy_id, granted_by, status, applied_at, expires_at, note) VALUES (?, ?, ?, ?, NOW(), ?, ?)',
+      [promoId, academy_id, req.user.id, 'applied', grantExpires, note || null]
+    );
+
+    // 사용 횟수 증가
+    await runQuery('UPDATE promotions SET used_count = used_count + 1 WHERE id = ?', [promoId]);
+
+    // 알림 발송
+    await runInsert(
+      'INSERT INTO platform_notifications (academy_id, type, title, message, data) VALUES (?, ?, ?, ?, ?)',
+      [academy_id, 'gift', `🎁 ${promo.name}`, appliedMessage, JSON.stringify({ promotion_id: promoId, grant_id: grantId })]
+    );
+
+    await logActivity(req.user.id, 'promotion_grant', 'academy', academy_id, { promotion: promo.name, type: promo.type });
+    res.json({ message: `${academy.name}에 ${promo.name}이(가) 지급되었습니다.`, appliedMessage });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// 일괄 지급
+router.post('/promotions/:id/grant-bulk', async (req, res) => {
+  try {
+    const promoId = parseInt(req.params.id);
+    const { academy_ids, note } = req.body;
+    if (!academy_ids?.length) return res.status(400).json({ error: '학원을 선택해주세요.' });
+
+    let successCount = 0;
+    const errors = [];
+    for (const aid of academy_ids) {
+      try {
+        // 내부적으로 grant 로직 재사용 - 간단히 redirect 방식 대신 직접 호출
+        const fakeReq = { ...req, params: { id: promoId.toString() }, body: { academy_id: aid, note } };
+        const fakeRes = {
+          json: () => { successCount++; },
+          status: (code) => ({ json: (data) => { errors.push({ academy_id: aid, error: data.error }); } }),
+        };
+        // 대신 직접 grant 엔드포인트 로직을 간소화하여 처리
+        const promo = await getOne('SELECT * FROM promotions WHERE id = ? AND is_active = 1', [promoId]);
+        if (!promo) { errors.push({ academy_id: aid, error: '프로모션 없음' }); continue; }
+
+        await runInsert(
+          'INSERT INTO promotion_grants (promotion_id, academy_id, granted_by, status, applied_at, note) VALUES (?, ?, ?, ?, NOW(), ?)',
+          [promoId, aid, req.user.id, 'applied', note || null]
+        );
+        await runInsert(
+          'INSERT INTO platform_notifications (academy_id, type, title, message, data) VALUES (?, ?, ?, ?, ?)',
+          [aid, 'gift', `🎁 ${promo.name}`, `${promo.name}이(가) 지급되었습니다.`, JSON.stringify({ promotion_id: promoId })]
+        );
+        await runQuery('UPDATE promotions SET used_count = used_count + 1 WHERE id = ?', [promoId]);
+        successCount++;
+      } catch (e) {
+        errors.push({ academy_id: aid, error: e.message });
+      }
+    }
+
+    await logActivity(req.user.id, 'promotion_grant_bulk', 'promotion', promoId, { count: successCount });
+    res.json({ message: `${successCount}개 학원에 지급 완료`, successCount, errors });
+  } catch (err) {
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// ======================== 매출 관리 ========================
+
+router.get('/revenue/summary', async (req, res) => {
+  try {
+    const month = new Date().toISOString().slice(0, 7);
+
+    const mrr = await getOne(
+      `SELECT COALESCE(SUM(CASE
+        WHEN subscription_tier = 'basic' THEN 77000
+        WHEN subscription_tier = 'standard' THEN 149000
+        ELSE 0
+      END), 0) as total
+      FROM academies WHERE is_active = 1 AND subscription_tier NOT IN ('free', 'trial')`
+    );
+
+    const monthlyRevenue = await getOne(
+      "SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE status = 'paid' AND to_char(paid_at, 'YYYY-MM') = ?",
+      [month]
+    );
+
+    const failedCount = await getOne(
+      "SELECT COUNT(*) as count FROM payments WHERE status = 'failed'"
+    );
+
+    const refundedTotal = await getOne(
+      "SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE status = 'refunded'"
+    );
+
+    const revenueTrend = await getAll(
+      `SELECT to_char(paid_at, 'YYYY-MM') as month, COALESCE(SUM(amount), 0) as total
+       FROM payments WHERE status = 'paid' AND paid_at > NOW() - INTERVAL '6 months'
+       GROUP BY to_char(paid_at, 'YYYY-MM') ORDER BY month ASC`
+    );
+
+    res.json({
+      mrr: mrr?.total || 0,
+      arr: (mrr?.total || 0) * 12,
+      monthlyRevenue: monthlyRevenue?.total || 0,
+      failedCount: failedCount?.count || 0,
+      refundedTotal: refundedTotal?.total || 0,
+      revenueTrend,
+    });
+  } catch (err) {
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
+router.get('/revenue/payments', async (req, res) => {
+  try {
+    const { status, academy_id, page = 1 } = req.query;
+    const limit = 30;
+    const offset = (parseInt(page) - 1) * limit;
+
+    let where = '1=1';
+    const params = [];
+    if (status) { params.push(status); where += ` AND p.status = $${params.length}`; }
+    if (academy_id) { params.push(parseInt(academy_id)); where += ` AND p.academy_id = $${params.length}`; }
+
+    const countResult = await getOne(`SELECT COUNT(*) as count FROM payments p WHERE ${where}`, params);
+    params.push(limit, offset);
+    const payments = await getAll(
+      `SELECT p.*, a.name as academy_name, a.slug as academy_slug
+       FROM payments p
+       LEFT JOIN academies a ON a.id = p.academy_id
+       WHERE ${where}
+       ORDER BY p.created_at DESC
+       LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params
+    );
+
+    res.json({ payments, total: countResult?.count || 0, page: parseInt(page), totalPages: Math.ceil((countResult?.count || 0) / limit) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// ======================== 알림 API (학원 admin용) ========================
+
+// 이건 superadmin 전용이 아니라 일반 admin도 접근 가능해야 함 - 별도로 export
+// 하지만 편의상 여기서 정의하고, server.js에서 별도 등록
+
+// ======================== 학원 메모 ========================
+
+router.get('/academies/:id/memos', async (req, res) => {
+  try {
+    const memos = await getAll(
+      `SELECT m.*, u.name as author_name
+       FROM academy_memos m
+       LEFT JOIN users u ON u.id = m.author_id
+       WHERE m.academy_id = ?
+       ORDER BY m.created_at DESC`,
+      [parseInt(req.params.id)]
+    );
+    res.json(memos);
+  } catch (err) {
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
+router.post('/academies/:id/memos', async (req, res) => {
+  try {
+    const { content } = req.body;
+    if (!content?.trim()) return res.status(400).json({ error: '내용을 입력해주세요.' });
+    await runInsert(
+      'INSERT INTO academy_memos (academy_id, author_id, content) VALUES (?, ?, ?)',
+      [parseInt(req.params.id), req.user.id, content.trim()]
+    );
+    res.json({ message: '메모가 저장되었습니다.' });
+  } catch (err) {
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
+router.delete('/memos/:id', async (req, res) => {
+  try {
+    await runQuery('DELETE FROM academy_memos WHERE id = ?', [parseInt(req.params.id)]);
+    res.json({ message: '메모가 삭제되었습니다.' });
+  } catch (err) {
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });

@@ -5,8 +5,11 @@ import AvatarSVG from '../../components/AvatarSVG';
 import { getLevelInfo, getStageInfo, getXpPercent, getAllStages } from '../../utils/gamification';
 import BottomTabBar from '../../components/BottomTabBar';
 import { getUser } from '../../api';
+import { useTenantConfig } from '../../contexts/TenantContext';
 
 export default function GameHub() {
+  const { config } = useTenantConfig();
+  const subject = config.subject;
   const navigate = useNavigate();
   const [charData, setCharData] = useState(null);
   const [myTitles, setMyTitles] = useState([]);
@@ -127,10 +130,10 @@ export default function GameHub() {
   if (!charData) return <div className="content" style={{ textAlign: 'center', padding: 40 }}>캐릭터 정보를 불러올 수 없습니다.</div>;
 
   const levelInfo = charData.levelInfo || getLevelInfo(charData.xp);
-  const autoStage = getStageInfo(levelInfo.level);
+  const autoStage = getStageInfo(levelInfo.level, subject);
   // 선택한 단계가 있으면 해당 단계 표시, 없으면 자동
   const selectedStageName = charData.selectedStage || '';
-  const allStagesList = getAllStages();
+  const allStagesList = getAllStages(subject);
   const selectedStageObj = selectedStageName ? allStagesList.find(s => s.stage === selectedStageName) : null;
   const stage = selectedStageObj ? { stage: selectedStageObj.stage, color: selectedStageObj.color, glow: 'star', label: selectedStageObj.label } : autoStage;
   const xpPct = getXpPercent(levelInfo);
@@ -425,8 +428,8 @@ export default function GameHub() {
 
       {/* 단계 정보 모달 */}
       {showStages && (() => {
-        const stages = getAllStages();
-        const currentAutoStage = getStageInfo(levelInfo.level);
+        const stages = getAllStages(subject);
+        const currentAutoStage = getStageInfo(levelInfo.level, subject);
         const displayedStage = stage; // 현재 표시 중인 단계
         const handleSelectStage = async (stageName) => {
           try {
@@ -699,7 +702,7 @@ export default function GameHub() {
 
       {/* 레벨업 축하 모달 */}
       {levelUpInfo && (() => {
-        const newStage = getStageInfo(levelUpInfo.level);
+        const newStage = getStageInfo(levelUpInfo.level, subject);
         return (
           <div style={{
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,

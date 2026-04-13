@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
+import useMediaQuery from '../hooks/useMediaQuery';
 
 const CATEGORIES = [
   {
@@ -49,6 +50,7 @@ export default function AdminSubNav() {
   const navigate   = useNavigate();
   const location   = useLocation();
   const currentPath = location.pathname;
+  const isLg = useMediaQuery('(min-width: 1600px)');
 
   const category = CATEGORIES.find(cat =>
     cat.pages.some(p => currentPath === p.path || currentPath.startsWith(p.path + '/'))
@@ -58,13 +60,13 @@ export default function AdminSubNav() {
 
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap',
+      display: 'flex', alignItems: 'center', gap: isLg ? 8 : 6, flexWrap: 'wrap',
       marginBottom: 'var(--space-4)',
-      padding: '6px 0',
+      padding: isLg ? '8px 0' : '6px 0',
       borderBottom: '1px solid var(--border)',
     }}>
       <span style={{
-        fontSize: 11, fontWeight: 700, color: 'var(--neutral-400)',
+        fontSize: isLg ? 13 : 11, fontWeight: 700, color: 'var(--neutral-400)',
         letterSpacing: '0.06em', textTransform: 'uppercase', marginRight: 2,
       }}>
         {category.label}
@@ -76,12 +78,12 @@ export default function AdminSubNav() {
             key={page.path}
             onClick={() => navigate(page.path)}
             style={{
-              padding: '5px 12px',
+              padding: isLg ? '7px 16px' : '5px 12px',
               borderRadius: 20,
               border: isActive ? 'none' : '1px solid var(--border)',
               cursor: 'pointer',
               fontFamily: 'inherit',
-              fontSize: 12,
+              fontSize: isLg ? 14 : 12,
               fontWeight: isActive ? 600 : 400,
               background: isActive ? 'var(--primary)' : 'transparent',
               color: isActive ? 'white' : 'var(--foreground)',

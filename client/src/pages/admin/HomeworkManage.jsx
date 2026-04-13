@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { useTenantConfig } from '../../contexts/TenantContext';
+import useMediaQuery from '../../hooks/useMediaQuery';
 
 function getSmsDefaultTemplate(academyName) {
   return `[${academyName || '나만의 조교'}] {name} 학생 과제 현황
@@ -29,6 +30,7 @@ const MEMO_PLACEHOLDERS = [
 
 export default function HomeworkManage() {
   const { config } = useTenantConfig();
+  const isLg = useMediaQuery('(min-width: 1600px)');
   const SMS_DEFAULT_TEMPLATE = getSmsDefaultTemplate(config.academyName);
   const navigate = useNavigate();
   const [classes, setClasses] = useState([]);
@@ -389,27 +391,27 @@ export default function HomeworkManage() {
 
         {/* 좌측 필터 사이드바 */}
         <div className="hw-sidebar" style={{
-          width: 220, minWidth: 220, flexShrink: 0,
-          display: 'flex', flexDirection: 'column', gap: 8,
+          width: isLg ? 260 : 220, minWidth: isLg ? 260 : 220, flexShrink: 0,
+          display: 'flex', flexDirection: 'column', gap: isLg ? 10 : 8,
         }}>
           <button className="btn btn-outline btn-sm" onClick={() => navigate('/admin')} style={{ width: '100%' }}>← 대시보드</button>
 
           <select value={selectedClass} onChange={e => setSelectedClass(e.target.value)}
-            style={{ padding: '8px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: 13, fontWeight: 600, width: '100%' }}>
+            style={{ padding: isLg ? '10px 12px' : '8px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: isLg ? 15 : 13, fontWeight: 600, width: '100%' }}>
             {classes.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
           </select>
           <select value={filterSchool} onChange={e => { setFilterSchool(e.target.value); setFilterGrade(''); }}
-            style={{ padding: '8px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: 13, width: '100%' }}>
+            style={{ padding: isLg ? '10px 12px' : '8px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: isLg ? 15 : 13, width: '100%' }}>
             <option value="">학교 전체</option>
             {schoolList.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
           <select value={filterGrade} onChange={e => setFilterGrade(e.target.value)}
-            style={{ padding: '8px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: 13, width: '100%' }}>
+            style={{ padding: isLg ? '10px 12px' : '8px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: isLg ? 15 : 13, width: '100%' }}>
             <option value="">학년 전체</option>
             {gradeList.map(g => <option key={g} value={g}>{g}</option>)}
           </select>
           <input type="date" value={date} onChange={e => setDate(e.target.value)}
-            style={{ padding: '8px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: 13, width: '100%', boxSizing: 'border-box' }} />
+            style={{ padding: isLg ? '10px 12px' : '8px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: isLg ? 15 : 13, width: '100%', boxSizing: 'border-box' }} />
 
           {/* 요약 칩 */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
@@ -777,7 +779,7 @@ export default function HomeworkManage() {
                 변수: {'{name}'} {'{school}'} {'{grade}'} {'{submit}'} {'{eval}'} {'{memo}'} {'{memo_line}'} {'{date}'}
               </div>
               <textarea value={smsTemplate} onChange={e => setSmsTemplate(e.target.value)} rows={5}
-                style={{ width: '100%', padding: '8px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: 13, fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box', lineHeight: 1.5 }} />
+                style={{ width: '100%', padding: isLg ? '10px 12px' : '8px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: isLg ? 15 : 13, fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box', lineHeight: 1.5 }} />
             </div>
 
             <button className="btn btn-primary" onClick={handleSendSms} disabled={smsSending} style={{ width: '100%', fontWeight: 700 }}>

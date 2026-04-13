@@ -1,6 +1,7 @@
 const express = require('express');
 const { runQuery, runInsert, getOne, getAll } = require('../db/database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
+const { addEvent } = require('../services/timeline');
 
 const router = express.Router();
 
@@ -14,7 +15,7 @@ router.post('/exams', authenticateToken, requireAdmin, async (req, res) => {
   }
   const id = await runInsert(
     'INSERT INTO exams (exam_type, name, exam_date, exam_end_date, school, grade, max_score, academy_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    [examType || '학력평가 모의고사', name, examDate || null, examEndDate || null, school || null, grade || null, maxScore || 100, req.academyId]
+    [examType || '기타', name, examDate || null, examEndDate || null, school || null, grade || null, maxScore || 100, req.academyId]
   );
   res.json({ message: '시험이 등록되었습니다.', id });
 });
@@ -33,7 +34,7 @@ router.put('/exams/:id', authenticateToken, requireAdmin, async (req, res) => {
   }
   await runQuery(
     'UPDATE exams SET exam_type = ?, name = ?, exam_date = ?, exam_end_date = ?, school = ?, grade = ?, max_score = ? WHERE id = ? AND academy_id = ?',
-    [examType || '학력평가 모의고사', name, examDate || null, examEndDate || null, school || null, grade || null, maxScore || 100, parseInt(req.params.id), req.academyId]
+    [examType || '기타', name, examDate || null, examEndDate || null, school || null, grade || null, maxScore || 100, parseInt(req.params.id), req.academyId]
   );
   res.json({ message: '시험이 수정되었습니다.' });
 });
@@ -69,6 +70,12 @@ router.post('/score', authenticateToken, requireAdmin, async (req, res) => {
   // 등수 자동 계산
   await calculateRanks(examId, req.academyId);
 
+  // 타임라인 이벤트
+  const exam = await getOne('SELECT name FROM exams WHERE id = ? AND academy_id = ?', [examId, req.academyId]);
+  addEvent(req.academyId, studentId, 'exam_score', `${exam?.name || '시험'}: ${score}점`,
+    note || null, { exam_id: examId, score }, req.user?.id
+  ).catch(e => console.error('[timeline]', e.message));
+
   res.json({ message: '성적이 저장되었습니다.' });
 });
 
@@ -100,6 +107,16 @@ router.post('/batch', authenticateToken, requireAdmin, async (req, res) => {
 
   // 등수 자동 계산
   await calculateRanks(examId, req.academyId);
+
+  // 타임라인 이벤트 (일괄)
+  const exam = await getOne('SELECT name FROM exams WHERE id = ? AND academy_id = ?', [examId, req.academyId]);
+  for (const s of scores) {
+    if (s.score != null) {
+      addEvent(req.academyId, s.studentId, 'exam_score', `${exam?.name || '시험'}: ${s.score}점`,
+        s.note || null, { exam_id: examId, score: s.score }, req.user?.id
+      ).catch(e => console.error('[timeline]', e.message));
+    }
+  }
 
   res.json({ message: `${scores.length}명의 성적이 저장되었습니다.` });
 });
@@ -227,7 +244,7 @@ router.get('/my-scores', authenticateToken, async (req, res) => {
 
   // 관리자/조교/선생님이 특정 학생 성적 조회
   let targetStudentId;
-  if (studentId && (req.user.role === 'admin' || ['조교', '선생님'].includes(req.user.school))) {
+  if (studentId && (['admin', 'assistant'].includes(req.user.role) || ['조교', '선생님'].includes(req.user.school))) {
     targetStudentId = parseInt(studentId);
   } else {
     const student = await getOne('SELECT id FROM students WHERE user_id = ? AND academy_id = ?', [req.user.id, req.academyId]);
@@ -253,7 +270,7 @@ router.get('/my-scores', authenticateToken, async (req, res) => {
 
 // 관리자용: 전체 학생 목록 (성적 조회용)
 router.get('/students-list', authenticateToken, async (req, res) => {
-  if (req.user.role !== 'admin' && !['조교', '선생님'].includes(req.user.school)) {
+  if (!['admin', 'assistant'].includes(req.user.role) && !['조교', '선생님'].includes(req.user.school)) {
     return res.status(403).json({ error: '권한이 없습니다.' });
   }
   const students = await getAll(
@@ -478,7 +495,7 @@ router.post('/exams/:examId/submit-answers', authenticateToken, async (req, res)
 
   // 관리자는 studentId 지정 가능, 학생은 자신만
   let targetStudentId = studentId;
-  if (req.user.role !== 'admin' && req.user.school !== '조교') {
+  if (!['admin', 'assistant'].includes(req.user.role) && req.user.school !== '조교') {
     const student = await getOne('SELECT id FROM students WHERE user_id = ? AND academy_id = ?', [req.user.id, req.academyId]);
     if (!student) return res.status(404).json({ error: '학생 정보를 찾을 수 없습니다.' });
     targetStudentId = student.id;
@@ -861,7 +878,7 @@ router.get('/exams/:examId/submissions', requireAdmin, async (req, res) => {
 router.get('/exams/:examId/my-submission', async (req, res) => {
   let targetStudentId;
   const { studentId } = req.query;
-  if (studentId && (req.user.role === 'admin' || ['조교', '선생님'].includes(req.user.school))) {
+  if (studentId && (['admin', 'assistant'].includes(req.user.role) || ['조교', '선생님'].includes(req.user.school))) {
     targetStudentId = parseInt(studentId);
   } else {
     const student = await getOne('SELECT id FROM students WHERE user_id = ? AND academy_id = ?', [req.user.id, req.academyId]);

@@ -4,7 +4,7 @@ const { runQuery, runInsert, getOne, getAll } = require('../db/database');
 const { authenticateToken, requireAdmin, requireAdminOnly } = require('../middleware/auth');
 const { sendSMS, sendBulkSMS, isConfigured } = require('../utils/smsHelper');
 const {
-  getMessageType, calculateTotalCost, checkAndDeductCredits, chargeCredits,
+  getMessageType, getByteLength, calculateTotalCost, checkAndDeductCredits, chargeCredits,
   logSentMessages, refundFailedMessages, getCredits, getPricing,
 } = require('../utils/smsBilling');
 
@@ -115,7 +115,7 @@ router.get('/pricing', async (req, res) => {
 // === 학생/수신자 조회 ===
 
 router.get('/recipients', async (req, res) => {
-  const { school, grade } = req.query;
+  const { school, grade, include_parents } = req.query;
   let query = `
     SELECT s.id, u.name, s.school, s.grade, u.phone, s.parent_phone
     FROM students s JOIN users u ON s.user_id = u.id
@@ -126,6 +126,24 @@ router.get('/recipients', async (req, res) => {
   if (grade) { query += ' AND s.grade = ?'; params.push(grade); }
   query += ' ORDER BY s.school, s.grade, u.name';
   const students = await getAll(query, params);
+
+  // parents 테이블에서 연결된 보호자 정보도 함께 조회
+  if (include_parents === '1') {
+    try {
+      for (const student of students) {
+        const parentRows = await getAll(
+          `SELECT p.id as parent_id, p.name as parent_name_new, p.phone as parent_phone_new
+           FROM parents p JOIN student_parents sp ON sp.parent_id = p.id
+           WHERE sp.student_id = ? AND p.academy_id = ?`,
+          [student.id, req.academyId]
+        );
+        student.linked_parents = parentRows;
+      }
+    } catch (e) {
+      // parents 테이블 미존재 시 무시
+    }
+  }
+
   res.json(students);
 });
 
@@ -176,23 +194,45 @@ router.get('/clinic-appointments', async (req, res) => {
   res.json(result);
 });
 
-// === 템플릿 CRUD ===
+// === 템플릿 CRUD (확장) ===
+
+// 변수 자동 감지
+function detectVariables(content) {
+  const matches = content.match(/\{[a-z_]+\}/g);
+  return matches ? [...new Set(matches)] : [];
+}
 
 router.get('/templates', async (req, res) => {
-  const templates = await getAll('SELECT * FROM sms_templates WHERE academy_id = ? ORDER BY id ASC', [req.academyId]);
+  const { message_type } = req.query;
+  let query = 'SELECT * FROM sms_templates WHERE academy_id = ?';
+  const params = [req.academyId];
+  if (message_type) { query += ' AND message_type = ?'; params.push(message_type); }
+  query += ' ORDER BY usage_count DESC, id ASC';
+  const templates = await getAll(query, params);
   res.json(templates);
 });
 
 router.post('/templates', async (req, res) => {
-  const { name, content } = req.body;
+  const { name, content, message_type } = req.body;
   if (!name || !content) return res.status(400).json({ error: '이름과 내용을 입력해주세요.' });
-  const id = await runInsert('INSERT INTO sms_templates (name, content, academy_id) VALUES (?, ?, ?)', [name, content, req.academyId]);
+  const variables = JSON.stringify(detectVariables(content));
+  const id = await runInsert(
+    'INSERT INTO sms_templates (name, content, academy_id, message_type, variables, updated_at) VALUES (?, ?, ?, ?, ?, NOW())',
+    [name, content, req.academyId, message_type || 'operational', variables]
+  );
   res.json({ message: '템플릿 저장됨', id });
 });
 
 router.put('/templates/:id', async (req, res) => {
-  const { name, content } = req.body;
-  await runQuery('UPDATE sms_templates SET name = ?, content = ? WHERE id = ? AND academy_id = ?', [name, content, req.params.id, req.academyId]);
+  const { name, content, message_type } = req.body;
+  const variables = content ? JSON.stringify(detectVariables(content)) : null;
+  let query = 'UPDATE sms_templates SET name = ?, content = ?, updated_at = NOW()';
+  const params = [name, content];
+  if (message_type) { query += ', message_type = ?'; params.push(message_type); }
+  if (variables) { query += ', variables = ?'; params.push(variables); }
+  query += ' WHERE id = ? AND academy_id = ?';
+  params.push(req.params.id, req.academyId);
+  await runQuery(query, params);
   res.json({ message: '템플릿 수정됨' });
 });
 
@@ -359,6 +399,266 @@ router.post('/send-bulk', async (req, res) => {
     await logSentMessages(batchId, logEntries, req.user.id, req.academyId);
     res.status(500).json({ error: e.message });
   }
+});
+
+// ============================================================
+// === 발송 전 검증 ===
+// ============================================================
+
+router.post('/validate', async (req, res) => {
+  const { message, message_type, recipient_ids, target_type } = req.body;
+  // message_type: operational, marketing, relationship
+  // target_type: student, parent, both
+  const warnings = [];
+  const errors = [];
+
+  if (!message) {
+    errors.push('메시지 내용이 비어있습니다.');
+    return res.json({ valid: false, errors, warnings });
+  }
+
+  // 1) 마케팅 메시지면 수신 동의 체크
+  if (message_type === 'marketing') {
+    if (!message.includes('(광고)')) {
+      warnings.push('광고성 메시지에는 "(광고)" 표시가 필요합니다. 자동 삽입됩니다.');
+    }
+    if (!message.includes('수신거부')) {
+      warnings.push('광고성 메시지에는 수신거부 안내가 필요합니다.');
+    }
+
+    // 수신 동의하지 않은 보호자 필터
+    if (recipient_ids && recipient_ids.length > 0 && target_type !== 'student') {
+      const nonconsented = await getAll(
+        `SELECT p.id, p.name FROM parents p
+         LEFT JOIN message_consent mc ON mc.parent_id = p.id AND mc.academy_id = ?
+         WHERE p.id IN (${recipient_ids.map(() => '?').join(',')})
+           AND (mc.marketing_consent IS NULL OR mc.marketing_consent = false OR mc.withdrawn_at IS NOT NULL)`,
+        [req.academyId, ...recipient_ids]
+      );
+      if (nonconsented.length > 0) {
+        warnings.push(`수신 동의하지 않은 보호자 ${nonconsented.length}명이 제외됩니다: ${nonconsented.map(p => p.name).join(', ')}`);
+      }
+    }
+  }
+
+  // 2) 퇴원생 필터링
+  if (recipient_ids && recipient_ids.length > 0) {
+    const withdrawn = await getAll(
+      `SELECT s.id, u.name FROM students s JOIN users u ON s.user_id = u.id
+       WHERE s.id IN (${recipient_ids.map(() => '?').join(',')})
+         AND s.status = 'withdrawn' AND s.academy_id = ?`,
+      [...recipient_ids, req.academyId]
+    );
+    if (withdrawn.length > 0) {
+      warnings.push(`퇴원생 ${withdrawn.length}명이 제외됩니다: ${withdrawn.map(s => s.name).join(', ')}`);
+    }
+  }
+
+  // 3) 중복 발송 체크 (같은 내용 24시간 내)
+  const duplicateCheck = await getOne(
+    `SELECT COUNT(*) as cnt FROM sms_send_logs
+     WHERE academy_id = ? AND message_content = ? AND status = 'sent'
+       AND created_at > NOW() - INTERVAL '24 hours'`,
+    [req.academyId, message]
+  );
+  if (duplicateCheck && duplicateCheck.cnt > 0) {
+    warnings.push(`동일한 내용이 최근 24시간 내에 ${duplicateCheck.cnt}건 발송되었습니다.`);
+  }
+
+  // 4) SMS 잔액 확인
+  const credit = await getCredits(req.academyId);
+  const msgType = getMessageType(message);
+  const pricing = await getPricing(req.academyId);
+  const recipientCount = recipient_ids ? recipient_ids.length : 0;
+  const estimatedCost = recipientCount * (pricing[msgType] || 13);
+
+  if (credit.balance < estimatedCost) {
+    errors.push(`잔액 부족: 필요 ${estimatedCost.toLocaleString()}원, 잔액 ${credit.balance.toLocaleString()}원`);
+  }
+
+  res.json({
+    valid: errors.length === 0,
+    errors,
+    warnings,
+    estimated_cost: estimatedCost,
+    balance: credit.balance,
+    message_type_detected: msgType,
+    recipient_count: recipientCount,
+  });
+});
+
+// ============================================================
+// === 예약 발송 ===
+// ============================================================
+
+router.post('/schedule', async (req, res) => {
+  const { message, message_type, recipients, scheduled_at, template_id } = req.body;
+  if (!message || !scheduled_at || !recipients) {
+    return res.status(400).json({ error: '메시지, 예약 시간, 수신자를 입력해주세요.' });
+  }
+
+  const scheduledTime = new Date(scheduled_at);
+  if (scheduledTime <= new Date()) {
+    return res.status(400).json({ error: '예약 시간은 현재 시간 이후여야 합니다.' });
+  }
+
+  const id = await runInsert(
+    `INSERT INTO message_schedule (academy_id, template_id, message, message_type, recipients, scheduled_at, created_by)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [req.academyId, template_id || null, message, message_type || 'operational',
+     JSON.stringify(recipients), scheduled_at, req.user.id]
+  );
+
+  res.json({ message: '예약 발송이 등록되었습니다.', id, scheduled_at });
+});
+
+router.get('/schedule', async (req, res) => {
+  const schedules = await getAll(
+    `SELECT ms.*, u.name as created_by_name
+     FROM message_schedule ms
+     LEFT JOIN users u ON ms.created_by = u.id
+     WHERE ms.academy_id = ?
+     ORDER BY ms.scheduled_at DESC`,
+    [req.academyId]
+  );
+  res.json(schedules);
+});
+
+router.delete('/schedule/:id', async (req, res) => {
+  const schedule = await getOne(
+    'SELECT * FROM message_schedule WHERE id = ? AND academy_id = ?',
+    [req.params.id, req.academyId]
+  );
+  if (!schedule) return res.status(404).json({ error: '예약을 찾을 수 없습니다.' });
+  if (schedule.status !== 'pending') {
+    return res.status(400).json({ error: '대기 중인 예약만 취소할 수 있습니다.' });
+  }
+
+  await runQuery(
+    'UPDATE message_schedule SET status = ? WHERE id = ? AND academy_id = ?',
+    ['cancelled', req.params.id, req.academyId]
+  );
+  res.json({ message: '예약이 취소되었습니다.' });
+});
+
+// ============================================================
+// === 수신 동의 관리 ===
+// ============================================================
+
+router.get('/consent', async (req, res) => {
+  const consents = await getAll(
+    `SELECT p.id as parent_id, p.name, p.phone,
+            mc.marketing_consent, mc.consented_at, mc.consent_method, mc.withdrawn_at,
+            (SELECT string_agg(u.name, ', ')
+             FROM student_parents sp
+             JOIN students s ON sp.student_id = s.id
+             JOIN users u ON s.user_id = u.id
+             WHERE sp.parent_id = p.id) as children_names
+     FROM parents p
+     LEFT JOIN message_consent mc ON mc.parent_id = p.id AND mc.academy_id = ?
+     WHERE p.tenant_id = ?
+     ORDER BY p.name`,
+    [req.academyId, req.academyId]
+  );
+  res.json(consents);
+});
+
+router.put('/consent/:parentId', async (req, res) => {
+  const { marketing_consent, consent_method } = req.body;
+  const parentId = parseInt(req.params.parentId);
+
+  if (marketing_consent) {
+    await runQuery(
+      `INSERT INTO message_consent (academy_id, parent_id, marketing_consent, consented_at, consent_method, withdrawn_at, updated_at)
+       VALUES (?, ?, true, NOW(), ?, NULL, NOW())
+       ON CONFLICT (academy_id, parent_id)
+       DO UPDATE SET marketing_consent = true, consented_at = NOW(), consent_method = ?, withdrawn_at = NULL, updated_at = NOW()`,
+      [req.academyId, parentId, consent_method || 'online', consent_method || 'online']
+    );
+    res.json({ message: '수신 동의가 등록되었습니다.' });
+  } else {
+    await runQuery(
+      `INSERT INTO message_consent (academy_id, parent_id, marketing_consent, withdrawn_at, updated_at)
+       VALUES (?, ?, false, NOW(), NOW())
+       ON CONFLICT (academy_id, parent_id)
+       DO UPDATE SET marketing_consent = false, withdrawn_at = NOW(), updated_at = NOW()`,
+      [req.academyId, parentId]
+    );
+    res.json({ message: '수신 동의가 철회되었습니다.' });
+  }
+});
+
+// 일괄 동의 등록
+router.post('/consent/bulk', async (req, res) => {
+  const { parent_ids, marketing_consent, consent_method } = req.body;
+  if (!parent_ids || !Array.isArray(parent_ids) || parent_ids.length === 0) {
+    return res.status(400).json({ error: '보호자를 선택해주세요.' });
+  }
+
+  let updated = 0;
+  for (const parentId of parent_ids) {
+    try {
+      if (marketing_consent) {
+        await runQuery(
+          `INSERT INTO message_consent (academy_id, parent_id, marketing_consent, consented_at, consent_method, withdrawn_at, updated_at)
+           VALUES (?, ?, true, NOW(), ?, NULL, NOW())
+           ON CONFLICT (academy_id, parent_id)
+           DO UPDATE SET marketing_consent = true, consented_at = NOW(), consent_method = ?, withdrawn_at = NULL, updated_at = NOW()`,
+          [req.academyId, parentId, consent_method || 'online', consent_method || 'online']
+        );
+      } else {
+        await runQuery(
+          `INSERT INTO message_consent (academy_id, parent_id, marketing_consent, withdrawn_at, updated_at)
+           VALUES (?, ?, false, NOW(), NOW())
+           ON CONFLICT (academy_id, parent_id)
+           DO UPDATE SET marketing_consent = false, withdrawn_at = NOW(), updated_at = NOW()`,
+          [req.academyId, parentId]
+        );
+      }
+      updated++;
+    } catch (e) { /* skip individual errors */ }
+  }
+
+  res.json({ message: `${updated}명의 동의 상태가 업데이트되었습니다.`, updated });
+});
+
+// ============================================================
+// === 발송 통계 ===
+// ============================================================
+
+router.get('/stats', async (req, res) => {
+  // 월별 유형별 발송 통계
+  const monthly = await getAll(
+    `SELECT date_trunc('month', created_at)::date as month,
+            message_category,
+            channel,
+            COUNT(*) as total_count,
+            SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END) as success_count,
+            SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as fail_count,
+            SUM(cost) as total_cost
+     FROM sms_send_logs WHERE academy_id = $1
+     GROUP BY date_trunc('month', created_at)::date, message_category, channel
+     ORDER BY month DESC
+     LIMIT 120`,
+    [req.academyId]
+  );
+
+  // 오늘/이번 달 요약
+  const todaySummary = await getOne(
+    `SELECT COUNT(*) as count, COALESCE(SUM(cost), 0) as cost
+     FROM sms_send_logs
+     WHERE academy_id = ? AND created_at >= CURRENT_DATE AND status = 'sent'`,
+    [req.academyId]
+  );
+
+  const monthSummary = await getOne(
+    `SELECT COUNT(*) as count, COALESCE(SUM(cost), 0) as cost
+     FROM sms_send_logs
+     WHERE academy_id = ? AND created_at >= date_trunc('month', CURRENT_DATE) AND status = 'sent'`,
+    [req.academyId]
+  );
+
+  res.json({ monthly, today: todaySummary, this_month: monthSummary });
 });
 
 module.exports = router;

@@ -75,7 +75,7 @@ export default function ProfileManage() {
             value={slogan}
             onChange={e => setSlogan(e.target.value)}
             rows={3}
-            placeholder="명확하게 확실하게,&#10;그리고&#10;강인하게 국어하기"
+            placeholder="우리 학원의 슬로건을&#10;입력해주세요"
             style={{ fontSize: 14, resize: 'vertical' }}
           />
           <p style={{ fontSize: 11, color: 'var(--muted-foreground)', marginTop: 'var(--space-1)' }}>

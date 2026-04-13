@@ -372,7 +372,7 @@ export default function AIAssistant() {
             padding: '6px 12px', color: 'white', cursor: 'pointer', fontSize: 'var(--text-xs)', fontWeight: 600,
           }}>← 대시보드</button>
           <div>
-            <div style={{ fontSize: 18, fontWeight: 800 }}>🤖 강인AI 어시스턴트</div>
+            <div style={{ fontSize: 18, fontWeight: 800 }}>🤖 AI 어시스턴트</div>
             <div style={{ fontSize: 11, opacity: 0.85, marginTop: 2 }}>자연어로 학원을 관리하세요</div>
           </div>
           <button onClick={handleClearChat} style={{

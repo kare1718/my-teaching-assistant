@@ -217,7 +217,7 @@ export default function HallOfFameManage() {
               <div>
                 <label style={labelStyle}>달성 학년</label>
                 <input value={form.grade} onChange={e => setForm({ ...form, grade: e.target.value })}
-                  placeholder="고3" style={inputStyle} />
+                  placeholder="예: 고3" style={inputStyle} />
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-2)' }}>

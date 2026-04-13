@@ -9,7 +9,7 @@ const router = express.Router();
 // 회원가입
 router.post('/register', async (req, res) => {
   try {
-    const { username, password, name, phone, school, grade, parentName, parentPhone, academySlug } = req.body;
+    const { username, password, name, phone, school, grade, parentName, parentPhone, academySlug, agreePrivacy, agreeMarketing } = req.body;
 
     const isStaff = school === '조교' || school === '선생님';
     if (!username || !password || !name || !phone || !school || !grade) {
@@ -33,7 +33,7 @@ router.post('/register', async (req, res) => {
     if (!academySlug) {
       return res.status(400).json({ error: '학원 정보가 필요합니다.' });
     }
-    const academy = await getOne('SELECT id FROM academies WHERE slug = ? AND is_active = 1', [academySlug]);
+    const academy = await getOne('SELECT id, max_students FROM academies WHERE slug = ? AND is_active = 1', [academySlug]);
     if (!academy) {
       return res.status(400).json({ error: '유효하지 않은 학원입니다.' });
     }
@@ -49,10 +49,22 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: '이미 등록된 전화번호입니다. 중복 가입은 불가합니다.' });
     }
 
+    // 학생 수 제한 체크 (조교/선생님은 제외)
+    if (!isStaff) {
+      const studentCount = await getOne(
+        "SELECT COUNT(*) as count FROM students s JOIN users u ON s.user_id = u.id WHERE s.academy_id = ? AND (s.status IS NULL OR s.status = 'active') AND u.role = 'student'",
+        [academyId]
+      );
+      if ((studentCount?.count || 0) >= (academy.max_students || 0)) {
+        return res.status(403).json({ error: `현재 플랜의 최대 학생 수(${academy.max_students}명)에 도달했습니다. 학원 관리자에게 문의하세요.` });
+      }
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
+    const userRole = isStaff ? 'assistant' : 'student';
     const userId = await runInsert(
-      'INSERT INTO users (username, password, name, role, approved, phone, academy_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [username, hashedPassword, name, 'student', 0, phone || '', academyId]
+      'INSERT INTO users (username, password, name, role, approved, phone, academy_id, agree_privacy, agree_marketing, agree_marketing_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [username, hashedPassword, name, userRole, 0, phone || '', academyId, agreePrivacy ? 1 : 0, agreeMarketing ? 1 : 0, agreeMarketing ? new Date().toISOString() : null]
     );
 
     await runQuery(
@@ -106,8 +118,8 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: '아이디 또는 비밀번호가 올바르지 않습니다.' });
     }
 
-    // 관리자는 항상 승인 상태, 학생은 승인 체크
-    if (user.role !== 'admin' && user.role !== 'superadmin' && !user.approved) {
+    // 관리자는 항상 승인 상태, 학생/조교는 승인 체크
+    if (!['admin', 'superadmin'].includes(user.role) && !user.approved) {
       return res.status(403).json({ error: '관리자 승인 대기 중입니다. 승인 후 로그인할 수 있습니다.' });
     }
 
@@ -124,9 +136,9 @@ router.post('/login', async (req, res) => {
       }
     }
 
-    // 학생이면 school 정보 조회
+    // 학생/조교이면 school 정보 조회
     let school = null;
-    if (user.role === 'student') {
+    if (user.role === 'student' || user.role === 'assistant') {
       const student = await getOne('SELECT school FROM students WHERE user_id = ? AND academy_id = ?', [user.id, user.academy_id]);
       if (student) school = student.school;
     }
@@ -268,6 +280,28 @@ router.put('/notifications/read-all', authenticateToken, async (req, res) => {
     res.json({ message: 'ok' });
   } catch (err) {
     res.json({ message: 'ok' });
+  }
+});
+
+// 초대 코드 확인 (공개 - 가입 페이지에서 사용)
+router.get('/verify-invite-code/:code', async (req, res) => {
+  try {
+    const academy = await getOne('SELECT id, name, slug FROM academies WHERE slug = ? AND is_active = 1', [req.params.code]);
+    if (!academy) return res.status(404).json({ error: '유효하지 않은 초대 코드입니다.' });
+    res.json({ academyName: academy.name, slug: academy.slug });
+  } catch (err) {
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// 내 학원 초대 코드 조회 (관리자용)
+router.get('/my-invite-code', authenticateToken, async (req, res) => {
+  try {
+    const academy = await getOne('SELECT id, name, slug FROM academies WHERE id = ?', [req.user.academy_id]);
+    if (!academy) return res.status(404).json({ error: '학원 정보를 찾을 수 없습니다.' });
+    res.json({ inviteCode: academy.slug, academyName: academy.name });
+  } catch (err) {
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
 

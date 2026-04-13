@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS students (
 
 CREATE TABLE IF NOT EXISTS exams (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  exam_type TEXT NOT NULL DEFAULT '학력평가 모의고사',
+  exam_type TEXT NOT NULL DEFAULT '기타',
   name TEXT NOT NULL,
   exam_date TEXT,
   school TEXT,

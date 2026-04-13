@@ -45,17 +45,23 @@ import ReportManage from './pages/admin/ReportManage';
 import AttendanceManage from './pages/admin/AttendanceManage';
 import TuitionManage from './pages/admin/TuitionManage';
 import ConsultationLog from './pages/admin/ConsultationLog';
+import LeadManage from './pages/admin/LeadManage';
 import PortfolioManage from './pages/admin/PortfolioManage';
 import SmsCredits from './pages/admin/SmsCredits';
 import AIAssistant from './pages/admin/AIAssistant';
 import BackupManage from './pages/admin/BackupManage';
 import BackupSecurity from './pages/admin/BackupSecurity';
+import ClassManage from './pages/admin/ClassManage';
 import SuperDashboard from './pages/superadmin/Dashboard';
 import AcademyDetail from './pages/superadmin/AcademyDetail';
 import AcademyCreate from './pages/superadmin/AcademyCreate';
 import SuperBackupSecurity from './pages/superadmin/BackupSecurity';
+import PromotionsPage from './pages/superadmin/PromotionsPage';
+import RevenuePage from './pages/superadmin/RevenuePage';
 import PreRegistered from './pages/admin/PreRegistered';
+import ParentManage from './pages/admin/ParentManage';
 import ProfileManage from './pages/admin/ProfileManage';
+import UserGuide from './pages/admin/UserGuide';
 import AttendanceCheck from './pages/student/AttendanceCheck';
 import Portfolio from './pages/student/Portfolio';
 import AIHub from './pages/student/AIHub';
@@ -63,8 +69,15 @@ import InfoHub from './pages/student/InfoHub';
 import StudyTimer from './pages/student/StudyTimer';
 import StudyRankings from './pages/student/StudyRankings';
 import SideNav from './components/SideNav';
+import PlatformNotificationBell from './components/PlatformNotificationBell';
+import ParentBottomNav from './components/ParentBottomNav';
 import PaymentPage from './pages/PaymentPage';
 import NotFoundPage from './pages/NotFoundPage';
+import ParentHome from './pages/parent/ParentHome';
+import ParentAttendance from './pages/parent/ParentAttendance';
+import ParentTuition from './pages/parent/ParentTuition';
+import ParentNotices from './pages/parent/ParentNotices';
+import ParentMore from './pages/parent/ParentMore';
 
 function Navbar() {
   const navigate = useNavigate();
@@ -82,12 +95,13 @@ function Navbar() {
     <nav className="navbar">
       <h1
         style={{ cursor: 'pointer' }}
-        onClick={() => navigate(user.role === 'superadmin' ? '/superadmin' : (user.role === 'admin' || user.school === '조교' || user.school === '선생님') ? '/admin' : '/student')}
+        onClick={() => navigate(user.role === 'superadmin' ? '/superadmin' : user.role === 'parent' ? '/parent' : (user.role === 'admin' || user.school === '조교' || user.school === '선생님') ? '/admin' : '/student')}
       >
         {config?.siteTitle || '나만의 조교'}
       </h1>
-      <div className="nav-right">
-        <span>{user.name}님 ({user.role === 'superadmin' ? '플랫폼 관리자' : user.role === 'admin' ? '관리자' : user.school === '조교' ? '조교' : user.school === '선생님' ? '선생님' : '학생'})</span>
+      <div className="nav-right" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {(user.role === 'admin' || user.school === '조교') && <PlatformNotificationBell />}
+        <span>{user.name}님 ({user.role === 'superadmin' ? '플랫폼 관리자' : user.role === 'admin' ? '관리자' : user.role === 'parent' ? '보호자' : user.school === '조교' ? '조교' : user.school === '선생님' ? '선생님' : '학생'})</span>
         <button onClick={handleLogout}>로그아웃</button>
       </div>
     </nav>
@@ -102,6 +116,7 @@ function ProtectedRoute({ children, role }) {
   if (role && user.role !== role) {
     if (user.role === 'admin' && role === 'student') return children;
     if (isAssistant && (role === 'admin' || role === 'student')) return children;
+    if (user.role === 'parent') return <Navigate to="/parent" />;
     return <Navigate to={user.role === 'admin' ? '/admin' : (isAssistant ? '/admin' : '/student')} />;
   }
   return children;
@@ -111,6 +126,7 @@ function RedirectIfLoggedIn({ children }) {
   const user = getUser();
   if (isLoggedIn() && user) {
     if (user.role === 'superadmin') return <Navigate to="/superadmin" />;
+    if (user.role === 'parent') return <Navigate to="/parent" />;
     const isAssistant = user.school === '조교';
     return <Navigate to={(user.role === 'admin' || isAssistant) ? '/admin' : '/student'} />;
   }
@@ -139,14 +155,34 @@ function App() {
   );
 }
 
+function ParentLayout() {
+  return (
+    <>
+      <div style={{ paddingBottom: 60 }}>
+        <Routes>
+          <Route index element={<ParentHome />} />
+          <Route path="attendance" element={<ParentAttendance />} />
+          <Route path="tuition" element={<ParentTuition />} />
+          <Route path="notices" element={<ParentNotices />} />
+          <Route path="more" element={<ParentMore />} />
+        </Routes>
+      </div>
+      <ParentBottomNav />
+    </>
+  );
+}
+
 function AppLayout() {
   const location = useLocation();
+  const user = getUser();
   const isPublicPayment = location.pathname.startsWith('/pay/');
+  const isParentRoute = location.pathname.startsWith('/parent');
 
   return (
     <div className="app">
-      {!isPublicPayment && <Navbar />}
-      {!isPublicPayment && <SideNav />}
+      {!isPublicPayment && !isParentRoute && <Navbar />}
+      {!isPublicPayment && !isParentRoute && <SideNav />}
+      {isParentRoute && <Navbar />}
       <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/onboarding" element={<OnboardingPage />} />
@@ -177,7 +213,9 @@ function AppLayout() {
             <Route path="/admin/subscription" element={<ProtectedRoute role="admin"><SubscriptionPage /></ProtectedRoute>} />
             <Route path="/admin/attendance" element={<ProtectedRoute role="admin"><AttendanceManage /></ProtectedRoute>} />
             <Route path="/admin/tuition" element={<ProtectedRoute role="admin"><TuitionManage /></ProtectedRoute>} />
+            <Route path="/admin/parents" element={<ProtectedRoute role="admin"><ParentManage /></ProtectedRoute>} />
             <Route path="/admin/consultations" element={<ProtectedRoute role="admin"><ConsultationLog /></ProtectedRoute>} />
+            <Route path="/admin/leads" element={<ProtectedRoute role="admin"><LeadManage /></ProtectedRoute>} />
             <Route path="/admin/portfolios" element={<ProtectedRoute role="admin"><PortfolioManage /></ProtectedRoute>} />
             <Route path="/admin/sms-credits" element={<ProtectedRoute role="admin"><SmsCredits /></ProtectedRoute>} />
             <Route path="/admin/ai" element={<ProtectedRoute role="admin"><AIAssistant /></ProtectedRoute>} />
@@ -185,6 +223,8 @@ function AppLayout() {
             <Route path="/admin/backup-security" element={<ProtectedRoute role="admin"><BackupSecurity /></ProtectedRoute>} />
             <Route path="/admin/pre-registered" element={<ProtectedRoute role="admin"><PreRegistered /></ProtectedRoute>} />
             <Route path="/admin/profile" element={<ProtectedRoute role="admin"><ProfileManage /></ProtectedRoute>} />
+            <Route path="/admin/classes" element={<ProtectedRoute role="admin"><ClassManage /></ProtectedRoute>} />
+            <Route path="/admin/guide" element={<ProtectedRoute role="admin"><UserGuide /></ProtectedRoute>} />
 
             <Route path="/student" element={<ProtectedRoute role="student"><MyPage /></ProtectedRoute>} />
             <Route path="/student/notices" element={<ProtectedRoute role="student"><Notices /></ProtectedRoute>} />
@@ -208,9 +248,13 @@ function AppLayout() {
             <Route path="/student/timer" element={<ProtectedRoute role="student"><StudyTimer /></ProtectedRoute>} />
             <Route path="/student/study-rankings" element={<ProtectedRoute role="student"><StudyRankings /></ProtectedRoute>} />
 
+            <Route path="/parent/*" element={<ProtectedRoute role="parent"><ParentLayout /></ProtectedRoute>} />
+
             <Route path="/superadmin" element={<ProtectedRoute role="superadmin"><SuperDashboard /></ProtectedRoute>} />
             <Route path="/superadmin/academy/new" element={<ProtectedRoute role="superadmin"><AcademyCreate /></ProtectedRoute>} />
             <Route path="/superadmin/academy/:id" element={<ProtectedRoute role="superadmin"><AcademyDetail /></ProtectedRoute>} />
+            <Route path="/superadmin/promotions" element={<ProtectedRoute role="superadmin"><PromotionsPage /></ProtectedRoute>} />
+            <Route path="/superadmin/revenue" element={<ProtectedRoute role="superadmin"><RevenuePage /></ProtectedRoute>} />
             <Route path="/superadmin/backup-security" element={<ProtectedRoute role="superadmin"><SuperBackupSecurity /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFoundPage />} />

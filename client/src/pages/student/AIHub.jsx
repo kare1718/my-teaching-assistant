@@ -60,8 +60,8 @@ export default function AIHub() {
         color: 'white', borderRadius: 16,
       }}>
         <div style={{ fontSize: 36 }}>🤖</div>
-        <div style={{ fontSize: 'var(--text-lg)', fontWeight: 800, marginTop: 4 }}>AI 강인쌤</div>
-        <p style={{ fontSize: 13, opacity: 0.9, marginTop: 4 }}>AI와 함께 국어 실력을 키워보세요</p>
+        <div style={{ fontSize: 'var(--text-lg)', fontWeight: 800, marginTop: 4 }}>AI 선생님</div>
+        <p style={{ fontSize: 13, opacity: 0.9, marginTop: 4 }}>AI와 함께 실력을 키워보세요</p>
       </div>
 
       {/* 오늘의 학습 팁 */}
@@ -100,7 +100,7 @@ export default function AIHub() {
           </div>
           <div>
             <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--warm-800)' }}>질문하기</div>
-            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--warm-500)', marginTop: 2 }}>AI 강인쌤에게<br/>국어 질문하기</div>
+            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--warm-500)', marginTop: 2 }}>AI 선생님에게<br/>질문하기</div>
           </div>
         </div>
 

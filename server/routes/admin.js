@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const { runQuery, runInsert, getOne, getAll } = require('../db/database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
+const { addEvent } = require('../services/timeline');
 
 // 프로필 수정 허용 필드 화이트리스트
 const USERS_EDITABLE_FIELDS = ['name', 'phone'];
@@ -161,6 +162,23 @@ router.get('/students/:id', async (req, res) => {
   if (!student) {
     return res.status(404).json({ error: '학생을 찾을 수 없습니다.' });
   }
+
+  // 연결된 보호자 배열 추가
+  try {
+    const parents = await getAll(
+      `SELECT p.id, p.name, p.phone, p.email, p.relationship as parent_relationship,
+              p.is_payer as parent_is_payer, sp.relationship, sp.is_primary, sp.is_payer
+       FROM parents p
+       JOIN student_parents sp ON sp.parent_id = p.id
+       WHERE sp.student_id = ? AND p.academy_id = ?`,
+      [student.id, req.academyId]
+    );
+    student.parents = parents;
+  } catch (e) {
+    // parents 테이블이 아직 없을 수 있음 (마이그레이션 전)
+    student.parents = [];
+  }
+
   res.json(student);
 });
 
@@ -202,6 +220,13 @@ router.put('/students/:id/status', async (req, res) => {
     return res.status(400).json({ error: '유효하지 않은 상태값입니다.' });
   }
   await runQuery('UPDATE students SET status = ? WHERE id = ? AND academy_id = ?', [status, parseInt(req.params.id), req.academyId]);
+
+  // 타임라인 이벤트
+  const statusLabel = status === 'active' ? '재원' : '퇴원';
+  addEvent(req.academyId, parseInt(req.params.id), 'status_change', `상태 변경: ${statusLabel}`,
+    null, { status }, req.user?.id
+  ).catch(e => console.error('[timeline]', e.message));
+
   res.json({ message: status === 'active' ? '재원 상태로 변경되었습니다.' : '퇴원 처리되었습니다.' });
 });
 
@@ -628,6 +653,16 @@ router.post('/pre-registered', async (req, res) => {
   const { name, phone, school, grade, parentName, parentPhone, memo } = req.body;
   if (!name || !school || !grade) {
     return res.status(400).json({ error: '이름, 학교, 학년은 필수입니다.' });
+  }
+
+  // 학생 수 제한 체크
+  const academy = await getOne('SELECT max_students FROM academies WHERE id = ?', [req.academyId]);
+  const studentCount = await getOne(
+    "SELECT COUNT(*) as count FROM students s JOIN users u ON s.user_id = u.id WHERE s.academy_id = ? AND (s.status IS NULL OR s.status = 'active') AND u.role = 'student'",
+    [req.academyId]
+  );
+  if (academy && (studentCount?.count || 0) >= (academy.max_students || 0)) {
+    return res.status(403).json({ error: `현재 플랜의 최대 학생 수(${academy.max_students}명)에 도달했습니다. 플랜을 업그레이드해주세요.` });
   }
 
   // 1. users 테이블에 계정 생성 (비밀번호 없음, 로그인 불가, approved=1)

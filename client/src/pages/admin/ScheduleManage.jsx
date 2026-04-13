@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { useTenantConfig, getAllGrades } from '../../contexts/TenantContext';
+import useMediaQuery from '../../hooks/useMediaQuery';
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -20,7 +21,7 @@ const COLORS = [
   { value: '#64748b', label: '회색' },
 ];
 
-const SPECIAL_GRADES = ['중3', '고1', '고2', '고3'];
+const DEFAULT_SPECIAL_GRADES = ['중3', '고1', '고2', '고3'];
 
 function fmtDate(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -28,7 +29,12 @@ function fmtDate(d) {
 
 export default function ScheduleManage() {
   const { config } = useTenantConfig();
+  const isLg = useMediaQuery('(min-width: 1600px)');
   const SCHOOLS = config.schools || [];
+  // 학원 설정의 학교 목록에서 학년 추출, 없으면 기본값
+  const SPECIAL_GRADES = SCHOOLS.length > 0
+    ? [...new Set(SCHOOLS.flatMap(s => s.grades || []))]
+    : DEFAULT_SPECIAL_GRADES;
   const EXAM_MAJOR_CATEGORIES = config.examTypes || [];
   const EXAM_TYPES = EXAM_MAJOR_CATEGORIES.flatMap(c => c.types || []);
   const EXAM_CATEGORIES = [
@@ -250,7 +256,7 @@ export default function ScheduleManage() {
   const [examCalYear, setExamCalYear] = useState(today.getFullYear());
   const [examCalMonth, setExamCalMonth] = useState(today.getMonth() + 1);
   const [examForm, setExamForm] = useState({
-    name: '', examType: '학력평가 모의고사', examDate: '', examEndDate: '', school: '', grade: '', maxScore: 100,
+    name: '', examType: '', examDate: '', examEndDate: '', school: '', grade: '', maxScore: 100,
   });
   const [isDateRange, setIsDateRange] = useState(false);
 
@@ -258,7 +264,7 @@ export default function ScheduleManage() {
   useEffect(() => { if (tab === 'exam') loadExams(); }, [tab]);
 
   const resetExamForm = () => {
-    setExamForm({ name: '', examType: '학력평가 모의고사', examDate: '', examEndDate: '', school: '', grade: '', maxScore: 100 });
+    setExamForm({ name: '', examType: '', examDate: '', examEndDate: '', school: '', grade: '', maxScore: 100 });
     setExamEditId(null);
     setIsDateRange(false);
   };
@@ -359,17 +365,17 @@ export default function ScheduleManage() {
     }
     return (
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-          <span onClick={prevMonth} style={{ cursor: 'pointer', fontSize: 13, padding: '2px 6px' }}>◀</span>
-          <span style={{ fontSize: 13, fontWeight: 700 }}>{calYear}.{String(calMonth).padStart(2, '0')}</span>
-          <span onClick={nextMonth} style={{ cursor: 'pointer', fontSize: 13, padding: '2px 6px' }}>▶</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isLg ? 8 : 6 }}>
+          <span onClick={prevMonth} style={{ cursor: 'pointer', fontSize: isLg ? 15 : 13, padding: '2px 6px' }}>◀</span>
+          <span style={{ fontSize: isLg ? 15 : 13, fontWeight: 700 }}>{calYear}.{String(calMonth).padStart(2, '0')}</span>
+          <span onClick={nextMonth} style={{ cursor: 'pointer', fontSize: isLg ? 15 : 13, padding: '2px 6px' }}>▶</span>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1, marginBottom: 2 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: isLg ? 2 : 1, marginBottom: 2 }}>
           {DAY_NAMES.map((dn, i) => (
-            <div key={dn} style={{ textAlign: 'center', fontSize: 10, fontWeight: 600, padding: '2px 0', color: i === 0 ? 'var(--destructive)' : i === 6 ? 'var(--primary-light)' : 'var(--muted-foreground)' }}>{dn}</div>
+            <div key={dn} style={{ textAlign: 'center', fontSize: isLg ? 12 : 10, fontWeight: 600, padding: isLg ? '3px 0' : '2px 0', color: i === 0 ? 'var(--destructive)' : i === 6 ? 'var(--primary-light)' : 'var(--muted-foreground)' }}>{dn}</div>
           ))}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1 }}>{cells}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: isLg ? 2 : 1 }}>{cells}</div>
       </div>
     );
   };
@@ -448,8 +454,8 @@ export default function ScheduleManage() {
       {tab === 'class' && (
         <div className="schedule-layout" style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
           {/* 왼쪽: 미니 캘린더 + 선택 날짜 목록 */}
-          <div className="schedule-calendar" style={{ flex: '0 0 220px' }}>
-            <div className="card" style={{ padding: 10 }}>{renderMiniCalendar()}</div>
+          <div className="schedule-calendar" style={{ flex: isLg ? '0 0 260px' : '0 0 220px' }}>
+            <div className="card" style={{ padding: isLg ? 14 : 10 }}>{renderMiniCalendar()}</div>
 
             {form.schedule_date && (
               <div className="card" style={{ padding: 10, marginTop: 8 }}>
@@ -976,7 +982,15 @@ export default function ScheduleManage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {filteredExams.map(e => {
                   const upcoming = e.exam_date && e.exam_date >= todayStr;
-                  const isFinal = e.exam_type.includes('내신 파이널');
+                  const catIdx = EXAM_MAJOR_CATEGORIES.findIndex(c => (c.types || []).includes(e.exam_type));
+                  const catColors = [
+                    { bg: 'var(--primary-lighter)', color: 'var(--primary)' },
+                    { bg: 'var(--warning-light)', color: 'oklch(35% 0.12 75)' },
+                    { bg: 'var(--success-light)', color: 'oklch(30% 0.12 145)' },
+                    { bg: 'oklch(95% 0.03 300)', color: 'oklch(35% 0.18 300)' },
+                    { bg: 'var(--info-light)', color: 'oklch(32% 0.12 260)' },
+                  ];
+                  const badgeStyle = catIdx >= 0 ? catColors[catIdx % catColors.length] : catColors[3];
                   return (
                     <div key={e.id} onClick={() => handleEditExam(e)} style={{
                       padding: '10px var(--space-3)', borderRadius: 'var(--radius)', cursor: 'pointer',
@@ -988,8 +1002,7 @@ export default function ScheduleManage() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
                           <span style={{
                             fontSize: 10, padding: '1px 6px', borderRadius: 10, fontWeight: 600,
-                            background: isFinal ? 'var(--warning-light)' : e.exam_type.includes('모의고사') ? 'var(--primary-lighter)' : e.exam_type.includes('정규반') ? 'var(--success-light)' : 'oklch(95% 0.03 300)',
-                            color: isFinal ? 'oklch(35% 0.12 75)' : e.exam_type.includes('모의고사') ? 'var(--primary)' : e.exam_type.includes('정규반') ? 'oklch(30% 0.12 145)' : 'oklch(35% 0.18 300)',
+                            background: badgeStyle.bg, color: badgeStyle.color,
                           }}>{e.exam_type}</span>
                           {upcoming && <span style={{ fontSize: 10, color: 'var(--warning)', fontWeight: 600 }}>예정</span>}
                         </div>

@@ -162,10 +162,10 @@ export default function StudentManage() {
   if (!student) return <div className="content"><p>로딩 중...</p></div>;
 
   const getExamBadgeClass = (type) => {
-    if (type === '학력평가 모의고사') return 'badge badge-info';
-    if (type?.includes('파이널')) return 'badge badge-danger';
-    if (type?.includes('모의고사')) return 'badge badge-purple';
-    return 'badge badge-warning';
+    if (!type) return 'badge badge-warning';
+    const catIdx = (config.examTypes || []).findIndex(c => (c.types || []).includes(type));
+    const badges = ['badge badge-info', 'badge badge-warning', 'badge badge-purple', 'badge badge-danger', 'badge badge-success'];
+    return catIdx >= 0 ? badges[catIdx % badges.length] : 'badge badge-warning';
   };
 
   return (

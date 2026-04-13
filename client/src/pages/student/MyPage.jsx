@@ -267,7 +267,7 @@ export default function MyPage() {
             <span style={{ fontSize: 18, fontWeight: 800 }}>나만의 조교</span>
           </div>
           <h2 style={{ fontWeight: 800, marginBottom: 6 }}>{info.name}님 안녕하세요!</h2>
-          <p>언제나 강인쌤이 응원합니다. 👍</p>
+          <p>언제나 선생님이 응원합니다.</p>
         </div>
       </div>
 
@@ -314,9 +314,9 @@ export default function MyPage() {
       {/* 캐릭터 미니 위젯 */}
       {charData && (() => {
         const lvl = charData.levelInfo || getLevelInfo(charData.xp);
-        const autoStage = getStageInfo(lvl.level);
+        const autoStage = getStageInfo(lvl.level, config.subject);
         const selName = charData.selectedStage || '';
-        const selObj = selName ? getAllStages().find(s => s.stage === selName) : null;
+        const selObj = selName ? getAllStages(config.subject).find(s => s.stage === selName) : null;
         const stage = selObj ? { stage: selObj.stage, color: selObj.color, label: selObj.label } : autoStage;
         const pct = getXpPercent(lvl);
         return (
@@ -451,6 +451,62 @@ export default function MyPage() {
             <div className="stat-card floating-card"><span className="stat-label">학부모</span><span className="stat-value" style={{ fontSize: 14 }}>{info.parent_name || '-'}</span></div>
           </div>
         )}
+      </div>
+
+      {/* 개인정보 및 마케팅 동의 관리 */}
+      <div className="card floating-card">
+        <h2>🔒 개인정보 및 수신 동의 관리</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '12px 16px', borderRadius: 10, background: 'var(--muted)', border: '1px solid var(--border)',
+          }}>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--foreground)' }}>[필수] 개인정보 수집 및 이용 동의</div>
+              <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 2 }}>서비스 이용을 위한 필수 동의 항목입니다.</div>
+            </div>
+            <span style={{
+              padding: '4px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700,
+              background: 'var(--success-light)', color: 'var(--success)',
+            }}>동의됨</span>
+          </div>
+
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '12px 16px', borderRadius: 10, background: 'var(--muted)', border: '1px solid var(--border)',
+          }}>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--foreground)' }}>[선택] 마케팅 정보 수신 동의</div>
+              <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 2 }}>
+                신규 강의, 교재, 이벤트 안내를 받을 수 있습니다.
+                {info.agree_marketing_at && (
+                  <span style={{ marginLeft: 8 }}>
+                    ({info.agree_marketing ? '동의일' : '철회일'}: {new Date(info.agree_marketing_at).toLocaleDateString('ko-KR')})
+                  </span>
+                )}
+              </div>
+            </div>
+            <button
+              className={`btn btn-sm ${info.agree_marketing ? 'btn-outline' : 'btn-primary'}`}
+              style={{ whiteSpace: 'nowrap', fontSize: 13 }}
+              onClick={async () => {
+                const newVal = !info.agree_marketing;
+                const confirmMsg = newVal
+                  ? '마케팅 정보 수신에 동의하시겠습니까?'
+                  : '마케팅 정보 수신 동의를 철회하시겠습니까?\n철회 후에도 서비스 이용에는 제한이 없습니다.';
+                if (!window.confirm(confirmMsg)) return;
+                try {
+                  const res = await apiPut('/students/marketing-consent', { agree: newVal });
+                  setMsg(res.message);
+                  setInfo({ ...info, agree_marketing: newVal ? 1 : 0, agree_marketing_at: new Date().toISOString() });
+                  setTimeout(() => setMsg(''), 3000);
+                } catch (err) { setMsg(err.message); }
+              }}
+            >
+              {info.agree_marketing ? '동의 철회' : '동의하기'}
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="card floating-card">

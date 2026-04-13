@@ -236,7 +236,7 @@ export default function QnAManage() {
                 {/* 기존 답변 표시 */}
                 {selectedQ.answer && (
                   <div style={{ padding: '10px 14px', borderRadius: 'var(--radius)', fontSize: 13, lineHeight: 1.6, border: '1px solid var(--border)', marginBottom: 'var(--space-3)', whiteSpace: 'pre-wrap' }}>
-                    <strong style={{ color: 'var(--primary)' }}>A. 강인쌤</strong>
+                    <strong style={{ color: 'var(--primary)' }}>A. 선생님</strong>
                     {selectedQ.answered_at && <span style={{ fontSize: 11, color: 'var(--muted-foreground)', marginLeft: 'var(--space-2)' }}>{formatDate(selectedQ.answered_at)}</span>}
                     <div style={{ marginTop: 'var(--space-1)' }}>{selectedQ.answer}</div>
                   </div>

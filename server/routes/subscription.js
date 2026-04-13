@@ -18,6 +18,13 @@ router.get('/', async (req, res) => {
     );
     if (!academy) return res.status(404).json({ error: '학원 정보를 찾을 수 없습니다.' });
 
+    // DB max_students가 현재 tier 기준과 다르면 보정
+    const tierLimit = TIER_LIMITS[academy.subscription_tier];
+    if (tierLimit && academy.max_students !== tierLimit.maxStudents) {
+      await runQuery('UPDATE academies SET max_students = ? WHERE id = ?', [tierLimit.maxStudents, academy.id]);
+      academy.max_students = tierLimit.maxStudents;
+    }
+
     const subscription = await getOne(
       'SELECT * FROM subscriptions WHERE academy_id = ? ORDER BY id DESC LIMIT 1',
       [req.academyId]

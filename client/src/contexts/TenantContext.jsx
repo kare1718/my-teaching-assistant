@@ -12,18 +12,7 @@ export function TenantProvider({ children }) {
       apiGet('/academies/my')
         .then(data => {
           const settings = typeof data.settings === 'string' ? JSON.parse(data.settings) : (data.settings || {});
-          setConfig({
-            academyId: data.id,
-            academyName: data.name,
-            slug: data.slug,
-            tier: data.subscription_tier,
-            schools: settings.schools || [],
-            examTypes: settings.examTypes || [],
-            siteTitle: settings.siteTitle || data.name || '나만의 조교',
-            mainTitle: settings.mainTitle || '',
-            branding: settings.branding || {},
-            academyInfo: settings.academyInfo || {},
-          });
+          setConfig(buildConfig(data));
           setLoading(false);
         })
         .catch(() => {
@@ -39,19 +28,7 @@ export function TenantProvider({ children }) {
       if (isLoggedIn()) {
         apiGet('/academies/my')
           .then(data => {
-            const settings = typeof data.settings === 'string' ? JSON.parse(data.settings) : (data.settings || {});
-            setConfig({
-              academyId: data.id,
-              academyName: data.name,
-              slug: data.slug,
-              tier: data.subscription_tier,
-              schools: settings.schools || [],
-              examTypes: settings.examTypes || [],
-              siteTitle: settings.siteTitle || data.name || '나만의 조교',
-              mainTitle: settings.mainTitle || '',
-              branding: settings.branding || {},
-              academyInfo: settings.academyInfo || {},
-            });
+            setConfig(buildConfig(data));
           })
           .catch(() => {});
       } else {
@@ -69,6 +46,24 @@ export function TenantProvider({ children }) {
   );
 }
 
+function buildConfig(data) {
+  const settings = typeof data.settings === 'string' ? JSON.parse(data.settings) : (data.settings || {});
+  return {
+    academyId: data.id,
+    academyName: data.name,
+    slug: data.slug,
+    tier: data.subscription_tier,
+    schools: settings.schools || [],
+    examTypes: settings.examTypes || [],
+    siteTitle: settings.siteTitle || data.name || '나만의 조교',
+    mainTitle: settings.mainTitle || '',
+    branding: settings.branding || {},
+    academyInfo: settings.academyInfo || {},
+    subject: settings.subject || null,
+    clinicSettings: settings.clinicSettings || {},
+  };
+}
+
 function getDefaultConfig() {
   return {
     academyId: null,
@@ -81,6 +76,8 @@ function getDefaultConfig() {
     mainTitle: '나만의 조교로 학원 운영을 더욱 편리하게',
     branding: {},
     academyInfo: {},
+    subject: null,
+    clinicSettings: {},
   };
 }
 

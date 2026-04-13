@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
+import { useTenantConfig } from '../../contexts/TenantContext';
+import useMediaQuery from '../../hooks/useMediaQuery';
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -11,15 +13,15 @@ const STATUS_MAP = {
   completed: { text: '완료', bg: 'oklch(92% 0.04 280)', color: 'oklch(28% 0.10 280)', border: 'oklch(50% 0.20 280)' },
 };
 
-const TIME_SLOTS = [
+const DEFAULT_TIME_SLOTS = [
   '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
   '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
   '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
   '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30'
 ];
 
-const TOPICS = [
-  '수업 내용 질문', '모의고사 분석', '학습 방법 상담',
+const DEFAULT_TOPICS = [
+  '수업 내용 질문', '시험 분석', '학습 방법 상담',
   '진도 점검', '오답 분석', '보충 수업', '시험 대비', '재시험', '기타'
 ];
 
@@ -38,6 +40,10 @@ const NOTE_GUIDE = {
 const CONSULT_TAGS = ['클리닉상담', '학습상담', '진로상담', '학부모상담', '생활지도', '성적관리'];
 
 export default function ClinicManage() {
+  const { config } = useTenantConfig();
+  const isLg = useMediaQuery('(min-width: 1600px)');
+  const TIME_SLOTS = config.clinicSettings?.timeSlots || DEFAULT_TIME_SLOTS;
+  const TOPICS = config.clinicSettings?.topics || DEFAULT_TOPICS;
   const [appointments, setAppointments] = useState([]);
   const [view, setView] = useState('calendar');
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
@@ -913,26 +919,26 @@ export default function ClinicManage() {
 
       {/* 캘린더 뷰 */}
       {view === 'calendar' && !selectedDate && (
-        <div className="card" style={{ padding: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div className="card" style={{ padding: isLg ? 24 : 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isLg ? 20 : 16 }}>
             <button className="btn btn-outline btn-sm" onClick={prevMonth}>&lt;</button>
-            <h2 style={{ margin: 0, fontSize: 18 }}>{currentYear}년 {currentMonth}월</h2>
+            <h2 style={{ margin: 0, fontSize: isLg ? 22 : 18 }}>{currentYear}년 {currentMonth}월</h2>
             <button className="btn btn-outline btn-sm" onClick={nextMonth}>&gt;</button>
           </div>
 
           {/* 요일 헤더 */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: isLg ? 4 : 2, marginBottom: isLg ? 6 : 4 }}>
             {DAY_NAMES.map(d => (
               <div key={d} style={{
-                textAlign: 'center', fontSize: 12, fontWeight: 700,
+                textAlign: 'center', fontSize: isLg ? 14 : 12, fontWeight: 700,
                 color: d === '일' ? 'var(--destructive)' : d === '토' ? 'var(--info)' : 'var(--muted-foreground)',
-                padding: '4px 0'
+                padding: isLg ? '6px 0' : '4px 0'
               }}>{d}</div>
             ))}
           </div>
 
           {/* 날짜 그리드 */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: isLg ? 4 : 2 }}>
             {calendarDays.map((day, idx) => {
               if (!day) return <div key={`empty-${idx}`} />;
               const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -943,21 +949,21 @@ export default function ClinicManage() {
               return (
                 <div key={day} onClick={() => dayAppts.length > 0 ? setSelectedDate(dateStr) : null}
                   style={{
-                    minHeight: 70, padding: '3px', borderRadius: 6, cursor: dayAppts.length > 0 ? 'pointer' : 'default',
+                    minHeight: isLg ? 90 : 70, padding: isLg ? '5px' : '3px', borderRadius: 6, cursor: dayAppts.length > 0 ? 'pointer' : 'default',
                     border: isToday ? '2px solid var(--primary)' : '1px solid var(--border)',
                     background: dayAppts.length > 0 ? 'var(--background)' : 'var(--card)',
                     overflow: 'hidden',
                     transition: 'all 0.2s',
                   }}>
                   <div style={{
-                    fontSize: 11, fontWeight: isToday ? 800 : 500, textAlign: 'center', marginBottom: 2,
+                    fontSize: isLg ? 14 : 11, fontWeight: isToday ? 800 : 500, textAlign: 'center', marginBottom: isLg ? 4 : 2,
                     color: dayOfWeek === 0 ? 'var(--destructive)' : dayOfWeek === 6 ? 'var(--info)' : 'var(--foreground)'
                   }}>{day}</div>
                   {dayAppts.sort((a, b) => a.time_slot.localeCompare(b.time_slot)).slice(0, 3).map(a => {
                     const st = STATUS_MAP[a.status] || STATUS_MAP.pending;
                     return (
                       <div key={a.id} style={{
-                        fontSize: 9, lineHeight: '13px', padding: '1px 2px', marginBottom: 1,
+                        fontSize: isLg ? 11 : 9, lineHeight: isLg ? '16px' : '13px', padding: isLg ? '2px 3px' : '1px 2px', marginBottom: 1,
                         borderRadius: 3, background: st.bg, color: st.color,
                         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                       }}>
@@ -968,7 +974,7 @@ export default function ClinicManage() {
                     );
                   })}
                   {dayAppts.length > 3 && (
-                    <div style={{ fontSize: 8, color: 'var(--muted-foreground)', textAlign: 'center' }}>+{dayAppts.length - 3}건</div>
+                    <div style={{ fontSize: isLg ? 10 : 8, color: 'var(--muted-foreground)', textAlign: 'center' }}>+{dayAppts.length - 3}건</div>
                   )}
                 </div>
               );
@@ -976,10 +982,10 @@ export default function ClinicManage() {
           </div>
 
           {/* 범례 */}
-          <div style={{ display: 'flex', gap: 12, marginTop: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: isLg ? 16 : 12, marginTop: isLg ? 16 : 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             {Object.entries(STATUS_MAP).map(([key, val]) => (
-              <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--muted-foreground)' }}>
-                <div style={{ width: 8, height: 8, borderRadius: 2, background: val.border }} /> {val.text}
+              <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: isLg ? 13 : 11, color: 'var(--muted-foreground)' }}>
+                <div style={{ width: isLg ? 10 : 8, height: isLg ? 10 : 8, borderRadius: 2, background: val.border }} /> {val.text}
               </div>
             ))}
           </div>

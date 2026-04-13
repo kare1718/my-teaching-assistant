@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { getUser } from '../../api';
+import { useTenantConfig } from '../../contexts/TenantContext';
 import {
   LineChart, Line, BarChart, Bar, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -10,39 +11,45 @@ import { SkeletonPage, ErrorState, EmptyState } from '../../components/StudentSt
 import BottomTabBar from '../../components/BottomTabBar';
 import { useMyScores, useStudentsList, useDistribution, useOmrSubmission } from '../../hooks/queries/useScores';
 
-const EXAM_CATEGORIES = [
-  { key: 'all', label: '전체' },
-  { key: 'mock', label: '모의고사', types: ['학력평가 모의고사'] },
-  { key: 'regular', label: '정규반', types: ['정규반 내신 테스트'] },
-  { key: '1mid', label: '1학기 중간', types: ['1학기 중간고사', '1학기 중간 내신 파이널'] },
-  { key: '1final', label: '1학기 기말', types: ['1학기 기말고사', '1학기 기말 내신 파이널'] },
-  { key: '2mid', label: '2학기 중간', types: ['2학기 중간고사', '2학기 중간 내신 파이널'] },
-  { key: '2final', label: '2학기 기말', types: ['2학기 기말고사', '2학기 기말 내신 파이널'] },
+const DEFAULT_CAT_COLORS = [
+  'oklch(30% 0.08 260)', 'var(--warning)', 'oklch(55% 0.20 290)',
+  'oklch(62% 0.16 200)', 'oklch(58% 0.14 160)', 'var(--destructive)',
+  'oklch(50% 0.16 30)', 'oklch(45% 0.12 120)',
 ];
 
-const CAT_COLORS = {
-  mock: 'oklch(30% 0.08 260)',
-  regular: 'var(--warning)',
-  '1mid': 'oklch(55% 0.20 290)',
-  '1final': 'oklch(62% 0.16 200)',
-  '2mid': 'oklch(58% 0.14 160)',
-  '2final': 'var(--destructive)',
-};
-
-const CAT_ICONS = {
-  mock: '📝',
-  regular: '📋',
-  '1mid': '🌸',
-  '1final': '☀️',
-  '2mid': '🍂',
-  '2final': '❄️',
-};
+const DEFAULT_CAT_ICONS = ['📝', '📋', '🌸', '☀️', '🍂', '❄️', '📚', '✏️'];
 
 export default function ScoreView() {
+  const { config } = useTenantConfig();
   const [activeCategory, setActiveCategory] = useState('all');
   const [showDist, setShowDist] = useState(null);
   const [expandedTrends, setExpandedTrends] = useState({});
   const [selectedOmrExamId, setSelectedOmrExamId] = useState(null);
+
+  const EXAM_CATEGORIES = useMemo(() => {
+    const cats = (config.examTypes || []).map((c, i) => ({
+      key: c.key || `cat_${i}`,
+      label: c.label || c.key,
+      types: c.types || [],
+    }));
+    return [{ key: 'all', label: '전체' }, ...cats];
+  }, [config.examTypes]);
+
+  const CAT_COLORS = useMemo(() => {
+    const map = {};
+    (config.examTypes || []).forEach((c, i) => {
+      map[c.key || `cat_${i}`] = DEFAULT_CAT_COLORS[i % DEFAULT_CAT_COLORS.length];
+    });
+    return map;
+  }, [config.examTypes]);
+
+  const CAT_ICONS = useMemo(() => {
+    const map = {};
+    (config.examTypes || []).forEach((c, i) => {
+      map[c.key || `cat_${i}`] = DEFAULT_CAT_ICONS[i % DEFAULT_CAT_ICONS.length];
+    });
+    return map;
+  }, [config.examTypes]);
 
   const user = getUser();
   const isStaff = user?.role === 'admin' || user?.school === '조교' || user?.school === '선생님';
@@ -275,7 +282,7 @@ export default function ScoreView() {
                       </div>
                     )}
                     {s.rank_num && s.total_students && (() => {
-                      const isNaesin = s.exam_type === '정규반 내신 테스트' || (s.exam_name && (s.exam_name.includes('내신') || s.exam_name.includes('중간') || s.exam_name.includes('기말')));
+                      const isNaesin = s.exam_name && (s.exam_name.includes('내신') || s.exam_name.includes('중간') || s.exam_name.includes('기말'));
                       const pctile = (s.rank_num / s.total_students) * 100;
                       if (isNaesin) {
                         // 내신 5등급 상대평가: 10%/24%/32%/24%/10% (누적 10/34/66/90/100%)

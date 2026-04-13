@@ -125,7 +125,7 @@ router.put('/my-stage', authenticateToken, async (req, res) => {
       { level: 70, stage: '국어의 레전드' }, { level: 75, stage: '국어의 신' },
       { level: 80, stage: '정철 술친구' }, { level: 85, stage: '세종대왕 절친' },
       { level: 90, stage: '훈민정음 원본' }, { level: 95, stage: '언어의 빅뱅' },
-      { level: 100, stage: '강인쌤과 동급' },
+      { level: 100, stage: '선생님과 동급' },
     ];
     const found = allStages.find(s => s.stage === stage);
     if (!found) return res.status(400).json({ error: '존재하지 않는 단계입니다.' });

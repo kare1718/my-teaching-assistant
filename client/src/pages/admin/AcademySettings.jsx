@@ -12,6 +12,7 @@ export default function AcademySettings() {
   const [mainTitle, setMainTitle] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [clinicTopics, setClinicTopics] = useState([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [sidebarPinned, setSidebarPinned] = useState(
@@ -24,6 +25,7 @@ export default function AcademySettings() {
       setExamTypes(config.examTypes || []);
       setSiteTitle(config.siteTitle || '');
       setMainTitle(config.mainTitle || '');
+      setClinicTopics(config.clinicSettings?.topics || []);
       setPhone(config.academyInfo?.phone || '');
       setAddress(config.academyInfo?.address || '');
     }
@@ -36,6 +38,7 @@ export default function AcademySettings() {
       const result = await apiPut('/academies/settings', {
         schools, examTypes, siteTitle, mainTitle,
         academyInfo: { phone, address },
+        clinicSettings: { topics: clinicTopics.length > 0 ? clinicTopics : undefined },
       });
       setMessage('설정이 저장되었습니다.');
       if (setConfig && result.settings) {
@@ -56,8 +59,33 @@ export default function AcademySettings() {
     setSchools(next);
   };
 
-  const addExamType = () => setExamTypes([...examTypes, '']);
-  const removeExamType = (idx) => setExamTypes(examTypes.filter((_, i) => i !== idx));
+  const addExamCategory = () => setExamTypes([...examTypes, { key: '', label: '', types: [] }]);
+  const removeExamCategory = (idx) => setExamTypes(examTypes.filter((_, i) => i !== idx));
+  const updateExamCategory = (idx, field, val) => {
+    const next = [...examTypes];
+    next[idx] = { ...next[idx], [field]: val };
+    if (field === 'label' && !next[idx].key) {
+      next[idx].key = val.replace(/\s+/g, '_').toLowerCase();
+    }
+    setExamTypes(next);
+  };
+  const addSubType = (catIdx) => {
+    const next = [...examTypes];
+    next[catIdx] = { ...next[catIdx], types: [...(next[catIdx].types || []), ''] };
+    setExamTypes(next);
+  };
+  const removeSubType = (catIdx, typeIdx) => {
+    const next = [...examTypes];
+    next[catIdx] = { ...next[catIdx], types: next[catIdx].types.filter((_, i) => i !== typeIdx) };
+    setExamTypes(next);
+  };
+  const updateSubType = (catIdx, typeIdx, val) => {
+    const next = [...examTypes];
+    const types = [...next[catIdx].types];
+    types[typeIdx] = val;
+    next[catIdx] = { ...next[catIdx], types };
+    setExamTypes(next);
+  };
 
   const handleToggleSidebarPin = () => {
     const next = !sidebarPinned;
@@ -185,19 +213,63 @@ export default function AcademySettings() {
       <section style={sectionStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h3 style={{ fontSize: 16, fontWeight: 700 }}>시험 유형 관리</h3>
-          <button className="btn btn-primary" onClick={addExamType} style={{ fontSize: 13, padding: '6px 14px' }}>+ 유형 추가</button>
+          <button className="btn btn-primary" onClick={addExamCategory} style={{ fontSize: 13, padding: '6px 14px' }}>+ 카테고리 추가</button>
         </div>
-        {examTypes.map((t, i) => (
-          <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+        {examTypes.map((cat, i) => (
+          <div key={i} style={{ padding: 14, borderRadius: 8, background: 'var(--muted)', marginBottom: 10 }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }}>
+              <input value={cat.label || ''} onChange={e => updateExamCategory(i, 'label', e.target.value)}
+                placeholder="카테고리명 (예: 모의고사)" style={{ flex: 1, fontWeight: 600 }} />
+              <input value={cat.key || ''} onChange={e => updateExamCategory(i, 'key', e.target.value)}
+                placeholder="key (예: mock)" style={{ width: 120, fontSize: 12 }} />
+              <button onClick={() => removeExamCategory(i)} style={{
+                background: 'var(--destructive-light)', color: 'oklch(48% 0.20 25)', border: 'none', borderRadius: 6,
+                padding: '6px 10px', cursor: 'pointer', fontSize: 12
+              }}>삭제</button>
+            </div>
+            <div style={{ paddingLeft: 12 }}>
+              <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 6, fontWeight: 600 }}>하위 시험 유형</div>
+              {(cat.types || []).map((t, j) => (
+                <div key={j} style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
+                  <input value={t} onChange={e => updateSubType(i, j, e.target.value)}
+                    placeholder="시험 유형명 (예: 학력평가 모의고사)" style={{ flex: 1, fontSize: 13 }} />
+                  <button onClick={() => removeSubType(i, j)} style={{
+                    background: 'none', color: 'var(--muted-foreground)', border: 'none',
+                    cursor: 'pointer', fontSize: 14, padding: '2px 6px'
+                  }}>x</button>
+                </div>
+              ))}
+              <button onClick={() => addSubType(i)} style={{
+                background: 'none', border: '1px dashed var(--border)', borderRadius: 6,
+                padding: '4px 12px', cursor: 'pointer', fontSize: 12, color: 'var(--muted-foreground)',
+                fontFamily: 'inherit', marginTop: 4
+              }}>+ 하위 유형 추가</button>
+            </div>
+          </div>
+        ))}
+      </section>
+
+      {/* 클리닉 토픽 */}
+      <section style={sectionStyle}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700 }}>클리닉 질문 주제</h3>
+          <button className="btn btn-primary" onClick={() => setClinicTopics([...clinicTopics, ''])}
+            style={{ fontSize: 13, padding: '6px 14px' }}>+ 주제 추가</button>
+        </div>
+        <p style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 10 }}>
+          비어있으면 기본 주제가 사용됩니다 (수업 내용 질문, 시험 분석, 학습 방법 상담 등)
+        </p>
+        {clinicTopics.map((t, i) => (
+          <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
             <input value={t} onChange={e => {
-              const next = [...examTypes];
+              const next = [...clinicTopics];
               next[i] = e.target.value;
-              setExamTypes(next);
-            }} placeholder="시험 유형명" style={{ flex: 1 }} />
-            <button onClick={() => removeExamType(i)} style={{
-              background: 'var(--destructive-light)', color: 'oklch(48% 0.20 25)', border: 'none', borderRadius: 6,
-              padding: '6px 10px', cursor: 'pointer', fontSize: 12
-            }}>삭제</button>
+              setClinicTopics(next);
+            }} placeholder="주제명" style={{ flex: 1, fontSize: 13 }} />
+            <button onClick={() => setClinicTopics(clinicTopics.filter((_, j) => j !== i))} style={{
+              background: 'none', color: 'var(--muted-foreground)', border: 'none',
+              cursor: 'pointer', fontSize: 14, padding: '2px 6px'
+            }}>x</button>
           </div>
         ))}
       </section>

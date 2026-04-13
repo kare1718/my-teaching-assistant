@@ -45,6 +45,7 @@ export default function RegisterPage() {
     parentName: '', parentPhone: '', inviteCode: ''
   });
   const [agreePrivacy, setAgreePrivacy] = useState(false);
+  const [agreeMarketing, setAgreeMarketing] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -118,7 +119,7 @@ export default function RegisterPage() {
     if (!isStaff && (!form.parentName || !form.parentPhone)) { setError('학부모 정보를 입력해주세요.'); return; }
     if (!agreePrivacy) { setError('개인정보 수집 및 이용에 동의해주세요.'); return; }
 
-    const submitData = { ...form };
+    const submitData = { ...form, agreePrivacy, agreeMarketing };
     if (userType === 'assistant') { submitData.school = '조교'; submitData.grade = '조교'; }
     else if (userType === 'teacher') { submitData.school = '선생님'; submitData.grade = '선생님'; }
 
@@ -418,6 +419,21 @@ export default function RegisterPage() {
               )}
 
               <div style={{ background: C.surface, borderRadius: 14, padding: '14px 16px', marginBottom: 20 }}>
+                {/* 전체 동의 */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 14, borderBottom: `1px solid ${C.border}`, marginBottom: 14 }}>
+                  <input
+                    type="checkbox"
+                    checked={agreePrivacy && agreeMarketing}
+                    onChange={(e) => { setAgreePrivacy(e.target.checked); setAgreeMarketing(e.target.checked); }}
+                    id="agreeAll"
+                    style={{ width: 20, height: 20, cursor: 'pointer', accentColor: C.accent }}
+                  />
+                  <label htmlFor="agreeAll" style={{ cursor: 'pointer', fontSize: 14, fontWeight: 700, color: C.textPrimary }}>
+                    전체 동의하기
+                  </label>
+                </div>
+
+                {/* 개인정보 동의 (필수) */}
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                   <input
                     type="checkbox" checked={agreePrivacy} onChange={(e) => setAgreePrivacy(e.target.checked)}
@@ -429,37 +445,44 @@ export default function RegisterPage() {
                   </label>
                 </div>
                 <button type="button" onClick={() => setShowPrivacy(!showPrivacy)}
-                  style={{ background: 'none', border: 'none', color: C.accent, fontSize: 12, cursor: 'pointer', marginTop: 6, padding: 0, fontFamily: FONT }}>
-                  {showPrivacy ? '접기' : '개인정보 처리방침 보기'}
+                  style={{ background: 'none', border: 'none', color: C.accent, fontSize: 12, cursor: 'pointer', marginTop: 6, padding: 0, fontFamily: FONT, marginLeft: 28 }}>
+                  {showPrivacy ? '접기' : '내용 보기'}
                 </button>
                 {showPrivacy && (
                   <div style={{
                     marginTop: 10, padding: '14px 16px', background: C.white,
                     borderRadius: 10, fontSize: 12, lineHeight: 1.8,
-                    color: C.textSecondary, maxHeight: 220, overflow: 'auto',
-                    border: `1px solid ${C.border}`
+                    color: C.textSecondary, maxHeight: 200, overflow: 'auto',
+                    border: `1px solid ${C.border}`, marginLeft: 28,
                   }}>
-                    <p><b>1. 수집하는 개인정보 항목</b></p>
-                    <p>- 이름, 아이디, 비밀번호(암호화 저장), 연락처</p>
-                    <p>- 학생의 경우: 학부모 이름/연락처, 학교/학년 정보</p>
-                    <p style={{ marginTop: 8 }}><b>2. 개인정보의 수집 및 이용 목적</b></p>
-                    <p>- 학원 수업 관리 및 학생 학습 현황 파악</p>
-                    <p>- 성적 관리, 출결 확인, 학부모 연락</p>
-                    <p>- 게이미피케이션(퀴즈, 랭킹, 포인트) 서비스 제공</p>
-                    <p style={{ marginTop: 8 }}><b>3. 개인정보의 보유 및 이용 기간</b></p>
-                    <p>- 학원 수강 기간 동안 보유하며, 수강 종료 시 즉시 파기합니다.</p>
-                    <p>- 회원 탈퇴 요청 시 지체 없이 삭제합니다.</p>
-                    <p style={{ marginTop: 8 }}><b>4. 마케팅 활용 안내</b></p>
-                    <p>- 수집된 개인정보는 <b>학원 수업 관리 목적으로만</b> 사용됩니다.</p>
-                    <p>- <b>마케팅, 광고, 제3자 제공 등 다른 목적으로 절대 활용하지 않습니다.</b></p>
-                    <p style={{ marginTop: 8 }}><b>5. 개인정보의 안전성 확보 조치</b></p>
-                    <p>- 비밀번호는 암호화(bcrypt)하여 저장합니다.</p>
-                    <p>- 관리자만 학생 정보에 접근할 수 있습니다.</p>
-                    <p>- 데이터는 안전한 서버에 보관됩니다.</p>
-                    <p style={{ marginTop: 8 }}><b>6. 개인정보 관련 문의</b></p>
-                    <p>- 개인정보 관련 문의사항은 담당 강사에게 직접 연락해주세요.</p>
+                    <p>'나만의 조교' 서비스 제공을 위해 아래와 같이 개인정보를 수집 및 이용합니다.</p>
+                    <p style={{ marginTop: 8 }}><b>수집 항목</b></p>
+                    <p>- 성명, 휴대전화 번호</p>
+                    <p style={{ marginTop: 8 }}><b>수집 및 이용 목적</b></p>
+                    <p>- 서비스 이용에 따른 본인 확인, 학습 관리 서비스 제공, 원활한 상담 및 주요 공지사항 전달</p>
+                    <p style={{ marginTop: 8 }}><b>보유 및 이용 기간</b></p>
+                    <p>- 서비스 탈퇴 시 또는 이용 목적 달성 시까지</p>
+                    <p>- 단, 관련 법령에 의해 보존이 필요한 경우 해당 기간 동안 보관</p>
                   </div>
                 )}
+
+                {/* 마케팅 동의 (선택) */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.border}` }}>
+                  <input
+                    type="checkbox" checked={agreeMarketing} onChange={(e) => setAgreeMarketing(e.target.checked)}
+                    id="agreeMarketing"
+                    style={{ marginTop: 2, width: 18, height: 18, cursor: 'pointer', accentColor: C.accent }}
+                  />
+                  <div>
+                    <label htmlFor="agreeMarketing" style={{ cursor: 'pointer', lineHeight: 1.5, fontSize: 13, color: C.textPrimary }}>
+                      <span style={{ color: C.textTertiary }}>[선택]</span> 마케팅 정보 수신 및 광고 활용에 동의합니다.
+                    </label>
+                    <div style={{ fontSize: 11, color: C.textTertiary, marginTop: 4, lineHeight: 1.7, marginLeft: 0 }}>
+                      <p style={{ margin: 0 }}>신규 강의 및 커리큘럼 안내, 신규 교재 출시 정보 제공, 이벤트 및 홍보성 메시지 발송</p>
+                      <p style={{ margin: '2px 0 0' }}>동의하지 않아도 서비스 이용에 제한이 없습니다. 동의 후 언제든 철회할 수 있습니다.</p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <button type="submit" style={{ ...primaryBtn, opacity: agreePrivacy ? 1 : 0.5 }} disabled={!agreePrivacy}

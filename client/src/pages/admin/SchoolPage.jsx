@@ -16,7 +16,7 @@ export default function SchoolPage() {
   const [materials, setMaterials] = useState([]);
   const [showExamForm, setShowExamForm] = useState(false);
   const [showMaterialForm, setShowMaterialForm] = useState(false);
-  const [newExam, setNewExam] = useState({ examType: '학력평가 모의고사', name: '', examDate: '', grade: '', maxScore: 100 });
+  const [newExam, setNewExam] = useState({ examType: '', name: '', examDate: '', grade: '', maxScore: 100 });
   const [newMaterial, setNewMaterial] = useState({ title: '', description: '', classDate: '', youtubeUrl: '' });
   const [uploadFile, setUploadFile] = useState(null);
   const [msg, setMsg] = useState('');
@@ -49,7 +49,7 @@ export default function SchoolPage() {
         grade: newExam.grade || null,
         maxScore: parseFloat(newExam.maxScore) || 100
       });
-      setNewExam({ examType: '학력평가 모의고사', name: '', examDate: '', grade: '', maxScore: 100 });
+      setNewExam({ examType: '', name: '', examDate: '', grade: '', maxScore: 100 });
       setShowExamForm(false);
       setMsg('시험이 등록되었습니다.');
       loadData();
@@ -96,10 +96,12 @@ export default function SchoolPage() {
   };
 
   const getExamBadgeClass = (type) => {
-    if (type === '학력평가 모의고사') return 'badge badge-info';
-    if (type?.includes('파이널')) return 'badge badge-danger';
-    if (type?.includes('모의고사')) return 'badge badge-purple';
-    return 'badge badge-warning';
+    if (!type) return 'badge badge-warning';
+    // 카테고리 인덱스에 따라 색상 배정
+    const allTypes = (config.examTypes || []).flatMap(c => c.types || []);
+    const catIdx = (config.examTypes || []).findIndex(c => (c.types || []).includes(type));
+    const badges = ['badge badge-info', 'badge badge-warning', 'badge badge-purple', 'badge badge-danger', 'badge badge-success'];
+    return catIdx >= 0 ? badges[catIdx % badges.length] : 'badge badge-warning';
   };
 
   const getYoutubeEmbedUrl = (url) => {
@@ -155,7 +157,7 @@ export default function SchoolPage() {
                 <div className="form-group">
                   <label>시험 분류 *</label>
                   <select value={newExam.examType} onChange={(e) => setNewExam({ ...newExam, examType: e.target.value })}>
-                    {(config.examTypes || []).map((t) => <option key={t} value={t}>{t}</option>)}
+                    {(config.examTypes || []).flatMap(c => c.types || []).map((t) => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
                 <div className="form-group">

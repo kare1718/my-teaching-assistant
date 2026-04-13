@@ -276,7 +276,7 @@ router.get('/admin/staff-list', requireAdmin, async (req, res) => {
   const staff = await getAll(
     `SELECT u.id, u.name, s.school as role FROM users u
      LEFT JOIN students s ON u.id = s.user_id
-     WHERE (u.role = 'admin' OR s.school IN ('조교', '선생님')) AND u.academy_id = ?
+     WHERE (u.role IN ('admin', 'assistant') OR s.school IN ('조교', '선생님')) AND u.academy_id = ?
      ORDER BY u.name`,
     [req.academyId]
   );

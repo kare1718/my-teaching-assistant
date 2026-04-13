@@ -212,7 +212,7 @@ export default function QnA() {
         }}>
           <img
             src="/uploads/character.png"
-            alt="강인쌤"
+            alt="선생님"
             style={{
               width: 40, height: 40, borderRadius: '10px',
               objectFit: 'contain', flexShrink: 0,
@@ -265,7 +265,7 @@ export default function QnA() {
               <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                 <img
                   src="/uploads/character.png"
-                  alt="강인쌤"
+                  alt="선생님"
                   style={{
                     width: 36, height: 36, borderRadius: '10px',
                     objectFit: 'contain', flexShrink: 0,
@@ -274,7 +274,7 @@ export default function QnA() {
                 />
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--primary)', marginBottom: 3 }}>
-                    강인쌤
+                    {config.academyName || '선생님'}
                   </div>
                   <div style={{
                     background: 'var(--muted)',
@@ -293,7 +293,7 @@ export default function QnA() {
               <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                 <img
                   src="/uploads/character.png"
-                  alt="강인쌤"
+                  alt="선생님"
                   style={{
                     width: 36, height: 36, borderRadius: '10px',
                     objectFit: 'contain', flexShrink: 0,
@@ -302,7 +302,7 @@ export default function QnA() {
                 />
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--primary)', marginBottom: 3 }}>
-                    강인쌤
+                    {config.academyName || '선생님'}
                   </div>
                   <div style={{
                     background: 'var(--muted)', padding: '12px 18px',

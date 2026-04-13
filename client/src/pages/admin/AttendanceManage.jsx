@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api';
+import useMediaQuery from '../../hooks/useMediaQuery';
 
 export default function AttendanceManage() {
+  const isLg = useMediaQuery('(min-width: 1600px)');
   const [todayData, setTodayData] = useState(null);
   const [absentList, setAbsentList] = useState([]);
   const [stats, setStats] = useState(null);
@@ -40,7 +42,7 @@ export default function AttendanceManage() {
 
   const summary = todayData || {};
   const total = summary.total || 0;
-  const present = summary.present || 0;
+  const present = summary.present ?? summary.checkedIn ?? 0;
   const absent = summary.absent || 0;
   const late = summary.late || 0;
 
@@ -59,7 +61,7 @@ export default function AttendanceManage() {
       </div>
 
       {/* 요약 카드 */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fit, minmax(${isLg ? 160 : 130}px, 1fr))`, gap: isLg ? 16 : 12, marginBottom: isLg ? 28 : 24 }}>
         {[
           { label: '총원', value: total, bg: 'oklch(97% 0.02 230)', color: 'oklch(38% 0.10 230)' },
           { label: '출석', value: present, bg: 'var(--success-light)', color: 'oklch(52% 0.14 160)' },
@@ -67,10 +69,10 @@ export default function AttendanceManage() {
           { label: '지각', value: late, bg: 'oklch(97% 0.04 85)', color: 'oklch(55% 0.14 85)' },
         ].map(c => (
           <div key={c.label} style={{
-            background: c.bg, borderRadius: 12, padding: 16, textAlign: 'center',
+            background: c.bg, borderRadius: 12, padding: isLg ? 20 : 16, textAlign: 'center',
           }}>
-            <p style={{ fontSize: 13, color: 'var(--neutral-500)', marginBottom: 4 }}>{c.label}</p>
-            <p style={{ fontSize: 28, fontWeight: 800, color: c.color }}>{c.value}</p>
+            <p style={{ fontSize: isLg ? 15 : 13, color: 'var(--neutral-500)', marginBottom: isLg ? 6 : 4 }}>{c.label}</p>
+            <p style={{ fontSize: isLg ? 34 : 28, fontWeight: 800, color: c.color }}>{c.value}</p>
           </div>
         ))}
       </div>

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getUser, api } from '../api';
 import ThemeToggle from './ThemeToggle';
+import useMediaQuery from '../hooks/useMediaQuery';
 
 /* ─── SVG Icon primitives ─────────────────────────────────────────── */
 const Icon = ({ d, size = 16, children, viewBox = '0 0 24 24' }) => (
@@ -61,9 +62,12 @@ const adminPages = [
   { path: '/admin/attendance', label: '출결 관리', desc: '출석/결석 관리', icon: Icons.clipboard },
   { path: '/admin/pending', label: '가입 승인', desc: '신규 승인/거절', badgeKey: 'pending_users', icon: Icons.userCheck },
   { path: '/admin/edit-requests', label: '정보 수정 요청', desc: '수정 요청 처리', badgeKey: 'edit_requests', icon: Icons.edit },
+  { path: '/admin/parents', label: '보호자 관리', desc: '보호자 등록/연결', icon: Icons.userCheck },
   { path: '/admin/consultations', label: '상담 일지', desc: '학생/학부모 상담', icon: Icons.message },
+  { path: '/admin/leads', label: '상담 관리', desc: '리드/신규문의 파이프라인', icon: Icons.barChart },
 
   { divider: true, label: '수업 및 운영' },
+  { path: '/admin/classes', label: '수업 관리', desc: '반/수강생/세션 관리', icon: Icons.book },
   { path: '/admin/schedules', label: '수업 일정 관리', desc: '일정 등록/관리', icon: Icons.calendar },
   { path: '/admin/scores', label: '시험 성적 관리', desc: '성적 입력/관리', icon: Icons.barChart },
   { path: '/admin/clinic', label: '클리닉 관리', desc: '클리닉 승인', badgeKey: 'pending_clinic', icon: Icons.stethoscope },
@@ -93,12 +97,18 @@ const adminPages = [
 
   { divider: true, label: '설정' },
   { path: '/admin/settings', label: '학원 설정', desc: '학원 기본 설정', icon: Icons.settings },
+  { path: '/admin/guide', label: '사용법 가이드', desc: '서비스 사용 안내', icon: Icons.book },
 ];
 
 /* ─── Super admin nav ────────────────────────────────────────────── */
 const superadminPages = [
   { path: '/superadmin', label: '대시보드', desc: '플랫폼 전체 현황', icon: Icons.home },
+  { divider: true, label: '비즈니스' },
+  { path: '/superadmin/revenue', label: '매출 관리', desc: '결제/환불/MRR', icon: Icons.dollar },
+  { path: '/superadmin/promotions', label: '프로모션', desc: '기프트/쿠폰/이용권', icon: Icons.star },
+  { divider: true, label: '운영' },
   { path: '/superadmin/academy/new', label: '학원 생성', desc: '새 학원 등록', icon: Icons.userPlus },
+  { divider: true, label: '시스템' },
   { path: '/superadmin/backup-security', label: '백업/보안', desc: '데이터 백업 및 보안', icon: Icons.save },
   { divider: true, label: '학원 관리 바로가기' },
   { path: '/admin', label: '관리자 페이지', desc: '학원 관리 화면으로', icon: Icons.settings },
@@ -139,6 +149,11 @@ export default function SideNav() {
   const isSuperAdminPage = location.pathname.startsWith('/superadmin');
   const isAdminPage = location.pathname.startsWith('/admin') || isSuperAdminPage;
   const isAdminUser = user.role === 'admin' || user.role === 'superadmin' || user.school === '조교';
+
+  /* ── Screen size ── */
+  const isLg = useMediaQuery('(min-width: 1600px)');
+  const SIDEBAR_W = isLg ? 260 : 230;
+  const NAV_H = isLg ? 58 : 52;
 
   /* ── Admin sidebar state ── */
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' && window.innerWidth > 768);
@@ -296,7 +311,7 @@ export default function SideNav() {
   const renderAdminMenu = () => {
     let currentCat = null;
     return (
-      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 10px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: isLg ? '10px 12px' : '8px 10px' }}>
         {adminPages.map((item, idx) => {
           if (item.divider) {
             currentCat = item.label;
@@ -305,8 +320,8 @@ export default function SideNav() {
             return (
               <button key={idx} onClick={() => toggleCategory(item.label)} style={{
                 display: 'flex', alignItems: 'center', gap: 6, width: '100%',
-                fontSize: 11, fontWeight: 700, color: 'var(--neutral-400)',
-                padding: '16px 10px 6px', letterSpacing: '0.04em',
+                fontSize: isLg ? 12 : 11, fontWeight: 700, color: 'var(--neutral-400)',
+                padding: isLg ? '18px 10px 7px' : '16px 10px 6px', letterSpacing: '0.04em',
                 margin: 0, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
               }}>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
@@ -339,9 +354,9 @@ export default function SideNav() {
           return (
             <button key={item.path} onClick={() => navigate(item.path)} style={{
               display: 'flex', alignItems: 'center', gap: 10,
-              width: '100%', padding: '8px 10px', borderRadius: 7,
+              width: '100%', padding: isLg ? '9px 12px' : '8px 10px', borderRadius: 7,
               border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-              fontSize: 14, fontWeight: isActive ? 600 : 400,
+              fontSize: isLg ? 15 : 14, fontWeight: isActive ? 600 : 400,
               background: isActive ? 'var(--primary-lighter)' : 'transparent',
               color: isActive ? 'var(--primary)' : 'var(--foreground)',
               transition: 'background 0.12s', marginBottom: 1, textAlign: 'left',
@@ -354,7 +369,7 @@ export default function SideNav() {
               </span>
               <div style={{ flex: 1 }}>
                 <span>{item.label}</span>
-                {item.desc && <div style={{ fontSize: 11, color: 'var(--neutral-400)', fontWeight: 400, marginTop: 2 }}>{item.desc}</div>}
+                {item.desc && <div style={{ fontSize: isLg ? 12 : 11, color: 'var(--neutral-400)', fontWeight: 400, marginTop: 2 }}>{item.desc}</div>}
               </div>
               {badgeCount > 0 && (
                 <span style={{
@@ -490,22 +505,22 @@ export default function SideNav() {
       <>
         {/* Sidebar panel */}
         <div id="admin-sidebar" style={{
-          position: 'fixed', top: 52, left: 0, bottom: 0,
-          width: sidebarOpen ? 230 : 0,
+          position: 'fixed', top: NAV_H, left: 0, bottom: 0,
+          width: sidebarOpen ? SIDEBAR_W : 0,
           background: 'var(--card)', zIndex: 180,
           borderRight: sidebarOpen ? '1px solid var(--border)' : 'none',
           transition: 'width 0.22s cubic-bezier(0.16,1,0.3,1)',
           overflow: 'hidden', display: 'flex', flexDirection: 'column',
           fontFamily: FONT,
         }}>
-          <div style={{ width: 230, minWidth: 230, display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <div style={{ width: SIDEBAR_W, minWidth: SIDEBAR_W, display: 'flex', flexDirection: 'column', height: '100%' }}>
             {/* Sidebar header */}
             <div style={{
-              padding: '12px 14px', borderBottom: '1px solid var(--border)',
+              padding: isLg ? '14px 16px' : '12px 14px', borderBottom: '1px solid var(--border)',
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--muted-foreground)', margin: 0, letterSpacing: '0.02em' }}>
+                <span style={{ fontSize: isLg ? 14 : 13, fontWeight: 700, color: 'var(--muted-foreground)', margin: 0, letterSpacing: '0.02em' }}>
                   {isSuperAdminPage ? '플랫폼 관리' : '관리자 메뉴'}
                 </span>
                 {totalBadge > 0 && (
@@ -547,10 +562,19 @@ export default function SideNav() {
           </div>
         </div>
 
+        {/* 모바일 사이드바 오버레이 (고정 안 된 경우) */}
+        {!isDesktop && sidebarOpen && !pinned && (
+          <div onClick={toggleSidebar} style={{
+            position: 'fixed', inset: 0, top: NAV_H,
+            background: 'rgba(0,0,0,0.3)', zIndex: 179,
+            transition: 'opacity 0.2s',
+          }} />
+        )}
+
         {/* Collapsed: open button — 모바일에서만 */}
         {!sidebarOpen && !isDesktop && (
           <button onClick={toggleSidebar} style={{
-            position: 'fixed', top: 62, left: 8, zIndex: 180,
+            position: 'fixed', top: NAV_H + 10, left: 8, zIndex: 180,
             width: 32, height: 32, borderRadius: 7,
             background: 'var(--card)', border: '1px solid var(--border)',
             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -565,8 +589,8 @@ export default function SideNav() {
 
         {/* Push content right — 데스크톱은 항상, 모바일은 고정 시만 */}
         <style>{`
-          .content, .main-content { margin-left: ${sidebarOpen ? '230px' : '0'} !important; transition: margin-left 0.22s cubic-bezier(0.16,1,0.3,1); }
-          @media (max-width: 768px) { .content, .main-content { margin-left: ${pinned && sidebarOpen ? '230px' : '0'} !important; } }
+          .content, .main-content { margin-left: ${sidebarOpen ? SIDEBAR_W + 'px' : '0'} !important; transition: margin-left 0.22s cubic-bezier(0.16,1,0.3,1); }
+          @media (max-width: 768px) { .content, .main-content { margin-left: ${pinned && sidebarOpen ? SIDEBAR_W + 'px' : '0'} !important; } }
           @keyframes badgePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
         `}</style>
       </>
@@ -584,7 +608,7 @@ export default function SideNav() {
         onPointerUp={onPointerUp}
         onClick={onFabClick}
         style={{
-          position: 'fixed', left: 14, top: fabY, zIndex: 200,
+          position: 'fixed', left: 14, top: fabY, zIndex: 210,
           width: 46, height: 46, borderRadius: '50%',
           background: open
             ? 'linear-gradient(135deg, oklch(20% 0.06 260), oklch(25% 0.08 260))'

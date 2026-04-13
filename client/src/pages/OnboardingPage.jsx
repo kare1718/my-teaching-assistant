@@ -56,6 +56,9 @@ export default function OnboardingPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [agreePrivacy, setAgreePrivacy] = useState(false);
+  const [agreeMarketing, setAgreeMarketing] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
 
   useEffect(() => { injectKeyframes(); }, []);
 
@@ -94,6 +97,10 @@ export default function OnboardingPage() {
 
   const handleSubmit = async () => {
     setError('');
+    if (!agreePrivacy) {
+      setError('개인정보 수집 및 이용에 동의해주세요.');
+      return;
+    }
     if (form.adminPassword !== form.adminPasswordConfirm) {
       setError('비밀번호가 일치하지 않습니다.');
       return;
@@ -387,13 +394,80 @@ export default function OnboardingPage() {
               </div>
             </div>
 
+            {/* 개인정보 동의 */}
+            <div style={{ background: C.surface, borderRadius: 14, padding: '14px 16px' }}>
+              {/* 전체 동의 */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 14, borderBottom: `1px solid ${C.border}`, marginBottom: 14 }}>
+                <input
+                  type="checkbox"
+                  checked={agreePrivacy && agreeMarketing}
+                  onChange={(e) => { setAgreePrivacy(e.target.checked); setAgreeMarketing(e.target.checked); }}
+                  id="obAgreeAll"
+                  style={{ width: 20, height: 20, cursor: 'pointer', accentColor: C.accent }}
+                />
+                <label htmlFor="obAgreeAll" style={{ cursor: 'pointer', fontSize: 14, fontWeight: 700, color: C.textPrimary }}>
+                  전체 동의하기
+                </label>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                <input
+                  type="checkbox" checked={agreePrivacy} onChange={(e) => setAgreePrivacy(e.target.checked)}
+                  id="obAgreePrivacy"
+                  style={{ marginTop: 2, width: 18, height: 18, cursor: 'pointer', accentColor: C.accent }}
+                />
+                <label htmlFor="obAgreePrivacy" style={{ cursor: 'pointer', lineHeight: 1.5, fontSize: 13, color: C.textPrimary }}>
+                  <b>[필수]</b> 개인정보 수집 및 이용에 동의합니다.
+                </label>
+              </div>
+              <button type="button" onClick={() => setShowPrivacy(!showPrivacy)}
+                style={{ background: 'none', border: 'none', color: C.accent, fontSize: 12, cursor: 'pointer', marginTop: 6, padding: 0, fontFamily: FONT, marginLeft: 28 }}>
+                {showPrivacy ? '접기' : '내용 보기'}
+              </button>
+              {showPrivacy && (
+                <div style={{
+                  marginTop: 10, padding: '14px 16px', background: C.white,
+                  borderRadius: 10, fontSize: 12, lineHeight: 1.8,
+                  color: C.textSecondary, maxHeight: 200, overflow: 'auto',
+                  border: `1px solid ${C.border}`, marginLeft: 28,
+                }}>
+                  <p>'나만의 조교' 서비스 제공을 위해 아래와 같이 개인정보를 수집 및 이용합니다.</p>
+                  <p style={{ marginTop: 8 }}><b>수집 항목</b></p>
+                  <p>- 성명, 휴대전화 번호</p>
+                  <p style={{ marginTop: 8 }}><b>수집 및 이용 목적</b></p>
+                  <p>- 서비스 이용에 따른 본인 확인, 학습 관리 서비스 제공, 원활한 상담 및 주요 공지사항 전달</p>
+                  <p style={{ marginTop: 8 }}><b>보유 및 이용 기간</b></p>
+                  <p>- 서비스 탈퇴 시 또는 이용 목적 달성 시까지</p>
+                  <p>- 단, 관련 법령에 의해 보존이 필요한 경우 해당 기간 동안 보관</p>
+                </div>
+              )}
+
+              {/* 마케팅 동의 (선택) */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.border}` }}>
+                <input
+                  type="checkbox" checked={agreeMarketing} onChange={(e) => setAgreeMarketing(e.target.checked)}
+                  id="obAgreeMarketing"
+                  style={{ marginTop: 2, width: 18, height: 18, cursor: 'pointer', accentColor: C.accent }}
+                />
+                <div>
+                  <label htmlFor="obAgreeMarketing" style={{ cursor: 'pointer', lineHeight: 1.5, fontSize: 13, color: C.textPrimary }}>
+                    <span style={{ color: C.textTertiary }}>[선택]</span> 마케팅 정보 수신 및 광고 활용에 동의합니다.
+                  </label>
+                  <div style={{ fontSize: 11, color: C.textTertiary, marginTop: 4, lineHeight: 1.7 }}>
+                    <p style={{ margin: 0 }}>신규 강의 및 커리큘럼 안내, 신규 교재 출시 정보 제공, 이벤트 및 홍보성 메시지 발송</p>
+                    <p style={{ margin: '2px 0 0' }}>동의하지 않아도 서비스 이용에 제한이 없습니다. 동의 후 언제든 철회할 수 있습니다.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div style={{ display: 'flex', gap: 10 }}>
               <button style={outlineBtn} onClick={() => setStep(2)}
                 onMouseOver={e => e.currentTarget.style.background = C.surface}
                 onMouseOut={e => e.currentTarget.style.background = C.white}
               >이전</button>
-              <button style={primaryBtn} onClick={handleSubmit} disabled={loading}
-                onMouseOver={e => { if (!loading) { e.currentTarget.style.background = C.accentDark; e.currentTarget.style.boxShadow = '0 4px 12px oklch(55% 0.15 250 / 0.25)'; }}}
+              <button style={{ ...primaryBtn, opacity: agreePrivacy ? 1 : 0.5 }} onClick={handleSubmit} disabled={loading || !agreePrivacy}
+                onMouseOver={e => { if (!loading && agreePrivacy) { e.currentTarget.style.background = C.accentDark; e.currentTarget.style.boxShadow = '0 4px 12px oklch(55% 0.15 250 / 0.25)'; }}}
                 onMouseOut={e => { e.currentTarget.style.background = C.accent; e.currentTarget.style.boxShadow = 'none'; }}
               >{loading ? '생성 중...' : '학원 만들기'}</button>
             </div>

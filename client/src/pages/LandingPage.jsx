@@ -128,9 +128,10 @@ const testimonials2 = [
 ];
 
 const plans = [
-  { name: 'Basic', price: '7.9만원', students: '50명', features: ['성적 관리', '게이미피케이션', '랭킹/상점', '안내사항/자료'], color: 'var(--info)' },
-  { name: 'Standard', price: '15.9만원', students: '100명', features: ['Basic 전체', 'AI 리포트', 'SMS 발송', '클리닉/숙제'], color: 'oklch(55% 0.20 290)', popular: true },
-  { name: 'Pro', price: '별도 문의', students: '100명 이상', features: ['Standard 전체', '조교 관리', '수납 관리', 'API 내보내기'], color: 'var(--warning)' },
+  { id: 'free', name: 'Free', price: 0, yearlyPrice: 0, students: '10명', features: ['학생 10명', '성적 관리', '게이미피케이션', '기본 기능'], desc: '소규모 수업에 딱' },
+  { id: 'basic', name: 'Basic', price: 79000, yearlyPrice: 67000, students: '50명', features: ['학생 50명', '성적 관리', '게이미피케이션', '랭킹/상점', '안내사항/자료'], desc: '성장하는 학원을 위한' },
+  { id: 'standard', name: 'Standard', price: 159000, yearlyPrice: 135000, students: '100명', features: ['학생 100명', 'Basic 전체 포함', 'AI 리포트', 'SMS 발송', '클리닉/숙제', '출결 알림'], desc: '가장 인기 있는 플랜', popular: true },
+  { id: 'pro', name: 'Pro', price: 0, yearlyPrice: 0, students: '100명 이상', features: ['학생 무제한', 'Standard 전체 포함', '조교 관리', '수납 관리', 'API 내보내기', '전담 매니저'], desc: '대형 학원 맞춤', inquiry: true },
 ];
 
 const comparisonRows = [
@@ -175,15 +176,9 @@ const faqCategories = [
 export default function LandingPage() {
   const navigate = useNavigate();
   const user = getUser();
-
-  if (isLoggedIn() && user) {
-    const isAssistant = user.school === '조교';
-    navigate((user.role === 'admin' || isAssistant) ? '/admin' : '/student');
-    return null;
-  }
-
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeFaq, setActiveFaq] = useState(null);
+  const [landingYearly, setLandingYearly] = useState(true);
   const scrolled = useScrolled();
   const { addRef, isVisible } = useReveal();
 
@@ -191,6 +186,13 @@ export default function LandingPage() {
   const m2 = useCountUp(98.7, 1, '%');
   const m3 = useCountUp(4.87, 2, '/5.0');
   const m4 = useCountUp(90, 0, '%');
+
+  useEffect(() => {
+    if (isLoggedIn() && user) {
+      const isAssistant = user.school === '조교';
+      navigate((user.role === 'admin' || isAssistant) ? '/admin' : '/student', { replace: true });
+    }
+  }, [user, navigate]);
 
   const scrollTo = (id) => {
     setMobileMenuOpen(false);
@@ -310,26 +312,42 @@ export default function LandingPage() {
           </div>
           <div ref={addRef} style={{ display: 'flex', justifyContent: 'center' }}>
             <PhoneMockup headerColor={C.accent} headerTitle="대시보드" headerSub="나만의 조교">
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                {[{ label: '출결', val: '24/28', c: 'var(--info)', bg: 'var(--info-light)' }, { label: '미납', val: '3명', c: 'var(--destructive)', bg: 'var(--destructive-light)' }, { label: '랭킹 1위', val: '이서진', c: 'var(--warning)', bg: 'var(--warning-light)', sub: 'Lv.15' }].map((item, i) => (
-                  <MockCard key={i} style={{ padding: 10, textAlign: 'center' }}>
-                    <div style={{ width: 24, height: 24, borderRadius: 6, background: item.bg, margin: '0 auto 6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>
-                      {i === 0 ? '📱' : i === 1 ? '⚠️' : '🏆'}
-                    </div>
-                    <p style={{ fontSize: 9, color: C.textTertiary }}>{item.label}</p>
-                    <p style={{ fontSize: item.val.length > 3 ? 12 : 16, fontWeight: 700, color: item.c }}>{item.val}</p>
-                    {item.sub && <p style={{ fontSize: 8, color: 'var(--warning)', fontWeight: 600 }}>{item.sub}</p>}
+              {/* 초대코드 */}
+              <MockCard style={{ padding: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--muted)' }}>
+                <div>
+                  <p style={{ fontSize: 9, color: C.textTertiary }}>학원 초대 코드</p>
+                  <p style={{ fontSize: 16, fontWeight: 800, letterSpacing: 3, color: C.accent, fontFamily: 'monospace' }}>A7K2M9</p>
+                </div>
+                <span style={{ fontSize: 10, fontWeight: 600, color: C.accent, padding: '4px 10px', borderRadius: 6, background: C.accentBg, cursor: 'pointer' }}>복사</span>
+              </MockCard>
+              {/* 조치 필요 */}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {[{ label: '가입 승인', val: 2, c: 'var(--destructive)', bg: 'var(--destructive-light)' }, { label: '미납', val: 3, c: 'var(--warning)', bg: 'var(--warning-light)' }, { label: '수정 요청', val: 1, c: C.accent, bg: C.accentBg }].map((item, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 8, background: item.bg, border: `1px solid ${item.c}20` }}>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: item.c }}>{item.val}</span>
+                    <span style={{ fontSize: 9, color: item.c, fontWeight: 600 }}>{item.label}</span>
+                  </div>
+                ))}
+              </div>
+              {/* KPI 카드 */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+                {[{ label: '재원생', val: '47', unit: '명', c: C.accent }, { label: '오늘 클리닉', val: '3', unit: '건', c: 'oklch(55% 0.20 290)' }, { label: '이번 주 수업', val: '12', unit: '회', c: 'var(--success)' }, { label: '다음 시험', val: 'D-5', unit: '', c: 'var(--warning)' }].map((item, i) => (
+                  <MockCard key={i} style={{ padding: 10 }}>
+                    <p style={{ fontSize: 8, fontWeight: 600, color: C.textTertiary, textTransform: 'uppercase', marginBottom: 2 }}>{item.label}</p>
+                    <p style={{ fontSize: 20, fontWeight: 800, color: item.c }}>{item.val}<span style={{ fontSize: 10, fontWeight: 500, color: C.textTertiary }}>{item.unit}</span></p>
                   </MockCard>
                 ))}
               </div>
-              <MockCard>
-                <p style={{ fontSize: 11, fontWeight: 600, color: C.textSecondary, marginBottom: 8 }}>최근 활동</p>
-                {['이서진 QR 체크인 — 14:02', '미납: 박도현 외 2명 (D+3)', '김하윤 Lv.12 → Lv.13 승급'].map((t, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                    <div style={{ width: 20, height: 20, borderRadius: '50%', background: [C.accentBg, 'var(--destructive-light)', 'var(--warning-light)'][i], display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, flexShrink: 0 }}>
-                      {['📱', '⚠️', '🏆'][i]}
-                    </div>
-                    <p style={{ fontSize: 10, color: i === 1 ? 'var(--destructive)' : C.textSecondary }}>{t}</p>
+              {/* 학교별 현황 */}
+              <MockCard style={{ padding: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: C.textSecondary }}>학교별 현황</span>
+                  <span style={{ fontSize: 10, color: C.accent, fontWeight: 700 }}>47명</span>
+                </div>
+                {[['A고등학교', 15], ['B고등학교', 12], ['C고등학교', 10], ['중3', 10]].map(([name, cnt], i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 8px', borderRadius: 6, background: i === 0 ? C.accentBg : 'transparent', marginBottom: 2 }}>
+                    <span style={{ fontSize: 10, color: C.textSecondary }}>{name}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: C.accent }}>{cnt}명</span>
                   </div>
                 ))}
               </MockCard>
@@ -410,30 +428,56 @@ export default function LandingPage() {
             </div>
             <div style={{ display: 'flex', justifyContent: 'center' }}>
               <PhoneMockup headerColor={C.accent} headerTitle="김하윤 학생" headerSub="학부모 페이지">
+                {/* 출결 현황 - 캘린더 스타일 */}
                 <MockCard>
-                  <p style={{ fontSize: 11, fontWeight: 600, color: C.textSecondary, marginBottom: 8 }}>이번 주 출결</p>
-                  <div style={{ display: 'flex', gap: 6 }}>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: C.textSecondary, marginBottom: 8 }}>4월 출결 현황</p>
+                  <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
                     {['월','화','수','목','금'].map((d, i) => (
-                      <span key={i} style={{ width: 28, height: 28, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, background: i < 3 ? C.accent : 'var(--neutral-200)', color: i < 3 ? C.white : 'var(--neutral-400)' }}>{d}</span>
+                      <span key={i} style={{ flex: 1, textAlign: 'center', fontSize: 9, color: C.textTertiary, fontWeight: 600 }}>{d}</span>
                     ))}
                   </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4 }}>
+                    {[1,1,1,1,1, 1,1,0,1,1].map((v, i) => (
+                      <span key={i} style={{ height: 22, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 600, background: v ? C.accent : 'var(--destructive-light)', color: v ? C.white : 'var(--destructive)' }}>{v ? '✓' : '결'}</span>
+                    ))}
+                  </div>
+                  <p style={{ fontSize: 9, color: C.accent, fontWeight: 600, marginTop: 6, textAlign: 'right' }}>출석률 90% (9/10회)</p>
                 </MockCard>
+                {/* 성적 추이 - 실제 시험명 포함 */}
                 <MockCard>
                   <p style={{ fontSize: 11, fontWeight: 600, color: C.textSecondary, marginBottom: 8 }}>성적 추이</p>
-                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 48 }}>
-                    {[40, 55, 50, 70, 85].map((h, i) => (
-                      <div key={i} style={{ flex: 1, height: `${h}%`, borderRadius: '4px 4px 0 0', background: i === 4 ? C.accent : i === 3 ? 'oklch(55% 0.15 250 / 0.2)' : 'var(--neutral-200)' }} />
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 52 }}>
+                    {[{ h: 45, label: '1차', score: '62' }, { h: 58, label: '2차', score: '71' }, { h: 52, label: '3차', score: '68' }, { h: 72, label: '4차', score: '80' }, { h: 88, label: '5차', score: '92' }].map((d, i) => (
+                      <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                        <span style={{ fontSize: 8, fontWeight: 700, color: i === 4 ? C.accent : C.textTertiary }}>{d.score}</span>
+                        <div style={{ width: '100%', height: `${d.h}%`, borderRadius: '4px 4px 0 0', background: i === 4 ? C.accent : i === 3 ? 'oklch(55% 0.15 250 / 0.3)' : 'var(--neutral-200)', transition: 'height 0.3s' }} />
+                        <span style={{ fontSize: 7, color: i === 4 ? C.accent : C.textTertiary, fontWeight: i === 4 ? 700 : 400 }}>{d.label}</span>
+                      </div>
                     ))}
                   </div>
+                  <p style={{ fontSize: 9, color: 'var(--destructive)', marginTop: 6 }}>⚠️ 오답률 높은 영역: 비문학 추론</p>
                 </MockCard>
+                {/* 과제 현황 - 진행률 바 추가 */}
                 <MockCard>
-                  <p style={{ fontSize: 11, fontWeight: 600, color: C.textSecondary, marginBottom: 8 }}>과제 현황</p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: C.textSecondary }}>과제 현황</span>
+                    <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--success)', padding: '2px 6px', background: 'var(--success-light)', borderRadius: 4 }}>2/3 완료</span>
+                  </div>
                   {[['독서록 제출', '완료', C.accent], ['어휘 테스트 복습', '진행중', 'var(--warning)'], ['비문학 풀이 5지문', '미제출', C.textTertiary]].map(([t, s, c], i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', borderBottom: i < 2 ? '1px solid var(--neutral-100)' : 'none' }}>
                       <span style={{ fontSize: 10, color: C.textSecondary }}>{t}</span>
-                      <span style={{ fontSize: 10, color: c, fontWeight: 700 }}>{s}</span>
+                      <span style={{ fontSize: 9, color: c, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: i === 0 ? C.accentBg : i === 1 ? 'var(--warning-light)' : 'var(--neutral-100)' }}>{s}</span>
                     </div>
                   ))}
+                </MockCard>
+                {/* 포트폴리오 */}
+                <MockCard style={{ padding: 12 }}>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: C.textSecondary, marginBottom: 6 }}>포트폴리오</p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontSize: 10, color: C.textSecondary }}>누적 포트폴리오</span>
+                    <span style={{ fontSize: 10, color: C.accent, fontWeight: 700 }}>3건</span>
+                  </div>
+                  <div style={{ padding: '6px 10px', borderRadius: 6, background: C.accentBg, textAlign: 'center', fontSize: 10, color: C.accent, fontWeight: 600, cursor: 'pointer' }}>포트폴리오 열람 →</div>
                 </MockCard>
               </PhoneMockup>
             </div>
@@ -453,32 +497,67 @@ export default function LandingPage() {
               </div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'center', direction: 'ltr' }}>
-              <PhoneMockup headerColor="oklch(48% 0.22 295)" headerTitle="오늘의 업무" headerSub="조교 관리">
-                <MockCard>
+              <PhoneMockup headerColor="oklch(48% 0.22 295)" headerTitle="조교 근무표" headerSub="수업 및 운영">
+                {/* 이번 주 근무 현황 */}
+                <MockCard style={{ padding: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: C.textSecondary }}>오늘의 업무</span>
-                    <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: 'var(--success-light)', color: 'oklch(52% 0.14 150)', fontWeight: 500 }}>3/5 완료</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: C.textSecondary }}>이번 주 근무</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: 'oklch(48% 0.22 295)' }}>4월 2주차</span>
                   </div>
-                  {['김하윤 숙제 확인', '이도현 어휘 테스트 채점', '3차시 채점 (15명)', '오후반 클리닉 진행', '학부모 상담 자료 준비'].map((t, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                      <div style={{ width: 14, height: 14, borderRadius: 3, border: i < 3 ? `2px solid ${C.accent}` : '2px solid var(--neutral-300)', background: i < 3 ? C.accent : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {i < 3 && <span style={{ color: C.white, fontSize: 8, fontWeight: 700 }}>✓</span>}
+                  {[{ name: '박지은 조교', hours: '12/20h', pct: 60, color: 'oklch(48% 0.22 295)' }, { name: '김현수 조교', hours: '16/20h', pct: 80, color: C.accent }, { name: '이수아 조교', hours: '8/15h', pct: 53, color: 'var(--success)' }].map((ta, i) => (
+                    <div key={i} style={{ marginBottom: 8 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                        <span style={{ fontSize: 10, color: C.textSecondary, fontWeight: 500 }}>{ta.name}</span>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: ta.color }}>{ta.hours}</span>
                       </div>
-                      <span style={{ fontSize: 10, color: C.textSecondary, textDecoration: i < 3 ? 'line-through' : 'none' }}>{t}</span>
+                      <div style={{ height: 6, background: 'var(--neutral-100)', borderRadius: 3, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${ta.pct}%`, background: ta.color, borderRadius: 3, transition: 'width 0.3s' }} />
+                      </div>
                     </div>
                   ))}
                 </MockCard>
-                <MockCard>
-                  <p style={{ fontSize: 11, fontWeight: 600, color: C.textSecondary, marginBottom: 8 }}>오늘 클리닉</p>
-                  {[['김하윤 · 비문학', '15:00'], ['박도현 · 문학', '16:30']].map(([name, time], i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'oklch(94% 0.04 300)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8 }}>👤</div>
-                        <span style={{ fontSize: 10, color: C.textSecondary }}>{name}</span>
+                {/* 오늘 클리닉 일정 */}
+                <MockCard style={{ padding: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: C.textSecondary }}>오늘 클리닉</span>
+                    <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 10, background: 'var(--info-light)', color: 'var(--info)', fontWeight: 600 }}>3건</span>
+                  </div>
+                  {[{ name: '김하윤', topic: '비문학 추론', time: '15:00', status: '승인', sc: 'var(--success)' }, { name: '박도현', topic: '문학 감상', time: '16:00', status: '승인', sc: 'var(--success)' }, { name: '이서윤', topic: '어휘', time: '17:30', status: '대기', sc: 'var(--warning)' }].map((c, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '6px 8px', borderRadius: 6, background: i === 0 ? 'var(--info-light)' : 'transparent', marginBottom: 4, border: i === 0 ? '1px solid var(--info)20' : '1px solid transparent' }}>
+                      <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'oklch(94% 0.04 300)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, flexShrink: 0 }}>👤</div>
+                      <div style={{ flex: 1, marginLeft: 6 }}>
+                        <span style={{ fontSize: 10, fontWeight: 600, color: C.textPrimary }}>{c.name}</span>
+                        <span style={{ fontSize: 9, color: C.textTertiary, marginLeft: 4 }}>{c.topic}</span>
                       </div>
-                      <span style={{ fontSize: 10, color: C.textTertiary }}>{time}</span>
+                      <span style={{ fontSize: 9, color: C.textTertiary, marginRight: 6 }}>{c.time}</span>
+                      <span style={{ fontSize: 8, fontWeight: 600, color: c.sc, padding: '1px 6px', borderRadius: 4, background: c.sc === 'var(--success)' ? 'var(--success-light)' : 'var(--warning-light)' }}>{c.status}</span>
                     </div>
                   ))}
+                </MockCard>
+                {/* 과제 관리 요약 */}
+                <MockCard style={{ padding: 12 }}>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: C.textSecondary, marginBottom: 8 }}>과제 채점 현황</p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--success)' }}>28</p>
+                        <p style={{ fontSize: 8, color: C.textTertiary }}>채점 완료</p>
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--warning)' }}>7</p>
+                        <p style={{ fontSize: 8, color: C.textTertiary }}>채점 대기</p>
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--destructive)' }}>3</p>
+                        <p style={{ fontSize: 8, color: C.textTertiary }}>미제출</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ height: 6, background: 'var(--neutral-100)', borderRadius: 3, overflow: 'hidden', display: 'flex' }}>
+                    <div style={{ height: '100%', width: '74%', background: 'var(--success)', borderRadius: '3px 0 0 3px' }} />
+                    <div style={{ height: '100%', width: '18%', background: 'var(--warning)' }} />
+                    <div style={{ height: '100%', width: '8%', background: 'var(--destructive)', borderRadius: '0 3px 3px 0' }} />
+                  </div>
                 </MockCard>
               </PhoneMockup>
             </div>
@@ -498,32 +577,54 @@ export default function LandingPage() {
               </div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <PhoneMockup headerColor="var(--warning)" headerTitle="퀴즈 챌린지" headerSub="게이미피케이션">
-                <MockCard>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, var(--warning), oklch(55% 0.20 35))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.white, fontSize: 14, fontWeight: 700 }}>H</div>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: 11, fontWeight: 700 }}>김하윤 <span style={{ color: 'var(--warning)' }}>Lv.12</span></p>
-                      <div style={{ height: 6, background: 'var(--neutral-100)', borderRadius: 3, marginTop: 4, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: '64%', background: 'var(--warning)', borderRadius: 3 }} />
-                      </div>
-                      <p style={{ fontSize: 8, color: C.textTertiary, marginTop: 2 }}>320 / 500 XP</p>
+              <PhoneMockup headerColor="var(--warning)" headerTitle="게임 홈" headerSub="게이미피케이션">
+                {/* 캐릭터 카드 - 실제 GameHub 반영 */}
+                <MockCard style={{ textAlign: 'center', padding: 16 }}>
+                  {/* 아바타 */}
+                  <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, var(--warning), oklch(55% 0.20 35))', margin: '0 auto 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.white, fontSize: 22, fontWeight: 700, boxShadow: '0 4px 12px oklch(55% 0.20 70 / 0.3)' }}>🧙</div>
+                  <p style={{ fontSize: 14, fontWeight: 700 }}>별빛마법사</p>
+                  <p style={{ fontSize: 10, color: C.textTertiary }}>김하윤</p>
+                  <div style={{ display: 'inline-block', background: 'linear-gradient(135deg, var(--warning-light), var(--warning))', padding: '2px 10px', borderRadius: 12, fontSize: 9, fontWeight: 600, color: 'oklch(35% 0.12 75)', marginTop: 4 }}>🔮 어휘 마스터</div>
+                  {/* XP 프로그레스 바 */}
+                  <div style={{ margin: '12px auto 0', maxWidth: 200 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--warning)' }}>Lv.12</span>
+                      <span style={{ fontSize: 9, color: C.textTertiary }}>320 / 500 XP</span>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <p style={{ fontSize: 8, color: C.textTertiary }}>보유</p>
-                      <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--warning)' }}>1,250P</p>
+                    <div style={{ height: 8, background: 'var(--neutral-100)', borderRadius: 4, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: '64%', background: 'linear-gradient(90deg, var(--warning), oklch(65% 0.18 60))', borderRadius: 4 }} />
+                    </div>
+                  </div>
+                  {/* XP & 포인트 */}
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginTop: 12 }}>
+                    <div>
+                      <p style={{ fontSize: 16, fontWeight: 700, color: C.accent }}>4,230</p>
+                      <p style={{ fontSize: 9, color: C.textTertiary }}>누적 XP</p>
+                    </div>
+                    <div style={{ width: 1, background: 'var(--neutral-200)' }} />
+                    <div>
+                      <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--warning)' }}>1,250</p>
+                      <p style={{ fontSize: 9, color: C.textTertiary }}>보유 포인트</p>
                     </div>
                   </div>
                 </MockCard>
-                <MockCard>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: C.textSecondary }}>어휘 퀴즈</span>
-                    <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: 'var(--warning-light)', color: 'oklch(55% 0.14 70)', fontWeight: 500 }}>+30 XP</span>
-                  </div>
-                  <p style={{ fontSize: 10, color: C.textSecondary, marginBottom: 8 }}>다음 중 '해이하다'의 뜻으로 올바른 것은?</p>
-                  {['긴장이 풀려 느슨하다', '매우 부지런하다', '성격이 급하다', '태도가 진지하다'].map((o, i) => (
-                    <div key={i} style={{ padding: '6px 10px', borderRadius: 8, border: `1px solid ${i === 0 ? C.accent : 'var(--neutral-200)'}`, marginBottom: 4, fontSize: 10, color: i === 0 ? C.accent : C.textSecondary, background: i === 0 ? C.accentBg : 'transparent', fontWeight: i === 0 ? 600 : 400 }}>{o}</div>
+                {/* 메뉴 그리드 - 실제 GameHub 2x3 그리드 */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                  {[{ icon: '📝', label: '어휘', sub: '퀴즈' }, { icon: '🧠', label: '지식', sub: '퀴즈' }, { icon: '📖', label: '비문학', sub: '독해' }, { icon: '🏆', label: '랭킹', sub: '' }, { icon: '🛒', label: '상점', sub: '' }, { icon: '🎖️', label: '칭호', sub: '' }].map((m, i) => (
+                    <MockCard key={i} style={{ padding: 10, textAlign: 'center', cursor: 'pointer' }}>
+                      <div style={{ fontSize: 22, marginBottom: 4 }}>{m.icon}</div>
+                      <p style={{ fontSize: 10, fontWeight: 600, color: C.textPrimary }}>{m.label}</p>
+                      {m.sub && <p style={{ fontSize: 8, color: C.textTertiary }}>{m.sub}</p>}
+                    </MockCard>
                   ))}
+                </div>
+                {/* 출석 보너스 */}
+                <MockCard style={{ padding: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <p style={{ fontSize: 10, fontWeight: 600 }}>🎁 수업 출석 보너스</p>
+                    <p style={{ fontSize: 8, color: C.textTertiary }}>오늘 출석 시 +50 XP</p>
+                  </div>
+                  <span style={{ fontSize: 9, fontWeight: 600, color: C.white, padding: '4px 10px', borderRadius: 6, background: C.accent }}>받기</span>
                 </MockCard>
               </PhoneMockup>
             </div>
@@ -585,44 +686,101 @@ export default function LandingPage() {
 
       {/* === PRICING === */}
       <section id="pricing" style={{ padding: '96px 0', background: C.surfaceCard }}>
-        <div style={{ maxWidth: 1152, margin: '0 auto', padding: '0 24px' }}>
-          <div ref={addRef} style={{ textAlign: 'center', marginBottom: 64 }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+          <div ref={addRef} style={{ textAlign: 'center', marginBottom: 48 }}>
             <p style={{ fontSize: 14, fontWeight: 600, color: C.accent, marginBottom: 12 }}>30일 무료 체험으로 시작</p>
             <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.5rem)', fontWeight: 700, letterSpacing: '-0.025em', lineHeight: 1.3, marginBottom: 12 }}>합리적인 요금제</h2>
-            <p style={{ color: C.textTertiary }}>카드 등록 없이 30일간 전체 기능을 써보세요.</p>
+            <p style={{ color: C.textTertiary, marginBottom: 24 }}>카드 등록 없이 30일간 전체 기능을 써보세요.</p>
+            {/* 월간/연간 토글 */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 0, background: C.white, borderRadius: 12, padding: 4, border: `1px solid ${C.border}` }}>
+              <button onClick={() => setLandingYearly(false)} style={{
+                padding: '8px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer', border: 'none', transition: 'all 0.2s',
+                background: !landingYearly ? C.accent : 'transparent', color: !landingYearly ? C.white : C.textTertiary,
+              }}>월간 결제</button>
+              <button onClick={() => setLandingYearly(true)} style={{
+                padding: '8px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer', border: 'none', transition: 'all 0.2s', position: 'relative',
+                background: landingYearly ? C.accent : 'transparent', color: landingYearly ? C.white : C.textTertiary,
+              }}>연간 결제
+                <span style={{ position: 'absolute', top: -10, right: -10, background: 'oklch(55% 0.18 25)', color: 'white', padding: '2px 8px', borderRadius: 8, fontSize: 10, fontWeight: 700 }}>15% OFF</span>
+              </button>
+            </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20, maxWidth: 900, margin: '0 auto' }}>
-            {plans.map((p, i) => (
-              <div key={i} ref={addRef} style={{
-                padding: 24, borderRadius: 16, background: C.white,
-                border: p.popular ? `2px solid ${C.accent}` : `1px solid ${C.border}`,
-                position: 'relative', textAlign: 'center', display: 'flex', flexDirection: 'column',
-              }}>
-                {p.popular && (
-                  <span style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: C.accent, color: C.white, padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>가장 많이 선택</span>
-                )}
-                <h3 style={{ fontSize: 18, fontWeight: 700, color: C.textPrimary, marginBottom: 4 }}>{p.name}</h3>
-                <p style={{ fontSize: 30, fontWeight: 700, color: C.textPrimary, margin: '12px 0 4px' }}>월 {p.price}</p>
-                <p style={{ fontSize: 13, color: C.textTertiary, marginBottom: 20 }}>최대 {p.students}</p>
-                <ul style={{ listStyle: 'none', padding: 0, textAlign: 'left', flex: 1 }}>
-                  {p.features.map((f, j) => (
-                    <li key={j} style={{ padding: '6px 0', fontSize: 14, color: C.textSecondary, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <Check /> {f}
-                    </li>
-                  ))}
-                </ul>
-                <button onClick={() => navigate('/onboarding')} style={{
-                  marginTop: 20, width: '100%', padding: '12px 0', fontSize: 14, fontWeight: 600, borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s',
-                  background: p.popular ? C.accent : 'transparent', color: p.popular ? C.white : C.textSecondary,
-                  border: p.popular ? 'none' : `1px solid ${C.border}`,
-                }} onMouseOver={e => { e.currentTarget.style.background = p.popular ? C.accentLight : 'var(--muted)'; }}
-                   onMouseOut={e => { e.currentTarget.style.background = p.popular ? C.accent : 'transparent'; }}>
-                  {p.popular ? '30일 무료 체험' : '무료로 시작하기'}
-                </button>
-              </div>
-            ))}
+
+          {landingYearly && (
+            <p ref={addRef} style={{ textAlign: 'center', marginBottom: 24, padding: '8px 20px', background: 'oklch(95% 0.04 140)', borderRadius: 10, fontSize: 13, fontWeight: 600, color: 'oklch(45% 0.14 140)', maxWidth: 500, margin: '0 auto 24px' }}>
+              연간 결제 시 매달 15% 할인된 가격으로 이용하세요
+            </p>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, maxWidth: 1100, margin: '0 auto' }}>
+            {plans.map((p, i) => {
+              const price = landingYearly ? p.yearlyPrice : p.price;
+              const showDiscount = landingYearly && p.price > 0 && !p.inquiry;
+              const yearlySaving = p.price > 0 ? (p.price - p.yearlyPrice) * 12 : 0;
+              return (
+                <div key={i} ref={addRef} style={{
+                  padding: 28, borderRadius: 16, background: C.white,
+                  border: p.popular ? `2px solid ${C.accent}` : `1px solid ${C.border}`,
+                  position: 'relative', textAlign: 'center', display: 'flex', flexDirection: 'column',
+                }}>
+                  {p.popular && (
+                    <span style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: C.accent, color: C.white, padding: '4px 14px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>가장 많이 선택</span>
+                  )}
+                  <h3 style={{ fontSize: 20, fontWeight: 800, color: C.textPrimary, marginBottom: 4, marginTop: p.popular ? 8 : 0 }}>{p.name}</h3>
+                  <p style={{ fontSize: 12, color: C.textTertiary, marginBottom: 16 }}>{p.desc}</p>
+
+                  {/* 가격 */}
+                  <div style={{ minHeight: 64, marginBottom: 8 }}>
+                    {p.inquiry ? (
+                      <p style={{ fontSize: 26, fontWeight: 900, color: C.textPrimary }}>별도 문의</p>
+                    ) : price === 0 ? (
+                      <p style={{ fontSize: 30, fontWeight: 900, color: C.textPrimary }}>무료</p>
+                    ) : (
+                      <>
+                        {showDiscount && (
+                          <p style={{ fontSize: 13, color: C.textTertiary, textDecoration: 'line-through', marginBottom: 2 }}>{p.price.toLocaleString()}원</p>
+                        )}
+                        <p style={{ fontSize: 28, fontWeight: 900, color: C.textPrimary, lineHeight: 1.1 }}>
+                          {price.toLocaleString()}<span style={{ fontSize: 14, fontWeight: 600 }}>원</span>
+                        </p>
+                        <p style={{ fontSize: 12, color: C.textTertiary, marginTop: 4 }}>/월 (부가세 포함)</p>
+                      </>
+                    )}
+                  </div>
+
+                  {showDiscount && yearlySaving > 0 && (
+                    <div style={{ margin: '0 0 8px', padding: '4px 10px', borderRadius: 8, background: 'oklch(95% 0.05 25)', fontSize: 11, fontWeight: 700, color: 'oklch(50% 0.18 25)' }}>
+                      연 {yearlySaving.toLocaleString()}원 절약
+                    </div>
+                  )}
+
+                  <p style={{ fontSize: 13, color: C.textTertiary, fontWeight: 700, marginBottom: 12 }}>최대 {p.students}</p>
+
+                  <div style={{ height: 1, background: C.border, margin: '0 0 12px' }} />
+
+                  <ul style={{ listStyle: 'none', padding: 0, textAlign: 'left', flex: 1 }}>
+                    {p.features.map((f, j) => (
+                      <li key={j} style={{ padding: '5px 0', fontSize: 14, color: C.textSecondary, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Check /> {f}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <button onClick={() => navigate('/onboarding')} style={{
+                    marginTop: 16, width: '100%', padding: '12px 0', fontSize: 14, fontWeight: 600, borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s',
+                    background: p.popular ? C.accent : p.inquiry ? 'linear-gradient(135deg, oklch(55% 0.14 75), oklch(50% 0.14 55))' : 'transparent',
+                    color: p.popular || p.inquiry ? C.white : C.textSecondary,
+                    border: !p.popular && !p.inquiry ? `1px solid ${C.border}` : 'none',
+                    boxShadow: p.popular ? '0 2px 8px oklch(48% 0.18 260 / 0.3)' : 'none',
+                  }} onMouseOver={e => { if (!p.inquiry) e.currentTarget.style.opacity = '0.85'; }}
+                     onMouseOut={e => { e.currentTarget.style.opacity = '1'; }}>
+                    {p.popular ? '30일 무료 체험' : p.inquiry ? '도입 문의' : '시작하기'}
+                  </button>
+                </div>
+              );
+            })}
           </div>
-          <p style={{ textAlign: 'center', marginTop: 24, color: C.textTertiary, fontSize: 14 }}>모든 플랜 30일 무료 체험 가능</p>
+          <p style={{ textAlign: 'center', marginTop: 24, color: C.textTertiary, fontSize: 13 }}>모든 요금은 부가세(VAT) 포함 가격입니다 · 언제든 해지 가능</p>
         </div>
       </section>
 

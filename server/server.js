@@ -121,20 +121,31 @@ app.use('/api/ox-quiz', require('./routes/oxQuiz'));
 app.use('/api/reports', require('./routes/reports'));
 app.use('/api/study-timer', require('./routes/studyTimer'));
 app.use('/api/ai', require('./routes/aiAssistant'));
+app.use('/api/parents', require('./routes/parents'));
 
 // SaaS 전용 라우트
 app.use('/api/academies', require('./routes/academies'));
 app.use('/api/subscription', require('./routes/subscription'));
 app.use('/api/superadmin', require('./routes/superadmin'));
+app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/onboarding', require('./routes/onboarding'));
+
+// 웹훅 라우트 (인증 미들웨어 스킵 — 별도 시그니처 검증)
+app.use('/api/webhook', require('./routes/webhook'));
 
 // 신규 기능 라우트 (파일이 존재할 때만 로드)
 const optionalRoutes = [
   { path: '/api/attendance', file: './routes/attendance' },
   { path: '/api/tuition', file: './routes/tuition' },
   { path: '/api/consultation', file: './routes/consultation' },
+  { path: '/api/leads', file: './routes/leads' },
   { path: '/api/portfolio', file: './routes/portfolio' },
   { path: '/api/sms-credits', file: './routes/sms-credits' },
+  { path: '/api/classes', file: './routes/classes' },
+  { path: '/api/automation', file: './routes/automation' },
+  { path: '/api/timeline', file: './routes/timeline' },
+  { path: '/api/dashboard', file: './routes/dashboard' },
+  { path: '/api/parent', file: './routes/parentApp' },
 ];
 for (const route of optionalRoutes) {
   try {
@@ -220,6 +231,14 @@ async function start() {
       await runSeeds();
       console.log('[DB] 시드 데이터 확인 완료');
     } catch (e) { console.error('[DB] 시드 데이터 오류:', e.message); }
+
+    // 크론잡 스케줄러 초기화
+    try {
+      const { initCronJobs } = require('./services/cronJobs');
+      initCronJobs();
+    } catch (e) {
+      console.error('[크론] 스케줄러 초기화 실패:', e.message);
+    }
 
     server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`[나만의 조교] 서버 시작: http://localhost:${PORT}`);

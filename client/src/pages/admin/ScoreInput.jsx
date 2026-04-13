@@ -14,7 +14,7 @@ export default function ScoreInput() {
   const [students, setStudents] = useState([]);
   const [selectedExam, setSelectedExam] = useState(null);
   const [scoreInputs, setScoreInputs] = useState({});
-  const [newExam, setNewExam] = useState({ examType: '학력평가 모의고사', name: '', examDate: '', school: '', grade: '', maxScore: 100 });
+  const [newExam, setNewExam] = useState({ examType: '', name: '', examDate: '', school: '', grade: '', maxScore: 100 });
   const [customExamType, setCustomExamType] = useState(false);
   const [editExamId, setEditExamId] = useState(null);
   const [msg, setMsg] = useState('');
@@ -73,7 +73,7 @@ export default function ScoreInput() {
         await apiPost('/scores/exams', payload);
         setMsg('시험이 등록되었습니다.');
       }
-      setNewExam({ examType: '학력평가 모의고사', name: '', examDate: '', school: '', grade: '', maxScore: 100 });
+      setNewExam({ examType: '', name: '', examDate: '', school: '', grade: '', maxScore: 100 });
       loadExams();
       setTimeout(() => setMsg(''), 2000);
     } catch (err) { setMsg(err.message); }
@@ -521,7 +521,7 @@ export default function ScoreInput() {
                     <div style={{ display: 'flex', gap: 6 }}>
                       <input value={newExam.examType} onChange={e => setNewExam({ ...newExam, examType: e.target.value })}
                         placeholder="시험 분류를 직접 입력" style={{ flex: 1, padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 13 }} autoFocus />
-                      <button type="button" onClick={() => { setCustomExamType(false); setNewExam({ ...newExam, examType: '학력평가 모의고사' }); }}
+                      <button type="button" onClick={() => { setCustomExamType(false); setNewExam({ ...newExam, examType: EXAM_TYPES[0] || '' }); }}
                         style={{ padding: '6px 10px', fontSize: 12, background: 'var(--border)', border: 'none', borderRadius: 6, cursor: 'pointer', whiteSpace: 'nowrap' }}>목록</button>
                     </div>
                   ) : (
@@ -529,7 +529,7 @@ export default function ScoreInput() {
                       <select value={newExam.examType} onChange={e => setNewExam({ ...newExam, examType: e.target.value })}
                         style={{ flex: 1, padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 13 }}>
                         {EXAM_MAJOR_CATEGORIES.map(cat => (
-                          <optgroup key={cat.key} label={`${cat.emoji} ${cat.label.replace(/^. /, '')}`}>
+                          <optgroup key={cat.key} label={cat.label}>
                             {cat.types.map(t => <option key={t} value={t}>{t}</option>)}
                           </optgroup>
                         ))}
@@ -579,7 +579,7 @@ export default function ScoreInput() {
                   {editExamId && (
                     <button type="button" className="btn btn-outline" style={{ fontSize: 13 }} onClick={() => {
                       setEditExamId(null);
-                      setNewExam({ examType: '학력평가 모의고사', name: '', examDate: '', school: '', grade: '', maxScore: 100 });
+                      setNewExam({ examType: '', name: '', examDate: '', school: '', grade: '', maxScore: 100 });
                     }}>취소</button>
                   )}
                 </div>
