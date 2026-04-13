@@ -20,14 +20,14 @@ process.on('uncaughtException', (err) => {
 });
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 
 // ── 보안 미들웨어 ──
 const corsOrigin = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
   : process.env.NODE_ENV === 'production'
     ? true
-    : ['http://localhost:5173', 'http://localhost:3002'];
+    : ['http://localhost:5174', 'http://localhost:3002'];
 app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json({ limit: '1mb' }));
 

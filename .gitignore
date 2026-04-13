@@ -6,6 +6,9 @@ server/.env
 .env
 backups/
 uploads/
+__pycache__/
+*.pyc
+*.pyo
 *.db
 *.log
 .DS_Store

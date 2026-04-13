@@ -52,6 +52,7 @@ const Icons = {
   trendingUp:  <Icon><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></Icon>,
   info:        <Icon><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></Icon>,
   checkCircle: <Icon><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></Icon>,
+  shield:      <Icon><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></Icon>,
 };
 
 /* ─── Admin nav tree ──────────────────────────────────────────────── */
@@ -95,8 +96,12 @@ const adminPages = [
   { path: '/admin/sms-credits', label: 'SMS 충전', desc: 'SMS 크레딧 충전', icon: Icons.phone },
   { path: '/admin/subscription', label: '구독 관리', desc: '구독 플랜 관리', icon: Icons.diamond },
 
+  { divider: true, label: '자동화' },
+  { path: '/admin/automation', label: '자동화 관리', desc: '규칙/업무 큐/이력', icon: Icons.zap },
+
   { divider: true, label: '설정' },
   { path: '/admin/settings', label: '학원 설정', desc: '학원 기본 설정', icon: Icons.settings },
+  { path: '/admin/settings/roles', label: '역할·권한', desc: '역할별 접근 권한 관리', icon: Icons.shield },
   { path: '/admin/guide', label: '사용법 가이드', desc: '서비스 사용 안내', icon: Icons.book },
 ];
 

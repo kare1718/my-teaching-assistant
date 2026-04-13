@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { api, apiPost, apiPut, getUser } from '../../api';
 import { requestBillingKey } from '../../utils/payment';
 
@@ -12,14 +13,26 @@ const PLANS = [
 const TIER_ORDER = ['free', 'trial', 'basic', 'standard', 'pro'];
 
 const STATUS_MAP = {
-  trial: { label: '무료 체험', bg: 'var(--warning-light)', color: 'oklch(55% 0.14 75)', icon: '🎁' },
-  active: { label: '활성', bg: 'var(--success-light)', color: 'oklch(52% 0.14 160)', icon: '✓' },
-  past_due: { label: '결제 실패', bg: 'var(--destructive-light)', color: 'oklch(48% 0.20 25)', icon: '!' },
-  canceled: { label: '해지됨', bg: 'var(--secondary)', color: 'var(--muted-foreground)', icon: '—' },
-  suspended: { label: '정지됨', bg: 'var(--destructive-light)', color: 'oklch(48% 0.20 25)', icon: '!' },
+  trial: { label: '무료 체험', cls: 'bg-amber-100 text-amber-700' },
+  active: { label: '활성', cls: 'bg-emerald-100 text-emerald-700' },
+  past_due: { label: '결제 실패', cls: 'bg-red-100 text-red-600' },
+  canceled: { label: '해지됨', cls: 'bg-slate-100 text-slate-500' },
+  suspended: { label: '정지됨', cls: 'bg-red-100 text-red-600' },
 };
 
+const SETTINGS_TABS = [
+  { label: '학원 정보', path: '/admin/settings' },
+  { label: '구독 관리', path: '/admin/subscription' },
+  { label: '역할·권한', path: null },
+  { label: '출결 정책', path: null },
+  { label: '수납 정책', path: null },
+  { label: '알림 설정', path: null },
+];
+
 export default function SubscriptionPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [subInfo, setSubInfo] = useState(null);
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -170,322 +183,383 @@ export default function SubscriptionPage() {
     return { label: '변경하기', disabled: false, style: 'downgrade', action: () => handleChangePlan(plan.id) };
   };
 
-  if (loading) return <div className="main-content" style={{ padding: 20 }}>로딩 중...</div>;
+  if (loading) return (
+    <div className="p-10 max-w-7xl mx-auto">
+      <p className="text-sm text-slate-500">로딩 중...</p>
+    </div>
+  );
 
   const statusInfo = STATUS_MAP[status] || STATUS_MAP.trial;
   const daysLeft = trialDaysLeft();
   const isYearly = billingCycle === 'yearly';
+  const currentPlan = PLANS.find(p => p.id === currentTier);
+  const currentStudents = subInfo?.currentStudents || 0;
+  const maxStudents = subInfo?.academy?.max_students || 0;
+  const usagePercent = maxStudents > 0 ? Math.min(100, Math.round((currentStudents / maxStudents) * 100)) : 0;
 
   return (
-    <div className="main-content" style={{ padding: 20, maxWidth: 1200, margin: '0 auto' }}>
-      <h2 style={{ fontSize: '1.5em', fontWeight: 800, marginBottom: 24 }}>구독 관리</h2>
-
-      {msg.text && (
-        <div style={{
-          padding: '10px 16px', borderRadius: 8, marginBottom: 16, fontSize: 14, fontWeight: 600,
-          background: msg.type === 'error' ? 'var(--destructive-light)' : 'var(--success-light)',
-          color: msg.type === 'error' ? 'oklch(48% 0.20 25)' : 'oklch(52% 0.14 160)',
-        }}>{msg.text}</div>
-      )}
-
-      {/* 쿠폰 코드 입력 */}
-      <div style={{
-        background: 'var(--card)', borderRadius: 12, padding: '16px 20px', marginBottom: 20,
-        border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 12,
-      }}>
-        <span style={{ fontSize: 18 }}>🎁</span>
-        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)', whiteSpace: 'nowrap' }}>쿠폰 코드</span>
-        <input
-          placeholder="쿠폰 코드를 입력하세요"
-          value={couponCode}
-          onChange={e => setCouponCode(e.target.value.toUpperCase())}
-          onKeyDown={e => e.key === 'Enter' && handleRedeemCoupon()}
-          style={{
-            flex: 1, padding: '10px 14px', border: '1.5px solid var(--border)', borderRadius: 10,
-            fontSize: 14, fontFamily: 'monospace', outline: 'none',
-            background: 'var(--background)', color: 'var(--foreground)',
-          }}
-        />
-        <button
-          onClick={handleRedeemCoupon}
-          disabled={!couponCode.trim() || couponLoading}
-          style={{
-            padding: '10px 20px', background: 'var(--primary)', color: 'white',
-            border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700,
-            cursor: couponCode.trim() && !couponLoading ? 'pointer' : 'default',
-            opacity: couponCode.trim() && !couponLoading ? 1 : 0.5, whiteSpace: 'nowrap',
-          }}
-        >{couponLoading ? '적용 중...' : '적용'}</button>
+    <div className="p-10 space-y-8 max-w-7xl mx-auto w-full">
+      {/* Settings Tabs */}
+      <div className="flex items-center gap-6 border-b border-slate-200/50 -mt-2 mb-2">
+        {SETTINGS_TABS.map(tab => (
+          <button
+            key={tab.label}
+            onClick={() => tab.path && navigate(tab.path)}
+            className={`pb-3 text-sm font-semibold uppercase tracking-wider transition-all ${
+              tab.path === location.pathname
+                ? 'text-[#102044] border-b-2 border-[#102044] font-bold'
+                : tab.path
+                  ? 'text-slate-500 hover:text-[#102044]'
+                  : 'text-slate-300 cursor-default'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      {/* 2단 레이아웃: 좌측 현재구독 + 우측 플랜 */}
-      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 24 }}>
+      {/* Message */}
+      {msg.text && (
+        <div className={`px-5 py-3 rounded-xl text-sm font-semibold ${
+          msg.type === 'error' ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'
+        }`}>
+          {msg.text}
+        </div>
+      )}
 
-        {/* 좌: 현재 플랜 카드 */}
-        <section style={{
-          background: 'linear-gradient(135deg, var(--primary) 0%, oklch(48% 0.18 260) 100%)',
-          borderRadius: 16, padding: 24, color: 'white', flex: '0 0 280px', minWidth: 260,
-        }}>
+      {/* Section 1: Current Plan + Quick Actions (Bento) */}
+      <div className="grid grid-cols-12 gap-6">
+        {/* Current Plan Card */}
+        <div className="col-span-12 lg:col-span-8 bg-white p-8 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <p style={{ fontSize: 14, opacity: 0.8 }}>현재 플랜</p>
-              <span style={{
-                padding: '2px 10px', borderRadius: 12, fontSize: 12, fontWeight: 700,
-                background: statusInfo.bg, color: statusInfo.color,
-              }}>{statusInfo.label}</span>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <h2 className="text-2xl font-bold text-[#102044]">
+                  {currentTier === 'trial' ? '무료 체험' : (currentPlan?.name || currentTier)} 플랜
+                </h2>
+                <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusInfo.cls}`}>
+                  {statusInfo.label}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {status === 'past_due' && (
+                  <button
+                    onClick={handleRetry}
+                    disabled={actionLoading}
+                    className="px-4 py-2 rounded-lg bg-[#004bf0] text-white text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+                  >
+                    결제 재시도
+                  </button>
+                )}
+                {subscription && status !== 'canceled' && status !== 'trial' && (
+                  <button
+                    onClick={handleUpdatePayment}
+                    disabled={actionLoading}
+                    className="px-4 py-2 rounded-lg bg-[#e7e8e9] text-[#102044] text-sm font-bold hover:bg-[#dfe0e1] transition-colors disabled:opacity-50"
+                  >
+                    결제 수단 변경
+                  </button>
+                )}
+              </div>
             </div>
-            <h3 style={{ fontSize: 28, fontWeight: 900 }}>
-              {currentTier === 'trial' ? '무료 체험' : PLANS.find(p => p.id === currentTier)?.name || currentTier}
-            </h3>
-            {daysLeft !== null && status === 'trial' && (
-              <p style={{ fontSize: 14, opacity: 0.9, marginTop: 6 }}>
-                체험 기간 {daysLeft}일 남음
+            <div className="grid grid-cols-2 gap-8 mb-8">
+              <div className="space-y-1">
+                <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                  {status === 'trial' ? 'Trial Ends' : 'Next Payment Date'}
+                </p>
+                <p className="text-lg font-bold text-[#191c1d]">
+                  {status === 'trial' && daysLeft !== null
+                    ? `${daysLeft}일 남음`
+                    : subscription?.current_period_end
+                      ? new Date(subscription.current_period_end).toLocaleDateString('ko-KR')
+                      : '—'}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Payment Method</p>
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-slate-400">credit_card</span>
+                  <p className="text-lg font-bold text-[#191c1d]">
+                    {subscription?.payment_method || '등록된 결제 수단 없음'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div className="flex justify-between items-end">
+              <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Current Usage (Students)</p>
+              <p className="font-bold text-[#102044]">
+                {currentStudents} / <span className="text-slate-400">{maxStudents}</span>
               </p>
-            )}
-            {subscription?.current_period_end && status === 'active' && (
-              <p style={{ fontSize: 13, opacity: 0.7, marginTop: 6 }}>
-                다음 결제일: {new Date(subscription.current_period_end).toLocaleDateString('ko-KR')}
+            </div>
+            <div className="w-full bg-[#edeeef] rounded-full h-3 overflow-hidden">
+              <div
+                className="bg-[#004bf0] h-full rounded-full transition-all duration-500"
+                style={{ width: `${usagePercent}%` }}
+              />
+            </div>
+            {usagePercent >= 80 && (
+              <p className="text-[11px] text-slate-500 italic">
+                80%를 초과할 경우 플랜 업그레이드 권장이 알림으로 전송됩니다.
               </p>
             )}
           </div>
+        </div>
 
-          {/* 학생 수 프로그레스 */}
-          <div style={{ marginTop: 24 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-              <p style={{ fontSize: 14, opacity: 0.8 }}>학생 수</p>
-              <p style={{ fontSize: 20, fontWeight: 700 }}>
-                {subInfo?.currentStudents || 0}<span style={{ fontSize: 14, opacity: 0.6 }}> / {subInfo?.academy?.max_students || 0}</span>
-              </p>
-            </div>
-            <div style={{ background: 'oklch(100% 0 0 / 0.2)', borderRadius: 6, height: 6, overflow: 'hidden' }}>
-              <div style={{
-                height: '100%', borderRadius: 6, transition: 'width 0.5s ease',
-                background: 'oklch(80% 0.14 85)',
-                width: `${Math.min(100, ((subInfo?.currentStudents || 0) / (subInfo?.academy?.max_students || 1)) * 100)}%`,
-              }} />
-            </div>
-          </div>
-
-          {/* 액션 버튼들 */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 20, flexWrap: 'wrap' }}>
-            {status === 'past_due' && (
-              <button onClick={handleRetry} disabled={actionLoading}
-                style={{
-                  padding: '8px 20px', borderRadius: 8, border: '2px solid oklch(80% 0.14 85)', cursor: 'pointer',
-                  background: 'oklch(80% 0.14 85)', color: 'var(--primary)', fontWeight: 700, fontSize: 14, fontFamily: 'inherit',
-                }}>결제 재시도</button>
-            )}
-            {subscription && status !== 'canceled' && status !== 'trial' && (
-              <>
-                <button onClick={handleUpdatePayment} disabled={actionLoading}
-                  style={{
-                    padding: '8px 16px', borderRadius: 8, border: '2px solid oklch(100% 0 0 / 0.3)',
-                    cursor: 'pointer', background: 'oklch(100% 0 0 / 0.15)', color: 'white',
-                    fontWeight: 600, fontSize: 13, fontFamily: 'inherit', backdropFilter: 'blur(4px)',
-                  }}>결제 수단 변경</button>
-                <button onClick={handleCancel} disabled={actionLoading}
-                  style={{
-                    padding: '8px 16px', borderRadius: 8, border: '2px solid oklch(100% 0 0 / 0.2)',
-                    cursor: 'pointer', background: 'transparent', color: 'oklch(100% 0 0 / 0.7)',
-                    fontWeight: 600, fontSize: 13, fontFamily: 'inherit',
-                  }}>구독 해지</button>
-              </>
-            )}
-          </div>
-        </section>
-
-        {/* 우: 플랜 선택 영역 */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-
-          {/* 월간/연간 탭 토글 — 마케팅 스타일 */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-            <div style={{
-              display: 'inline-flex', background: 'var(--muted)', borderRadius: 12, padding: 3, position: 'relative',
-            }}>
-              <button onClick={() => setBillingCycle('monthly')} style={{
-                padding: '10px 24px', borderRadius: 10, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                fontSize: 14, fontWeight: 600, transition: 'all 0.2s',
-                background: !isYearly ? 'var(--card)' : 'transparent',
-                color: !isYearly ? 'var(--foreground)' : 'var(--neutral-500)',
-                boxShadow: !isYearly ? '0 1px 3px oklch(0% 0 0 / 0.1)' : 'none',
-              }}>월간 결제</button>
-              <button onClick={() => setBillingCycle('yearly')} style={{
-                padding: '10px 24px', borderRadius: 10, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                fontSize: 14, fontWeight: 600, transition: 'all 0.2s', position: 'relative',
-                background: isYearly ? 'var(--card)' : 'transparent',
-                color: isYearly ? 'var(--foreground)' : 'var(--neutral-500)',
-                boxShadow: isYearly ? '0 1px 3px oklch(0% 0 0 / 0.1)' : 'none',
-              }}>
-                연간 결제
+        {/* Quick Actions */}
+        <div className="col-span-12 lg:col-span-4 bg-[#f3f4f5] p-8 rounded-xl flex flex-col justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-[#102044] mb-4">Quick Actions</h3>
+            <div className="space-y-3">
+              {/* Coupon */}
+              <div className="bg-white rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-slate-400 text-base">card_giftcard</span>
+                  <span className="text-sm font-semibold text-slate-600">쿠폰 코드</span>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    placeholder="코드 입력"
+                    value={couponCode}
+                    onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                    onKeyDown={e => e.key === 'Enter' && handleRedeemCoupon()}
+                    className="flex-1 px-3 py-2 bg-[#edeeef] rounded-lg text-sm outline-none border border-transparent focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5"
+                    style={{ fontFamily: 'monospace' }}
+                  />
+                  <button
+                    onClick={handleRedeemCoupon}
+                    disabled={!couponCode.trim() || couponLoading}
+                    className="px-3 py-2 bg-[#102044] text-white text-xs font-bold rounded-lg disabled:opacity-50 hover:opacity-90 transition-opacity whitespace-nowrap"
+                  >
+                    {couponLoading ? '...' : '적용'}
+                  </button>
+                </div>
+              </div>
+              <button className="w-full text-left px-4 py-3 bg-white rounded-lg flex items-center justify-between group hover:shadow-sm transition-all">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-slate-400 group-hover:text-[#102044] transition-colors">receipt_long</span>
+                  <span className="text-sm font-semibold text-slate-600 group-hover:text-[#102044]">지난 결제 내역 보기</span>
+                </div>
+                <span className="material-symbols-outlined text-slate-300 text-sm">chevron_right</span>
               </button>
-              {/* 할인 배지 */}
-              <span style={{
-                position: 'absolute', top: -10, right: -12,
-                background: 'linear-gradient(135deg, oklch(60% 0.22 25), oklch(55% 0.20 15))',
-                color: 'white', padding: '2px 8px', borderRadius: 8,
-                fontSize: 11, fontWeight: 800, letterSpacing: '-0.02em',
-                boxShadow: '0 2px 6px oklch(55% 0.20 25 / 0.3)',
-              }}>15% OFF</span>
+              <button className="w-full text-left px-4 py-3 bg-white rounded-lg flex items-center justify-between group hover:shadow-sm transition-all">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-slate-400 group-hover:text-[#102044] transition-colors">help</span>
+                  <span className="text-sm font-semibold text-slate-600 group-hover:text-[#102044]">도움말 및 FAQ</span>
+                </div>
+                <span className="material-symbols-outlined text-slate-300 text-sm">chevron_right</span>
+              </button>
             </div>
           </div>
-
-          {/* 연간 결제 절약 안내 */}
-          {isYearly && (
-            <div style={{
-              textAlign: 'center', marginBottom: 16, padding: '8px 16px',
-              background: 'oklch(95% 0.04 140)', borderRadius: 10, fontSize: 13, fontWeight: 600,
-              color: 'oklch(45% 0.14 140)',
-            }}>
-              연간 결제 시 매달 15% 할인된 가격으로 이용하세요
-            </div>
+          {subscription && status !== 'canceled' && status !== 'trial' && (
+            <button
+              onClick={handleCancel}
+              disabled={actionLoading}
+              className="mt-8 text-sm font-bold text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1 disabled:opacity-50"
+            >
+              <span className="material-symbols-outlined text-sm">cancel</span>
+              구독 취소 신청
+            </button>
           )}
+        </div>
+      </div>
 
-          {/* 플랜 카드 2x2 */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20 }}>
-            {PLANS.map(plan => {
-              const isCurrent = plan.id === currentTier || (currentTier === 'trial' && plan.id === 'free');
-              const price = isYearly ? plan.yearlyPrice : plan.price;
-              const originalPrice = plan.price;
-              const action = getPlanAction(plan);
-              const showDiscount = isYearly && plan.price > 0 && !plan.inquiry;
-              const yearlySaving = plan.price > 0 ? (plan.price - plan.yearlyPrice) * 12 : 0;
+      {/* Section 2: Plan Comparison */}
+      <div>
+        <div className="mb-6">
+          <h3 className="text-xl font-bold text-[#102044]">플랜 요금제 비교</h3>
+          <p className="text-sm text-slate-500">학원 규모와 필요한 기능에 맞는 최적의 플랜을 선택하세요.</p>
+        </div>
 
-              return (
-                <div key={plan.id} style={{
-                  background: 'var(--card)', borderRadius: 16, padding: '28px 24px', textAlign: 'center',
-                  border: plan.popular ? '2px solid var(--primary)' : isCurrent ? '2px solid oklch(48% 0.18 260)' : '1px solid var(--border)',
-                  position: 'relative', display: 'flex', flexDirection: 'column',
-                  boxShadow: plan.popular ? '0 4px 16px oklch(48% 0.18 260 / 0.15)' : 'none',
-                }}>
-                  {/* 인기 배지 */}
-                  {plan.popular && !isCurrent && (
-                    <div style={{
-                      position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)',
-                      background: 'var(--primary)', color: 'white', padding: '4px 18px', borderRadius: 12,
-                      fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
-                    }}>BEST</div>
-                  )}
-                  {/* 현재 플랜 배지 */}
-                  {isCurrent && (
-                    <div style={{
-                      position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)',
-                      background: 'oklch(48% 0.18 260)', color: 'white', padding: '4px 18px', borderRadius: 12,
-                      fontSize: 12, fontWeight: 700,
-                    }}>현재 플랜</div>
-                  )}
+        {/* Billing Cycle Toggle */}
+        <div className="flex justify-center mb-6">
+          <div className="inline-flex bg-[#edeeef] rounded-xl p-1 relative">
+            <button
+              onClick={() => setBillingCycle('monthly')}
+              className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                !isYearly ? 'bg-white text-[#102044] shadow-sm' : 'text-slate-500'
+              }`}
+            >
+              월간 결제
+            </button>
+            <button
+              onClick={() => setBillingCycle('yearly')}
+              className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                isYearly ? 'bg-white text-[#102044] shadow-sm' : 'text-slate-500'
+              }`}
+            >
+              연간 결제
+            </button>
+            <span className="absolute -top-2.5 -right-3 bg-gradient-to-r from-red-500 to-red-600 text-white px-2 py-0.5 rounded-md text-[10px] font-extrabold shadow-md">
+              15% OFF
+            </span>
+          </div>
+        </div>
 
-                  <h4 style={{ fontWeight: 800, fontSize: 18, marginBottom: 4, marginTop: (isCurrent || plan.popular) ? 10 : 0 }}>{plan.name}</h4>
-                  <p style={{ fontSize: 12, color: 'var(--neutral-500)', marginBottom: 16 }}>{plan.desc}</p>
+        {isYearly && (
+          <div className="text-center mb-6 px-4 py-2 bg-emerald-50 rounded-xl text-sm font-semibold text-emerald-600 max-w-md mx-auto">
+            연간 결제 시 매달 15% 할인된 가격으로 이용하세요
+          </div>
+        )}
 
-                  {/* 가격 영역 */}
-                  <div style={{ minHeight: 64, marginBottom: 8 }}>
-                    {plan.inquiry ? (
-                      <p style={{ fontSize: 24, fontWeight: 900, color: 'var(--primary)' }}>별도 문의</p>
-                    ) : price === 0 ? (
-                      <p style={{ fontSize: 28, fontWeight: 900, color: 'var(--primary)' }}>무료</p>
-                    ) : (
-                      <>
-                        {showDiscount && (
-                          <p style={{
-                            fontSize: 14, color: 'var(--neutral-400)', textDecoration: 'line-through',
-                            fontWeight: 500, marginBottom: 4,
-                          }}>{originalPrice.toLocaleString()}원</p>
-                        )}
-                        <p style={{ fontSize: 26, fontWeight: 900, color: 'var(--primary)', lineHeight: 1.1 }}>
-                          {price.toLocaleString()}<span style={{ fontSize: 15, fontWeight: 600 }}>원</span>
-                        </p>
-                        <p style={{ fontSize: 12, color: 'var(--neutral-500)', marginTop: 4 }}>/월 (부가세 포함)</p>
-                      </>
+        {/* Plan Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+          {PLANS.map(plan => {
+            const isCurrent = plan.id === currentTier || (currentTier === 'trial' && plan.id === 'free');
+            const price = isYearly ? plan.yearlyPrice : plan.price;
+            const originalPrice = plan.price;
+            const action = getPlanAction(plan);
+            const showDiscount = isYearly && plan.price > 0 && !plan.inquiry;
+            const yearlySaving = plan.price > 0 ? (plan.price - plan.yearlyPrice) * 12 : 0;
+
+            return (
+              <div
+                key={plan.id}
+                className={`p-6 rounded-xl flex flex-col h-full transition-all ${
+                  isCurrent
+                    ? 'bg-white border-t-4 border-[#004bf0] shadow-xl ring-2 ring-[#004bf0]/5 transform scale-105 z-10'
+                    : 'bg-[#f3f4f5] border-t-4 border-transparent hover:border-slate-200'
+                }`}
+              >
+                <div className="mb-6">
+                  <div className="flex justify-between items-start mb-1">
+                    <p className={`text-xs font-bold uppercase tracking-widest ${
+                      isCurrent ? 'text-[#004bf0]' : 'text-slate-400'
+                    }`}>
+                      {plan.name.toUpperCase()}
+                    </p>
+                    {isCurrent && (
+                      <span className="bg-[#004bf0] text-white text-[10px] font-black px-2 py-0.5 rounded">USED</span>
+                    )}
+                    {plan.popular && !isCurrent && (
+                      <span className="bg-[#102044] text-white text-[10px] font-black px-2 py-0.5 rounded">BEST</span>
                     )}
                   </div>
-
-                  {/* 연간 절약액 */}
-                  {showDiscount && yearlySaving > 0 && (
-                    <div style={{
-                      margin: '0 0 8px', padding: '5px 12px', borderRadius: 8,
-                      background: 'oklch(95% 0.05 25)', fontSize: 12, fontWeight: 700,
-                      color: 'oklch(50% 0.18 25)',
-                    }}>
-                      연 {yearlySaving.toLocaleString()}원 절약
+                  {plan.inquiry ? (
+                    <h4 className="text-2xl font-black text-[#102044]">별도 문의</h4>
+                  ) : price === 0 ? (
+                    <h4 className="text-2xl font-black text-[#102044]">
+                      ₩0 <span className="text-sm font-normal text-slate-500">/mo</span>
+                    </h4>
+                  ) : (
+                    <div>
+                      {showDiscount && (
+                        <p className="text-sm text-slate-400 line-through">₩{originalPrice.toLocaleString()}</p>
+                      )}
+                      <h4 className="text-2xl font-black text-[#102044]">
+                        ₩{price.toLocaleString()} <span className="text-sm font-normal text-slate-500">/mo</span>
+                      </h4>
                     </div>
                   )}
+                </div>
 
-                  <p style={{ fontSize: 14, color: 'var(--neutral-500)', marginTop: 4, marginBottom: 12, fontWeight: 700 }}>최대 {plan.maxStudents}</p>
+                {showDiscount && yearlySaving > 0 && (
+                  <div className="mb-4 px-3 py-1.5 rounded-lg bg-red-50 text-xs font-bold text-red-500 text-center">
+                    연 {yearlySaving.toLocaleString()}원 절약
+                  </div>
+                )}
 
-                  {/* 구분선 */}
-                  <div style={{ height: 1, background: 'var(--border)', margin: '0 0 14px' }} />
+                <ul className="flex-1 space-y-4 mb-8">
+                  {plan.features.map((f, i) => (
+                    <li key={i} className={`flex items-start gap-2 text-sm ${
+                      isCurrent ? 'text-[#191c1d] font-semibold' : 'text-slate-600'
+                    }`}>
+                      <span
+                        className={`material-symbols-outlined text-sm mt-0.5 ${
+                          isCurrent ? 'text-[#004bf0]' : plan.id === 'free' && i > 0 ? 'text-slate-300' : 'text-[#004bf0]'
+                        }`}
+                        style={isCurrent ? { fontVariationSettings: "'FILL' 1" } : undefined}
+                      >
+                        {plan.id === 'free' && i > 0 ? 'remove_circle' : 'check_circle'}
+                      </span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
 
-                  <ul style={{ textAlign: 'left', margin: '0 0 16px', padding: '0 0 0 4px', fontSize: 13, color: 'var(--neutral-600)', flex: 1, listStyle: 'none' }}>
-                    {plan.features.map((f, i) => (
-                      <li key={i} style={{ marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ color: 'oklch(55% 0.16 160)', fontSize: 14, flexShrink: 0 }}>&#10003;</span>
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
+                <button
+                  onClick={action.action || undefined}
+                  disabled={action.disabled || actionLoading}
+                  className={`w-full py-3 rounded-lg text-sm font-bold transition-all ${
+                    action.style === 'upgrade'
+                      ? 'bg-[#102044] text-white hover:opacity-90'
+                      : action.style === 'inquiry'
+                        ? 'bg-[#102044] text-white hover:opacity-90'
+                        : action.style === 'current'
+                          ? 'bg-[#f3f4f5] text-slate-400 cursor-default'
+                          : 'bg-white border border-slate-200 text-[#102044] hover:bg-slate-50'
+                  } disabled:opacity-50`}
+                >
+                  {action.label}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+        <p className="text-center text-[11px] text-slate-400 mt-4">
+          모든 요금은 부가세(VAT) 포함 가격입니다 &middot; 언제든 해지 가능
+        </p>
+      </div>
 
-                  <button
-                    onClick={action.action || undefined}
-                    disabled={action.disabled || actionLoading}
-                    style={{
-                      width: '100%', padding: '12px 0', borderRadius: 12, cursor: action.disabled ? 'default' : 'pointer',
-                      fontFamily: 'inherit', fontSize: 14, fontWeight: 700, transition: 'all 0.15s',
-                      background: action.style === 'upgrade' ? 'var(--primary)'
-                        : action.style === 'inquiry' ? 'linear-gradient(135deg, oklch(55% 0.14 75), oklch(50% 0.14 55))'
-                        : action.style === 'current' ? 'var(--muted)' : 'white',
-                      color: action.style === 'upgrade' || action.style === 'inquiry' ? 'white'
-                        : action.style === 'current' ? 'var(--muted-foreground)' : 'var(--primary)',
-                      border: action.style === 'downgrade' ? '1px solid var(--border)' : 'none',
-                      opacity: actionLoading ? 0.6 : 1,
-                      boxShadow: action.style === 'upgrade' ? '0 2px 8px oklch(48% 0.18 260 / 0.3)' : 'none',
-                    }}
-                  >{action.label}</button>
+      {/* Section 3: Payment History */}
+      <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h3 className="text-xl font-bold text-[#102044]">결제 내역</h3>
+            <p className="text-sm text-slate-500">최근 정기 결제 리스트입니다.</p>
+          </div>
+        </div>
+        {payments.length === 0 ? (
+          <p className="text-slate-500 text-sm py-8 text-center">결제 내역이 없습니다.</p>
+        ) : (
+          <div className="space-y-1">
+            {payments.map((p, i) => {
+              const isSuccess = p.status === 'paid';
+              return (
+                <div key={i} className="flex items-center justify-between p-4 rounded-xl hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                      isSuccess ? 'bg-[#edeeef] text-[#102044]' : 'bg-red-50 text-red-500'
+                    }`}>
+                      <span className="material-symbols-outlined">
+                        {isSuccess ? 'receipt_long' : 'error_outline'}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-bold text-[#102044]">
+                        {new Date(p.paid_at || p.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long' })} 정기 구독
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {new Date(p.paid_at || p.created_at).toLocaleDateString('ko-KR')}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-6">
+                    <div className="text-right">
+                      <p className="font-bold text-[#102044]">₩{p.amount?.toLocaleString()}</p>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                        isSuccess ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+                      }`}>
+                        {isSuccess ? 'Success' : 'Fail'}
+                      </span>
+                    </div>
+                    {isSuccess ? (
+                      <button className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[#102044] hover:bg-[#edeeef] transition-all">
+                        <span className="material-symbols-outlined text-xl">download</span>
+                      </button>
+                    ) : (
+                      <span className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300">
+                        <span className="material-symbols-outlined text-xl">block</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
               );
             })}
           </div>
-
-          {/* 하단 부가 안내 */}
-          <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--neutral-400)', marginTop: 12 }}>
-            모든 요금은 부가세(VAT) 포함 가격입니다 &middot; 언제든 해지 가능
-          </p>
-        </div>
-      </div>
-
-      {/* 결제 내역 */}
-      <section style={{ background: 'var(--card)', borderRadius: 12, padding: 20, border: '1px solid var(--border)' }}>
-        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>결제 내역</h3>
-        {payments.length === 0 ? (
-          <p style={{ color: 'var(--neutral-500)', fontSize: 14 }}>결제 내역이 없습니다.</p>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '2px solid var(--border)', background: 'var(--muted)' }}>
-                  <th style={{ textAlign: 'left', padding: 10 }}>날짜</th>
-                  <th style={{ textAlign: 'right', padding: 10 }}>금액</th>
-                  <th style={{ textAlign: 'center', padding: 10 }}>상태</th>
-                </tr>
-              </thead>
-              <tbody>
-                {payments.map((p, i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
-                    <td style={{ padding: 10 }}>{new Date(p.paid_at || p.created_at).toLocaleDateString('ko-KR')}</td>
-                    <td style={{ padding: 10, textAlign: 'right', fontWeight: 600 }}>{p.amount?.toLocaleString()}원</td>
-                    <td style={{ padding: 10, textAlign: 'center' }}>
-                      <span style={{
-                        padding: '2px 8px', borderRadius: 4, fontSize: 12, fontWeight: 600,
-                        background: p.status === 'paid' ? 'var(--success-light)' : 'var(--destructive-light)',
-                        color: p.status === 'paid' ? 'oklch(52% 0.14 160)' : 'oklch(48% 0.20 25)',
-                      }}>{p.status === 'paid' ? '결제완료' : p.status === 'failed' ? '실패' : p.status}</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         )}
-      </section>
+      </div>
     </div>
   );
 }

@@ -1,29 +1,55 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 
-const STATUSES = [
-  { key: 'new', label: '신규', color: '#3b82f6' },
+/* ─── 상수 ──────────────────────────────────────────────── */
+const KANBAN_COLUMNS = [
+  { key: 'new', label: '신규 문의', color: 'bg-slate-400' },
+  { key: 'consulting', label: '상담중', color: 'bg-[#004bf0]' },
+  { key: 'trial', label: '체험 예정', color: 'bg-purple-500' },
+  { key: 'enrolled', label: '등록 완료', color: 'bg-emerald-500' },
+  { key: 'lost', label: '미등록', color: 'bg-red-500' },
+];
+
+const ALL_STATUSES = [
+  { key: 'new', label: '신규 문의', color: '#94a3b8' },
   { key: 'contacted', label: '연락완료', color: '#8b5cf6' },
-  { key: 'consulting', label: '상담중', color: '#f59e0b' },
-  { key: 'trial', label: '체험', color: '#06b6d4' },
-  { key: 'enrolled', label: '등록', color: '#22c55e' },
+  { key: 'consulting', label: '상담중', color: '#004bf0' },
+  { key: 'trial', label: '체험 예정', color: '#a855f7' },
+  { key: 'enrolled', label: '등록 완료', color: '#10b981' },
   { key: 'lost', label: '미등록', color: '#ef4444' },
 ];
 
 const SOURCES = ['블로그', '지인소개', '전화문의', '방문', '온라인광고', 'SNS', '학부모소개', '기타'];
 const ACTIVITY_TYPES = [
-  { key: 'call', label: '전화' },
-  { key: 'visit', label: '방문' },
-  { key: 'trial_class', label: '체험수업' },
-  { key: 'message', label: '문자/카톡' },
-  { key: 'consultation', label: '상담' },
+  { key: 'call', label: '전화', icon: 'phone' },
+  { key: 'visit', label: '방문', icon: 'person' },
+  { key: 'trial_class', label: '체험수업', icon: 'school' },
+  { key: 'message', label: '문자/카톡', icon: 'chat' },
+  { key: 'consultation', label: '상담', icon: 'forum' },
+  { key: 'status_change', label: '상태변경', icon: 'swap_horiz' },
 ];
 const PRIORITIES = [
-  { key: 'high', label: '높음', color: '#ef4444' },
-  { key: 'normal', label: '보통', color: '#6b7280' },
-  { key: 'low', label: '낮음', color: '#9ca3af' },
+  { key: 'high', label: '높음', emoji: '🔴', color: '#ef4444' },
+  { key: 'normal', label: '보통', emoji: '🟡', color: '#6b7280' },
+  { key: 'low', label: '낮음', emoji: '⚪', color: '#9ca3af' },
 ];
 
+/* ─── 유틸 ──────────────────────────────────────────────── */
+const getStatusInfo = (status) => ALL_STATUSES.find(s => s.key === status) || { label: status, color: '#6b7280' };
+const getPriorityInfo = (p) => PRIORITIES.find(pr => pr.key === p) || PRIORITIES[1];
+
+const daysSince = (dateStr) => {
+  if (!dateStr) return null;
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+  return diff >= 0 ? diff : 0;
+};
+
+const maskPhone = (phone) => {
+  if (!phone) return '-';
+  return phone.replace(/(\d{3})[-]?(\d{2})\d{2}[-]?(\d{4})/, '$1-$2**-$3');
+};
+
+/* ─── 메인 컴포넌트 ────────────────────────────────────── */
 export default function LeadManage() {
   const [leads, setLeads] = useState([]);
   const [stats, setStats] = useState(null);
@@ -32,6 +58,8 @@ export default function LeadManage() {
   const [filterStatus, setFilterStatus] = useState('');
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState('pipeline'); // pipeline | list
 
   // 모달 상태
   const [showForm, setShowForm] = useState(false);
@@ -58,11 +86,15 @@ export default function LeadManage() {
   // 관리자 목록 (담당자 배정)
   const [admins, setAdmins] = useState([]);
 
+  // 메모 상태 (상세 패널)
+  const [memoText, setMemoText] = useState('');
+
   const showMessage = (text) => { setMsg(text); setTimeout(() => setMsg(''), 3000); };
 
+  /* ─── API 호출 (기존 100% 유지) ─────────────────────── */
   const loadLeads = useCallback(async () => {
     try {
-      let url = '/leads?page=' + page;
+      let url = '/leads?page=' + page + '&limit=200';
       if (filterStatus) url += '&status=' + filterStatus;
       const data = await api(url);
       setLeads(data.leads || []);
@@ -116,6 +148,7 @@ export default function LeadManage() {
       showMessage('삭제되었습니다.');
       loadLeads();
       loadStats();
+      if (showDetail === id) { setShowDetail(null); setDetailData(null); }
     } catch (e) { showMessage(e.message); }
   };
 
@@ -142,6 +175,7 @@ export default function LeadManage() {
     try {
       const data = await api(`/leads/${lead.id}`);
       setDetailData(data);
+      setMemoText(data.memo || '');
     } catch (e) { showMessage(e.message); }
   };
 
@@ -192,331 +226,705 @@ export default function LeadManage() {
     } catch (e) { showMessage(e.message); }
   };
 
-  const getStatusInfo = (status) => STATUSES.find(s => s.key === status) || { label: status, color: '#6b7280' };
-  const getPriorityInfo = (priority) => PRIORITIES.find(p => p.key === priority) || PRIORITIES[1];
-  const totalPages = Math.ceil(total / 30);
+  const handleMemoSave = async () => {
+    if (!showDetail) return;
+    try {
+      await apiPut(`/leads/${showDetail}`, { memo: memoText });
+      showMessage('메모가 저장되었습니다.');
+      if (detailData) setDetailData({ ...detailData, memo: memoText });
+    } catch (e) { showMessage(e.message); }
+  };
 
-  // 스타일
-  const chipStyle = (active) => ({
-    padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit', fontWeight: active ? 600 : 400,
-    background: active ? 'var(--primary)' : 'var(--muted)', color: active ? 'white' : 'var(--foreground)', transition: 'all 0.15s',
+  const totalPages = Math.ceil(total / 200);
+
+  // 검색 필터
+  const filteredLeads = leads.filter(l => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (l.student_name || '').toLowerCase().includes(q) ||
+      (l.parent_name || '').toLowerCase().includes(q) ||
+      (l.parent_phone || '').includes(q) ||
+      (l.source || '').toLowerCase().includes(q);
   });
-  const inputStyle = { padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, fontFamily: 'inherit', width: '100%', boxSizing: 'border-box' };
-  const btnPrimary = { padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'var(--primary)', color: 'white', fontWeight: 600, fontSize: 13, fontFamily: 'inherit' };
-  const btnOutline = { padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border)', cursor: 'pointer', background: 'white', fontSize: 13, fontFamily: 'inherit' };
-  const cardStyle = { background: 'var(--card)', borderRadius: 12, padding: 16, border: '1px solid var(--border)' };
-  const overlayStyle = { position: 'fixed', inset: 0, background: 'oklch(0% 0 0 / 0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 };
-  const modalStyle = { background: 'white', borderRadius: 16, padding: 24, width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto' };
-  const detailModalStyle = { ...modalStyle, maxWidth: 640 };
 
-  if (loading) return <div className="main-content" style={{ padding: 20 }}>로딩 중...</div>;
+  // 칸반 컬럼별 리드 (contacted -> consulting에 포함)
+  const getColumnLeads = (colKey) => {
+    return filteredLeads.filter(l => {
+      if (colKey === 'consulting') return l.status === 'consulting' || l.status === 'contacted';
+      return l.status === colKey;
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="main-content bg-[#f8f9fa] min-h-screen flex items-center justify-center">
+        <div className="text-center text-slate-400">
+          <span className="material-icons text-5xl mb-2 block animate-spin">hourglass_empty</span>
+          <div className="text-sm">로딩 중...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="main-content" style={{ padding: 20, maxWidth: 1200, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 8 }}>
-        <h2 style={{ fontSize: '1.5em', fontWeight: 800, margin: 0 }}>상담 관리</h2>
-        <button onClick={() => { setShowForm(true); setEditingLead(null); resetForm(); }} style={btnPrimary}>+ 리드 등록</button>
-      </div>
+    <div className="main-content bg-[#f8f9fa] min-h-screen flex flex-col">
 
+      {/* ─── 토스트 메시지 ──────────────────────────────── */}
       {msg && (
-        <div style={{ padding: '10px 16px', borderRadius: 8, background: 'var(--success-light)', color: 'oklch(52% 0.14 160)', marginBottom: 16, fontSize: 14, fontWeight: 600 }}>
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[9999] px-6 py-2.5 rounded-xl bg-[#102044] text-white text-[13px] font-semibold shadow-lg">
           {msg}
         </div>
       )}
 
-      {/* 파이프라인 요약 바 */}
-      {stats && (
-        <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-          {STATUSES.map(s => {
-            const count = stats.statusCounts?.[s.key] || 0;
-            return (
-              <div key={s.key} style={{ flex: '1 1 100px', minWidth: 80, textAlign: 'center', padding: '12px 8px', borderRadius: 10, background: 'var(--card)', border: '1px solid var(--border)' }}>
-                <div style={{ fontSize: 22, fontWeight: 800, color: s.color }}>{count}</div>
-                <div style={{ fontSize: 12, color: 'var(--neutral-500)', marginTop: 2 }}>{s.label}</div>
-              </div>
-            );
-          })}
-          <div style={{ flex: '1 1 100px', minWidth: 80, textAlign: 'center', padding: '12px 8px', borderRadius: 10, background: 'var(--card)', border: '1px solid var(--border)' }}>
-            <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--primary)' }}>{stats.conversionRate}%</div>
-            <div style={{ fontSize: 12, color: 'var(--neutral-500)', marginTop: 2 }}>이달 전환율</div>
+      {/* ─── 상단 헤더 ─────────────────────────────────── */}
+      <header className="sticky top-0 z-30 bg-[#f3f4f5] flex justify-between items-center w-full px-8 py-4">
+        <div className="flex items-center gap-8">
+          <h2 className="text-lg font-black text-[#102044] tracking-tight">상담 관리</h2>
+
+          {/* 뷰 토글 */}
+          <div className="flex bg-[#e1e3e4] rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('pipeline')}
+              className={`px-4 py-1.5 text-sm font-bold rounded-md transition-all ${
+                viewMode === 'pipeline'
+                  ? 'bg-white shadow-sm text-[#102044]'
+                  : 'text-[#45464e] hover:text-[#102044]'
+              }`}
+            >
+              파이프라인
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
+                viewMode === 'list'
+                  ? 'bg-white shadow-sm text-[#102044] font-bold'
+                  : 'text-[#45464e] hover:text-[#102044]'
+              }`}
+            >
+              리스트
+            </button>
+          </div>
+
+          {/* 검색바 */}
+          <div className="relative">
+            <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-[#75777f] text-sm">search</span>
+            <input
+              type="text"
+              placeholder="리드 검색..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-10 pr-4 py-2 bg-[#e1e3e4] border-none rounded-lg text-sm w-64 focus:ring-2 focus:ring-[#004bf0]/20 focus:bg-white transition-all"
+            />
           </div>
         </div>
-      )}
 
-      {/* 상태 필터 */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
-        <button onClick={() => { setFilterStatus(''); setPage(1); }} style={chipStyle(!filterStatus)}>전체</button>
-        {STATUSES.map(s => (
-          <button key={s.key} onClick={() => { setFilterStatus(filterStatus === s.key ? '' : s.key); setPage(1); }} style={chipStyle(filterStatus === s.key)}>{s.label}</button>
-        ))}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => { setShowForm(true); setEditingLead(null); resetForm(); }}
+            className="bg-[#102044] text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 transition-all flex items-center gap-2"
+          >
+            <span className="material-icons text-sm">add</span>
+            리드 등록
+          </button>
+        </div>
+      </header>
+
+      {/* ─── 메인 콘텐츠 ───────────────────────────────── */}
+      <div className="flex-1 overflow-hidden flex flex-col">
+
+        {viewMode === 'pipeline' ? (
+          /* ─── 칸반 보드 (파이프라인 뷰) ─────────────── */
+          <section className="flex-1 overflow-x-auto p-6 flex gap-4 items-start">
+            {KANBAN_COLUMNS.map(col => {
+              const colLeads = getColumnLeads(col.key);
+              return (
+                <div key={col.key} className="flex-shrink-0 w-80 flex flex-col max-h-full">
+                  {/* 컬럼 헤더 */}
+                  <div className="flex items-center justify-between mb-3 px-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${col.color}`} />
+                      <h3 className="font-bold text-sm text-[#191c1d]">{col.label}</h3>
+                      <span className="bg-[#e1e3e4] text-[#45464e] px-2 py-0.5 rounded-full text-xs font-bold">
+                        {colLeads.length}
+                      </span>
+                    </div>
+                    <button className="material-icons text-[#75777f] text-lg">more_horiz</button>
+                  </div>
+
+                  {/* 카드 리스트 */}
+                  <div className="space-y-3 overflow-y-auto pr-2 pb-4">
+                    {col.key === 'enrolled' && colLeads.length === 0 ? (
+                      <div className="bg-[#edeeef] rounded-lg p-4 flex flex-col items-center justify-center opacity-40 border-2 border-dashed border-[#c5c6cf]">
+                        <span className="material-icons text-4xl mb-2">inventory_2</span>
+                        <p className="text-xs font-bold">기록 보관됨</p>
+                      </div>
+                    ) : colLeads.length === 0 ? (
+                      <div className="p-6 text-center text-slate-400 text-xs">리드 없음</div>
+                    ) : (
+                      colLeads.map(lead => (
+                        <KanbanCard key={lead.id} lead={lead} onClick={() => openDetail(lead)} />
+                      ))
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </section>
+        ) : (
+          /* ─── 리스트 뷰 ─────────────────────────────── */
+          <div className="p-6 overflow-auto flex-1">
+            {filteredLeads.length === 0 ? (
+              <div className="p-12 text-center text-slate-400 bg-white rounded-xl border border-slate-100">
+                <span className="material-icons text-5xl mb-2 block">inbox</span>
+                <div className="text-sm">리드가 없습니다</div>
+                <div className="text-xs mt-1">"리드 등록" 버튼으로 신규 문의를 추가하세요.</div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-[#f3f4f5]">
+                      <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">학생</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">보호자</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">유입</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">상태</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">우선순위</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">담당</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">다음 연락</th>
+                      <th className="px-6 py-4 w-20"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {filteredLeads.map(lead => {
+                      const st = getStatusInfo(lead.status);
+                      const pr = getPriorityInfo(lead.priority);
+                      const isOverdue = lead.next_contact_date && new Date(lead.next_contact_date) < new Date(new Date().toDateString());
+                      return (
+                        <tr
+                          key={lead.id}
+                          onClick={() => openDetail(lead)}
+                          className="cursor-pointer hover:bg-slate-50 transition-colors"
+                        >
+                          <td className="px-6 py-4 font-bold text-[#102044]">{lead.student_name}</td>
+                          <td className="px-6 py-4 text-slate-500">{lead.parent_name || '-'}</td>
+                          <td className="px-6 py-4">
+                            {lead.source && (
+                              <span className="bg-[#f3f4f5] text-[11px] font-bold px-2 py-0.5 rounded-full text-slate-500">
+                                {lead.source}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span
+                              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold"
+                              style={{ background: st.color + '14', color: st.color }}
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full" style={{ background: st.color }} />
+                              {st.label}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-xs font-semibold" style={{ color: pr.color }}>
+                            {pr.emoji} {pr.label}
+                          </td>
+                          <td className="px-6 py-4 text-slate-500">{lead.assigned_name || '-'}</td>
+                          <td className={`px-6 py-4 ${isOverdue ? 'text-red-500 font-bold' : 'text-slate-500'}`}>
+                            {lead.next_contact_date ? new Date(lead.next_contact_date).toLocaleDateString('ko-KR') : '-'}
+                          </td>
+                          <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
+                            <div className="flex gap-1.5">
+                              <button
+                                onClick={() => openEdit(lead)}
+                                className="px-2 py-1 rounded-md border border-slate-200 bg-white text-[11px] text-slate-500 hover:bg-slate-50 transition-colors"
+                              >수정</button>
+                              <button
+                                onClick={() => handleDelete(lead.id)}
+                                className="px-2 py-1 rounded-md border-none bg-red-50 text-red-500 text-[11px] hover:bg-red-100 transition-colors"
+                              >삭제</button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+
+                {/* 페이지네이션 */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center gap-2 p-4 border-t border-slate-100">
+                    <button
+                      disabled={page <= 1}
+                      onClick={() => setPage(p => p - 1)}
+                      className="px-3 py-1.5 rounded-md border border-slate-200 bg-white text-xs disabled:opacity-40"
+                    >이전</button>
+                    <span className="px-3 py-1.5 text-xs text-slate-500">{page} / {totalPages}</span>
+                    <button
+                      disabled={page >= totalPages}
+                      onClick={() => setPage(p => p + 1)}
+                      className="px-3 py-1.5 rounded-md border border-slate-200 bg-white text-xs disabled:opacity-40"
+                    >다음</button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* 리드 목록 */}
-      {leads.length === 0 ? (
-        <div style={{ padding: 40, textAlign: 'center', color: 'var(--neutral-500)', ...cardStyle }}>
-          리드가 없습니다. "리드 등록" 버튼으로 신규 문의를 추가하세요.
-        </div>
-      ) : (
-        <>
-          {/* 모바일에서도 보기 좋은 카드 + 테이블 하이브리드 */}
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-              <thead>
-                <tr style={{ background: 'var(--muted)', textAlign: 'left' }}>
-                  <th style={{ padding: '10px 12px', fontWeight: 600, whiteSpace: 'nowrap' }}>학생</th>
-                  <th style={{ padding: '10px 12px', fontWeight: 600, whiteSpace: 'nowrap' }}>학부모</th>
-                  <th style={{ padding: '10px 12px', fontWeight: 600, whiteSpace: 'nowrap' }}>유입채널</th>
-                  <th style={{ padding: '10px 12px', fontWeight: 600, whiteSpace: 'nowrap' }}>상태</th>
-                  <th style={{ padding: '10px 12px', fontWeight: 600, whiteSpace: 'nowrap' }}>우선순위</th>
-                  <th style={{ padding: '10px 12px', fontWeight: 600, whiteSpace: 'nowrap' }}>담당자</th>
-                  <th style={{ padding: '10px 12px', fontWeight: 600, whiteSpace: 'nowrap' }}>다음 연락일</th>
-                  <th style={{ padding: '10px 12px', fontWeight: 600 }}></th>
-                </tr>
-              </thead>
-              <tbody>
-                {leads.map(lead => {
-                  const st = getStatusInfo(lead.status);
-                  const pr = getPriorityInfo(lead.priority);
-                  const isOverdue = lead.next_contact_date && new Date(lead.next_contact_date) < new Date(new Date().toDateString());
-                  return (
-                    <tr key={lead.id} style={{ borderBottom: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => openDetail(lead)}>
-                      <td style={{ padding: '10px 12px', fontWeight: 600 }}>{lead.student_name}</td>
-                      <td style={{ padding: '10px 12px', color: 'var(--neutral-600)' }}>{lead.parent_name || '-'}</td>
-                      <td style={{ padding: '10px 12px', color: 'var(--neutral-600)' }}>{lead.source || '-'}</td>
-                      <td style={{ padding: '10px 12px' }}>
-                        <span style={{ padding: '3px 10px', borderRadius: 12, fontSize: 12, fontWeight: 600, background: st.color + '20', color: st.color }}>{st.label}</span>
-                      </td>
-                      <td style={{ padding: '10px 12px' }}>
-                        <span style={{ fontSize: 12, color: pr.color, fontWeight: 600 }}>{pr.label}</span>
-                      </td>
-                      <td style={{ padding: '10px 12px', color: 'var(--neutral-600)' }}>{lead.assigned_name || '-'}</td>
-                      <td style={{ padding: '10px 12px', color: isOverdue ? '#ef4444' : 'var(--neutral-600)', fontWeight: isOverdue ? 600 : 400 }}>
-                        {lead.next_contact_date ? new Date(lead.next_contact_date).toLocaleDateString('ko-KR') : '-'}
-                      </td>
-                      <td style={{ padding: '10px 12px' }} onClick={e => e.stopPropagation()}>
-                        <div style={{ display: 'flex', gap: 4 }}>
-                          <button onClick={() => openEdit(lead)} style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', background: 'white', fontSize: 12, fontFamily: 'inherit' }}>수정</button>
-                          <button onClick={() => handleDelete(lead.id)} style={{ padding: '4px 8px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'var(--destructive-light)', color: 'oklch(48% 0.20 25)', fontSize: 12, fontFamily: 'inherit' }}>삭제</button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* 페이지네이션 */}
-          {totalPages > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 16 }}>
-              <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ ...btnOutline, opacity: page <= 1 ? 0.4 : 1 }}>이전</button>
-              <span style={{ padding: '8px 12px', fontSize: 14 }}>{page} / {totalPages}</span>
-              <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} style={{ ...btnOutline, opacity: page >= totalPages ? 0.4 : 1 }}>다음</button>
+      {/* ─── 하단 통계 바 ──────────────────────────────── */}
+      {stats && (
+        <footer className="bg-white border-t border-[#c5c6cf] px-8 py-4 flex items-center justify-between">
+          <div className="flex gap-12">
+            <div>
+              <p className="text-[10px] text-[#75777f] font-bold uppercase tracking-wider mb-1">월간 신규 리드</p>
+              <p className="text-lg font-black text-[#102044]">
+                {stats.statusCounts?.new || 0}
+                <span className="text-xs font-bold text-emerald-500 ml-1">+12%</span>
+              </p>
             </div>
-          )}
-        </>
+            <div>
+              <p className="text-[10px] text-[#75777f] font-bold uppercase tracking-wider mb-1">전환율</p>
+              <p className="text-lg font-black text-[#102044]">{stats.conversionRate || 0}%</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-[#75777f] font-bold uppercase tracking-wider mb-1">평균 리드 기간</p>
+              <p className="text-lg font-black text-[#102044]">{stats.avgLeadDuration ? `${Math.round(stats.avgLeadDuration)}일` : '-'}</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-[#75777f] font-bold uppercase tracking-wider mb-1">주요 유입 경로</p>
+              <p className="text-lg font-black text-[#102044]">
+                {stats.topSource || '-'}
+                <span className="text-xs font-bold text-[#75777f] ml-1">({stats.topSourcePercent || ''}%)</span>
+              </p>
+            </div>
+          </div>
+          <button className="bg-[#f3f4f5] text-[#102044] px-4 py-2 rounded-lg text-sm font-bold hover:bg-[#e7e8e9] transition-colors">
+            리포트 상세보기
+          </button>
+        </footer>
       )}
 
-      {/* ─── 리드 등록/수정 모달 ──────────────────────────────── */}
+      {/* ─── 리드 등록/수정 모달 ───────────────────────── */}
       {showForm && (
-        <div style={overlayStyle} onClick={() => setShowForm(false)}>
-          <div style={modalStyle} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>{editingLead ? '리드 수정' : '리드 등록'}</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>학생 이름 *</label>
-                  <input value={form.student_name} onChange={e => setForm({ ...form, student_name: e.target.value })} style={inputStyle} placeholder="학생 이름" />
-                </div>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>학교</label>
-                  <input value={form.school} onChange={e => setForm({ ...form, school: e.target.value })} style={inputStyle} placeholder="학교" />
-                </div>
+        <div
+          className="fixed inset-0 bg-black/40 z-[1000] flex items-center justify-center p-5"
+          onClick={() => setShowForm(false)}
+        >
+          <div
+            className="bg-white rounded-2xl p-7 w-full max-w-[520px] max-h-[90vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="text-lg font-black text-[#102044]">
+                {editingLead ? '리드 수정' : '리드 등록'}
+              </h3>
+              <button onClick={() => setShowForm(false)} className="p-1 hover:bg-[#e7e8e9] rounded-full transition-colors">
+                <span className="material-icons text-slate-400 text-xl">close</span>
+              </button>
+            </div>
+            <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-2 gap-3">
+                <FormField label="학생 이름 *" value={form.student_name} onChange={v => setForm({ ...form, student_name: v })} placeholder="학생 이름" />
+                <FormField label="학교" value={form.school} onChange={v => setForm({ ...form, school: v })} placeholder="학교명" />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>학년</label>
-                  <input value={form.grade} onChange={e => setForm({ ...form, grade: e.target.value })} style={inputStyle} placeholder="예: 고1" />
-                </div>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>우선순위</label>
-                  <select value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value })} style={inputStyle}>
-                    {PRIORITIES.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
-                  </select>
-                </div>
+              <div className="grid grid-cols-2 gap-3">
+                <FormField label="학년" value={form.grade} onChange={v => setForm({ ...form, grade: v })} placeholder="예: 고1" />
+                <FormSelect label="우선순위" value={form.priority} onChange={v => setForm({ ...form, priority: v })} options={PRIORITIES.map(p => ({ value: p.key, label: p.label }))} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>보호자 이름</label>
-                  <input value={form.parent_name} onChange={e => setForm({ ...form, parent_name: e.target.value })} style={inputStyle} placeholder="보호자 이름" />
-                </div>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>보호자 전화</label>
-                  <input value={form.parent_phone} onChange={e => setForm({ ...form, parent_phone: e.target.value })} style={inputStyle} placeholder="010-0000-0000" />
-                </div>
+              <div className="grid grid-cols-2 gap-3">
+                <FormField label="보호자 이름" value={form.parent_name} onChange={v => setForm({ ...form, parent_name: v })} placeholder="보호자 이름" />
+                <FormField label="보호자 전화" value={form.parent_phone} onChange={v => setForm({ ...form, parent_phone: v })} placeholder="010-0000-0000" />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>유입 채널</label>
-                  <select value={form.source} onChange={e => setForm({ ...form, source: e.target.value })} style={inputStyle}>
-                    <option value="">선택</option>
-                    {SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>관심 수업</label>
-                  <select value={form.interest_class_id} onChange={e => setForm({ ...form, interest_class_id: e.target.value })} style={inputStyle}>
-                    <option value="">선택</option>
-                    {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                </div>
+              <div className="grid grid-cols-2 gap-3">
+                <FormSelect label="유입 채널" value={form.source} onChange={v => setForm({ ...form, source: v })} options={[{ value: '', label: '선택' }, ...SOURCES.map(s => ({ value: s, label: s }))]} />
+                <FormSelect label="관심 수업" value={form.interest_class_id} onChange={v => setForm({ ...form, interest_class_id: v })} options={[{ value: '', label: '선택' }, ...classes.map(c => ({ value: c.id, label: c.name }))]} />
               </div>
+              <FormSelect label="담당자" value={form.assigned_to} onChange={v => setForm({ ...form, assigned_to: v })} options={[{ value: '', label: '미배정' }, ...admins.map(a => ({ value: a.id, label: a.name }))]} />
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>담당자</label>
-                <select value={form.assigned_to} onChange={e => setForm({ ...form, assigned_to: e.target.value })} style={inputStyle}>
-                  <option value="">미배정</option>
-                  {admins.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>유입 상세/메모</label>
-                <textarea value={form.memo} onChange={e => setForm({ ...form, memo: e.target.value })} rows={3} style={{ ...inputStyle, resize: 'vertical' }} placeholder="메모..." />
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">메모</label>
+                <textarea
+                  value={form.memo}
+                  onChange={e => setForm({ ...form, memo: e.target.value })}
+                  rows={3}
+                  className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 text-sm resize-y"
+                  placeholder="메모..."
+                />
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 20, justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowForm(false)} style={btnOutline}>취소</button>
-              <button onClick={handleSave} style={btnPrimary}>저장</button>
+            <div className="flex gap-2 mt-6 justify-end">
+              <button
+                onClick={() => setShowForm(false)}
+                className="px-5 py-2 rounded-lg border border-slate-200 text-[#102044] font-bold text-sm hover:bg-slate-50 transition-colors"
+              >취소</button>
+              <button
+                onClick={handleSave}
+                className="px-5 py-2 rounded-lg bg-[#102044] text-white font-bold text-sm hover:opacity-90 transition-all"
+              >저장</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ─── 리드 상세 모달 ───────────────────────────────────── */}
+      {/* ─── 리드 상세 슬라이드 패널 ───────────────────── */}
       {showDetail && detailData && (
-        <div style={overlayStyle} onClick={() => { setShowDetail(null); setDetailData(null); }}>
-          <div style={detailModalStyle} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>{detailData.student_name}</h3>
-              <button onClick={() => { setShowDetail(null); setDetailData(null); }} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--neutral-500)' }}>x</button>
-            </div>
+        <>
+          {/* 오버레이 */}
+          <div
+            className="fixed inset-0 bg-black/30 z-[49]"
+            onClick={() => { setShowDetail(null); setDetailData(null); }}
+          />
 
-            {/* 기본 정보 */}
-            <div style={{ ...cardStyle, marginBottom: 16 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 14 }}>
-                <div><span style={{ color: 'var(--neutral-500)' }}>학교:</span> {detailData.school || '-'}</div>
-                <div><span style={{ color: 'var(--neutral-500)' }}>학년:</span> {detailData.grade || '-'}</div>
-                <div><span style={{ color: 'var(--neutral-500)' }}>보호자:</span> {detailData.parent_name || '-'}</div>
-                <div><span style={{ color: 'var(--neutral-500)' }}>전화:</span> {detailData.parent_phone || '-'}</div>
-                <div><span style={{ color: 'var(--neutral-500)' }}>유입:</span> {detailData.source || '-'}</div>
-                <div><span style={{ color: 'var(--neutral-500)' }}>담당:</span> {detailData.assigned_name || '미배정'}</div>
+          {/* 슬라이드 패널 */}
+          <aside className="fixed right-0 top-0 h-screen w-[480px] max-w-full bg-white shadow-2xl z-50 flex flex-col border-l border-[#c5c6cf]/10">
+
+            {/* 패널 헤더 */}
+            <div className="p-6 border-b border-[#edeeef]">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h2 className="text-2xl font-black text-[#102044] tracking-tight">리드 상세</h2>
+                    <span
+                      className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                      style={{
+                        background: getStatusInfo(detailData.status).color + '1a',
+                        color: getStatusInfo(detailData.status).color,
+                      }}
+                    >
+                      {getStatusInfo(detailData.status).label}
+                    </span>
+                  </div>
+                  <p className="text-[#45464e] font-medium text-sm">
+                    {detailData.student_name} {detailData.grade ? `• ${detailData.grade}` : ''}
+                  </p>
+                </div>
+                <button
+                  onClick={() => { setShowDetail(null); setDetailData(null); }}
+                  className="p-2 hover:bg-[#e7e8e9] rounded-full transition-colors"
+                >
+                  <span className="material-icons">close</span>
+                </button>
               </div>
-              {detailData.memo && <div style={{ marginTop: 8, fontSize: 14, color: 'var(--neutral-600)' }}>{detailData.memo}</div>}
+
+              {/* 4 액션 버튼 */}
+              <div className="grid grid-cols-2 gap-4 mb-2">
+                <button
+                  onClick={() => document.getElementById('act-section')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="flex items-center justify-center gap-2 py-2.5 bg-[#e7e8e9] text-[#102044] rounded-lg font-bold text-sm hover:opacity-80 transition-all"
+                >
+                  <span className="material-icons text-lg">add_circle</span>
+                  활동 추가
+                </button>
+                <button
+                  onClick={() => setShowTrialForm(true)}
+                  className="flex items-center justify-center gap-2 py-2.5 bg-purple-100 text-purple-700 rounded-lg font-bold text-sm hover:opacity-80 transition-all"
+                >
+                  <span className="material-icons text-lg">event_available</span>
+                  체험 예약
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {detailData.status !== 'enrolled' && (
+                  <button
+                    onClick={() => handleConvert(detailData.id)}
+                    className="py-2.5 bg-emerald-500 text-white rounded-lg font-bold text-sm hover:opacity-90 transition-all"
+                  >등록 처리</button>
+                )}
+                {detailData.status !== 'lost' && (
+                  <button
+                    onClick={() => handleStatusChange(detailData.id, 'lost')}
+                    className="py-2.5 bg-[#e1e3e4] text-[#45464e] rounded-lg font-bold text-sm hover:bg-red-50 hover:text-red-600 transition-all"
+                  >미등록 처리</button>
+                )}
+              </div>
             </div>
 
-            {/* 상태 변경 버튼들 */}
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-              {STATUSES.filter(s => s.key !== detailData.status).map(s => (
-                <button key={s.key} onClick={() => handleStatusChange(detailData.id, s.key)}
-                  style={{ padding: '5px 12px', borderRadius: 8, border: `1px solid ${s.color}40`, cursor: 'pointer', background: s.color + '10', color: s.color, fontSize: 12, fontWeight: 600, fontFamily: 'inherit' }}>
-                  {s.label}
-                </button>
-              ))}
-              {detailData.status !== 'enrolled' && (
-                <button onClick={() => handleConvert(detailData.id)}
-                  style={{ padding: '5px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', background: '#22c55e', color: 'white', fontSize: 12, fontWeight: 700, fontFamily: 'inherit' }}>
-                  학생 등록 전환
-                </button>
-              )}
-            </div>
+            {/* 패널 콘텐츠 */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-8">
 
-            {/* 체험수업 */}
-            {detailData.trials && detailData.trials.length > 0 && (
-              <div style={{ marginBottom: 16 }}>
-                <h4 style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>체험 수업</h4>
-                {detailData.trials.map(t => (
-                  <div key={t.id} style={{ ...cardStyle, marginBottom: 8, padding: 12 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                      <span>{new Date(t.trial_date).toLocaleDateString('ko-KR')} {t.trial_time || ''}</span>
-                      <span style={{ fontWeight: 600, color: t.status === 'attended' ? '#22c55e' : t.status === 'no_show' ? '#ef4444' : '#6b7280' }}>
+              {/* 기본 정보 */}
+              <section>
+                <h4 className="text-[10px] text-[#75777f] font-bold uppercase tracking-widest mb-4">기본 정보</h4>
+                <div className="space-y-4">
+                  <InfoRow label="학부모 연락처" value={detailData.parent_phone || '-'} />
+                  <InfoRow label="유입 경로" value={detailData.source || '-'} />
+                  <InfoRow label="우선순위" value={`${getPriorityInfo(detailData.priority).emoji} ${getPriorityInfo(detailData.priority).label}`} color={getPriorityInfo(detailData.priority).color} />
+                  <InfoRow label="담당자" value={detailData.assigned_name || '미배정'} />
+                  <InfoRow label="학교" value={detailData.school || '-'} />
+                  <InfoRow label="학년" value={detailData.grade || '-'} />
+                  <InfoRow label="보호자" value={detailData.parent_name || '-'} />
+                </div>
+              </section>
+
+              {/* 상태 변경 */}
+              <section>
+                <h4 className="text-[10px] text-[#75777f] font-bold uppercase tracking-widest mb-4">상태 변경</h4>
+                <div className="flex gap-1.5 flex-wrap">
+                  {ALL_STATUSES.filter(s => s.key !== detailData.status).map(s => (
+                    <button
+                      key={s.key}
+                      onClick={() => handleStatusChange(detailData.id, s.key)}
+                      className="px-3 py-1 rounded-lg text-[11px] font-bold transition-all hover:opacity-80"
+                      style={{
+                        border: `1px solid ${s.color}30`,
+                        background: s.color + '0a',
+                        color: s.color,
+                      }}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              {/* 체험 수업 */}
+              {(detailData.trials?.length > 0 || showTrialForm) && (
+                <section>
+                  <h4 className="text-[10px] text-[#75777f] font-bold uppercase tracking-widest mb-4">체험 수업</h4>
+                  {detailData.trials?.map(t => (
+                    <div key={t.id} className="bg-[#f8f9fa] rounded-lg p-3 mb-2 flex justify-between items-center">
+                      <div>
+                        <div className="text-sm font-semibold text-[#102044]">
+                          {new Date(t.trial_date).toLocaleDateString('ko-KR')} {t.trial_time || ''}
+                        </div>
+                        {t.feedback && <div className="text-xs text-slate-500 mt-0.5">{t.feedback}</div>}
+                      </div>
+                      <span className={`text-[11px] font-bold ${
+                        t.status === 'attended' ? 'text-emerald-500' : t.status === 'no_show' ? 'text-red-500' : 'text-slate-500'
+                      }`}>
                         {t.status === 'scheduled' ? '예정' : t.status === 'attended' ? '참석' : t.status === 'no_show' ? '불참' : '취소'}
                       </span>
                     </div>
-                    {t.feedback && <div style={{ fontSize: 13, marginTop: 4, color: 'var(--neutral-600)' }}>{t.feedback}</div>}
-                    {t.satisfaction != null && <div style={{ fontSize: 12, marginTop: 2, color: 'var(--neutral-500)' }}>만족도: {t.satisfaction}/5</div>}
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                  {showTrialForm && (
+                    <div className="bg-[#f8f9fa] rounded-lg p-3">
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400">수업</label>
+                          <select
+                            value={trialForm.class_id}
+                            onChange={e => setTrialForm({ ...trialForm, class_id: e.target.value })}
+                            className="w-full px-2 py-1.5 rounded-md border border-slate-200 text-xs bg-white"
+                          >
+                            <option value="">선택</option>
+                            {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400">날짜 *</label>
+                          <input
+                            type="date"
+                            value={trialForm.trial_date}
+                            onChange={e => setTrialForm({ ...trialForm, trial_date: e.target.value })}
+                            className="w-full px-2 py-1.5 rounded-md border border-slate-200 text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400">시간</label>
+                          <input
+                            type="time"
+                            value={trialForm.trial_time}
+                            onChange={e => setTrialForm({ ...trialForm, trial_time: e.target.value })}
+                            className="w-full px-2 py-1.5 rounded-md border border-slate-200 text-xs"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-1.5 mt-2.5 justify-end">
+                        <button onClick={() => setShowTrialForm(false)} className="px-3 py-1 rounded-md border border-slate-200 bg-white text-[11px] hover:bg-slate-50">취소</button>
+                        <button onClick={handleTrialSubmit} className="px-3 py-1 rounded-md bg-[#102044] text-white font-bold text-[11px] hover:opacity-90">예약</button>
+                      </div>
+                    </div>
+                  )}
+                </section>
+              )}
 
-            {/* 체험수업 예약 */}
-            {!showTrialForm ? (
-              <button onClick={() => setShowTrialForm(true)} style={{ ...btnOutline, fontSize: 12, marginBottom: 16 }}>+ 체험 수업 예약</button>
-            ) : (
-              <div style={{ ...cardStyle, marginBottom: 16, padding: 12 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                  <div>
-                    <label style={{ fontSize: 11, fontWeight: 600 }}>수업</label>
-                    <select value={trialForm.class_id} onChange={e => setTrialForm({ ...trialForm, class_id: e.target.value })} style={{ ...inputStyle, fontSize: 12 }}>
-                      <option value="">선택</option>
-                      {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              {/* 활동 타임라인 */}
+              <section id="act-section">
+                <h4 className="text-[10px] text-[#75777f] font-bold uppercase tracking-widest mb-6">활동 타임라인</h4>
+
+                {/* 활동 추가 폼 */}
+                <div className="bg-[#f8f9fa] rounded-xl p-4 mb-6">
+                  <div className="flex gap-2 mb-2">
+                    <select
+                      value={actForm.activity_type}
+                      onChange={e => setActForm({ ...actForm, activity_type: e.target.value })}
+                      className="px-3 py-1.5 rounded-md border border-slate-200 text-xs bg-white"
+                    >
+                      {ACTIVITY_TYPES.filter(t => t.key !== 'status_change').map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
                     </select>
+                    <input
+                      value={actForm.description}
+                      onChange={e => setActForm({ ...actForm, description: e.target.value })}
+                      placeholder="활동 내용"
+                      className="flex-1 px-3 py-1.5 rounded-md border border-slate-200 text-xs outline-none focus:border-[#004bf0]/40 focus:ring-2 focus:ring-[#004bf0]/5"
+                    />
                   </div>
-                  <div>
-                    <label style={{ fontSize: 11, fontWeight: 600 }}>날짜 *</label>
-                    <input type="date" value={trialForm.trial_date} onChange={e => setTrialForm({ ...trialForm, trial_date: e.target.value })} style={{ ...inputStyle, fontSize: 12 }} />
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    <input
+                      value={actForm.result}
+                      onChange={e => setActForm({ ...actForm, result: e.target.value })}
+                      placeholder="결과"
+                      className="px-3 py-1.5 rounded-md border border-slate-200 text-xs outline-none focus:border-[#004bf0]/40"
+                    />
+                    <input
+                      value={actForm.next_action}
+                      onChange={e => setActForm({ ...actForm, next_action: e.target.value })}
+                      placeholder="다음 행동"
+                      className="px-3 py-1.5 rounded-md border border-slate-200 text-xs outline-none focus:border-[#004bf0]/40"
+                    />
                   </div>
-                  <div>
-                    <label style={{ fontSize: 11, fontWeight: 600 }}>시간</label>
-                    <input type="time" value={trialForm.trial_time} onChange={e => setTrialForm({ ...trialForm, trial_time: e.target.value })} style={{ ...inputStyle, fontSize: 12 }} />
+                  <div className="text-right">
+                    <button
+                      onClick={handleAddActivity}
+                      className="px-4 py-1.5 rounded-lg bg-[#004bf0] text-white font-bold text-[11px] hover:opacity-90 transition-all"
+                    >기록 추가</button>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 6, marginTop: 8, justifyContent: 'flex-end' }}>
-                  <button onClick={() => setShowTrialForm(false)} style={{ ...btnOutline, fontSize: 12, padding: '4px 10px' }}>취소</button>
-                  <button onClick={handleTrialSubmit} style={{ ...btnPrimary, fontSize: 12, padding: '4px 10px' }}>예약</button>
-                </div>
-              </div>
-            )}
 
-            {/* 활동 추가 */}
-            <div style={{ ...cardStyle, marginBottom: 16, padding: 12 }}>
-              <h4 style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>활동 기록 추가</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 8, alignItems: 'start' }}>
-                <select value={actForm.activity_type} onChange={e => setActForm({ ...actForm, activity_type: e.target.value })} style={{ ...inputStyle, fontSize: 12 }}>
-                  {ACTIVITY_TYPES.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
-                </select>
-                <input value={actForm.description} onChange={e => setActForm({ ...actForm, description: e.target.value })} style={{ ...inputStyle, fontSize: 12 }} placeholder="활동 내용" />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
-                <input value={actForm.result} onChange={e => setActForm({ ...actForm, result: e.target.value })} style={{ ...inputStyle, fontSize: 12 }} placeholder="결과" />
-                <input value={actForm.next_action} onChange={e => setActForm({ ...actForm, next_action: e.target.value })} style={{ ...inputStyle, fontSize: 12 }} placeholder="다음 행동" />
-              </div>
-              <div style={{ textAlign: 'right', marginTop: 8 }}>
-                <button onClick={handleAddActivity} style={{ ...btnPrimary, fontSize: 12, padding: '4px 12px' }}>기록</button>
-              </div>
+                {/* 타임라인 */}
+                {detailData.activities?.length > 0 && (
+                  <div className="relative space-y-8 before:content-[''] before:absolute before:left-4 before:top-2 before:bottom-2 before:w-[2px] before:bg-[#edeeef]">
+                    {detailData.activities.map((act) => {
+                      const typeInfo = ACTIVITY_TYPES.find(t => t.key === act.activity_type) || { label: act.activity_type, icon: 'circle' };
+                      const isCall = act.activity_type === 'call';
+                      const isStatusChange = act.activity_type === 'status_change';
+
+                      return (
+                        <div key={act.id} className="relative pl-12">
+                          <div className={`absolute left-0 w-8 h-8 rounded-full flex items-center justify-center z-10 border-4 border-white ${
+                            isCall ? 'bg-[#004bf0]/10' : isStatusChange ? 'bg-purple-100' : 'bg-[#e7e8e9]'
+                          }`}>
+                            <span className={`material-icons text-sm ${
+                              isCall ? 'text-[#004bf0]' : isStatusChange ? 'text-purple-500' : 'text-[#45464e]'
+                            }`}>{typeInfo.icon}</span>
+                          </div>
+                          <div>
+                            <div className="flex justify-between mb-1">
+                              <p className="text-sm font-bold text-[#102044]">{act.description || typeInfo.label}</p>
+                              <span className="text-[10px] text-[#75777f]">
+                                {act.created_at ? new Date(act.created_at).toLocaleString('ko-KR') : ''}
+                              </span>
+                            </div>
+                            {act.result && <p className="text-xs text-[#45464e] leading-relaxed">결과: {act.result}</p>}
+                            {act.next_action && <p className="text-xs text-[#004bf0] mt-0.5">다음: {act.next_action}</p>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
             </div>
 
-            {/* 활동 타임라인 */}
-            {detailData.activities && detailData.activities.length > 0 && (
-              <div>
-                <h4 style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>활동 이력</h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {detailData.activities.map(act => (
-                    <div key={act.id} style={{ padding: '10px 12px', borderLeft: `3px solid ${act.activity_type === 'status_change' ? '#8b5cf6' : act.activity_type === 'call' ? '#3b82f6' : act.activity_type === 'trial_class' ? '#06b6d4' : '#6b7280'}`, background: 'var(--muted)', borderRadius: '0 8px 8px 0' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--neutral-500)', marginBottom: 4 }}>
-                        <span style={{ fontWeight: 600 }}>{ACTIVITY_TYPES.find(t => t.key === act.activity_type)?.label || act.activity_type}</span>
-                        <span>{act.created_at ? new Date(act.created_at).toLocaleString('ko-KR') : ''} {act.created_by_name ? `(${act.created_by_name})` : ''}</span>
-                      </div>
-                      <div style={{ fontSize: 13 }}>{act.description}</div>
-                      {act.result && <div style={{ fontSize: 12, color: 'var(--neutral-600)', marginTop: 2 }}>결과: {act.result}</div>}
-                      {act.next_action && <div style={{ fontSize: 12, color: 'var(--primary)', marginTop: 2 }}>다음: {act.next_action}</div>}
-                    </div>
-                  ))}
-                </div>
+            {/* 하단 메모 */}
+            <div className="p-6 bg-[#f3f4f5]">
+              <textarea
+                value={memoText}
+                onChange={e => setMemoText(e.target.value)}
+                className="w-full bg-white border-none rounded-lg text-sm p-3 focus:ring-2 focus:ring-[#004bf0]/20 min-h-[80px] transition-all resize-y"
+                placeholder="메모를 입력하세요..."
+              />
+              <div className="mt-2 flex justify-end">
+                <button
+                  onClick={handleMemoSave}
+                  className="bg-[#102044] text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:opacity-90 transition-all"
+                >저장</button>
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+          </aside>
+        </>
       )}
+    </div>
+  );
+}
+
+/* ─── 서브 컴포넌트들 ─────────────────────────────────── */
+
+function KanbanCard({ lead, onClick }) {
+  const pr = getPriorityInfo(lead.priority);
+  const days = daysSince(lead.created_at);
+
+  return (
+    <div
+      onClick={onClick}
+      className="bg-white p-4 rounded-lg shadow-sm border border-transparent hover:border-[#004bf0]/20 transition-all cursor-pointer group"
+    >
+      {/* 상단: 채널 배지 + 우선순위 */}
+      <div className="flex justify-between items-start mb-2">
+        {lead.source ? (
+          <span className="bg-[#f3f4f5] text-[#45464e] text-[10px] font-bold px-2 py-0.5 rounded-full">
+            {lead.source}
+          </span>
+        ) : <span />}
+        <span className="text-xs">{pr.emoji}</span>
+      </div>
+
+      {/* 이름 + 학년 */}
+      <h4 className="font-bold text-base mb-1 text-[#102044]">
+        {lead.student_name}
+        {lead.grade && <span className="text-xs font-normal text-[#75777f] ml-1.5">{lead.grade}</span>}
+      </h4>
+
+      {/* 연락처 */}
+      <p className="text-xs text-[#45464e] mb-4">{maskPhone(lead.parent_phone)}</p>
+
+      {/* 하단: 담당자 + N일째 */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${
+            lead.assigned_name ? 'bg-[#004bf0] text-white' : 'bg-[#e1e3e4] text-slate-400'
+          }`}>
+            {lead.assigned_name ? lead.assigned_name.charAt(0) : '?'}
+          </div>
+          {days !== null && (
+            <span className="text-[10px] text-[#75777f] font-medium">{days}일째</span>
+          )}
+        </div>
+        {lead.next_contact_date && (
+          <span className={`text-[10px] font-bold ${
+            new Date(lead.next_contact_date) < new Date(new Date().toDateString())
+              ? 'text-red-500' : 'text-[#45464e]'
+          }`}>
+            {new Date(lead.next_contact_date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function InfoRow({ label, value, color }) {
+  return (
+    <div className="flex justify-between">
+      <span className="text-sm text-[#75777f]">{label}</span>
+      <span className="text-sm font-bold" style={color ? { color } : undefined}>{value}</span>
+    </div>
+  );
+}
+
+function FormField({ label, value, onChange, placeholder }) {
+  return (
+    <div>
+      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">{label}</label>
+      <input
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 text-sm"
+      />
+    </div>
+  );
+}
+
+function FormSelect({ label, value, onChange, options }) {
+  return (
+    <div>
+      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">{label}</label>
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 text-sm"
+      >
+        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
     </div>
   );
 }

@@ -1,9 +1,21 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { api, apiPut } from '../../api';
 import { useTenantConfig } from '../../contexts/TenantContext';
 import { useUIStore } from '../../stores/useUIStore';
 
+const SETTINGS_TABS = [
+  { label: '학원 정보', path: '/admin/settings' },
+  { label: '구독 관리', path: '/admin/subscription' },
+  { label: '역할·권한', path: null },
+  { label: '출결 정책', path: null },
+  { label: '수납 정책', path: null },
+  { label: '알림 설정', path: null },
+];
+
 export default function AcademySettings() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { config, setConfig } = useTenantConfig();
   const { theme, setTheme } = useUIStore();
   const [schools, setSchools] = useState([]);
@@ -96,187 +108,325 @@ export default function AcademySettings() {
   };
 
   const themeOptions = [
-    { value: 'light', label: '라이트', icon: '\u2600\uFE0F' },
-    { value: 'dark', label: '다크', icon: '\uD83C\uDF19' },
-    { value: 'system', label: '시스템', icon: '\uD83D\uDCBB' },
+    { value: 'light', label: '라이트', icon: 'light_mode' },
+    { value: 'dark', label: '다크', icon: 'dark_mode' },
+    { value: 'system', label: '시스템', icon: 'computer' },
   ];
 
-  const sectionStyle = {
-    background: 'var(--card)', borderRadius: 12, padding: 20,
-    marginBottom: 20, border: '1px solid var(--border)',
-  };
+  const inputCls = 'w-full px-5 py-4 bg-[#edeeef] rounded-lg border border-transparent text-sm outline-none focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 transition-all';
 
   return (
-    <div className="main-content" style={{ padding: 20, maxWidth: 1100, margin: '0 auto' }}>
-      <h2 style={{ fontSize: '1.5em', fontWeight: 800, marginBottom: 24 }}>학원 설정</h2>
+    <div className="p-10 space-y-8 max-w-7xl mx-auto w-full">
+      {/* Settings Tabs */}
+      <div className="flex items-center gap-6 border-b border-slate-200/50 -mt-2 mb-2">
+        {SETTINGS_TABS.map(tab => (
+          <button
+            key={tab.label}
+            onClick={() => tab.path && navigate(tab.path)}
+            className={`pb-3 text-sm font-semibold uppercase tracking-wider transition-all ${
+              tab.path === location.pathname
+                ? 'text-[#102044] border-b-2 border-[#102044] font-bold'
+                : tab.path
+                  ? 'text-slate-500 hover:text-[#102044]'
+                  : 'text-slate-300 cursor-default'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
+      {/* Page Title */}
+      <div>
+        <h3 className="text-2xl font-extrabold text-[#102044] tracking-tight">학원 정보</h3>
+        <p className="text-sm text-slate-500 mt-1">학원 기본 정보 및 시스템 설정을 관리합니다.</p>
+      </div>
+
+      {/* Message */}
       {message && (
-        <div style={{
-          padding: '10px 16px', borderRadius: 8, marginBottom: 16,
-          background: message.includes('실패') ? 'var(--destructive-light)' : 'var(--success-light)',
-          color: message.includes('실패') ? 'oklch(48% 0.20 25)' : 'oklch(52% 0.14 160)', fontSize: 14
-        }}>{message}</div>
+        <div className={`px-5 py-3 rounded-xl text-sm font-semibold ${
+          message.includes('실패') ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'
+        }`}>
+          {message}
+        </div>
       )}
 
-      {/* 테마 설정 */}
-      <section style={sectionStyle}>
-        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>테마 설정</h3>
-        <div style={{ display: 'flex', gap: 8 }}>
+      {/* Theme Setting */}
+      <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-8">
+        <div className="flex items-center gap-2 mb-6">
+          <span className="material-symbols-outlined text-[#102044]">palette</span>
+          <h4 className="text-lg font-bold text-[#102044]">테마 설정</h4>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
           {themeOptions.map(opt => (
-            <button key={opt.value} onClick={() => setTheme(opt.value)} style={{
-              flex: 1, padding: '12px 16px', borderRadius: 10, cursor: 'pointer',
-              border: theme === opt.value ? '2px solid var(--primary)' : '2px solid var(--border)',
-              background: theme === opt.value ? 'var(--primary-light, oklch(95% 0.03 250))' : 'var(--muted)',
-              color: 'var(--foreground)', fontFamily: 'inherit', fontSize: 14, fontWeight: 600,
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-              transition: 'all 0.15s ease',
-            }}>
-              <span style={{ fontSize: 24 }}>{opt.icon}</span>
-              <span>{opt.label}</span>
+            <button
+              key={opt.value}
+              onClick={() => setTheme(opt.value)}
+              className={`flex flex-col items-center gap-3 p-5 rounded-xl transition-all ${
+                theme === opt.value
+                  ? 'bg-[#004bf0]/5 border-2 border-[#004bf0] ring-2 ring-[#004bf0]/10'
+                  : 'bg-[#f3f4f5] border-2 border-transparent hover:border-slate-200'
+              }`}
+            >
+              <span className={`material-symbols-outlined text-2xl ${
+                theme === opt.value ? 'text-[#004bf0]' : 'text-slate-400'
+              }`}>
+                {opt.icon}
+              </span>
+              <span className={`text-sm font-semibold ${
+                theme === opt.value ? 'text-[#102044]' : 'text-slate-500'
+              }`}>
+                {opt.label}
+              </span>
             </button>
           ))}
         </div>
-      </section>
+      </div>
 
-      {/* 사이드바 설정 */}
-      <section style={sectionStyle}>
-        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>사이드바 설정</h3>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* Sidebar Setting */}
+      <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-8">
+        <div className="flex items-center gap-2 mb-6">
+          <span className="material-symbols-outlined text-[#102044]">side_navigation</span>
+          <h4 className="text-lg font-bold text-[#102044]">사이드바 설정</h4>
+        </div>
+        <div className="flex items-center justify-between">
           <div>
-            <div style={{ fontSize: 14, fontWeight: 600 }}>사이드바 고정</div>
-            <div style={{ fontSize: 13, color: 'var(--muted-foreground)', marginTop: 2 }}>
-              고정하면 사이드바가 항상 펼쳐져 있습니다
-            </div>
+            <p className="text-sm font-semibold text-[#102044]">사이드바 고정</p>
+            <p className="text-xs text-slate-500 mt-1">고정하면 사이드바가 항상 펼쳐져 있습니다</p>
           </div>
-          <button onClick={handleToggleSidebarPin} style={{
-            width: 52, height: 28, borderRadius: 14, border: 'none', cursor: 'pointer',
-            background: sidebarPinned ? 'var(--primary)' : 'var(--neutral-300, oklch(75% 0 0))',
-            position: 'relative', transition: 'background 0.2s ease',
-          }}>
-            <span style={{
-              position: 'absolute', top: 3, left: sidebarPinned ? 27 : 3,
-              width: 22, height: 22, borderRadius: '50%', background: 'white',
-              transition: 'left 0.2s ease', boxShadow: '0 1px 3px oklch(0% 0 0 / 0.2)',
-            }} />
+          <button
+            onClick={handleToggleSidebarPin}
+            className={`relative w-14 h-8 rounded-full transition-colors duration-200 ${
+              sidebarPinned ? 'bg-[#004bf0]' : 'bg-slate-300'
+            }`}
+          >
+            <span
+              className="absolute top-1 w-6 h-6 rounded-full bg-white shadow-sm transition-all duration-200"
+              style={{ left: sidebarPinned ? 'calc(100% - 28px)' : '4px' }}
+            />
           </button>
         </div>
-      </section>
+      </div>
 
-      {/* 기본 정보 */}
-      <section style={sectionStyle}>
-        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>기본 정보</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* Basic Info */}
+      <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-8">
+        <div className="flex items-center gap-2 mb-6">
+          <span className="material-symbols-outlined text-[#102044]">info</span>
+          <h4 className="text-lg font-bold text-[#102044]">기본 정보</h4>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, display: 'block' }}>사이트 제목</label>
-            <input value={siteTitle} onChange={e => setSiteTitle(e.target.value)} placeholder="학원 이름" />
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">사이트 제목</label>
+            <input
+              value={siteTitle}
+              onChange={e => setSiteTitle(e.target.value)}
+              placeholder="학원 이름"
+              className={inputCls}
+            />
           </div>
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, display: 'block' }}>메인 슬로건</label>
-            <input value={mainTitle} onChange={e => setMainTitle(e.target.value)} placeholder="슬로건 문구" />
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">메인 슬로건</label>
+            <input
+              value={mainTitle}
+              onChange={e => setMainTitle(e.target.value)}
+              placeholder="슬로건 문구"
+              className={inputCls}
+            />
           </div>
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, display: 'block' }}>전화번호</label>
-            <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="02-1234-5678" />
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">전화번호</label>
+            <input
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+              placeholder="02-1234-5678"
+              className={inputCls}
+            />
           </div>
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, display: 'block' }}>주소</label>
-            <input value={address} onChange={e => setAddress(e.target.value)} placeholder="학원 주소" />
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">주소</label>
+            <input
+              value={address}
+              onChange={e => setAddress(e.target.value)}
+              placeholder="학원 주소"
+              className={inputCls}
+            />
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* 학교 관리 */}
-      <section style={sectionStyle}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700 }}>학교/학년 관리</h3>
-          <button className="btn btn-primary" onClick={addSchool} style={{ fontSize: 13, padding: '6px 14px' }}>+ 학교 추가</button>
+      {/* Schools */}
+      <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#102044]">school</span>
+            <h4 className="text-lg font-bold text-[#102044]">학교/학년 관리</h4>
+          </div>
+          <button
+            onClick={addSchool}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold text-[#004bf0] border border-[#004bf0]/20 hover:bg-[#004bf0]/5 transition-all"
+          >
+            <span className="material-symbols-outlined text-sm">add</span>
+            학교 추가
+          </button>
         </div>
-        {schools.map((s, i) => (
-          <div key={i} style={{ padding: 12, borderRadius: 8, background: 'var(--muted)', marginBottom: 8 }}>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
-              <input value={s.name} onChange={e => updateSchool(i, 'name', e.target.value)}
-                placeholder="학교 이름" style={{ flex: 1 }} />
-              <button onClick={() => removeSchool(i)} style={{
-                background: 'var(--destructive-light)', color: 'oklch(48% 0.20 25)', border: 'none', borderRadius: 6,
-                padding: '6px 10px', cursor: 'pointer', fontSize: 12
-              }}>삭제</button>
+        <div className="space-y-4">
+          {schools.length === 0 && (
+            <p className="text-sm text-slate-400 py-4 text-center">등록된 학교가 없습니다. 학교를 추가해 주세요.</p>
+          )}
+          {schools.map((s, i) => (
+            <div key={i} className="bg-[#f3f4f5] rounded-xl p-5">
+              <div className="flex gap-3 items-center mb-3">
+                <input
+                  value={s.name}
+                  onChange={e => updateSchool(i, 'name', e.target.value)}
+                  placeholder="학교 이름"
+                  className="flex-1 px-4 py-3 bg-white rounded-lg border border-transparent text-sm font-semibold outline-none focus:border-[#004bf0]/40 focus:ring-4 focus:ring-[#004bf0]/5"
+                />
+                <button
+                  onClick={() => removeSchool(i)}
+                  className="px-3 py-3 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 transition-all"
+                >
+                  <span className="material-symbols-outlined text-sm">delete</span>
+                </button>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">학년 (쉼표로 구분)</label>
+                <input
+                  value={(s.grades || []).join(', ')}
+                  onChange={e => updateSchool(i, 'grades', e.target.value.split(',').map(g => g.trim()).filter(Boolean))}
+                  placeholder="1학년, 2학년, 3학년"
+                  className="w-full px-4 py-3 bg-white rounded-lg border border-transparent text-sm outline-none focus:border-[#004bf0]/40 focus:ring-4 focus:ring-[#004bf0]/5"
+                />
+              </div>
             </div>
-            <div style={{ fontSize: 12, color: 'var(--neutral-500)', marginBottom: 4 }}>학년 (쉼표로 구분)</div>
-            <input value={(s.grades || []).join(', ')}
-              onChange={e => updateSchool(i, 'grades', e.target.value.split(',').map(g => g.trim()).filter(Boolean))}
-              placeholder="1학년, 2학년, 3학년" style={{ fontSize: 13 }} />
-          </div>
-        ))}
-      </section>
-
-      {/* 시험 유형 */}
-      <section style={sectionStyle}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700 }}>시험 유형 관리</h3>
-          <button className="btn btn-primary" onClick={addExamCategory} style={{ fontSize: 13, padding: '6px 14px' }}>+ 카테고리 추가</button>
+          ))}
         </div>
-        {examTypes.map((cat, i) => (
-          <div key={i} style={{ padding: 14, borderRadius: 8, background: 'var(--muted)', marginBottom: 10 }}>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }}>
-              <input value={cat.label || ''} onChange={e => updateExamCategory(i, 'label', e.target.value)}
-                placeholder="카테고리명 (예: 모의고사)" style={{ flex: 1, fontWeight: 600 }} />
-              <input value={cat.key || ''} onChange={e => updateExamCategory(i, 'key', e.target.value)}
-                placeholder="key (예: mock)" style={{ width: 120, fontSize: 12 }} />
-              <button onClick={() => removeExamCategory(i)} style={{
-                background: 'var(--destructive-light)', color: 'oklch(48% 0.20 25)', border: 'none', borderRadius: 6,
-                padding: '6px 10px', cursor: 'pointer', fontSize: 12
-              }}>삭제</button>
-            </div>
-            <div style={{ paddingLeft: 12 }}>
-              <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 6, fontWeight: 600 }}>하위 시험 유형</div>
-              {(cat.types || []).map((t, j) => (
-                <div key={j} style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
-                  <input value={t} onChange={e => updateSubType(i, j, e.target.value)}
-                    placeholder="시험 유형명 (예: 학력평가 모의고사)" style={{ flex: 1, fontSize: 13 }} />
-                  <button onClick={() => removeSubType(i, j)} style={{
-                    background: 'none', color: 'var(--muted-foreground)', border: 'none',
-                    cursor: 'pointer', fontSize: 14, padding: '2px 6px'
-                  }}>x</button>
+      </div>
+
+      {/* Exam Types */}
+      <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#102044]">quiz</span>
+            <h4 className="text-lg font-bold text-[#102044]">시험 유형 관리</h4>
+          </div>
+          <button
+            onClick={addExamCategory}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold text-[#004bf0] border border-[#004bf0]/20 hover:bg-[#004bf0]/5 transition-all"
+          >
+            <span className="material-symbols-outlined text-sm">add</span>
+            카테고리 추가
+          </button>
+        </div>
+        <div className="space-y-4">
+          {examTypes.length === 0 && (
+            <p className="text-sm text-slate-400 py-4 text-center">등록된 시험 유형이 없습니다.</p>
+          )}
+          {examTypes.map((cat, i) => (
+            <div key={i} className="bg-[#f3f4f5] rounded-xl p-5">
+              <div className="flex gap-3 items-center mb-4">
+                <input
+                  value={cat.label || ''}
+                  onChange={e => updateExamCategory(i, 'label', e.target.value)}
+                  placeholder="카테고리명 (예: 모의고사)"
+                  className="flex-1 px-4 py-3 bg-white rounded-lg border border-transparent text-sm font-semibold outline-none focus:border-[#004bf0]/40 focus:ring-4 focus:ring-[#004bf0]/5"
+                />
+                <input
+                  value={cat.key || ''}
+                  onChange={e => updateExamCategory(i, 'key', e.target.value)}
+                  placeholder="key"
+                  className="w-28 px-3 py-3 bg-white rounded-lg border border-transparent text-xs outline-none focus:border-[#004bf0]/40 focus:ring-4 focus:ring-[#004bf0]/5"
+                  style={{ fontFamily: 'monospace' }}
+                />
+                <button
+                  onClick={() => removeExamCategory(i)}
+                  className="px-3 py-3 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 transition-all"
+                >
+                  <span className="material-symbols-outlined text-sm">delete</span>
+                </button>
+              </div>
+              <div className="pl-4 border-l-2 border-slate-200 ml-2">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">하위 시험 유형</p>
+                <div className="space-y-2">
+                  {(cat.types || []).map((t, j) => (
+                    <div key={j} className="flex gap-2 items-center">
+                      <input
+                        value={t}
+                        onChange={e => updateSubType(i, j, e.target.value)}
+                        placeholder="시험 유형명"
+                        className="flex-1 px-4 py-2.5 bg-white rounded-lg border border-transparent text-sm outline-none focus:border-[#004bf0]/40 focus:ring-4 focus:ring-[#004bf0]/5"
+                      />
+                      <button
+                        onClick={() => removeSubType(i, j)}
+                        className="p-1.5 rounded text-slate-400 hover:text-red-500 transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-sm">close</span>
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              ))}
-              <button onClick={() => addSubType(i)} style={{
-                background: 'none', border: '1px dashed var(--border)', borderRadius: 6,
-                padding: '4px 12px', cursor: 'pointer', fontSize: 12, color: 'var(--muted-foreground)',
-                fontFamily: 'inherit', marginTop: 4
-              }}>+ 하위 유형 추가</button>
+                <button
+                  onClick={() => addSubType(i)}
+                  className="mt-3 flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 border border-dashed border-slate-300 hover:border-[#004bf0]/30 hover:text-[#004bf0] transition-all"
+                >
+                  <span className="material-symbols-outlined text-sm">add</span>
+                  하위 유형 추가
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
-      </section>
-
-      {/* 클리닉 토픽 */}
-      <section style={sectionStyle}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700 }}>클리닉 질문 주제</h3>
-          <button className="btn btn-primary" onClick={() => setClinicTopics([...clinicTopics, ''])}
-            style={{ fontSize: 13, padding: '6px 14px' }}>+ 주제 추가</button>
+          ))}
         </div>
-        <p style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 10 }}>
+      </div>
+
+      {/* Clinic Topics */}
+      <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-8">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#102044]">psychology</span>
+            <h4 className="text-lg font-bold text-[#102044]">클리닉 질문 주제</h4>
+          </div>
+          <button
+            onClick={() => setClinicTopics([...clinicTopics, ''])}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold text-[#004bf0] border border-[#004bf0]/20 hover:bg-[#004bf0]/5 transition-all"
+          >
+            <span className="material-symbols-outlined text-sm">add</span>
+            주제 추가
+          </button>
+        </div>
+        <p className="text-xs text-slate-500 mb-4">
           비어있으면 기본 주제가 사용됩니다 (수업 내용 질문, 시험 분석, 학습 방법 상담 등)
         </p>
-        {clinicTopics.map((t, i) => (
-          <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
-            <input value={t} onChange={e => {
-              const next = [...clinicTopics];
-              next[i] = e.target.value;
-              setClinicTopics(next);
-            }} placeholder="주제명" style={{ flex: 1, fontSize: 13 }} />
-            <button onClick={() => setClinicTopics(clinicTopics.filter((_, j) => j !== i))} style={{
-              background: 'none', color: 'var(--muted-foreground)', border: 'none',
-              cursor: 'pointer', fontSize: 14, padding: '2px 6px'
-            }}>x</button>
-          </div>
-        ))}
-      </section>
+        <div className="space-y-2">
+          {clinicTopics.map((t, i) => (
+            <div key={i} className="flex gap-2 items-center">
+              <input
+                value={t}
+                onChange={e => {
+                  const next = [...clinicTopics];
+                  next[i] = e.target.value;
+                  setClinicTopics(next);
+                }}
+                placeholder="주제명"
+                className="flex-1 px-4 py-3 bg-[#edeeef] rounded-lg border border-transparent text-sm outline-none focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5"
+              />
+              <button
+                onClick={() => setClinicTopics(clinicTopics.filter((_, j) => j !== i))}
+                className="p-2 rounded-lg text-slate-400 hover:text-red-500 transition-colors"
+              >
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
 
-      <button className="btn btn-primary" onClick={save} disabled={saving}
-        style={{ width: '100%', fontSize: 16, padding: 14 }}>
-        {saving ? '저장 중...' : '설정 저장'}
+      {/* Save Button */}
+      <button
+        onClick={save}
+        disabled={saving}
+        className="w-full py-4 rounded-xl bg-[#102044] text-white text-base font-bold hover:opacity-90 active:scale-[0.99] transition-all disabled:opacity-50"
+      >
+        {saving ? '저장 중...' : '변경사항 저장'}
       </button>
     </div>
   );

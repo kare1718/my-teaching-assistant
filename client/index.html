@@ -17,6 +17,21 @@
     <link rel="icon" type="image/png" href="/icons/icon-192.png" />
     <!-- Paperlogy 폰트 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy.css" />
+    <!-- Material Symbols -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" />
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        corePlugins: { preflight: false },
+        theme: { extend: {} }
+      }
+    </script>
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+    </style>
   </head>
   <body class="notranslate" translate="no">
     <div id="root"></div>

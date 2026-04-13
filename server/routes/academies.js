@@ -60,7 +60,7 @@ router.put('/settings', authenticateToken, requireAdmin, async (req, res) => {
   try {
     if (!req.academyId) return res.status(400).json({ error: '학원 정보가 없습니다.' });
 
-    const { schools, examTypes, siteTitle, mainTitle, branding, academyInfo } = req.body;
+    const { schools, examTypes, siteTitle, mainTitle, branding, academyInfo, rolePermissions, customRoles } = req.body;
 
     const academy = await getOne('SELECT settings FROM academies WHERE id = ?', [req.academyId]);
     if (!academy) return res.status(404).json({ error: '학원을 찾을 수 없습니다.' });
@@ -73,6 +73,8 @@ router.put('/settings', authenticateToken, requireAdmin, async (req, res) => {
     if (mainTitle !== undefined) current.mainTitle = mainTitle;
     if (branding !== undefined) current.branding = { ...current.branding, ...branding };
     if (academyInfo !== undefined) current.academyInfo = academyInfo;
+    if (rolePermissions !== undefined) current.rolePermissions = rolePermissions;
+    if (customRoles !== undefined) current.customRoles = customRoles;
 
     await runQuery('UPDATE academies SET settings = ? WHERE id = ?', [JSON.stringify(current), req.academyId]);
 

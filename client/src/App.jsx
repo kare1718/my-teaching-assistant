@@ -18,6 +18,7 @@ import ReviewManage from './pages/admin/ReviewManage';
 import QnAManage from './pages/admin/QnAManage';
 import AdminStudentView from './pages/admin/AdminStudentView';
 import AcademySettings from './pages/admin/AcademySettings';
+import RolePermissions from './pages/admin/RolePermissions';
 import SubscriptionPage from './pages/admin/SubscriptionPage';
 import MyPage from './pages/student/MyPage';
 import Notices from './pages/student/Notices';
@@ -62,6 +63,7 @@ import PreRegistered from './pages/admin/PreRegistered';
 import ParentManage from './pages/admin/ParentManage';
 import ProfileManage from './pages/admin/ProfileManage';
 import UserGuide from './pages/admin/UserGuide';
+import AutomationManage from './pages/admin/AutomationManage';
 import AttendanceCheck from './pages/student/AttendanceCheck';
 import Portfolio from './pages/student/Portfolio';
 import AIHub from './pages/student/AIHub';
@@ -210,6 +212,7 @@ function AppLayout() {
             <Route path="/admin/homework" element={<ProtectedRoute role="admin"><HomeworkManage /></ProtectedRoute>} />
             <Route path="/admin/reports" element={<ProtectedRoute role="admin"><ReportManage /></ProtectedRoute>} />
             <Route path="/admin/settings" element={<ProtectedRoute role="admin"><AcademySettings /></ProtectedRoute>} />
+            <Route path="/admin/settings/roles" element={<ProtectedRoute role="admin"><RolePermissions /></ProtectedRoute>} />
             <Route path="/admin/subscription" element={<ProtectedRoute role="admin"><SubscriptionPage /></ProtectedRoute>} />
             <Route path="/admin/attendance" element={<ProtectedRoute role="admin"><AttendanceManage /></ProtectedRoute>} />
             <Route path="/admin/tuition" element={<ProtectedRoute role="admin"><TuitionManage /></ProtectedRoute>} />
@@ -225,6 +228,7 @@ function AppLayout() {
             <Route path="/admin/profile" element={<ProtectedRoute role="admin"><ProfileManage /></ProtectedRoute>} />
             <Route path="/admin/classes" element={<ProtectedRoute role="admin"><ClassManage /></ProtectedRoute>} />
             <Route path="/admin/guide" element={<ProtectedRoute role="admin"><UserGuide /></ProtectedRoute>} />
+            <Route path="/admin/automation" element={<ProtectedRoute role="admin"><AutomationManage /></ProtectedRoute>} />
 
             <Route path="/student" element={<ProtectedRoute role="student"><MyPage /></ProtectedRoute>} />
             <Route path="/student/notices" element={<ProtectedRoute role="student"><Notices /></ProtectedRoute>} />
