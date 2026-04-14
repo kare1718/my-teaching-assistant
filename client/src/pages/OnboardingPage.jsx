@@ -562,12 +562,44 @@ export default function OnboardingPage() {
                 </div>
               </div>
 
-              {/* CTA */}
+              {/* 환영 CTA: 3가지 시작 옵션 */}
+              <div className="w-full mb-4 text-left">
+                <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">시작하는 방법</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/login?academy=${form.slug}`)}
+                    className="p-5 rounded-xl border border-slate-200 text-left hover:border-[#004bf0] hover:bg-[#f0f4ff] transition-all"
+                  >
+                    <div className="text-2xl mb-1">🚀</div>
+                    <div className="font-extrabold text-[#102044]">빈 학원에서 시작하기</div>
+                    <div className="text-xs text-slate-500 mt-1">실제 학원 데이터를 단계별로 입력합니다. 체크리스트가 안내해드립니다.</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/login?academy=${form.slug}&sample=1`)}
+                    className="p-5 rounded-xl border border-slate-200 text-left hover:border-[#004bf0] hover:bg-[#f0f4ff] transition-all"
+                  >
+                    <div className="text-2xl mb-1">🎨</div>
+                    <div className="font-extrabold text-[#102044]">샘플 데이터로 체험하기</div>
+                    <div className="text-xs text-slate-500 mt-1">미리 준비된 샘플 학원으로 기능을 먼저 체험하세요. 나중에 언제든 삭제할 수 있습니다.</div>
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/login?academy=${form.slug}&import=1`)}
+                  className="w-full mt-3 py-3 rounded-lg border-2 border-dashed border-slate-300 text-sm font-bold text-[#102044] hover:border-[#004bf0] hover:text-[#004bf0] transition-all"
+                >
+                  📂 엑셀 파일이 있나요? · 엑셀 Import 시작
+                </button>
+              </div>
+
+              {/* 기본 CTA */}
               <button
                 className="w-full py-4 px-6 bg-[#102044] text-white rounded-xl font-bold text-lg hover:bg-[#004bf0] transition-all active:scale-[0.98] focus:ring-4 focus:ring-[#102044]/20"
                 onClick={() => navigate(`/login?academy=${form.slug}`)}
               >
-                시작하기
+                지금 로그인하기
               </button>
             </div>
           )}

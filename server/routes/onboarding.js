@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const { runQuery, runInsert, getOne, getAll } = require('../db/database');
 const { JWT_SECRET } = require('../middleware/auth');
 const { TIER_LIMITS } = require('../middleware/subscription');
+const { track } = require('../services/analytics');
 
 const router = express.Router();
 
@@ -74,6 +75,12 @@ router.post('/create-academy', async (req, res) => {
       { expiresIn: '7d' }
     );
 
+    // [KPI] signup + onboarding_completed 이벤트 기록
+    req.academyId = academyId;
+    req.user = { id: userId, role: 'admin', academy_id: academyId };
+    track(req, 'signup', { source: 'onboarding', subject }).catch(() => {});
+    track(req, 'onboarding_completed', { subject }).catch(() => {});
+
     res.json({
       message: '학원이 생성되었습니다!',
       token,
@@ -130,5 +137,61 @@ async function seedDefaults(academyId) {
     );
   }
 }
+
+// GET /api/onboarding/progress — 온보딩 체크리스트 진행 상황
+const { authenticateToken, requireAdmin } = require('../middleware/auth');
+router.get('/progress', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const academyId = req.academyId;
+    if (!academyId) return res.json({ items: [], hidden: true });
+
+    const academy = await getOne('SELECT created_at FROM academies WHERE id = ?', [academyId]);
+    const createdAt = academy?.created_at ? new Date(academy.created_at) : new Date();
+    const daysOld = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+
+    const safeCount = async (sql, params) => {
+      try { const r = await getOne(sql, params); return Number(r?.c || 0); }
+      catch (e) { return 0; }
+    };
+
+    const studentCount = await safeCount(
+      `SELECT COUNT(*) as c FROM students s JOIN users u ON s.user_id = u.id
+       WHERE s.academy_id = ? AND u.role = 'student'`,
+      [academyId]
+    );
+    const classCount = await safeCount(`SELECT COUNT(*) as c FROM classes WHERE academy_id = ?`, [academyId]);
+    const classStudentCount = await safeCount(
+      `SELECT COUNT(*) as c FROM class_students cs JOIN classes c ON cs.class_id = c.id WHERE c.academy_id = ?`,
+      [academyId]
+    );
+    const attendanceCount = await safeCount(`SELECT COUNT(*) as c FROM attendance WHERE academy_id = ?`, [academyId]);
+    const tuitionCount = await safeCount(`SELECT COUNT(*) as c FROM tuition_records WHERE academy_id = ?`, [academyId]);
+    const noticeCount = await safeCount(`SELECT COUNT(*) as c FROM notices WHERE academy_id = ?`, [academyId]);
+    const parentCount = await safeCount(`SELECT COUNT(*) as c FROM parents WHERE academy_id = ?`, [academyId]);
+    const automationCount = await safeCount(
+      `SELECT COUNT(*) as c FROM automation_rules WHERE academy_id = ? AND enabled = true`,
+      [academyId]
+    );
+
+    const items = [
+      { key: 'academy', label: '학원 정보 등록', done: true, path: '/admin/settings' },
+      { key: 'student', label: '첫 학생 등록 (또는 엑셀 Import)', done: studentCount > 0, path: '/admin/students' },
+      { key: 'class', label: '첫 반 생성 + 수강생 배정', done: classCount > 0 && classStudentCount > 0, path: '/admin/classes' },
+      { key: 'attendance', label: '출결 기록 1건', done: attendanceCount > 0, path: '/admin/attendance' },
+      { key: 'tuition', label: '수강료 청구 1건 생성', done: tuitionCount > 0, path: '/admin/tuition' },
+      { key: 'notice', label: '공지사항 1건 발송', done: noticeCount > 0, path: '/admin/notices' },
+      { key: 'parent', label: '보호자 1명 연결', done: parentCount > 0, path: '/admin/parents' },
+      { key: 'automation', label: '자동화 규칙 1개 활성화 (선택)', done: automationCount > 0, path: '/admin/automation', optional: true },
+    ];
+    const doneCount = items.filter(x => x.done).length;
+    const total = items.length;
+    const progress = Math.round((doneCount / total) * 100);
+
+    res.json({ items, progress, doneCount, total, hidden: daysOld > 7, daysOld });
+  } catch (err) {
+    console.error('[onboarding/progress]', err);
+    res.status(500).json({ error: '진행 상황을 불러오지 못했습니다.' });
+  }
+});
 
 module.exports = router;

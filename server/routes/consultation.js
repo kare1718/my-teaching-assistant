@@ -4,6 +4,7 @@ const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { requirePermission } = require('../middleware/permission');
 const { addEvent } = require('../services/timeline');
 const { logAction } = require('../services/audit');
+const { track } = require('../services/analytics');
 
 const router = express.Router();
 router.use(authenticateToken);
@@ -58,6 +59,9 @@ router.post('/', requirePermission('consultations', 'create'), async (req, res) 
     addEvent(req.academyId, student_id, 'consultation', `상담: ${counselor}`,
       content, { consultation_id: id, tags: tagsStr }, req.user?.id
     ).catch(e => console.error('[timeline]', e.message));
+
+    // [KPI] feature_used
+    track(req, 'feature_used', { feature: 'consultation.create' }).catch(() => {});
 
     res.json({ id, message: '상담 기록이 저장되었습니다.' });
   } catch (err) {

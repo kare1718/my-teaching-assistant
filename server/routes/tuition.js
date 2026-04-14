@@ -5,6 +5,7 @@ const { requirePermission } = require('../middleware/permission');
 const { sendBulk } = require('../services/notification');
 const { addEvent } = require('../services/timeline');
 const { logAction } = require('../services/audit');
+const { track, trackFirst } = require('../services/analytics');
 
 const router = express.Router();
 router.use(authenticateToken);
@@ -134,6 +135,10 @@ router.post('/records', async (req, res) => {
     addEvent(req.academyId, student_id, 'tuition_billed', `수강료 청구: ${Number(finalAmount).toLocaleString()}원`,
       null, { tuition_record_id: id, amount: finalAmount, due_date }, req.user?.id
     ).catch(e => console.error('[timeline]', e.message));
+
+    // [KPI] first_tuition_billed + feature_used
+    trackFirst(req, 'first_tuition_billed', { amount: Number(finalAmount) }).catch(() => {});
+    track(req, 'feature_used', { feature: 'tuition.create', amount: Number(finalAmount) }).catch(() => {});
 
     res.json({ id, message: '수납 기록이 생성되었습니다.' });
   } catch (err) {
@@ -692,6 +697,392 @@ router.post('/generate-monthly', async (req, res) => {
   } catch (err) {
     console.error('[자동 청구 생성 오류]', err.message);
     res.status(500).json({ error: '자동 청구 생성 중 오류가 발생했습니다.' });
+  }
+});
+
+// ===========================================================================
+// === 수납 예외 처리 8가지 (migration 022) ==================================
+// ===========================================================================
+
+const tuitionCalc = require('../services/tuitionCalculator');
+
+// --- 할인 규칙 CRUD ---
+
+router.get('/discount-rules', async (req, res) => {
+  try {
+    const rows = await getAll(
+      'SELECT * FROM discount_rules WHERE academy_id = ? ORDER BY created_at DESC',
+      [req.academyId]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('[할인 규칙 목록]', err.message);
+    res.status(500).json({ error: '할인 규칙 조회 중 오류가 발생했습니다.' });
+  }
+});
+
+router.post('/discount-rules', async (req, res) => {
+  try {
+    const { name, rule_type, condition, discount_type, discount_value, is_active } = req.body;
+    if (!name || !rule_type || !discount_type || discount_value == null) {
+      return res.status(400).json({ error: 'name, rule_type, discount_type, discount_value는 필수입니다.' });
+    }
+    if (!['sibling', 'scholarship', 'promotion', 'custom'].includes(rule_type)) {
+      return res.status(400).json({ error: '유효하지 않은 rule_type입니다.' });
+    }
+    if (!['percent', 'fixed'].includes(discount_type)) {
+      return res.status(400).json({ error: 'discount_type은 percent 또는 fixed여야 합니다.' });
+    }
+    const cond = typeof condition === 'string' ? condition : JSON.stringify(condition || {});
+    const id = await runInsert(
+      `INSERT INTO discount_rules (academy_id, name, rule_type, condition, discount_type, discount_value, is_active)
+       VALUES (?, ?, ?, ?::jsonb, ?, ?, ?)`,
+      [req.academyId, name, rule_type, cond, discount_type, discount_value, is_active !== false]
+    );
+    res.json({ id, message: '할인 규칙이 생성되었습니다.' });
+  } catch (err) {
+    console.error('[할인 규칙 생성]', err.message);
+    res.status(500).json({ error: '할인 규칙 생성 중 오류가 발생했습니다.' });
+  }
+});
+
+router.put('/discount-rules/:id', async (req, res) => {
+  try {
+    const rule = await getOne('SELECT id FROM discount_rules WHERE id = ? AND academy_id = ?', [req.params.id, req.academyId]);
+    if (!rule) return res.status(404).json({ error: '할인 규칙을 찾을 수 없습니다.' });
+    const { name, condition, discount_type, discount_value, is_active } = req.body;
+    const fields = []; const params = [];
+    if (name !== undefined) { fields.push('name = ?'); params.push(name); }
+    if (condition !== undefined) { fields.push('condition = ?::jsonb'); params.push(typeof condition === 'string' ? condition : JSON.stringify(condition)); }
+    if (discount_type !== undefined) { fields.push('discount_type = ?'); params.push(discount_type); }
+    if (discount_value !== undefined) { fields.push('discount_value = ?'); params.push(discount_value); }
+    if (is_active !== undefined) { fields.push('is_active = ?'); params.push(!!is_active); }
+    if (!fields.length) return res.status(400).json({ error: '수정할 항목이 없습니다.' });
+    params.push(req.params.id, req.academyId);
+    await runQuery(`UPDATE discount_rules SET ${fields.join(', ')} WHERE id = ? AND academy_id = ?`, params);
+    res.json({ message: '할인 규칙이 수정되었습니다.' });
+  } catch (err) {
+    console.error('[할인 규칙 수정]', err.message);
+    res.status(500).json({ error: '할인 규칙 수정 중 오류가 발생했습니다.' });
+  }
+});
+
+router.delete('/discount-rules/:id', async (req, res) => {
+  try {
+    const rule = await getOne('SELECT id FROM discount_rules WHERE id = ? AND academy_id = ?', [req.params.id, req.academyId]);
+    if (!rule) return res.status(404).json({ error: '할인 규칙을 찾을 수 없습니다.' });
+    await runQuery('DELETE FROM discount_rules WHERE id = ? AND academy_id = ?', [req.params.id, req.academyId]);
+    res.json({ message: '할인 규칙이 삭제되었습니다.' });
+  } catch (err) {
+    console.error('[할인 규칙 삭제]', err.message);
+    res.status(500).json({ error: '할인 규칙 삭제 중 오류가 발생했습니다.' });
+  }
+});
+
+// --- 학생 개별 할인 ---
+
+router.post('/students/:id/discounts', async (req, res) => {
+  try {
+    const { rule_id, amount, discount_type, reason, valid_from, valid_until } = req.body;
+    const student = await getOne('SELECT id FROM students WHERE id = ? AND academy_id = ?', [req.params.id, req.academyId]);
+    if (!student) return res.status(404).json({ error: '학생을 찾을 수 없습니다.' });
+    const id = await runInsert(
+      `INSERT INTO student_discounts (academy_id, student_id, rule_id, amount, discount_type, reason, valid_from, valid_until)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [req.academyId, req.params.id, rule_id || null, amount || null, discount_type || null, reason || '', valid_from || null, valid_until || null]
+    );
+    res.json({ id, message: '개별 할인이 등록되었습니다.' });
+  } catch (err) {
+    console.error('[개별 할인 등록]', err.message);
+    res.status(500).json({ error: '개별 할인 등록 중 오류가 발생했습니다.' });
+  }
+});
+
+router.get('/students/:id/discounts', async (req, res) => {
+  try {
+    const rows = await getAll(
+      `SELECT sd.*, dr.name as rule_name, dr.rule_type
+       FROM student_discounts sd
+       LEFT JOIN discount_rules dr ON dr.id = sd.rule_id
+       WHERE sd.academy_id = ? AND sd.student_id = ?
+       ORDER BY sd.created_at DESC`,
+      [req.academyId, req.params.id]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('[학생 할인 목록]', err.message);
+    res.status(500).json({ error: '할인 목록 조회 중 오류가 발생했습니다.' });
+  }
+});
+
+router.delete('/student-discounts/:id', async (req, res) => {
+  try {
+    const row = await getOne('SELECT id FROM student_discounts WHERE id = ? AND academy_id = ?', [req.params.id, req.academyId]);
+    if (!row) return res.status(404).json({ error: '개별 할인을 찾을 수 없습니다.' });
+    await runQuery('DELETE FROM student_discounts WHERE id = ? AND academy_id = ?', [req.params.id, req.academyId]);
+    res.json({ message: '삭제되었습니다.' });
+  } catch (err) {
+    console.error('[개별 할인 삭제]', err.message);
+    res.status(500).json({ error: '삭제 중 오류가 발생했습니다.' });
+  }
+});
+
+// --- 혼합 수납 ---
+
+router.post('/records/:id/split-payment', async (req, res) => {
+  try {
+    const { splits } = req.body; // [{method, amount, memo}]
+    if (!Array.isArray(splits) || splits.length === 0) {
+      return res.status(400).json({ error: 'splits 배열이 필요합니다.' });
+    }
+    const record = await getOne(
+      'SELECT id, amount, status, student_id, discount_amount FROM tuition_records WHERE id = ? AND academy_id = ?',
+      [req.params.id, req.academyId]
+    );
+    if (!record) return res.status(404).json({ error: '수납 기록을 찾을 수 없습니다.' });
+
+    const validMethods = ['card', 'cash', 'bank', 'portone'];
+    let totalPaid = 0;
+    for (const s of splits) {
+      if (!validMethods.includes(s.method)) {
+        return res.status(400).json({ error: `유효하지 않은 결제 수단: ${s.method}` });
+      }
+      if (!s.amount || s.amount <= 0) {
+        return res.status(400).json({ error: '각 분할 금액은 0보다 커야 합니다.' });
+      }
+      totalPaid += Number(s.amount);
+    }
+
+    const payable = Number(record.amount) - Number(record.discount_amount || 0);
+    if (totalPaid > payable) {
+      return res.status(400).json({ error: `합계(${totalPaid})가 청구액(${payable})을 초과합니다.` });
+    }
+
+    for (const s of splits) {
+      await runInsert(
+        `INSERT INTO payment_splits (tuition_record_id, academy_id, method, amount, memo, received_by)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [req.params.id, req.academyId, s.method, s.amount, s.memo || '', req.userId]
+      );
+    }
+
+    // 합계가 청구액과 같으면 완납 처리
+    if (totalPaid >= payable) {
+      await runQuery(
+        "UPDATE tuition_records SET status = 'paid', paid_at = NOW() WHERE id = ? AND academy_id = ?",
+        [req.params.id, req.academyId]
+      );
+      addEvent(req.academyId, record.student_id, 'tuition_paid',
+        `수강료 납부(혼합): ${totalPaid.toLocaleString()}원`,
+        null, { tuition_record_id: record.id, splits }, req.user?.id
+      ).catch(() => {});
+    }
+
+    res.json({ message: '혼합 수납이 기록되었습니다.', totalPaid, fullyPaid: totalPaid >= payable });
+  } catch (err) {
+    console.error('[혼합 수납]', err.message);
+    res.status(500).json({ error: '혼합 수납 처리 중 오류가 발생했습니다.' });
+  }
+});
+
+router.get('/records/:id/payment-splits', async (req, res) => {
+  try {
+    const rows = await getAll(
+      'SELECT * FROM payment_splits WHERE tuition_record_id = ? AND academy_id = ? ORDER BY paid_at ASC',
+      [req.params.id, req.academyId]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('[혼합 수납 조회]', err.message);
+    res.status(500).json({ error: '혼합 수납 조회 중 오류가 발생했습니다.' });
+  }
+});
+
+// --- 분할 납부 ---
+
+router.post('/records/:id/installments', async (req, res) => {
+  try {
+    const { count } = req.body;
+    const n = Math.max(2, Math.min(12, Number(count) || 2));
+    const record = await getOne(
+      'SELECT * FROM tuition_records WHERE id = ? AND academy_id = ?',
+      [req.params.id, req.academyId]
+    );
+    if (!record) return res.status(404).json({ error: '수납 기록을 찾을 수 없습니다.' });
+    if (record.status === 'paid') return res.status(400).json({ error: '이미 완납된 건은 분할할 수 없습니다.' });
+
+    const total = Number(record.amount);
+    const base = Math.floor(total / n);
+    const remainder = total - base * n;
+    const groupId = `inst-${record.id}-${Date.now()}`;
+    const baseDue = new Date(record.due_date);
+
+    const ids = [];
+    for (let i = 0; i < n; i++) {
+      const due = new Date(baseDue);
+      due.setMonth(due.getMonth() + i);
+      const amt = base + (i === 0 ? remainder : 0);
+      const id = await runInsert(
+        `INSERT INTO tuition_records (academy_id, student_id, plan_id, amount, due_date, class_id, memo, installment_group_id, installment_seq)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [req.academyId, record.student_id, record.plan_id, amt, due.toISOString().slice(0, 10), record.class_id,
+         `${record.memo || ''} [${i + 1}/${n}회차 분할]`, groupId, i + 1]
+      );
+      ids.push(id);
+    }
+
+    // 원본은 취소 처리 (status='cancelled' 없다면 금액 0 조정으로 무효화)
+    await runQuery(
+      `UPDATE tuition_records SET memo = COALESCE(memo,'') || ' [분할 처리됨: ${groupId}]', amount = 0 WHERE id = ? AND academy_id = ?`,
+      [req.params.id, req.academyId]
+    );
+
+    res.json({ message: `${n}회 분할 납부가 생성되었습니다.`, groupId, records: ids });
+  } catch (err) {
+    console.error('[분할 납부]', err.message);
+    res.status(500).json({ error: '분할 납부 생성 중 오류가 발생했습니다.' });
+  }
+});
+
+// --- 환불 미리보기 ---
+
+router.post('/records/:id/calculate-refund', async (req, res) => {
+  try {
+    const { drop_date } = req.body;
+    if (!drop_date) return res.status(400).json({ error: 'drop_date가 필요합니다.' });
+    const owner = await getOne('SELECT id FROM tuition_records WHERE id = ? AND academy_id = ?', [req.params.id, req.academyId]);
+    if (!owner) return res.status(404).json({ error: '수납 기록을 찾을 수 없습니다.' });
+    const result = await tuitionCalc.calculateRefund(req.params.id, drop_date);
+    res.json(result);
+  } catch (err) {
+    console.error('[환불 계산]', err.message);
+    res.status(500).json({ error: '환불 계산 중 오류가 발생했습니다.' });
+  }
+});
+
+// --- 보강 차감 적용 ---
+
+router.post('/records/:id/apply-makeup-credit', async (req, res) => {
+  try {
+    const { credit_ids } = req.body; // 적용할 크레딧 ID 배열 (옵션 — 없으면 전체)
+    const record = await getOne(
+      'SELECT * FROM tuition_records WHERE id = ? AND academy_id = ?',
+      [req.params.id, req.academyId]
+    );
+    if (!record) return res.status(404).json({ error: '수납 기록을 찾을 수 없습니다.' });
+    if (record.status === 'paid') return res.status(400).json({ error: '완납된 건은 차감할 수 없습니다.' });
+
+    const credits = await getAll(
+      `SELECT * FROM makeup_credits
+       WHERE academy_id = ? AND student_id = ? AND status = 'pending'
+        ${Array.isArray(credit_ids) && credit_ids.length ? `AND id IN (${credit_ids.map(() => '?').join(',')})` : ''}`,
+      [req.academyId, record.student_id, ...(Array.isArray(credit_ids) ? credit_ids : [])]
+    );
+
+    if (credits.length === 0) return res.json({ message: '적용할 보강 크레딧이 없습니다.', applied: 0, amount: 0 });
+
+    let totalCredit = credits.reduce((s, c) => s + Number(c.credit_amount), 0);
+    const currentDiscount = Number(record.discount_amount || 0);
+    const maxApplicable = Math.max(0, Number(record.amount) - currentDiscount);
+    totalCredit = Math.min(totalCredit, maxApplicable);
+
+    await runQuery(
+      `UPDATE tuition_records SET discount_amount = COALESCE(discount_amount,0) + ?,
+         discount_reason = COALESCE(discount_reason,'') || ' [보강차감 ${totalCredit}원]'
+       WHERE id = ? AND academy_id = ?`,
+      [totalCredit, req.params.id, req.academyId]
+    );
+
+    for (const c of credits) {
+      await runQuery(
+        `UPDATE makeup_credits SET status = 'applied', applied_to_record_id = ? WHERE id = ? AND academy_id = ?`,
+        [req.params.id, c.id, req.academyId]
+      );
+    }
+
+    res.json({ message: '보강 차감이 적용되었습니다.', applied: credits.length, amount: totalCredit });
+  } catch (err) {
+    console.error('[보강 차감]', err.message);
+    res.status(500).json({ error: '보강 차감 적용 중 오류가 발생했습니다.' });
+  }
+});
+
+// --- 월 청구 생성 + 할인 자동 적용 + 보강 차감 ---
+
+router.post('/generate-monthly-with-discounts', async (req, res) => {
+  try {
+    const { target_month } = req.body;
+    const now = new Date();
+    const month = target_month || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const dueDate = `${month}-01`;
+
+    const students = await getAll(
+      `SELECT cs.student_id, c.id as class_id, c.tuition_plan_id, tp.amount
+       FROM class_students cs
+       JOIN classes c ON c.id = cs.class_id AND c.academy_id = ?
+       JOIN tuition_plans tp ON tp.id = c.tuition_plan_id AND tp.is_active = true
+       WHERE cs.status = 'active'`,
+      [req.academyId]
+    );
+
+    let created = 0, skipped = 0, totalDiscount = 0, totalMakeup = 0;
+    const details = [];
+
+    for (const s of students) {
+      const exists = await getOne(
+        `SELECT id FROM tuition_records
+         WHERE academy_id = ? AND student_id = ? AND plan_id = ? AND due_date >= ? AND due_date < ?`,
+        [req.academyId, s.student_id, s.tuition_plan_id, dueDate, `${month}-32`]
+      );
+      if (exists) { skipped++; continue; }
+
+      // 할인 계산
+      const disc = await tuitionCalc.applyDiscounts(req.academyId, s.student_id, Number(s.amount), month);
+      // 보강 크레딧
+      const mc = await tuitionCalc.getMakeupCredits(req.academyId, s.student_id);
+      const makeupAmount = Math.min(mc.total, disc.final_amount);
+      const finalAmount = disc.final_amount - makeupAmount;
+
+      const discountReason = [
+        ...disc.applied.map(a => `${a.name}:${a.amount}`),
+        makeupAmount > 0 ? `보강차감:${makeupAmount}` : null,
+      ].filter(Boolean).join(', ');
+
+      const recordId = await runInsert(
+        `INSERT INTO tuition_records
+         (academy_id, student_id, plan_id, amount, discount_amount, discount_reason, due_date, class_id, memo)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [req.academyId, s.student_id, s.tuition_plan_id, Number(s.amount),
+         disc.total_discount + makeupAmount, discountReason, dueDate, s.class_id, `${month} 자동 청구`]
+      );
+
+      // 보강 크레딧 사용 처리
+      if (makeupAmount > 0) {
+        let remaining = makeupAmount;
+        for (const cr of mc.credits) {
+          if (remaining <= 0) break;
+          const use = Math.min(remaining, Number(cr.credit_amount));
+          await runQuery(
+            `UPDATE makeup_credits SET status = 'applied', applied_to_record_id = ? WHERE id = ? AND academy_id = ?`,
+            [recordId, cr.id, req.academyId]
+          );
+          remaining -= use;
+        }
+      }
+
+      created++;
+      totalDiscount += disc.total_discount;
+      totalMakeup += makeupAmount;
+      details.push({ student_id: s.student_id, base: Number(s.amount), discount: disc.total_discount, makeup: makeupAmount, final: finalAmount });
+    }
+
+    res.json({
+      message: `${month} 청구 ${created}건 생성, ${skipped}건 스킵. 할인 ${totalDiscount.toLocaleString()}원, 보강차감 ${totalMakeup.toLocaleString()}원`,
+      created, skipped, totalDiscount, totalMakeup, details,
+    });
+  } catch (err) {
+    console.error('[월 청구+할인]', err.message);
+    res.status(500).json({ error: '월 청구 생성 중 오류가 발생했습니다.' });
   }
 });
 

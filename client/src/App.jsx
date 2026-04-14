@@ -59,6 +59,7 @@ import AcademyCreate from './pages/superadmin/AcademyCreate';
 import SuperBackupSecurity from './pages/superadmin/BackupSecurity';
 import PromotionsPage from './pages/superadmin/PromotionsPage';
 import RevenuePage from './pages/superadmin/RevenuePage';
+import KPIDashboard from './pages/superadmin/KPIDashboard';
 import PreRegistered from './pages/admin/PreRegistered';
 import ParentManage from './pages/admin/ParentManage';
 import ProfileManage from './pages/admin/ProfileManage';
@@ -72,6 +73,8 @@ import InfoHub from './pages/student/InfoHub';
 import StudyTimer from './pages/student/StudyTimer';
 import StudyRankings from './pages/student/StudyRankings';
 import SideNav from './components/SideNav';
+import OnboardingChecklist from './components/OnboardingChecklist';
+import DataImport from './pages/admin/DataImport';
 import PlatformNotificationBell from './components/PlatformNotificationBell';
 import ParentBottomNav from './components/ParentBottomNav';
 import PaymentPage from './pages/PaymentPage';
@@ -189,6 +192,7 @@ function AppLayout() {
     <div className="app">
       {!isPublicPayment && !isParentRoute && <Navbar />}
       {!isPublicPayment && !isParentRoute && <SideNav />}
+      {!isPublicPayment && !isParentRoute && <OnboardingChecklist />}
       {isParentRoute && <Navbar />}
       <Routes>
             <Route path="/" element={<LandingPage />} />
@@ -239,6 +243,7 @@ function AppLayout() {
             <Route path="/admin/guide" element={<ProtectedRoute role="admin"><UserGuide /></ProtectedRoute>} />
             <Route path="/admin/automation" element={<ProtectedRoute role="admin"><AutomationManage /></ProtectedRoute>} />
             <Route path="/admin/audit-logs" element={<ProtectedRoute role="admin"><AuditLogs /></ProtectedRoute>} />
+            <Route path="/admin/data-import" element={<ProtectedRoute role="admin"><DataImport /></ProtectedRoute>} />
 
             <Route path="/student" element={<ProtectedRoute role="student"><MyPage /></ProtectedRoute>} />
             <Route path="/student/notices" element={<ProtectedRoute role="student"><Notices /></ProtectedRoute>} />
@@ -269,6 +274,7 @@ function AppLayout() {
             <Route path="/superadmin/academy/:id" element={<ProtectedRoute role="superadmin"><AcademyDetail /></ProtectedRoute>} />
             <Route path="/superadmin/promotions" element={<ProtectedRoute role="superadmin"><PromotionsPage /></ProtectedRoute>} />
             <Route path="/superadmin/revenue" element={<ProtectedRoute role="superadmin"><RevenuePage /></ProtectedRoute>} />
+            <Route path="/superadmin/kpi" element={<ProtectedRoute role="superadmin"><KPIDashboard /></ProtectedRoute>} />
             <Route path="/superadmin/backup-security" element={<ProtectedRoute role="superadmin"><SuperBackupSecurity /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFoundPage />} />

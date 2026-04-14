@@ -4,6 +4,7 @@ const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { sendToParent } = require('../services/notification');
 const { addEvent } = require('../services/timeline');
 const { logAction } = require('../services/audit');
+const { track, trackFirst } = require('../services/analytics');
 
 const router = express.Router();
 router.use(authenticateToken);
@@ -102,6 +103,10 @@ router.post('/check-in', async (req, res) => {
     addEvent(academyId, targetStudentId, status === 'present' ? 'attendance' : status === 'late' ? 'late' : 'attendance',
       `${statusLabel} 체크인`, null, { attendance_id: id, status }, req.user?.id
     ).catch(e => console.error('[timeline]', e.message));
+
+    // [KPI] first_attendance + feature_used
+    trackFirst(req, 'first_attendance', { student_id: targetStudentId }).catch(() => {});
+    track(req, 'feature_used', { feature: 'attendance.check_in', method: checkMethod, status }).catch(() => {});
 
     res.json({ id, status, message: status === 'late' ? '지각 처리되었습니다.' : '출석이 확인되었습니다!' });
   } catch (err) {

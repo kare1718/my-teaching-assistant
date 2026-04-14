@@ -28,6 +28,126 @@ const severityColor = {
   low: { bg: 'var(--info-light)', border: 'oklch(88% 0.06 260)', text: 'oklch(32% 0.12 260)' },
 };
 
+const priorityStyle = {
+  urgent: { label: '긴급', bg: '#fee2e2', text: '#b91c1c' },
+  high:   { label: '높음', bg: '#fef3c7', text: '#b45309' },
+  normal: { label: '보통', bg: '#f1f5f9', text: '#475569' },
+  low:    { label: '낮음', bg: '#f1f5f9', text: '#64748b' },
+};
+
+// ════════════════════════════════════════
+// 공용: "오늘 처리할 일" 카드 + 빠른 작업 버튼
+// ════════════════════════════════════════
+function QuickActionsBar({ actions, isLg }) {
+  const navigate = useNavigate();
+  if (!actions || actions.length === 0) return null;
+  return (
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: `repeat(${actions.length}, minmax(0, 1fr))`,
+      gap: 12,
+      marginBottom: isLg ? 18 : 14,
+    }}>
+      {actions.map((a, i) => (
+        <button
+          key={i}
+          onClick={() => navigate(a.url)}
+          style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            padding: isLg ? '16px 12px' : '12px 10px',
+            background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12,
+            cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(0,75,240,0.3)'; e.currentTarget.style.background = '#f8fafc'; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#fff'; }}
+        >
+          {a.icon && (
+            <span className="material-symbols-outlined" style={{ fontSize: 24, color: '#004bf0', marginBottom: 6 }}>{a.icon}</span>
+          )}
+          <span style={{ fontSize: isLg ? 14 : 12, fontWeight: 700, color: '#102044' }}>{a.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function TodayTasksCard({ tasks, total, isLg, emptyText = '오늘 처리할 일이 없습니다 ✅' }) {
+  const navigate = useNavigate();
+  const displayTasks = (tasks || []).slice(0, 5);
+  const count = total ?? (tasks?.length || 0);
+  return (
+    <div style={{
+      background: '#fff', borderRadius: 12, border: '1px solid #f1f5f9',
+      padding: isLg ? 24 : 18, marginBottom: isLg ? 18 : 14,
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isLg ? 16 : 12 }}>
+        <h2 style={{ margin: 0, fontSize: isLg ? 18 : 15, fontWeight: 800, color: '#102044', letterSpacing: '-0.01em' }}>
+          오늘 처리할 일
+          {count > 0 && (
+            <span style={{
+              marginLeft: 10, fontSize: isLg ? 13 : 11, fontWeight: 700,
+              padding: '2px 10px', borderRadius: 999, background: '#fee2e2', color: '#b91c1c',
+            }}>{count}건</span>
+          )}
+        </h2>
+      </div>
+      {displayTasks.length === 0 ? (
+        <p style={{ fontSize: isLg ? 14 : 12, color: '#64748b', textAlign: 'center', padding: '24px 0', margin: 0 }}>
+          {emptyText}
+        </p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {displayTasks.map(task => {
+            const pri = priorityStyle[task.priority] || priorityStyle.normal;
+            return (
+              <div key={task.id} style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: isLg ? '12px 14px' : '10px 12px',
+                borderRadius: 10, background: '#f8fafc', border: '1px solid #f1f5f9',
+              }}>
+                <span style={{
+                  flexShrink: 0, fontSize: 10, fontWeight: 800, letterSpacing: '0.04em',
+                  padding: '3px 10px', borderRadius: 999,
+                  background: pri.bg, color: pri.text,
+                }}>{pri.label}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ margin: 0, fontSize: isLg ? 14 : 12, fontWeight: 700, color: '#102044', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {task.title}
+                  </p>
+                  {task.description && (
+                    <p style={{ margin: '2px 0 0', fontSize: isLg ? 12 : 10, color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {task.description}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() => navigate(task.action_url)}
+                  style={{
+                    flexShrink: 0, background: '#102044', color: '#fff',
+                    padding: isLg ? '8px 14px' : '6px 10px', borderRadius: 8,
+                    fontSize: isLg ? 12 : 11, fontWeight: 700, border: 'none',
+                    cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
+                  }}
+                >{task.action_label || '처리'}</button>
+              </div>
+            );
+          })}
+          {count > displayTasks.length && (
+            <button
+              onClick={() => navigate('/admin/automation')}
+              style={{
+                marginTop: 4, background: 'none', border: 'none',
+                color: '#004bf0', fontSize: isLg ? 13 : 11, fontWeight: 700,
+                cursor: 'pointer', fontFamily: 'inherit', padding: 6, textAlign: 'right',
+              }}
+            >전체 보기 →</button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ════════════════════════════════════════
 // 원장(admin) 대시보드
 // ════════════════════════════════════════
@@ -46,42 +166,100 @@ function OwnerDashboard({ isLg }) {
   if (loading) return <LoadingState />;
   if (!data) return <ErrorState />;
 
-  const { today_summary: ts, attendance_today: att, tuition_summary: tui, risk_alerts, tasks_summary: tasks, recent_events, class_occupancy } = data;
+  const {
+    today_summary: ts, attendance_today: att, tuition_summary: tui,
+    risk_alerts, tasks_summary: tasks, recent_events, class_occupancy,
+    today_tasks, today_tasks_total, quick_actions, quick_stats,
+  } = data;
+
+  // 빈 학원 상태 — 학생이 0명일 때 첫 시작 가이드 표시
+  if (!ts.total_students) {
+    return (
+      <div style={{ maxWidth: 760, margin: '40px auto', padding: '0 16px' }}>
+        <div className="card" style={{ padding: 40, textAlign: 'center' }}>
+          <div style={{ fontSize: 56, marginBottom: 8 }}>🏫</div>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--primary)', marginBottom: 8 }}>
+            첫 학생을 등록해 운영을 시작해보세요
+          </h1>
+          <p style={{ color: 'var(--muted-foreground)', marginBottom: 24 }}>
+            학생을 한 명이라도 추가하면 대시보드가 활성화되고, 모든 기능을 사용할 수 있습니다.
+          </p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => navigate('/admin/students')}
+              style={{ padding: '14px 22px', background: 'var(--primary)', color: '#fff', borderRadius: 10, fontWeight: 800, border: 'none', cursor: 'pointer' }}
+            >
+              ➕ 학생 추가
+            </button>
+            <button
+              onClick={() => navigate('/admin/data-import')}
+              style={{ padding: '14px 22px', background: '#004bf0', color: '#fff', borderRadius: 10, fontWeight: 800, border: 'none', cursor: 'pointer' }}
+            >
+              📂 엑셀 Import
+            </button>
+            <button
+              onClick={async () => {
+                if (!window.confirm('샘플 학원 데이터를 생성하시겠습니까? (학생 10명, 반 2개, 출결·수납·공지·상담 포함)')) return;
+                try {
+                  await api('/sample-data/generate', { method: 'POST' });
+                  window.location.reload();
+                } catch (e) { alert('샘플 생성 실패: ' + e.message); }
+              }}
+              style={{ padding: '14px 22px', background: '#fff', color: 'var(--primary)', borderRadius: 10, fontWeight: 800, border: '2px solid var(--border)', cursor: 'pointer' }}
+            >
+              🎨 샘플 데이터
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const attTotal = att.present + att.absent + att.late + att.excused;
-  const attRate = attTotal > 0 ? Math.round(((att.present + att.late) / attTotal) * 100) : 0;
+  const attRate = (quick_stats?.attendance_rate_today ?? (attTotal > 0 ? Math.round(((att.present + att.late) / attTotal) * 100) : 0));
+
+  const kpiItems = [
+    { label: '재원생', value: fmt(ts.total_students), unit: '명', color: '#102044', path: '/admin/students' },
+    { label: '오늘 출결률', value: `${attRate}`, unit: '%', color: attRate >= 90 ? '#059669' : attRate >= 70 ? '#d97706' : '#dc2626', path: '/admin/attendance' },
+    { label: '이번달 수납', value: fmtWon(tui.this_month_collected), unit: '원', color: '#102044', path: '/admin/tuition' },
+    { label: '미납', value: fmtWon(tui.outstanding_total), unit: '원', color: tui.overdue_count > 0 ? '#dc2626' : '#059669', path: '/admin/tuition' },
+  ];
 
   return (
     <>
-      {/* KPI 카드 4개 */}
-      <div className="dash-kpi-row" style={{ marginBottom: isLg ? 18 : 14 }}>
-        {[
-          { label: '재원생', value: fmt(ts.total_students), unit: '명', sub: `신규 ${ts.new_this_month} / 퇴원 ${ts.withdrawn_this_month}`, color: 'var(--primary)', path: '/admin/students' },
-          { label: '오늘 출결률', value: `${attRate}`, unit: '%', sub: `출석 ${att.present} / 결석 ${att.absent} / 지각 ${att.late}`, color: attRate >= 90 ? 'var(--success)' : attRate >= 70 ? 'var(--warning)' : 'var(--destructive)', path: '/admin/attendance' },
-          { label: '이번달 수납', value: fmtWon(tui.this_month_collected), unit: '원', sub: `청구 ${fmtWon(tui.this_month_billed)}원`, color: 'var(--primary)', path: '/admin/tuition' },
-          { label: '미납 건수', value: fmt(tui.overdue_count), unit: '건', sub: `미납액 ${fmtWon(tui.outstanding_total)}원`, color: tui.overdue_count > 0 ? 'var(--destructive)' : 'var(--success)', path: '/admin/tuition' },
-        ].map((kpi, i) => (
-          <div key={i} style={{ flex: 1, minWidth: 0 }}>
-            <div className="card" onClick={() => navigate(kpi.path)} style={{
-              margin: 0, padding: isLg ? '18px 22px' : '14px 16px', cursor: 'pointer',
-              height: '100%', boxSizing: 'border-box', transition: 'box-shadow 0.15s',
-            }}
-            onMouseEnter={e => e.currentTarget.style.boxShadow = 'var(--shadow-md)'}
-            onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
-            >
-              <p style={{ fontSize: isLg ? 12 : 10, fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: isLg ? 6 : 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                {kpi.label}
-              </p>
-              <div style={{ fontSize: isLg ? 30 : 24, fontWeight: 800, color: kpi.color, lineHeight: 1, marginBottom: isLg ? 5 : 3 }}>
-                {kpi.value}
-                <span style={{ fontSize: isLg ? 14 : 12, fontWeight: 500, color: 'var(--muted-foreground)', marginLeft: 2 }}>{kpi.unit}</span>
-              </div>
-              <p style={{ fontSize: isLg ? 13 : 11, color: 'var(--muted-foreground)', margin: 0 }}>{kpi.sub}</p>
+      {/* 1. 빠른 작업 버튼 */}
+      <QuickActionsBar actions={quick_actions} isLg={isLg} />
+
+      {/* 2. 오늘 처리할 일 */}
+      <TodayTasksCard tasks={today_tasks} total={today_tasks_total} isLg={isLg} />
+
+      {/* 3. 축소된 KPI 4개 */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+        gap: 10, marginBottom: isLg ? 18 : 14,
+      }}>
+        {kpiItems.map((kpi, i) => (
+          <div key={i} onClick={() => navigate(kpi.path)} style={{
+            background: '#fff', border: '1px solid #f1f5f9', borderRadius: 12,
+            padding: isLg ? '14px 18px' : '10px 12px', cursor: 'pointer',
+            display: 'flex', flexDirection: 'column', justifyContent: 'center',
+            minHeight: isLg ? 84 : 68, transition: 'all 0.15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(0,75,240,0.3)'; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = '#f1f5f9'; }}
+          >
+            <p style={{ margin: 0, fontSize: isLg ? 11 : 9, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {kpi.label}
+            </p>
+            <div style={{ marginTop: 4, fontSize: isLg ? 22 : 17, fontWeight: 800, color: kpi.color, lineHeight: 1.1 }}>
+              {kpi.value}
+              <span style={{ fontSize: isLg ? 12 : 10, fontWeight: 600, color: '#94a3b8', marginLeft: 2 }}>{kpi.unit}</span>
             </div>
           </div>
         ))}
       </div>
 
-      {/* 중단: 위험알림 + 업무 */}
+      {/* 4. 위험 알림 + 최근 활동 */}
       <div className="dash-mid-grid" style={{ marginBottom: isLg ? 18 : 14 }}>
         {/* 위험 알림 */}
         <div className="card" style={{ margin: 0, flex: 3, minWidth: 0 }}>
@@ -227,10 +405,13 @@ function TeacherDashboard({ isLg }) {
   if (loading) return <LoadingState />;
   if (!data) return <ErrorState />;
 
-  const { today_classes, attendance_pending, student_alerts } = data;
+  const { today_classes, attendance_pending, student_alerts, today_tasks, today_tasks_total } = data;
 
   return (
     <>
+      {/* 오늘 처리할 일 (최상단) */}
+      <TodayTasksCard tasks={today_tasks} total={today_tasks_total} isLg={isLg} emptyText="오늘 할 일이 모두 정리되었습니다 ✅" />
+
       {/* KPI */}
       <div className="dash-kpi-row" style={{ marginBottom: isLg ? 18 : 14 }}>
         {[
@@ -323,10 +504,13 @@ function CounselorDashboard({ isLg }) {
   if (loading) return <LoadingState />;
   if (!data) return <ErrorState />;
 
-  const { today_consultations, follow_up_due, new_inquiries, conversion_stats: cs } = data;
+  const { today_consultations, follow_up_due, new_inquiries, conversion_stats: cs, today_tasks, today_tasks_total } = data;
 
   return (
     <>
+      {/* 오늘 처리할 일 (최상단) */}
+      <TodayTasksCard tasks={today_tasks} total={today_tasks_total} isLg={isLg} emptyText="오늘 처리할 상담/후속조치가 없습니다 ✅" />
+
       {/* KPI */}
       <div className="dash-kpi-row" style={{ marginBottom: isLg ? 18 : 14 }}>
         {[
@@ -422,6 +606,78 @@ function CounselorDashboard({ isLg }) {
             </div>
           </div>
         </div>
+      </div>
+    </>
+  );
+}
+
+// ════════════════════════════════════════
+// 행정(staff) 대시보드
+// ════════════════════════════════════════
+function StaffDashboard({ isLg }) {
+  const navigate = useNavigate();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api('/dashboard/staff')
+      .then(setData)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <LoadingState />;
+  if (!data) return <ErrorState />;
+
+  const { tuition_today: tt, overdue_list, sms_balance, today_tasks, today_tasks_total } = data;
+
+  return (
+    <>
+      <TodayTasksCard tasks={today_tasks} total={today_tasks_total} isLg={isLg} emptyText="오늘 수납 처리 대상이 없습니다 ✅" />
+
+      <div className="dash-kpi-row" style={{ marginBottom: isLg ? 18 : 14 }}>
+        {[
+          { label: '오늘 납부기한', value: tt.due_today, unit: '건', color: tt.due_today > 0 ? 'var(--warning)' : 'var(--success)' },
+          { label: '수납 확인 대기', value: tt.pending_confirmation, unit: '건', color: 'var(--primary)' },
+          { label: '미납 독촉 대상', value: overdue_list.length, unit: '건', color: overdue_list.length > 0 ? 'var(--destructive)' : 'var(--success)' },
+          { label: 'SMS 잔액', value: fmt(sms_balance.balance), unit: '건', color: 'var(--primary)' },
+        ].map((kpi, i) => (
+          <div key={i} style={{ flex: 1, minWidth: 0 }}>
+            <div className="card" style={{ margin: 0, padding: isLg ? '18px 22px' : '14px 16px', height: '100%', boxSizing: 'border-box' }}>
+              <p style={{ fontSize: isLg ? 12 : 10, fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: isLg ? 6 : 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{kpi.label}</p>
+              <div style={{ fontSize: isLg ? 30 : 24, fontWeight: 800, color: kpi.color, lineHeight: 1 }}>
+                {kpi.value}<span style={{ fontSize: isLg ? 14 : 12, fontWeight: 500, color: 'var(--muted-foreground)', marginLeft: 2 }}>{kpi.unit}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="card">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isLg ? 14 : 10 }}>
+          <h2 style={{ margin: 0, fontSize: isLg ? 16 : 14, fontWeight: 700 }}>미납 독촉 대상 TOP {overdue_list.length}</h2>
+          <span onClick={() => navigate('/admin/tuition')} style={{ fontSize: isLg ? 13 : 11, color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}>전체 보기 &rarr;</span>
+        </div>
+        {overdue_list.length === 0 ? (
+          <p style={{ fontSize: isLg ? 14 : 12, color: 'var(--muted-foreground)', textAlign: 'center', padding: '16px 0' }}>미납 건이 없습니다</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {overdue_list.map(t => (
+              <div key={t.id} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: isLg ? '10px 14px' : '8px 12px', borderRadius: 8,
+                background: 'var(--destructive-light)', border: '1px solid oklch(85% 0.08 25)',
+              }}>
+                <span style={{ fontSize: isLg ? 14 : 12, fontWeight: 700, cursor: 'pointer' }}
+                  onClick={() => navigate(`/admin/student-view/${t.student_id}`)}
+                >{t.student_name}</span>
+                <span style={{ fontSize: isLg ? 13 : 11, color: 'var(--destructive)', fontWeight: 600 }}>
+                  {parseInt(t.amount || 0).toLocaleString()}원 · 기한 {t.due_date}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </>
   );
@@ -759,7 +1015,9 @@ export default function AdminDashboard() {
           ? <TeacherDashboard isLg={isLg} />
           : role === 'counselor'
             ? <CounselorDashboard isLg={isLg} />
-            : <LegacyDashboard isLg={isLg} />
+            : role === 'staff'
+              ? <StaffDashboard isLg={isLg} />
+              : <LegacyDashboard isLg={isLg} />
       }
 
       {/* Responsive styles */}

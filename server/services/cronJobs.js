@@ -503,6 +503,54 @@ function initCronJobs() {
     } catch (err) { console.error('[크론/퇴원위험] 전체 오류:', err.message); }
   }, { timezone: 'Asia/Seoul' });
 
+  // ─────────────────────────────────────────────
+  // 매주 월요일 08:00 KST — KPI 주간 리포트 (SuperAdmin)
+  // ─────────────────────────────────────────────
+  cron.schedule('0 8 * * 1', async () => {
+    console.log(`[크론] ${new Date().toISOString()} — 주간 KPI 리포트 생성`);
+    try {
+      const kpi = require('./kpi');
+      const to = new Date().toISOString();
+      const from = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+      const [northStar, funnel, warnings] = await Promise.all([
+        kpi.getNorthStarMetrics(from, to),
+        kpi.getFunnel(from, to),
+        kpi.getWarnings(),
+      ]);
+
+      const summary = {
+        period: { from, to },
+        northStar,
+        funnel,
+        warnings,
+        generated_at: new Date().toISOString(),
+      };
+
+      // SuperAdmin에게 플랫폼 알림 발송
+      const admins = await getAll(
+        `SELECT id FROM users WHERE role = 'superadmin'`,
+        []
+      );
+      for (const admin of admins) {
+        try {
+          await runInsert(
+            `INSERT INTO notifications (user_id, academy_id, type, title, message, data, created_at)
+             VALUES (?, NULL, 'kpi_weekly', ?, ?, ?, NOW())`,
+            [
+              admin.id,
+              '주간 KPI 리포트',
+              `활성 학원 ${northStar.active_academies}곳 · 신규 가입 ${funnel.signups}건 · 결제 ${funnel.paid}건 · 경고 ${warnings.length}건`,
+              JSON.stringify(summary),
+            ]
+          );
+        } catch (e) { /* notifications 테이블이 없거나 스키마 다르면 무시 */ }
+      }
+
+      console.log(`[크론/KPI] 주간 리포트 발송 완료 (SuperAdmin ${admins.length}명)`);
+    } catch (err) { console.error('[크론/KPI] 전체 오류:', err.message); }
+  }, { timezone: 'Asia/Seoul' });
+
   console.log('[크론] 스케줄 등록 완료:');
   console.log('  - 매분: 예약 메시지 발송');
   console.log('  - 03:00 KST: Trial 만료 → Free Tier 전환');
@@ -512,6 +560,7 @@ function initCronJobs() {
   console.log('  - 09:00 KST: 보강 미편성 경고');
   console.log('  - 10:00 KST: 상담 후속조치 미완료 알림');
   console.log('  - 매주 월 09:00 KST: 퇴원 위험 학생 체크');
+  console.log('  - 매주 월 08:00 KST: KPI 주간 리포트 (SuperAdmin)');
 }
 
 module.exports = { initCronJobs, checkTrialExpiry, retryFailedPayments, processScheduledMessages };

@@ -8,6 +8,7 @@ const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { requirePermission } = require('../middleware/permission');
 const { addEvent } = require('../services/timeline');
 const { logAction } = require('../services/audit');
+const { track, trackFirst } = require('../services/analytics');
 
 // 프로필 수정 허용 필드 화이트리스트
 const USERS_EDITABLE_FIELDS = ['name', 'phone'];
@@ -913,6 +914,10 @@ router.post('/pre-registered', async (req, res) => {
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'linked', CURRENT_TIMESTAMP, ?)`,
     [name, phone || '', school, grade, parentName || '', parentPhone || '', memo || '', studentId, req.academyId]
   );
+
+  // [KPI] first_student_added (첫 학생 등록 시에만)
+  trackFirst(req, 'first_student_added', { student_id: studentId }).catch(() => {});
+  track(req, 'feature_used', { feature: 'students.create' }).catch(() => {});
 
   res.json({ message: '학생이 등록되었습니다. 모든 목록에 표시됩니다.', id: preRegId, studentId, userId });
 });

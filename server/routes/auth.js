@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { runQuery, runInsert, getOne, getAll } = require('../db/database');
 const { JWT_SECRET, authenticateToken } = require('../middleware/auth');
+const { track } = require('../services/analytics');
 
 const router = express.Router();
 
@@ -71,6 +72,10 @@ router.post('/register', async (req, res) => {
       'INSERT INTO students (user_id, school, grade, parent_name, parent_phone, academy_id) VALUES (?, ?, ?, ?, ?, ?)',
       [userId, school, grade, parentName || '', parentPhone || '', academyId]
     );
+
+    // [KPI] signup 이벤트 기록
+    req.academyId = academyId;
+    track(req, 'signup', { role: userRole, school, grade }).catch(() => {});
 
     res.json({ message: '회원가입이 완료되었습니다. 관리자 승인 후 이용 가능합니다.' });
   } catch (err) {
@@ -148,6 +153,11 @@ router.post('/login', async (req, res) => {
       JWT_SECRET,
       { expiresIn: rememberMe ? '30d' : '1d' }
     );
+
+    // [KPI] login 이벤트 기록
+    req.user = user;
+    req.academyId = user.academy_id;
+    track(req, 'login', { role: user.role }).catch(() => {});
 
     res.json({
       token,

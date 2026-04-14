@@ -137,6 +137,115 @@ router.get('/owner', async (req, res) => {
        ORDER BY c.name`, [aid]
     );
 
+    // ── 8. today_tasks (마누스 IA: "오늘 할 일") ──
+    // 우선순위별 태스크 생성 — 최대 10개
+    const priorityRank = { urgent: 0, high: 1, normal: 2, low: 3 };
+
+    // 8-1. 미납 tuition_records → urgent/high
+    const overdueTuitions = await getAll(
+      `SELECT tr.id, tr.amount, tr.paid_amount, tr.due_date, u.name AS student_name, s.id AS student_id,
+              (CURRENT_DATE - tr.due_date) AS days_overdue
+       FROM tuition_records tr
+       JOIN students s ON s.id = tr.student_id
+       JOIN users u ON u.id = s.user_id
+       WHERE tr.academy_id = ? AND tr.status = 'overdue'
+       ORDER BY tr.due_date ASC LIMIT 20`, [aid]
+    );
+
+    // 8-2. 오늘 결석 + 미통지 → high
+    const absentNotNotified = await getAll(
+      `SELECT a.id, u.name AS student_name, s.id AS student_id
+       FROM attendance a
+       JOIN students s ON s.id = a.student_id
+       JOIN users u ON u.id = s.user_id
+       WHERE a.academy_id = ? AND a.date = ? AND a.status = 'absent'
+         AND COALESCE(a.auto_notified, false) = false
+       LIMIT 20`, [aid, today]
+    );
+
+    // 8-3. 상담 후속조치 기한 도래 → high
+    const followUpsDue = await getAll(
+      `SELECT cl.id, cl.consultation_type, cl.follow_up_date, u.name AS student_name, s.id AS student_id
+       FROM consultation_logs cl
+       LEFT JOIN students s ON s.id = cl.student_id
+       LEFT JOIN users u ON u.id = s.user_id
+       WHERE cl.academy_id = ? AND cl.follow_up_date <= ?
+         AND COALESCE(cl.follow_up_done, 0) = 0
+       ORDER BY cl.follow_up_date ASC LIMIT 20`, [aid, today]
+    );
+
+    // 8-4. task_queue pending
+    const taskQueueItems = await getAll(
+      `SELECT id, task_type, title, description, priority, due_date, related_student_id
+       FROM task_queue
+       WHERE academy_id = ? AND status = 'pending'
+       ORDER BY
+         CASE priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END,
+         due_date ASC NULLS LAST
+       LIMIT 20`, [aid]
+    );
+
+    const todayTasks = [];
+    overdueTuitions.forEach(t => {
+      const days = parseInt(t.days_overdue || 0);
+      todayTasks.push({
+        id: `tui-${t.id}`,
+        type: 'tuition_overdue',
+        priority: days >= 7 ? 'urgent' : 'high',
+        title: `${t.student_name} 수강료 미납 (D+${days})`,
+        description: `${parseInt(t.amount || 0).toLocaleString()}원 · 기한 ${t.due_date}`,
+        action_label: '독촉 SMS',
+        action_url: `/admin/tuition?student=${t.student_id}`,
+      });
+    });
+    absentNotNotified.forEach(a => {
+      todayTasks.push({
+        id: `att-${a.id}`,
+        type: 'absence_notify',
+        priority: 'high',
+        title: `${a.student_name} 오늘 결석 연락 필요`,
+        description: '학부모 통지 미발송',
+        action_label: '연락하기',
+        action_url: `/admin/student-view/${a.student_id}`,
+      });
+    });
+    followUpsDue.forEach(f => {
+      todayTasks.push({
+        id: `fu-${f.id}`,
+        type: 'consultation_followup',
+        priority: 'high',
+        title: `${f.student_name || '미배정'} 상담 후속조치`,
+        description: `${f.consultation_type || '상담'} · 기한 ${f.follow_up_date}`,
+        action_label: '상담 기록',
+        action_url: `/admin/consultation`,
+      });
+    });
+    taskQueueItems.forEach(t => {
+      todayTasks.push({
+        id: `tq-${t.id}`,
+        type: t.task_type || 'task',
+        priority: t.priority || 'normal',
+        title: t.title,
+        description: t.description || '',
+        action_label: '처리',
+        action_url: '/admin/automation',
+        related_student_id: t.related_student_id,
+      });
+    });
+
+    todayTasks.sort((a, b) =>
+      (priorityRank[a.priority] ?? 9) - (priorityRank[b.priority] ?? 9)
+    );
+    const todayTasksTop = todayTasks.slice(0, 10);
+
+    // ── 9. quick_actions (고정) ──
+    const quickActions = [
+      { label: '출결 입력', icon: 'how_to_reg', url: '/admin/attendance' },
+      { label: '공지 발송', icon: 'campaign', url: '/admin/sms' },
+      { label: '수강료 청구', icon: 'receipt_long', url: '/admin/tuition' },
+      { label: '상담 기록', icon: 'edit_note', url: '/admin/consultation' },
+    ];
+
     res.json({
       today_summary: {
         total_students: totalActive,
@@ -156,6 +265,15 @@ router.get('/owner', async (req, res) => {
         urgent: parseInt(tasksUrgent?.cnt || 0),
         overdue: parseInt(tasksOverdue?.cnt || 0),
       },
+      today_tasks: todayTasksTop,
+      today_tasks_total: todayTasks.length,
+      quick_stats: {
+        students_active: totalActive,
+        attendance_rate_today: attTotal > 0 ? Math.round(((present + late) / attTotal) * 100) : 0,
+        tuition_collected_month: parseInt(thisMonthCollected?.total || 0),
+        tuition_outstanding: parseInt(outstandingTotal?.total || 0),
+      },
+      quick_actions: quickActions,
       recent_events: recentEvents,
       class_occupancy: classOccupancy.map(c => ({
         id: c.id,
@@ -218,15 +336,54 @@ router.get('/teacher', async (req, res) => {
       [userId, aid, aid]
     );
 
+    // today_tasks: 출결 미입력 건 + 연속 결석 알림
+    const todayTasks = [];
+    const attPendingCnt = parseInt(attendancePending?.cnt || 0);
+    if (attPendingCnt > 0) {
+      todayTasks.push({
+        id: 'att-pending',
+        type: 'attendance_pending',
+        priority: 'urgent',
+        title: `출결 미입력 ${attPendingCnt}건`,
+        description: '오늘 수업 출결을 입력하세요',
+        action_label: '출결 입력',
+        action_url: '/admin/attendance',
+      });
+    }
+    todayClasses.forEach(c => {
+      todayTasks.push({
+        id: `cls-${c.id}`,
+        type: 'class_today',
+        priority: 'normal',
+        title: `${c.name} 수업`,
+        description: `${(c.start_time || '').slice(0, 5)}~${(c.end_time || '').slice(0, 5)} · ${c.student_count || 0}명`,
+        action_label: '출결',
+        action_url: '/admin/attendance',
+      });
+    });
+    studentAlerts.forEach(a => {
+      todayTasks.push({
+        id: `alert-${a.student_id}`,
+        type: 'absence_alert',
+        priority: 'high',
+        title: `${a.student_name} 연속 결석`,
+        description: `최근 2주간 ${a.absence_count}회 결석`,
+        action_label: '학생 보기',
+        action_url: `/admin/student-view/${a.student_id}`,
+      });
+    });
+
     res.json({
       today_classes: todayClasses,
-      attendance_pending: parseInt(attendancePending?.cnt || 0),
+      attendance_pending: attPendingCnt,
       student_alerts: studentAlerts.map(a => ({
         student_id: a.student_id,
         student_name: a.student_name,
         message: `최근 2주간 ${a.absence_count}회 결석`,
       })),
       homework_summary: { not_submitted_count: 0, checked_count: 0 },
+      today_tasks: todayTasks.slice(0, 10),
+      today_tasks_total: todayTasks.length,
     });
   } catch (err) {
     console.error('[Dashboard/teacher]', err);
@@ -277,6 +434,41 @@ router.get('/counselor', async (req, res) => {
     const inquiries = parseInt(thisMonthInquiries?.cnt || 0);
     const enrolled = parseInt(thisMonthEnrolled?.cnt || 0);
 
+    const todayTasks = [];
+    followUpDue.forEach(c => {
+      todayTasks.push({
+        id: `fu-${c.id}`,
+        type: 'consultation_followup',
+        priority: 'high',
+        title: `${c.student_name || '미배정'} 후속조치`,
+        description: `${c.consultation_type || '상담'} · 기한 ${c.follow_up_date}`,
+        action_label: '상담 기록',
+        action_url: '/admin/consultation',
+      });
+    });
+    todayConsultations.forEach(c => {
+      todayTasks.push({
+        id: `tc-${c.id}`,
+        type: 'consultation_today',
+        priority: 'normal',
+        title: `${c.student_name || '미배정'} 오늘 상담`,
+        description: c.consultation_type || '상담 예정',
+        action_label: '열기',
+        action_url: '/admin/consultation',
+      });
+    });
+    newInquiries.slice(0, 5).forEach(lead => {
+      todayTasks.push({
+        id: `lead-${lead.id}`,
+        type: 'new_lead',
+        priority: 'normal',
+        title: `신규 문의: ${lead.student_name}`,
+        description: `${lead.school || ''} ${lead.grade || ''} ${lead.source ? '· ' + lead.source : ''}`.trim(),
+        action_label: '리드 보기',
+        action_url: '/admin/leads',
+      });
+    });
+
     res.json({
       today_consultations: todayConsultations,
       follow_up_due: followUpDue,
@@ -286,6 +478,8 @@ router.get('/counselor', async (req, res) => {
         this_month_enrolled: enrolled,
         conversion_rate: inquiries > 0 ? Math.round((enrolled / inquiries) * 100) : 0,
       },
+      today_tasks: todayTasks.slice(0, 10),
+      today_tasks_total: todayTasks.length,
     });
   } catch (err) {
     console.error('[Dashboard/counselor]', err);
@@ -324,9 +518,35 @@ router.get('/staff', async (req, res) => {
       `SELECT balance, total_used FROM sms_credits WHERE academy_id = ?`, [aid]
     );
 
+    const todayTasks = [];
+    const dueTodayCnt = parseInt(dueToday?.cnt || 0);
+    if (dueTodayCnt > 0) {
+      todayTasks.push({
+        id: 'due-today',
+        type: 'tuition_due_today',
+        priority: 'urgent',
+        title: `오늘 납부 기한 ${dueTodayCnt}건`,
+        description: '입금 확인 필요',
+        action_label: '수납 확인',
+        action_url: '/admin/tuition',
+      });
+    }
+    overdueList.forEach(t => {
+      const days = Math.max(0, Math.floor((Date.now() - new Date(t.due_date).getTime()) / 86400000));
+      todayTasks.push({
+        id: `ov-${t.id}`,
+        type: 'tuition_overdue',
+        priority: days >= 7 ? 'urgent' : 'high',
+        title: `${t.student_name} 미납 D+${days}`,
+        description: `${parseInt(t.amount || 0).toLocaleString()}원`,
+        action_label: '독촉 SMS',
+        action_url: `/admin/tuition?student=${t.student_id}`,
+      });
+    });
+
     res.json({
       tuition_today: {
-        due_today: parseInt(dueToday?.cnt || 0),
+        due_today: dueTodayCnt,
         pending_confirmation: parseInt(pendingConfirmation?.cnt || 0),
       },
       overdue_list: overdueList,
@@ -335,6 +555,8 @@ router.get('/staff', async (req, res) => {
         total_used: parseInt(smsCredits?.total_used || 0),
       },
       settlement_status: { status: 'normal', message: '정상' },
+      today_tasks: todayTasks.slice(0, 10),
+      today_tasks_total: todayTasks.length,
     });
   } catch (err) {
     console.error('[Dashboard/staff]', err);

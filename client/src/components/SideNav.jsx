@@ -64,6 +64,7 @@ const adminNavGroups = [
     { path: '/admin/students', label: '학생 목록' },
     { path: '/admin/parents', label: '보호자 관리' },
     { path: '/admin/pre-registered', label: '사전 등록' },
+    { path: '/admin/data-import', label: '데이터 가져오기' },
     { path: '/admin/pending', label: '가입 승인', badgeKey: 'pending_users' },
   ]},
 
@@ -125,6 +126,7 @@ const TIER_BADGE_STYLE = {
 /* ─── Super admin nav ────────────────────────────────────────────── */
 const superadminPages = [
   { path: '/superadmin', label: '대시보드', desc: '플랫폼 전체 현황', icon: Icons.home },
+  { path: '/superadmin/kpi', label: 'KPI 대시보드', desc: '북극성/퍼널/경고 지표', icon: Icons.chart || Icons.home },
   { divider: true, label: '비즈니스' },
   { path: '/superadmin/revenue', label: '매출 관리', desc: '결제/환불/MRR', icon: Icons.dollar },
   { path: '/superadmin/promotions', label: '프로모션', desc: '기프트/쿠폰/이용권', icon: Icons.star },

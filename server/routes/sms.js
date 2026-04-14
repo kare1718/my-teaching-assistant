@@ -9,6 +9,7 @@ const {
   logSentMessages, refundFailedMessages, getCredits, getPricing,
 } = require('../utils/smsBilling');
 const { logAction } = require('../services/audit');
+const { track, trackFirst } = require('../services/analytics');
 
 const router = express.Router();
 router.use(authenticateToken);
@@ -340,6 +341,10 @@ router.post('/send', requirePermission('sms', 'create'), async (req, res) => {
       req, action: 'sms_send', resourceType: 'sms',
       after: { recipient_count: 1, cost: costResult.totalCost, type: msgType },
     });
+    // [KPI] first_notice_sent + feature_used
+    trackFirst(req, 'first_notice_sent', { channel: 'sms' }).catch(() => {});
+    track(req, 'feature_used', { feature: 'sms.send', count: 1 }).catch(() => {});
+
     res.json({ message: 'SMS 전송 완료', result, cost: costResult.totalCost, balance: credit.balance });
   } catch (e) {
     await logSentMessages(batchId, [{ phone: to, message, messageType: msgType, status: 'failed', error: e.message }], req.user.id, req.academyId);

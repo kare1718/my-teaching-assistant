@@ -4,6 +4,7 @@ const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { TIER_LIMITS, YEARLY_PRICES } = require('../middleware/subscription');
 const { verifyPayment, getBillingKeyInfo, cancelPayment, retryPayment } = require('../services/billing');
 const { logAction } = require('../services/audit');
+const { track } = require('../services/analytics');
 
 const router = express.Router();
 router.use(authenticateToken, requireAdmin);
@@ -137,6 +138,10 @@ router.post('/subscribe', async (req, res) => {
       [req.academyId, subId, paymentId || 'billing_key_initial', amount]
     );
 
+    // [KPI] payment_success + trial_started + plan_upgraded
+    track(req, 'payment_success', { plan: planType, cycle, amount }).catch(() => {});
+    track(req, 'plan_upgraded', { to: planType, cycle }).catch(() => {});
+
     res.json({
       message: '구독이 시작되었습니다.',
       subscription: {
@@ -194,6 +199,9 @@ router.put('/change-plan', async (req, res) => {
       // 학생 수 제한은 다음 결제 시 적용 (현재는 유지)
     }
 
+    // [KPI] plan_upgraded / plan_downgraded
+    track(req, isUpgrade ? 'plan_upgraded' : 'plan_downgraded', { from: sub.plan_type, to: planType }).catch(() => {});
+
     res.json({
       message: isUpgrade ? '플랜이 즉시 업그레이드되었습니다.' : '다음 결제일부터 플랜이 변경됩니다.',
       planType,
@@ -230,6 +238,9 @@ router.post('/cancel', async (req, res) => {
       req, action: 'subscription_cancel', resourceType: 'subscription', resourceId: sub.id,
       before: { status: 'active' }, after: { status: 'canceled', effectiveDate: sub.current_period_end },
     });
+    // [KPI] subscription_canceled
+    track(req, 'subscription_canceled', { plan: sub.plan_type }).catch(() => {});
+
     res.json({
       message: '구독이 해지되었습니다. 현재 결제 주기가 끝날 때까지 사용 가능합니다.',
       effectiveDate: sub.current_period_end,
