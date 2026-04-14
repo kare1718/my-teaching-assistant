@@ -148,10 +148,10 @@ const testimonials2 = [
 ];
 
 const plans = [
-  { id: 'free', name: 'Free', price: 0, yearlyPrice: 0, students: '10명', features: ['학생 10명', '성적 관리', '게이미피케이션', '기본 기능'], desc: '소규모 수업에 딱' },
-  { id: 'basic', name: 'Basic', price: 79000, yearlyPrice: 67000, students: '50명', features: ['학생 50명', '성적 관리', '게이미피케이션', '랭킹/상점', '안내사항/자료'], desc: '성장하는 학원을 위한' },
-  { id: 'standard', name: 'Standard', price: 159000, yearlyPrice: 135000, students: '100명', features: ['학생 100명', 'Basic 전체 포함', 'AI 리포트', 'SMS 발송', '클리닉/숙제', '출결 알림'], desc: '가장 인기 있는 플랜', popular: true },
-  { id: 'pro', name: 'Pro', price: 0, yearlyPrice: 0, students: '100명 이상', features: ['학생 무제한', 'Standard 전체 포함', '조교 관리', '수납 관리', 'API 내보내기', '전담 매니저'], desc: '대형 학원 맞춤', inquiry: true },
+  { id: 'free', name: 'Free', price: 0, yearlyPrice: 0, students: '15명', features: ['성적 관리', '출결 (기본)', '공지', '수업 자료', 'Q&A'], desc: '1인 과외, 소규모 체험' },
+  { id: 'starter', name: 'Starter', price: 49000, yearlyPrice: 41650, students: '50명', features: ['Free 기능 전체', '학생 관리 고급', '수납 기본 (청구/납부/미납)', 'SMS 발송', '보호자 앱', '기본 상담 메모'], desc: '소형 학원', popular: true },
+  { id: 'pro', name: 'Pro', price: 129000, yearlyPrice: 109650, students: '100명', features: ['Starter 기능 전체', '자동화 엔진 (결석/미납 알림)', '상담 CRM + 리드 파이프라인', '수납 예외 처리 (할인/분납/환불)', '고급 리포트', 'AI 리포트'], desc: '성장 학원' },
+  { id: 'first_class', name: 'First Class', price: 0, yearlyPrice: 0, students: '무제한', features: ['Pro 기능 전체', '게이미피케이션 (XP/레벨/퀴즈)', '학생 아바타 + 상점', 'AI 문제 생성', '브랜딩 (로고/컬러)', '전담 지원'], desc: '관리형/입시형 학원', inquiry: true },
 ];
 
 const comparisonRows = [
@@ -164,32 +164,13 @@ const comparisonRows = [
 ];
 
 const faqCategories = [
-  { label: '출결 / 수납', items: [
-    { q: '출결 체크는 어떤 방식으로 하나요?', a: 'QR 체크인, 태블릿 터치, 강사 수동 체크 세 가지를 지원합니다. 어떤 방식이든 체크 즉시 학부모에게 출석 알림이 자동 발송됩니다.' },
-    { q: '수납 자동 청구는 구체적으로 어떻게 작동하나요?', a: '학생 등록 시 수납일을 설정하면 D-3일 납부 안내, D-Day 리마인드, D+1일 연체 표시까지 자동 처리됩니다. 도입 학원의 미납률이 평균 12%에서 2% 이하로 떨어졌습니다.' },
-    { q: '학부모가 카드 결제나 계좌이체로 바로 납부할 수 있나요?', a: '네. 안내 문자의 결제 링크를 통해 카드 결제, 계좌이체, 네이버페이, 카카오페이 등으로 바로 납부 가능합니다.' },
-  ]},
-  { label: '조교 관리', items: [
-    { q: '조교에게 어떤 업무를 배정할 수 있나요?', a: '클리닉(보충수업) 진행, 숙제 확인/채점, 학생 관리 등 모든 업무를 체크리스트로 배정합니다. 완료 체크하면 결과가 선생님에게 자동 보고됩니다.' },
-    { q: '조교 시간표 관리와 대타 배정은 어떻게 하나요?', a: '조교별 주간 시간표를 등록하면 스케줄 충돌 시 자동 알림이 표시됩니다. 결근 시 대타 가능한 조교 목록을 확인하고 한 번에 배정할 수 있어요.' },
-    { q: '조교도 별도 앱을 설치해야 하나요?', a: '웹 브라우저에서 바로 접속할 수 있어서 별도 앱 설치가 필요 없습니다. 조교 계정에서는 자신에게 배정된 업무만 보입니다.' },
-  ]},
-  { label: '학부모 소통', items: [
-    { q: '학부모 전용 페이지에서 뭘 볼 수 있나요?', a: '출결 현황, 성적 추이, 숙제 현황, 수납 내역, 상담 예약까지 한 페이지에서 다 확인할 수 있습니다.' },
-    { q: '학부모도 앱을 설치해야 하나요?', a: '아닙니다. 카카오톡이나 문자로 링크를 보내드리면, 터치 한 번으로 바로 볼 수 있습니다. 앱 설치 허들을 완전히 없앴습니다.' },
-    { q: '선생님 개인 전화번호가 학부모에게 노출되나요?', a: '아닙니다. 모든 문자는 시스템 발신번호로 발송됩니다. 퇴근 후 개인 카톡으로 학부모 연락이 오는 문제를 원천적으로 해결합니다.' },
-  ]},
-  { label: '성적 / 게이미피케이션', items: [
-    { q: '성적 분석 대시보드에서 구체적으로 뭘 볼 수 있나요?', a: '시험별 점수 추이, 영역별 취약점 분석, 반 내 위치, 목표 달성률을 자동 생성합니다.' },
-    { q: '게이미피케이션이 실제로 효과가 있나요?', a: '포인트, 레벨, 아바타 커스터마이징으로 학생이 자발적으로 참여합니다. 도입 학원 평균 숙제 이행률 40% 상승, 6개월 이상 사용 학원에서도 효과 유지 중입니다.' },
-    { q: 'AI 문항 출제는 어떤 과목을 지원하나요?', a: '현재 국어(수능형)을 가장 깊이 지원합니다. 학생별 취약 영역 맞춤 출제, 난이도 자동 조절이 가능해요. 다른 과목도 순차 확대 중입니다.' },
-  ]},
-  { label: '요금 / 시작하기', items: [
-    { q: '무료 체험 후 자동 결제되나요?', a: '절대 아닙니다. 카드 정보를 받지 않기 때문에 자동 결제가 불가능합니다. 30일 체험이 끝나면 Free 플랜(학생 5명)으로 자동 전환됩니다.' },
-    { q: '초기 세팅이 복잡하지 않나요?', a: '5분이면 끝납니다. 학원 이름 + 수업 시간 + 학생 이름만 입력하면 바로 사용 가능. 기존 엑셀 일괄 업로드도 지원합니다.' },
-    { q: '국어 전용 앱인가요?', a: '모든 과목에서 사용 가능합니다. AI 문항 출제만 현재 국어 중심이고 다른 과목도 순차 확대 중입니다.' },
-    { q: '학생 5명 이하면 정말 평생 무료인가요?', a: '네, 진짜 평생 무료입니다. 기간 제한 없고, 출결·수납·학부모 페이지까지 모두 포함이에요.' },
-    { q: '기존 엑셀 데이터를 옮길 수 있나요?', a: '네. 학생 명단, 연락처, 성적 데이터를 엑셀로 일괄 업로드할 수 있습니다.' },
+  { label: '자주 묻는 질문', items: [
+    { q: '무료로 어디까지 사용할 수 있나요?', a: 'Free 플랜은 학생 15명까지 무기한 사용할 수 있습니다. 성적, 출결, 공지, 수업 자료, Q&A 기능을 제공하며, 체험용으로 충분합니다. 유료 기능 체험은 14일 무료 체험을 이용해주세요.' },
+    { q: '문자 비용은 별도인가요?', a: '네, 문자와 알림톡 비용은 구독료와 완전히 분리되어 사용량 기준으로 별도 과금됩니다. SMS는 9.9원, 알림톡은 7.5원 수준으로 투명하게 제공하며, 선충전 후 차감 방식입니다.' },
+    { q: '기존 엑셀 데이터를 옮길 수 있나요?', a: '네, 학생 명단/수강생 명단/출결 기록 엑셀 파일을 간편하게 Import할 수 있습니다. 컬럼 매핑과 검증 과정을 거쳐 안전하게 일괄 등록됩니다. 초기 도입 시 전담 지원도 제공합니다.' },
+    { q: '공부방이나 1:1 과외도 사용할 수 있나요?', a: '네, 1인 과외부터 대형 학원까지 모두 사용 가능합니다. Free 플랜은 개인 과외 선생님에게 적합하고, Starter는 소형 학원, Pro는 중형 학원, First Class는 관리형 입시학원에 최적화되어 있습니다.' },
+    { q: '보호자도 바로 사용할 수 있나요?', a: '네, Starter 플랜부터 보호자 전용 앱이 제공됩니다. 보호자는 자녀의 출결, 공지, 수납 내역을 확인하고 상담 요청과 결제를 모바일에서 바로 진행할 수 있습니다.' },
+    { q: 'AI 기능은 무엇을 해주나요?', a: 'AI 기능은 상담 준비 시간 단축(학생 이력 요약), 리포트 코멘트 자동 생성, 퀴즈 문제 자동 생성, Q&A 답변 제안 등 실무 보조에 집중되어 있습니다. Pro 플랜은 AI 리포트, First Class는 AI 문제 생성까지 포함합니다.' },
   ]},
 ];
 
@@ -322,10 +303,10 @@ export default function LandingPage() {
                 transition: 'all 0.2s', boxShadow: '0 4px 12px oklch(55% 0.15 250 / 0.2)',
               }} onMouseOver={e => { e.currentTarget.style.background = C.accentLight; e.currentTarget.style.boxShadow = '0 8px 24px oklch(55% 0.15 250 / 0.25)'; }}
                  onMouseOut={e => { e.currentTarget.style.background = C.accent; e.currentTarget.style.boxShadow = '0 4px 12px oklch(55% 0.15 250 / 0.2)'; }}>
-                30일 무료 체험 시작하기 <ArrowRight />
+                14일 무료 체험 시작하기 <ArrowRight />
               </button>
               <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, color: C.textTertiary }}>
-                <Shield /> 카드 등록 없이 · 30일 전체 기능 체험
+                <Shield /> 카드 등록 없이 · 14일 전체 기능 체험
               </span>
             </div>
           </div>
@@ -448,8 +429,47 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* === VALUE BUNDLES (기능 묶음 소개) === */}
+      <section id="value-bundles" style={{ padding: '96px 0' }}>
+        <div style={{ maxWidth: 1152, margin: '0 auto', padding: '0 24px' }}>
+          <div ref={addRef} style={{ textAlign: 'center', marginBottom: 56 }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 12 }}>VALUE BUNDLES</p>
+            <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.5rem)', fontWeight: 800, color: '#102044', letterSpacing: '-0.025em', lineHeight: 1.3, marginBottom: 12 }}>학원 운영의 모든 업무를 하나로</h2>
+            <p style={{ color: C.textTertiary, fontSize: 16 }}>기능이 아닌 가치로 묶었습니다</p>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
+            {[
+              { icon: '✅', title: '운영 기본', sub: '출결과 수납을 더 정확하게', desc: '출결 등록, 청구, 납부 확인, 미납 관리까지 일상 운영을 한 곳에서 처리합니다.', badge: '모든 플랜', badgeBg: '#e0f2fe', badgeColor: '#0369a1' },
+              { icon: '👤', title: '학생 관리', sub: '학생 상태를 한눈에', desc: '상담, 출결, 수납, 학습 흐름을 학생 단위로 연결해 더 정교하게 관리합니다.', badge: 'Starter 이상', badgeBg: '#dbeafe', badgeColor: '#1e40af' },
+              { icon: '👨‍👩‍👧', title: '보호자 소통', sub: '신뢰를 만드는 소통', desc: '공지, 출결, 납부, 상담 요청을 깔끔하게 연결해 보호자 소통 부담을 줄입니다.', badge: 'Starter 이상', badgeBg: '#dbeafe', badgeColor: '#1e40af' },
+              { icon: '⚡', title: '자동화', sub: '반복 업무를 줄이는 규칙', desc: '결석, 미납, 후속 안내처럼 놓치기 쉬운 운영을 자동으로 관리합니다.', badge: 'Pro 이상', badgeBg: '#ede9fe', badgeColor: '#5b21b6' },
+              { icon: '✨', title: '프리미엄 기능', sub: '학생 참여와 유지율까지', desc: '리워드, 과제 참여, AI 요약 기능으로 학원 운영의 차별화를 만듭니다.', badge: 'First Class', badgeBg: '#fef3c7', badgeColor: '#92400e' },
+            ].map((v, i) => (
+              <div key={i} ref={addRef} style={{
+                background: '#ffffff', borderRadius: 16, padding: 32,
+                border: '1px solid #f1f5f9', boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                transition: 'all 0.25s', display: 'flex', flexDirection: 'column',
+              }}
+              onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(0,75,240,0.2)'; e.currentTarget.style.boxShadow = '0 10px 25px -5px rgba(0,0,0,0.1)'; }}
+              onMouseOut={e => { e.currentTarget.style.borderColor = '#f1f5f9'; e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.04)'; }}>
+                <div style={{ fontSize: 32, marginBottom: 16 }}>{v.icon}</div>
+                <div style={{ marginBottom: 12 }}>
+                  <h3 style={{ fontSize: 18, fontWeight: 800, color: '#102044', marginBottom: 4 }}>{v.title}</h3>
+                  <p style={{ fontSize: 14, color: '#004bf0', fontWeight: 600 }}>"{v.sub}"</p>
+                </div>
+                <p style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.65, flex: 1, marginBottom: 16 }}>{v.desc}</p>
+                <span style={{
+                  alignSelf: 'flex-start', borderRadius: 999, padding: '4px 12px',
+                  fontSize: 11, fontWeight: 700, background: v.badgeBg, color: v.badgeColor,
+                }}>{v.badge}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* === DIFFERENTIATORS === */}
-      <section style={{ padding: '96px 0' }}>
+      <section style={{ padding: '96px 0', background: C.surfaceCard }}>
         <div style={{ maxWidth: 1152, margin: '0 auto', padding: '0 24px' }}>
           <div ref={addRef} style={{ textAlign: 'center', marginBottom: 64 }}>
             <p style={{ fontSize: 14, fontWeight: 600, color: C.accent, marginBottom: 12 }}>왜 나만의 조교인가요?</p>
@@ -756,9 +776,9 @@ export default function LandingPage() {
       <section id="pricing" style={{ padding: '96px 0', background: C.surfaceCard }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
           <div ref={addRef} style={{ textAlign: 'center', marginBottom: 48 }}>
-            <p style={{ fontSize: 14, fontWeight: 600, color: C.accent, marginBottom: 12 }}>30일 무료 체험으로 시작</p>
-            <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.5rem)', fontWeight: 700, letterSpacing: '-0.025em', lineHeight: 1.3, marginBottom: 12 }}>합리적인 요금제</h2>
-            <p style={{ color: C.textTertiary, marginBottom: 24 }}>카드 등록 없이 30일간 전체 기능을 써보세요.</p>
+            <p style={{ fontSize: 14, fontWeight: 600, color: C.accent, marginBottom: 12 }}>14일 무료 체험으로 시작</p>
+            <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.5rem)', fontWeight: 700, letterSpacing: '-0.025em', lineHeight: 1.3, marginBottom: 12 }}>학원 규모와 운영 방식에 맞게 선택하세요</h2>
+            <p style={{ color: C.textTertiary, marginBottom: 24 }}>무료 체험부터 운영 자동화, 학생 참여 설계까지 필요한 수준에 맞춰 시작할 수 있습니다.</p>
             {/* 월간/연간 토글 */}
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 0, background: C.white, borderRadius: 12, padding: 4, border: `1px solid ${C.border}` }}>
               <button onClick={() => setLandingYearly(false)} style={{
@@ -811,7 +831,7 @@ export default function LandingPage() {
                         <p style={{ fontSize: 28, fontWeight: 900, color: C.textPrimary, lineHeight: 1.1 }}>
                           {price.toLocaleString()}<span style={{ fontSize: 14, fontWeight: 600 }}>원</span>
                         </p>
-                        <p style={{ fontSize: 12, color: C.textTertiary, marginTop: 4 }}>/월 (부가세 포함)</p>
+                        <p style={{ fontSize: 12, color: C.textTertiary, marginTop: 4 }}>/월 (VAT 별도)</p>
                       </>
                     )}
                   </div>
@@ -842,18 +862,51 @@ export default function LandingPage() {
                     boxShadow: p.popular ? '0 2px 8px oklch(48% 0.18 260 / 0.3)' : 'none',
                   }} onMouseOver={e => { if (!p.inquiry) e.currentTarget.style.opacity = '0.85'; }}
                      onMouseOut={e => { e.currentTarget.style.opacity = '1'; }}>
-                    {p.popular ? '30일 무료 체험' : p.inquiry ? '도입 문의' : '시작하기'}
+                    {p.popular ? '14일 무료 체험' : p.inquiry ? '상담 요청' : price === 0 ? '무료로 시작' : '14일 무료 체험'}
                   </button>
                 </div>
               );
             })}
           </div>
-          <p style={{ textAlign: 'center', marginTop: 24, color: C.textTertiary, fontSize: 13 }}>모든 요금은 부가세(VAT) 포함 가격입니다 · 언제든 해지 가능</p>
+          <p style={{ textAlign: 'center', marginTop: 24, color: C.textTertiary, fontSize: 13 }}>모든 가격 VAT 별도 · 연간 결제 시 15% 할인 · 문자·알림 비용은 사용량 기준 별도 안내 · 언제든 해지 가능</p>
+        </div>
+      </section>
+
+      {/* === TRUST === */}
+      <section id="trust" style={{ padding: '96px 0' }}>
+        <div style={{ maxWidth: 1152, margin: '0 auto', padding: '0 24px' }}>
+          <div ref={addRef} style={{ textAlign: 'center', marginBottom: 56 }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 12 }}>TRUST</p>
+            <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.5rem)', fontWeight: 800, color: '#102044', letterSpacing: '-0.025em', lineHeight: 1.3 }}>안심하고 도입하세요</h2>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
+            {[
+              { icon: '🔒', title: '보안', items: ['역할별 권한 관리 (RBAC)', '전 데이터 암호화 (HTTPS)', '감사 로그 자동 기록', '테넌트 데이터 완전 격리'] },
+              { icon: '🔄', title: '운영', items: ['자동 백업 (매일)', '데이터 이전 지원 (엑셀 Import)', '14일 무료 체험 (카드 등록 없음)', '1일 내 첫 세팅 완료'] },
+              { icon: '⚖️', title: '법규 준수', items: ['개인정보처리방침 공개', '광고성 메시지 동의 관리', '사업자 정보 투명 공개', '환불 정책 명시'] },
+            ].map((t, i) => (
+              <div key={i} ref={addRef} style={{
+                background: '#ffffff', borderRadius: 16, padding: 32,
+                border: '1px solid #f1f5f9', boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+              }}>
+                <div style={{ fontSize: 36, marginBottom: 16 }}>{t.icon}</div>
+                <h3 style={{ fontSize: 20, fontWeight: 800, color: '#102044', marginBottom: 16 }}>{t.title}</h3>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                  {t.items.map((it, j) => (
+                    <li key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 0', fontSize: 14, color: C.textSecondary }}>
+                      <span style={{ color: '#10b981', fontWeight: 800, flexShrink: 0 }}>✓</span>
+                      <span>{it}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* === FAQ === */}
-      <section id="faq" style={{ padding: '96px 0' }}>
+      <section id="faq" style={{ padding: '96px 0', background: C.surfaceCard }}>
         <div style={{ maxWidth: 768, margin: '0 auto', padding: '0 24px' }}>
           <div ref={addRef} style={{ textAlign: 'center', marginBottom: 64 }}>
             <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.5rem)', fontWeight: 700, letterSpacing: '-0.025em', marginBottom: 12 }}>궁금하신 점이 있으신가요?</h2>
@@ -889,29 +942,35 @@ export default function LandingPage() {
       </section>
 
       {/* === CTA === */}
-      <section id="cta" style={{ padding: '96px 0', background: C.surfaceCard }}>
+      <section id="cta" style={{ padding: '96px 0', background: 'linear-gradient(135deg, #102044 0%, #1e2a5e 100%)' }}>
         <div style={{ maxWidth: 768, margin: '0 auto', padding: '0 24px', textAlign: 'center' }}>
-          <p ref={addRef} style={{ fontSize: 14, fontWeight: 600, color: C.accent, marginBottom: 16 }}>5분이면 시작할 수 있습니다</p>
-          <h2 ref={addRef} style={{ fontSize: 'clamp(1.5rem, 5vw, 3rem)', fontWeight: 700, letterSpacing: '-0.025em', lineHeight: 1.3, marginBottom: 20 }}>
-            저처럼 3시간을<br/>돌려받으세요.
+          <h2 ref={addRef} style={{ fontSize: 'clamp(1.5rem, 5vw, 3rem)', fontWeight: 800, letterSpacing: '-0.025em', lineHeight: 1.3, marginBottom: 20, color: '#ffffff' }}>
+            학원 운영, 이제 바꿀 때입니다
           </h2>
-          <p ref={addRef} style={{ fontSize: 18, color: C.textSecondary, lineHeight: 1.7, marginBottom: 32 }}>
-            카드 등록 없이 30일간 전체 기능을 써보세요.<br/>5명 이하라면 체험 후에도 평생 무료로 계속 쓸 수 있습니다.
+          <p ref={addRef} style={{ fontSize: 18, color: 'rgba(255,255,255,0.8)', lineHeight: 1.7, marginBottom: 36 }}>
+            지금 쓰고 계신 엑셀과 단톡방에서 꺼내보세요.<br/>14일 무료 체험, 카드 등록 없이 시작할 수 있습니다.
           </p>
-          <div ref={addRef}>
+          <div ref={addRef} style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center', alignItems: 'center' }}>
             <button onClick={() => navigate('/onboarding')} style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8, background: C.accent, color: C.white,
-              fontWeight: 700, fontSize: 18, padding: '20px 40px', borderRadius: 16, border: 'none', cursor: 'pointer',
-              transition: 'all 0.2s', boxShadow: '0 4px 12px oklch(55% 0.15 250 / 0.2)',
-            }} onMouseOver={e => { e.currentTarget.style.background = C.accentLight; e.currentTarget.style.boxShadow = '0 8px 24px oklch(55% 0.15 250 / 0.25)'; }}
-               onMouseOut={e => { e.currentTarget.style.background = C.accent; e.currentTarget.style.boxShadow = '0 4px 12px oklch(55% 0.15 250 / 0.2)'; }}>
-              무료 체험 시작하기 <ArrowRight />
+              background: '#ffffff', color: '#102044',
+              fontWeight: 800, fontSize: 16, padding: '16px 32px', borderRadius: 12, border: 'none', cursor: 'pointer',
+              transition: 'all 0.2s',
+            }} onMouseOver={e => { e.currentTarget.style.opacity = '0.9'; }}
+               onMouseOut={e => { e.currentTarget.style.opacity = '1'; }}>
+              무료로 시작하기
             </button>
-          </div>
-          <div ref={addRef} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 24, fontSize: 14, color: C.textTertiary, marginTop: 24 }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Shield /> 카드 등록 없음</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Clock /> 5분 세팅</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Heart /> 5명 이하 평생 무료</span>
+            <button onClick={() => scrollTo('pricing')} style={{
+              background: 'transparent', color: '#ffffff',
+              fontWeight: 800, fontSize: 16, padding: '16px 32px', borderRadius: 12,
+              border: '2px solid #ffffff', cursor: 'pointer', transition: 'all 0.2s',
+            }} onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+               onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}>
+              데모 요청하기
+            </button>
+            <a href="#pricing" onClick={e => { e.preventDefault(); scrollTo('pricing'); }} style={{
+              color: '#ffffff', fontWeight: 700, fontSize: 16,
+              textDecoration: 'underline', textDecorationThickness: 2, textUnderlineOffset: 4,
+            }}>도입 상담</a>
           </div>
         </div>
       </section>
