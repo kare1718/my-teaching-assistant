@@ -606,6 +606,202 @@ router.get('/students/:id/view-data', async (req, res) => {
   res.json({ student, notices: notices.slice(0, 3), scores: scores.slice(-3) });
 });
 
+// === 학생 상세 허브 전용 엔드포인트 ===
+
+// 종합 개요: 출석률, 미납, 최근 상담, 다음 일정 요약
+router.get('/students/:id/overview', async (req, res) => {
+  try {
+    const sid = parseInt(req.params.id);
+    const aid = req.academyId;
+
+    const student = await getOne(
+      `SELECT s.id, s.school, s.grade, s.status, s.parent_name, s.parent_phone,
+              u.name, u.phone
+       FROM students s JOIN users u ON s.user_id = u.id
+       WHERE s.id = ? AND s.academy_id = ?`,
+      [sid, aid]
+    );
+    if (!student) return res.status(404).json({ error: '학생을 찾을 수 없습니다.' });
+
+    // 최근 30일 출석 통계
+    const attStats = await getOne(
+      `SELECT
+         COUNT(*) FILTER (WHERE status = 'present') AS present,
+         COUNT(*) FILTER (WHERE status = 'absent')  AS absent,
+         COUNT(*) FILTER (WHERE status = 'late')    AS late,
+         COUNT(*) AS total
+       FROM attendance
+       WHERE student_id = ? AND academy_id = ? AND date >= CURRENT_DATE - INTERVAL '30 days'`,
+      [sid, aid]
+    ).catch(() => ({ present: 0, absent: 0, late: 0, total: 0 }));
+
+    // 미납 건 수/금액
+    const tuition = await getOne(
+      `SELECT COUNT(*) AS overdue_count,
+              COALESCE(SUM(COALESCE(adjusted_amount, amount)), 0) AS overdue_amount
+       FROM tuition_records
+       WHERE student_id = ? AND academy_id = ? AND status IN ('pending','overdue') AND due_date < CURRENT_DATE`,
+      [sid, aid]
+    ).catch(() => ({ overdue_count: 0, overdue_amount: 0 }));
+
+    // 최근 상담
+    const lastConsult = await getOne(
+      `SELECT created_at, title FROM consultation_logs
+       WHERE student_id = ? AND academy_id = ?
+       ORDER BY created_at DESC LIMIT 1`,
+      [sid, aid]
+    ).catch(() => null);
+
+    // 연속 결석 (최근 5회 세션 기준)
+    const recentAtt = await getAll(
+      `SELECT status FROM attendance
+       WHERE student_id = ? AND academy_id = ?
+       ORDER BY date DESC LIMIT 5`,
+      [sid, aid]
+    ).catch(() => []);
+    let consecutiveAbsent = 0;
+    for (const a of recentAtt) {
+      if (a.status === 'absent') consecutiveAbsent++;
+      else break;
+    }
+
+    const attendanceRate = attStats.total > 0
+      ? Math.round((Number(attStats.present) / Number(attStats.total)) * 100)
+      : null;
+
+    res.json({
+      student,
+      attendance: {
+        present: Number(attStats.present) || 0,
+        absent: Number(attStats.absent) || 0,
+        late: Number(attStats.late) || 0,
+        total: Number(attStats.total) || 0,
+        rate: attendanceRate,
+      },
+      tuition: {
+        overdueCount: Number(tuition.overdue_count) || 0,
+        overdueAmount: Number(tuition.overdue_amount) || 0,
+      },
+      lastConsultation: lastConsult,
+      consecutiveAbsent,
+    });
+  } catch (err) {
+    console.error('overview error:', err);
+    res.status(500).json({ error: '개요 로드 실패' });
+  }
+});
+
+// 수강 중인 반 목록 + 반별 출석 통계
+router.get('/students/:id/classes', async (req, res) => {
+  try {
+    const sid = parseInt(req.params.id);
+    const aid = req.academyId;
+
+    const classes = await getAll(
+      `SELECT c.id, c.name, c.teacher_name, c.schedule_text, cs.enrolled_at, cs.status
+       FROM class_students cs
+       JOIN classes c ON c.id = cs.class_id
+       WHERE cs.student_id = ? AND c.academy_id = ?
+       ORDER BY cs.status ASC, cs.enrolled_at DESC`,
+      [sid, aid]
+    ).catch(() => []);
+
+    res.json(classes);
+  } catch (err) {
+    console.error('student classes error:', err);
+    res.status(500).json({ error: '수업 로드 실패' });
+  }
+});
+
+// 통계: 월별 출석/수납/성적 추이
+router.get('/students/:id/stats', async (req, res) => {
+  try {
+    const sid = parseInt(req.params.id);
+    const aid = req.academyId;
+
+    const monthlyAttendance = await getAll(
+      `SELECT TO_CHAR(date, 'YYYY-MM') AS month,
+              COUNT(*) FILTER (WHERE status = 'present') AS present,
+              COUNT(*) FILTER (WHERE status = 'absent')  AS absent,
+              COUNT(*) FILTER (WHERE status = 'late')    AS late,
+              COUNT(*) AS total
+       FROM attendance
+       WHERE student_id = ? AND academy_id = ? AND date >= CURRENT_DATE - INTERVAL '6 months'
+       GROUP BY 1 ORDER BY 1`,
+      [sid, aid]
+    ).catch(() => []);
+
+    const monthlyTuition = await getAll(
+      `SELECT TO_CHAR(due_date, 'YYYY-MM') AS month,
+              COUNT(*) AS total,
+              COUNT(*) FILTER (WHERE status = 'paid')    AS paid,
+              COUNT(*) FILTER (WHERE status IN ('pending','overdue')) AS pending
+       FROM tuition_records
+       WHERE student_id = ? AND academy_id = ? AND due_date >= CURRENT_DATE - INTERVAL '6 months'
+       GROUP BY 1 ORDER BY 1`,
+      [sid, aid]
+    ).catch(() => []);
+
+    const examTrend = await getAll(
+      `SELECT e.name AS exam_name, e.exam_date, sc.score, e.max_score
+       FROM scores sc JOIN exams e ON sc.exam_id = e.id
+       WHERE sc.student_id = ? AND sc.academy_id = ?
+       ORDER BY e.exam_date DESC LIMIT 10`,
+      [sid, aid]
+    ).catch(() => []);
+
+    res.json({ monthlyAttendance, monthlyTuition, examTrend });
+  } catch (err) {
+    console.error('student stats error:', err);
+    res.status(500).json({ error: '통계 로드 실패' });
+  }
+});
+
+// 사이드바: 학생별 미해결 업무
+router.get('/students/:id/open-tasks', async (req, res) => {
+  try {
+    const sid = parseInt(req.params.id);
+    const tasks = await getAll(
+      `SELECT id, title, priority, due_date, status
+       FROM task_queue
+       WHERE related_student_id = ? AND academy_id = ? AND status = 'pending'
+       ORDER BY
+         CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'normal' THEN 3 ELSE 4 END,
+         due_date ASC NULLS LAST
+       LIMIT 10`,
+      [sid, req.academyId]
+    ).catch(() => []);
+    res.json(tasks);
+  } catch {
+    res.json([]);
+  }
+});
+
+// 사이드바: 학생별 다음 일정
+router.get('/students/:id/next-schedule', async (req, res) => {
+  try {
+    const sid = parseInt(req.params.id);
+    const aid = req.academyId;
+
+    // 수강 중인 반의 다가오는 세션
+    const sessions = await getAll(
+      `SELECT cs.id, cs.session_date AS date, cs.start_time, cs.end_time, c.name AS class_name
+       FROM class_sessions cs
+       JOIN classes c ON c.id = cs.class_id
+       JOIN class_students cst ON cst.class_id = c.id
+       WHERE cst.student_id = ? AND c.academy_id = ? AND cs.session_date >= CURRENT_DATE
+         AND cst.status = 'active'
+       ORDER BY cs.session_date ASC, cs.start_time ASC
+       LIMIT 5`,
+      [sid, aid]
+    ).catch(() => []);
+
+    res.json(sessions);
+  } catch {
+    res.json([]);
+  }
+});
+
 // === 안내사항 ===
 
 router.post('/notices', async (req, res) => {
