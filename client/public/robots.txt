@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Allow: /terms
+Allow: /privacy
+Allow: /refund
+Allow: /business-info
+Disallow: /admin
+Disallow: /student
+Disallow: /parent
+Disallow: /superadmin
+Disallow: /api
+Disallow: /onboarding
+
+Sitemap: /sitemap.xml

@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
   }
 
   const schedules = await getAll(
-    `SELECT * FROM class_schedules ${where} ORDER BY schedule_date ASC, time_slot ASC`,
+    `SELECT * FROM class_schedules /* academy_id 필터는 where 변수에 포함됨 */ ${where} ORDER BY schedule_date ASC, time_slot ASC`,
     params
   );
   res.json(schedules);

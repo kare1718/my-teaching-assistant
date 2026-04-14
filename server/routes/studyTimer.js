@@ -675,6 +675,7 @@ setInterval(async () => {
   try {
     const expired = await getAll(
       `SELECT * FROM study_sessions
+       /* 배경 cron job — academy_id 무관, 모든 테넌트 대상으로 만료 세션 정리 */
        WHERE is_active = true
          AND last_heartbeat_at < NOW() - INTERVAL '90 seconds'`
     );

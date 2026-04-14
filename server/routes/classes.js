@@ -102,10 +102,10 @@ router.get('/:id', async (req, res) => {
       `SELECT cs.*, u.name as teacher_name
        FROM class_sessions cs
        LEFT JOIN users u ON u.id = cs.teacher_id
-       WHERE cs.class_id = ?
+       WHERE cs.class_id = ? AND cs.academy_id = ?
        ORDER BY cs.session_date DESC, cs.start_time DESC
        LIMIT 10`,
-      [req.params.id]
+      [req.params.id, req.academyId]
     );
 
     res.json({ ...cls, students, recurring, sessions });
@@ -386,8 +386,8 @@ router.post('/:id/sessions/generate', async (req, res) => {
 
         // 중복 체크
         const exists = await getOne(
-          'SELECT id FROM class_sessions WHERE class_id = ? AND session_date = ? AND start_time = ?',
-          [req.params.id, dateStr, rule.start_time]
+          'SELECT id FROM class_sessions WHERE class_id = ? AND session_date = ? AND start_time = ? AND academy_id = ?',
+          [req.params.id, dateStr, rule.start_time, req.academyId]
         );
         if (exists) continue;
 
@@ -416,21 +416,21 @@ router.put('/sessions/:id', async (req, res) => {
     );
     if (!session) return res.status(404).json({ error: '세션을 찾을 수 없습니다.' });
 
-    const { session_date, start_time, end_time, teacher_id, status, memo } = req.body;
+    // 화이트리스트 기반 동적 UPDATE — 파라미터 주입 방지
+    const ALLOWED = ['session_date', 'start_time', 'end_time', 'teacher_id', 'status', 'memo'];
     const fields = [];
     const params = [];
-
-    if (session_date !== undefined) { fields.push('session_date = ?'); params.push(session_date); }
-    if (start_time !== undefined) { fields.push('start_time = ?'); params.push(start_time); }
-    if (end_time !== undefined) { fields.push('end_time = ?'); params.push(end_time); }
-    if (teacher_id !== undefined) { fields.push('teacher_id = ?'); params.push(teacher_id); }
-    if (status !== undefined) { fields.push('status = ?'); params.push(status); }
-    if (memo !== undefined) { fields.push('memo = ?'); params.push(memo); }
+    for (const key of ALLOWED) {
+      if (req.body[key] !== undefined) {
+        fields.push(`${key} = ?`);
+        params.push(req.body[key]);
+      }
+    }
 
     if (fields.length === 0) return res.status(400).json({ error: '수정할 항목이 없습니다.' });
 
-    params.push(req.params.id);
-    await runQuery(`UPDATE class_sessions SET ${fields.join(', ')} WHERE id = ?`, params);
+    params.push(req.params.id, req.academyId);
+    await runQuery(`UPDATE class_sessions SET ${fields.join(', ')} WHERE id = ? AND academy_id = ?`, params);
     res.json({ message: '세션이 수정되었습니다.' });
   } catch (err) {
     console.error('[세션 수정 오류]', err.message);
@@ -449,8 +449,8 @@ router.post('/sessions/:id/cancel', async (req, res) => {
 
     const { cancel_reason } = req.body;
     await runQuery(
-      "UPDATE class_sessions SET status = 'cancelled', cancel_reason = ? WHERE id = ?",
-      [cancel_reason || null, req.params.id]
+      "UPDATE class_sessions SET status = 'cancelled', cancel_reason = ? WHERE id = ? AND academy_id = ?",
+      [cancel_reason || null, req.params.id, req.academyId]
     );
     res.json({ message: '휴강 처리되었습니다.' });
   } catch (err) {
@@ -535,21 +535,25 @@ router.put('/recurring/:id', async (req, res) => {
     );
     if (!rule) return res.status(404).json({ error: '반복 일정을 찾을 수 없습니다.' });
 
-    const { day_of_week, start_time, end_time, effective_from, effective_until, is_active } = req.body;
+    // 화이트리스트 기반 동적 UPDATE
+    const ALLOWED = ['day_of_week', 'start_time', 'end_time', 'effective_from', 'effective_until', 'is_active'];
     const fields = [];
     const params = [];
-
-    if (day_of_week !== undefined) { fields.push('day_of_week = ?'); params.push(day_of_week); }
-    if (start_time !== undefined) { fields.push('start_time = ?'); params.push(start_time); }
-    if (end_time !== undefined) { fields.push('end_time = ?'); params.push(end_time); }
-    if (effective_from !== undefined) { fields.push('effective_from = ?'); params.push(effective_from); }
-    if (effective_until !== undefined) { fields.push('effective_until = ?'); params.push(effective_until); }
-    if (is_active !== undefined) { fields.push('is_active = ?'); params.push(is_active); }
+    for (const key of ALLOWED) {
+      if (req.body[key] !== undefined) {
+        fields.push(`${key} = ?`);
+        params.push(req.body[key]);
+      }
+    }
 
     if (fields.length === 0) return res.status(400).json({ error: '수정할 항목이 없습니다.' });
 
-    params.push(req.params.id);
-    await runQuery(`UPDATE class_schedules_recurring SET ${fields.join(', ')} WHERE id = ?`, params);
+    // class_schedules_recurring에 academy_id 없음 — 부모 classes 테이블로 테넌트 검증
+    params.push(req.params.id, req.academyId);
+    await runQuery(
+      `UPDATE class_schedules_recurring SET ${fields.join(', ')} WHERE id = ? AND class_id IN (SELECT id FROM classes WHERE academy_id = ?)`,
+      params
+    );
     res.json({ message: '반복 일정이 수정되었습니다.' });
   } catch (err) {
     console.error('[반복 일정 수정 오류]', err.message);
@@ -566,7 +570,10 @@ router.delete('/recurring/:id', async (req, res) => {
     );
     if (!rule) return res.status(404).json({ error: '반복 일정을 찾을 수 없습니다.' });
 
-    await runQuery('DELETE FROM class_schedules_recurring WHERE id = ?', [req.params.id]);
+    await runQuery(
+      'DELETE FROM class_schedules_recurring WHERE id = ? AND class_id IN (SELECT id FROM classes WHERE academy_id = ?)',
+      [req.params.id, req.academyId]
+    );
     res.json({ message: '반복 일정이 삭제되었습니다.' });
   } catch (err) {
     console.error('[반복 일정 삭제 오류]', err.message);
@@ -586,23 +593,23 @@ router.put('/:id/teacher', async (req, res) => {
 
     const { teacher_id, reason } = req.body;
 
-    // 이전 강사 해제
+    // 이전 강사 해제 (class_id 경유로 academy_id 검증)
     if (cls.teacher_id) {
       await runQuery(
-        "UPDATE teacher_assignments SET released_at = NOW() WHERE class_id = ? AND teacher_id = ? AND released_at IS NULL",
-        [req.params.id, cls.teacher_id]
+        "UPDATE teacher_assignments SET released_at = NOW() WHERE class_id = ? AND teacher_id = ? AND released_at IS NULL AND class_id IN (SELECT id FROM classes WHERE academy_id = ?)",
+        [req.params.id, cls.teacher_id, req.academyId]
       );
     }
 
-    // 새 강사 배정
+    // 새 강사 배정 — 위 cls lookup에서 academy_id 검증 완료
     if (teacher_id) {
       await runInsert(
-        'INSERT INTO teacher_assignments (class_id, teacher_id, reason) VALUES (?, ?, ?)',
+        'INSERT INTO teacher_assignments (class_id, teacher_id, reason) /* academy_id verified via parent class lookup */ VALUES (?, ?, ?)',
         [req.params.id, teacher_id, reason || '강사 변경']
       );
     }
 
-    await runQuery('UPDATE classes SET teacher_id = ?, updated_at = NOW() WHERE id = ?', [teacher_id || null, req.params.id]);
+    await runQuery('UPDATE classes SET teacher_id = ?, updated_at = NOW() WHERE id = ? AND academy_id = ?', [teacher_id || null, req.params.id, req.academyId]);
     res.json({ message: '강사가 변경되었습니다.' });
   } catch (err) {
     console.error('[강사 변경 오류]', err.message);

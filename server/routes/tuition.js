@@ -251,8 +251,8 @@ router.post('/records/:id/payment-link', async (req, res) => {
 
     const token = crypto.randomBytes(32).toString('hex');
     await runQuery(
-      'UPDATE tuition_records SET payment_token = ? WHERE id = ?',
-      [token, req.params.id]
+      'UPDATE tuition_records SET payment_token = ? WHERE id = ? AND academy_id = ?',
+      [token, req.params.id, req.academyId]
     );
 
     const paymentUrl = `${process.env.CORS_ORIGIN || 'http://localhost:3001'}/pay/${token}`;
@@ -298,8 +298,8 @@ router.post('/records/:id/adjust', async (req, res) => {
 
     // 조정 금액 계산: 기존 조정 이력 합산
     const adjustments = await getAll(
-      'SELECT adjustment_type, amount FROM tuition_adjustments WHERE tuition_record_id = ?',
-      [req.params.id]
+      'SELECT adjustment_type, amount FROM tuition_adjustments WHERE tuition_record_id = ? AND academy_id = ?',
+      [req.params.id, req.academyId]
     );
     let totalAdj = 0;
     for (const adj of adjustments) {
@@ -312,8 +312,8 @@ router.post('/records/:id/adjust', async (req, res) => {
     const adjustedAmount = record.amount + totalAdj;
 
     await runQuery(
-      'UPDATE tuition_records SET adjusted_amount = ?, adjustment_reason = ? WHERE id = ?',
-      [adjustedAmount, reason, req.params.id]
+      'UPDATE tuition_records SET adjusted_amount = ?, adjustment_reason = ? WHERE id = ? AND academy_id = ?',
+      [adjustedAmount, reason, req.params.id, req.academyId]
     );
 
     await logAction({
@@ -337,8 +337,8 @@ router.get('/records/:id/adjustments', async (req, res) => {
     if (!record) return res.status(404).json({ error: '수납 기록을 찾을 수 없습니다.' });
 
     const rows = await getAll(
-      'SELECT * FROM tuition_adjustments WHERE tuition_record_id = ? ORDER BY created_at DESC',
-      [req.params.id]
+      'SELECT * FROM tuition_adjustments WHERE tuition_record_id = ? AND academy_id = ? ORDER BY created_at DESC',
+      [req.params.id, req.academyId]
     );
     res.json(rows);
   } catch (err) {
@@ -391,8 +391,8 @@ router.put('/refunds/:id/approve', async (req, res) => {
     if (refund.status !== 'pending') return res.status(400).json({ error: '대기 상태의 환불만 승인할 수 있습니다.' });
 
     await runQuery(
-      "UPDATE tuition_refunds SET status = 'approved', approved_by = ? WHERE id = ?",
-      [req.userId, req.params.id]
+      "UPDATE tuition_refunds SET status = 'approved', approved_by = ? WHERE id = ? AND academy_id = ?",
+      [req.userId, req.params.id, req.academyId]
     );
     await logAction({ req, action: 'tuition_refund_approve', resourceType: 'tuition_refund', resourceId: parseInt(req.params.id) });
     res.json({ message: '환불이 승인되었습니다.' });
@@ -413,15 +413,15 @@ router.put('/refunds/:id/complete', async (req, res) => {
     if (refund.status !== 'approved') return res.status(400).json({ error: '승인된 환불만 완료 처리할 수 있습니다.' });
 
     await runQuery(
-      "UPDATE tuition_refunds SET status = 'completed', completed_at = NOW() WHERE id = ?",
-      [req.params.id]
+      "UPDATE tuition_refunds SET status = 'completed', completed_at = NOW() WHERE id = ? AND academy_id = ?",
+      [req.params.id, req.academyId]
     );
 
     // 수납 기록에 환불 정보 반영
     await runQuery(
       `UPDATE tuition_records SET refund_amount = COALESCE(refund_amount, 0) + ?, refund_at = NOW(), refund_reason = ?, refund_method = ?, status = 'refunded'
-       WHERE id = ?`,
-      [refund.refund_amount, refund.reason, refund.refund_method, refund.tuition_record_id]
+       WHERE id = ? AND academy_id = ?`,
+      [refund.refund_amount, refund.reason, refund.refund_method, refund.tuition_record_id, req.academyId]
     );
 
     await logAction({ req, action: 'tuition_refund_complete', resourceType: 'tuition_refund', resourceId: parseInt(req.params.id) });
@@ -443,8 +443,8 @@ router.put('/refunds/:id/reject', async (req, res) => {
     if (refund.status !== 'pending') return res.status(400).json({ error: '대기 상태의 환불만 거절할 수 있습니다.' });
 
     await runQuery(
-      "UPDATE tuition_refunds SET status = 'rejected' WHERE id = ?",
-      [req.params.id]
+      "UPDATE tuition_refunds SET status = 'rejected' WHERE id = ? AND academy_id = ?",
+      [req.params.id, req.academyId]
     );
     res.json({ message: '환불이 거절되었습니다.' });
   } catch (err) {
@@ -600,8 +600,8 @@ router.post('/settlement/:month/close', async (req, res) => {
 
     if (existing) {
       await runQuery(
-        `UPDATE tuition_settlements SET total_billed = ?, total_collected = ?, total_outstanding = ?, total_refunded = ?, total_adjusted = ?, net_revenue = ?, status = 'closed', closed_by = ?, closed_at = NOW(), memo = ? WHERE id = ?`,
-        [billed.total, collected.total, outstanding.total, refunded.total, adjusted.total, collected.total - refunded.total, req.userId, memo || null, existing.id]
+        `UPDATE tuition_settlements SET total_billed = ?, total_collected = ?, total_outstanding = ?, total_refunded = ?, total_adjusted = ?, net_revenue = ?, status = 'closed', closed_by = ?, closed_at = NOW(), memo = ? WHERE id = ? AND academy_id = ?`,
+        [billed.total, collected.total, outstanding.total, refunded.total, adjusted.total, collected.total - refunded.total, req.userId, memo || null, existing.id, req.academyId]
       );
     } else {
       await runInsert(
@@ -635,8 +635,8 @@ router.post('/settlement/:month/reopen', async (req, res) => {
     if (existing.status === 'open') return res.status(400).json({ error: '이미 열려있는 상태입니다.' });
 
     await runQuery(
-      "UPDATE tuition_settlements SET status = 'open', closed_by = NULL, closed_at = NULL WHERE id = ?",
-      [existing.id]
+      "UPDATE tuition_settlements SET status = 'open', closed_by = NULL, closed_at = NULL WHERE id = ? AND academy_id = ?",
+      [existing.id, req.academyId]
     );
     res.json({ message: `${month} 마감이 취소되었습니다.` });
   } catch (err) {
@@ -1137,8 +1137,8 @@ publicRouter.post('/tuition/:token/pay', async (req, res) => {
     }
 
     await runQuery(
-      `UPDATE tuition_records SET status = 'paid', paid_at = NOW(), portone_payment_id = ?, payment_token = NULL WHERE id = ?`,
-      [paymentId, record.id]
+      `UPDATE tuition_records SET status = 'paid', paid_at = NOW(), portone_payment_id = ?, payment_token = NULL WHERE id = ? AND academy_id = ?`,
+      [paymentId, record.id, record.academy_id]
     );
 
     res.json({ message: '결제가 완료되었습니다.' });

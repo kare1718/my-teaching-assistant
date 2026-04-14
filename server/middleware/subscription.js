@@ -118,12 +118,17 @@ const TIER_FEATURES = {
   starter: STARTER,
   pro: PRO,
   first_class: FIRST_CLASS,
-  // ── 레거시 호환 (기존 DB에 남아있는 tier 값 대응) ──
-  trial: FREE,           // 기존 trial → free (더 이상 별도 체험 플랜 없음)
-  basic: STARTER,        // 기존 basic → starter
-  standard: PRO,         // 기존 standard → pro
-  growth: PRO,           // 기존 growth → pro
-  premium: FIRST_CLASS,  // 기존 premium → first_class
+
+  // ─────────────────────────────────────────────
+  // 레거시 호환 매핑 (삭제 금지)
+  // 기존 DB에 남아있을 수 있는 tier 값을 현행 4단 구조로 매핑
+  // 실제 신규 학원은 Free/Starter/Pro/First Class 중 선택
+  // ─────────────────────────────────────────────
+  trial: FREE,           // 구 체험 플랜 → free (14일 체험은 is_trial 플래그로 대체)
+  basic: STARTER,        // 구 Basic → Starter
+  standard: PRO,         // 구 Standard → Pro
+  growth: PRO,           // 구 Growth → Pro
+  premium: FIRST_CLASS,  // 구 Premium → First Class
 };
 
 // price는 모두 월 요금 (VAT 별도). first_class는 별도 문의 → price=null
@@ -133,7 +138,11 @@ const TIER_LIMITS = {
   starter:     { maxStudents: 50,   price: 49000,  smsIncluded: 0, vatIncluded: false },
   pro:         { maxStudents: 100,  price: 129000, smsIncluded: 0, vatIncluded: false },
   first_class: { maxStudents: null, price: null,   smsIncluded: 0, vatIncluded: false, inquiry: true },
-  // 레거시 호환 (기존 DB 값은 신규 티어 제한치로 매핑)
+
+  // ─────────────────────────────────────────────
+  // 레거시 호환 매핑 (삭제 금지)
+  // 기존 DB에 남아있을 수 있는 tier 값을 현행 4단 구조로 매핑
+  // ─────────────────────────────────────────────
   trial:    { maxStudents: 15,   price: 0,      smsIncluded: 0, vatIncluded: false },
   basic:    { maxStudents: 50,   price: 49000,  smsIncluded: 0, vatIncluded: false },
   standard: { maxStudents: 100,  price: 129000, smsIncluded: 0, vatIncluded: false },
@@ -142,6 +151,12 @@ const TIER_LIMITS = {
 };
 
 // 티어 한글/표시명
+// ─────────────────────────────────────────────
+// 레거시 호환 주의 (삭제 금지)
+// 레거시 tier(trial/basic/standard/growth/premium)는 UI 표시 시
+// 반드시 TIER_FEATURES 매핑을 거쳐 현행 4단 중 하나의 label로 변환되어야 함
+// (TIER_LABELS는 현행 키만 유지 — 신규 DB는 항상 이 4개 중 하나)
+// ─────────────────────────────────────────────
 const TIER_LABELS = {
   free:        'Free',
   starter:     'Starter',

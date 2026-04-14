@@ -64,16 +64,16 @@ router.get('/children/:studentId/summary', async (req, res) => {
 
     const weekAttendance = await getAll(
       `SELECT status FROM attendance
-       WHERE student_id = ? AND date >= ?`,
-      [studentId, weekStartStr]
+       WHERE student_id = ? AND date >= ? AND academy_id = ?`,
+      [studentId, weekStartStr, req.academyId]
     );
     const totalWeek = weekAttendance.length;
     const presentWeek = weekAttendance.filter(a => a.status === 'present' || a.status === 'late').length;
     const weekRate = totalWeek > 0 ? Math.round((presentWeek / totalWeek) * 100) : null;
 
     const todayAttendance = await getOne(
-      `SELECT status, check_in_at FROM attendance WHERE student_id = ? AND date = ?`,
-      [studentId, today]
+      `SELECT status, check_in_at FROM attendance WHERE student_id = ? AND date = ? AND academy_id = ?`,
+      [studentId, today, req.academyId]
     );
 
     // 미납 정보
@@ -91,10 +91,10 @@ router.get('/children/:studentId/summary', async (req, res) => {
       `SELECT sc.score, sc.rank, e.name AS exam_name, e.date AS exam_date, e.total_score
        FROM scores sc
        JOIN exams e ON e.id = sc.exam_id
-       WHERE sc.student_id = ?
+       WHERE sc.student_id = ? AND sc.academy_id = ?
        ORDER BY e.date DESC NULLS LAST, sc.created_at DESC
        LIMIT 1`,
-      [studentId]
+      [studentId, req.academyId]
     );
 
     // 마지막 상담일
@@ -138,7 +138,7 @@ router.get('/children/:studentId/attendance', async (req, res) => {
 
     const { month } = req.query; // YYYY-MM
     let dateFilter = '';
-    const params = [studentId];
+    const params = [studentId, req.academyId];
 
     if (month) {
       dateFilter = " AND TO_CHAR(date, 'YYYY-MM') = ?";
@@ -148,7 +148,7 @@ router.get('/children/:studentId/attendance', async (req, res) => {
     const rows = await getAll(
       `SELECT id, date, status, check_in_at, memo
        FROM attendance
-       WHERE student_id = ?${dateFilter}
+       WHERE student_id = ? AND academy_id = ?${dateFilter}
        ORDER BY date DESC`,
       params
     );
@@ -201,9 +201,9 @@ router.get('/children/:studentId/scores', async (req, res) => {
               e.name AS exam_name, e.exam_type, e.date AS exam_date, e.total_score
        FROM scores sc
        JOIN exams e ON e.id = sc.exam_id
-       WHERE sc.student_id = ?
+       WHERE sc.student_id = ? AND sc.academy_id = ?
        ORDER BY e.date DESC NULLS LAST, sc.created_at DESC`,
-      [studentId]
+      [studentId, req.academyId]
     );
     res.json(rows);
   } catch (err) {

@@ -1,93 +1,108 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { getUser, logout, isLoggedIn, checkTokenExpiry } from './api';
 import { TenantProvider, useTenantConfig } from './contexts/TenantContext';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import LandingPage from './pages/LandingPage';
-import OnboardingPage from './pages/OnboardingPage';
-import AdminDashboard from './pages/admin/Dashboard';
-import SchoolPage from './pages/admin/SchoolPage';
-import GradePage from './pages/admin/GradePage';
-import StudentManage from './pages/admin/StudentManage';
-import ScoreInput from './pages/admin/ScoreInput';
-import NoticeCreate from './pages/admin/NoticeCreate';
-import PendingUsers from './pages/admin/PendingUsers';
-import EditRequests from './pages/admin/EditRequests';
-import ReviewManage from './pages/admin/ReviewManage';
-import QnAManage from './pages/admin/QnAManage';
-import AdminStudentView from './pages/admin/AdminStudentView';
-import AcademySettings from './pages/admin/AcademySettings';
-import RolePermissions from './pages/admin/RolePermissions';
-import SubscriptionPage from './pages/admin/SubscriptionPage';
-import MyPage from './pages/student/MyPage';
-import Notices from './pages/student/Notices';
-import ScoreView from './pages/student/ScoreView';
-import Materials from './pages/student/Materials';
-import Reviews from './pages/student/Reviews';
-import QnA from './pages/student/QnA';
-import GameHub from './pages/student/GameHub';
-import VocabQuiz from './pages/student/VocabQuiz';
-import KnowledgeQuiz from './pages/student/KnowledgeQuiz';
-import ReadingQuiz from './pages/student/ReadingQuiz';
-import Rankings from './pages/student/Rankings';
-import Shop from './pages/student/Shop';
-import AvatarCustomize from './pages/student/AvatarCustomize';
-import GamificationManage from './pages/admin/GamificationManage';
-import SmsManage from './pages/admin/SmsManage';
-import ClinicManage from './pages/admin/ClinicManage';
-import ScheduleManage from './pages/admin/ScheduleManage';
-import ClinicApply from './pages/student/ClinicApply';
-import HallOfFameManage from './pages/admin/HallOfFameManage';
-import TAScheduleManage from './pages/admin/TAScheduleManage';
-import HomeworkManage from './pages/admin/HomeworkManage';
-import OXQuiz from './pages/student/OXQuiz';
-import ReportManage from './pages/admin/ReportManage';
-import AttendanceManage from './pages/admin/AttendanceManage';
-import TuitionManage from './pages/admin/TuitionManage';
-import ConsultationLog from './pages/admin/ConsultationLog';
-import LeadManage from './pages/admin/LeadManage';
-import PortfolioManage from './pages/admin/PortfolioManage';
-import SmsCredits from './pages/admin/SmsCredits';
-import AIAssistant from './pages/admin/AIAssistant';
-import BackupManage from './pages/admin/BackupManage';
-import BackupSecurity from './pages/admin/BackupSecurity';
-import ClassManage from './pages/admin/ClassManage';
-import SuperDashboard from './pages/superadmin/Dashboard';
-import AcademyDetail from './pages/superadmin/AcademyDetail';
-import AcademyCreate from './pages/superadmin/AcademyCreate';
-import SuperBackupSecurity from './pages/superadmin/BackupSecurity';
-import PromotionsPage from './pages/superadmin/PromotionsPage';
-import RevenuePage from './pages/superadmin/RevenuePage';
-import KPIDashboard from './pages/superadmin/KPIDashboard';
-import PreRegistered from './pages/admin/PreRegistered';
-import ParentManage from './pages/admin/ParentManage';
-import ProfileManage from './pages/admin/ProfileManage';
-import UserGuide from './pages/admin/UserGuide';
-import AutomationManage from './pages/admin/AutomationManage';
-import AuditLogs from './pages/admin/AuditLogs';
-import AttendanceCheck from './pages/student/AttendanceCheck';
-import Portfolio from './pages/student/Portfolio';
-import AIHub from './pages/student/AIHub';
-import InfoHub from './pages/student/InfoHub';
-import StudyTimer from './pages/student/StudyTimer';
-import StudyRankings from './pages/student/StudyRankings';
+import LoadingScreen from './components/LoadingScreen';
 import SideNav from './components/SideNav';
 import OnboardingChecklist from './components/OnboardingChecklist';
-import DataImport from './pages/admin/DataImport';
 import PlatformNotificationBell from './components/PlatformNotificationBell';
 import ParentBottomNav from './components/ParentBottomNav';
-import PaymentPage from './pages/PaymentPage';
+
+// 빠른 로드 필요 (정적 유지)
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import NotFoundPage from './pages/NotFoundPage';
-import ParentHome from './pages/parent/ParentHome';
-import ParentAttendance from './pages/parent/ParentAttendance';
-import ParentTuition from './pages/parent/ParentTuition';
-import ParentNotices from './pages/parent/ParentNotices';
-import ParentMore from './pages/parent/ParentMore';
-import Terms from './pages/legal/Terms';
-import Privacy from './pages/legal/Privacy';
-import Refund from './pages/legal/Refund';
-import BusinessInfo from './pages/legal/BusinessInfo';
+
+// 일반 페이지 (lazy)
+const OnboardingPage = lazy(() => import('./pages/OnboardingPage'));
+const PaymentPage = lazy(() => import('./pages/PaymentPage'));
+
+// 정책 페이지 (lazy)
+const Terms = lazy(() => import('./pages/legal/Terms'));
+const Privacy = lazy(() => import('./pages/legal/Privacy'));
+const Refund = lazy(() => import('./pages/legal/Refund'));
+const BusinessInfo = lazy(() => import('./pages/legal/BusinessInfo'));
+
+// 관리자 페이지 (lazy)
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
+const SchoolPage = lazy(() => import('./pages/admin/SchoolPage'));
+const GradePage = lazy(() => import('./pages/admin/GradePage'));
+const StudentManage = lazy(() => import('./pages/admin/StudentManage'));
+const ScoreInput = lazy(() => import('./pages/admin/ScoreInput'));
+const NoticeCreate = lazy(() => import('./pages/admin/NoticeCreate'));
+const PendingUsers = lazy(() => import('./pages/admin/PendingUsers'));
+const EditRequests = lazy(() => import('./pages/admin/EditRequests'));
+const ReviewManage = lazy(() => import('./pages/admin/ReviewManage'));
+const QnAManage = lazy(() => import('./pages/admin/QnAManage'));
+const AdminStudentView = lazy(() => import('./pages/admin/AdminStudentView'));
+const AcademySettings = lazy(() => import('./pages/admin/AcademySettings'));
+const RolePermissions = lazy(() => import('./pages/admin/RolePermissions'));
+const SubscriptionPage = lazy(() => import('./pages/admin/SubscriptionPage'));
+const GamificationManage = lazy(() => import('./pages/admin/GamificationManage'));
+const SmsManage = lazy(() => import('./pages/admin/SmsManage'));
+const ClinicManage = lazy(() => import('./pages/admin/ClinicManage'));
+const ScheduleManage = lazy(() => import('./pages/admin/ScheduleManage'));
+const HallOfFameManage = lazy(() => import('./pages/admin/HallOfFameManage'));
+const TAScheduleManage = lazy(() => import('./pages/admin/TAScheduleManage'));
+const HomeworkManage = lazy(() => import('./pages/admin/HomeworkManage'));
+const ReportManage = lazy(() => import('./pages/admin/ReportManage'));
+const AttendanceManage = lazy(() => import('./pages/admin/AttendanceManage'));
+const TuitionManage = lazy(() => import('./pages/admin/TuitionManage'));
+const ConsultationLog = lazy(() => import('./pages/admin/ConsultationLog'));
+const LeadManage = lazy(() => import('./pages/admin/LeadManage'));
+const PortfolioManage = lazy(() => import('./pages/admin/PortfolioManage'));
+const SmsCredits = lazy(() => import('./pages/admin/SmsCredits'));
+const AIAssistant = lazy(() => import('./pages/admin/AIAssistant'));
+const BackupManage = lazy(() => import('./pages/admin/BackupManage'));
+const BackupSecurity = lazy(() => import('./pages/admin/BackupSecurity'));
+const ClassManage = lazy(() => import('./pages/admin/ClassManage'));
+const PreRegistered = lazy(() => import('./pages/admin/PreRegistered'));
+const ParentManage = lazy(() => import('./pages/admin/ParentManage'));
+const ProfileManage = lazy(() => import('./pages/admin/ProfileManage'));
+const UserGuide = lazy(() => import('./pages/admin/UserGuide'));
+const AutomationManage = lazy(() => import('./pages/admin/AutomationManage'));
+const AuditLogs = lazy(() => import('./pages/admin/AuditLogs'));
+const DataImport = lazy(() => import('./pages/admin/DataImport'));
+
+// 학생 페이지 (lazy)
+const MyPage = lazy(() => import('./pages/student/MyPage'));
+const Notices = lazy(() => import('./pages/student/Notices'));
+const ScoreView = lazy(() => import('./pages/student/ScoreView'));
+const Materials = lazy(() => import('./pages/student/Materials'));
+const Reviews = lazy(() => import('./pages/student/Reviews'));
+const QnA = lazy(() => import('./pages/student/QnA'));
+const GameHub = lazy(() => import('./pages/student/GameHub'));
+const VocabQuiz = lazy(() => import('./pages/student/VocabQuiz'));
+const KnowledgeQuiz = lazy(() => import('./pages/student/KnowledgeQuiz'));
+const ReadingQuiz = lazy(() => import('./pages/student/ReadingQuiz'));
+const OXQuiz = lazy(() => import('./pages/student/OXQuiz'));
+const Rankings = lazy(() => import('./pages/student/Rankings'));
+const Shop = lazy(() => import('./pages/student/Shop'));
+const AvatarCustomize = lazy(() => import('./pages/student/AvatarCustomize'));
+const ClinicApply = lazy(() => import('./pages/student/ClinicApply'));
+const AttendanceCheck = lazy(() => import('./pages/student/AttendanceCheck'));
+const Portfolio = lazy(() => import('./pages/student/Portfolio'));
+const AIHub = lazy(() => import('./pages/student/AIHub'));
+const InfoHub = lazy(() => import('./pages/student/InfoHub'));
+const StudyTimer = lazy(() => import('./pages/student/StudyTimer'));
+const StudyRankings = lazy(() => import('./pages/student/StudyRankings'));
+
+// 보호자 페이지 (lazy)
+const ParentHome = lazy(() => import('./pages/parent/ParentHome'));
+const ParentAttendance = lazy(() => import('./pages/parent/ParentAttendance'));
+const ParentTuition = lazy(() => import('./pages/parent/ParentTuition'));
+const ParentNotices = lazy(() => import('./pages/parent/ParentNotices'));
+const ParentMore = lazy(() => import('./pages/parent/ParentMore'));
+
+// SuperAdmin (lazy)
+const SuperDashboard = lazy(() => import('./pages/superadmin/Dashboard'));
+const AcademyDetail = lazy(() => import('./pages/superadmin/AcademyDetail'));
+const AcademyCreate = lazy(() => import('./pages/superadmin/AcademyCreate'));
+const SuperBackupSecurity = lazy(() => import('./pages/superadmin/BackupSecurity'));
+const PromotionsPage = lazy(() => import('./pages/superadmin/PromotionsPage'));
+const RevenuePage = lazy(() => import('./pages/superadmin/RevenuePage'));
+const KPIDashboard = lazy(() => import('./pages/superadmin/KPIDashboard'));
 
 function Navbar() {
   const navigate = useNavigate();
@@ -169,13 +184,15 @@ function ParentLayout() {
   return (
     <>
       <div style={{ paddingBottom: 60 }}>
-        <Routes>
-          <Route index element={<ParentHome />} />
-          <Route path="attendance" element={<ParentAttendance />} />
-          <Route path="tuition" element={<ParentTuition />} />
-          <Route path="notices" element={<ParentNotices />} />
-          <Route path="more" element={<ParentMore />} />
-        </Routes>
+        <Suspense fallback={<LoadingScreen />}>
+          <Routes>
+            <Route index element={<ParentHome />} />
+            <Route path="attendance" element={<ParentAttendance />} />
+            <Route path="tuition" element={<ParentTuition />} />
+            <Route path="notices" element={<ParentNotices />} />
+            <Route path="more" element={<ParentMore />} />
+          </Routes>
+        </Suspense>
       </div>
       <ParentBottomNav />
     </>
@@ -194,6 +211,7 @@ function AppLayout() {
       {!isPublicPayment && !isParentRoute && <SideNav />}
       {!isPublicPayment && !isParentRoute && <OnboardingChecklist />}
       {isParentRoute && <Navbar />}
+      <Suspense fallback={<LoadingScreen />}>
       <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/onboarding" element={<OnboardingPage />} />
@@ -279,6 +297,7 @@ function AppLayout() {
 
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
+      </Suspense>
     </div>
   );
 }

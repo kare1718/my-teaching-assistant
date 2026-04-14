@@ -37,11 +37,38 @@ const GLOBAL_TABLES = new Set([
   'platform_notices',
   'migrations',
   'pg_stat_activity',
+  // 플랫폼/슈퍼관리자 전용 테이블 (academy_id 컬럼 없음)
+  'legal_info',
+  'promotions',
+  'platform_activity_logs',
+  'webhook_events',
+  // 개발 초기에 academy_id 도입 전 생성된 레거시 테이블 (게이미피케이션 - 학원 단일)
+  'xp_logs',
+  'homework_records',
+  'notifications',
+  'notice_reads',
 ]);
 
 // users 테이블은 academy_id 스코프지만 auth 플로우에서 academy_id 없이 조회가 많아
 // 경고를 '의심' 레벨로 분리한다.
-const SOFT_TABLES = new Set(['users']);
+// SOFT: 부모 테이블이 academy_id를 가지고 있고, 라우트에서 부모를 먼저 lookup하여
+// 테넌시를 검증하는 패턴이 관용적으로 쓰이는 child 테이블들.
+// 감사 스크립트는 부모 lookup을 정적으로 판별할 수 없으므로 soft로 분리하여
+// 수동 리뷰 대상임을 표시한다.
+const SOFT_TABLES = new Set([
+  'users',
+  // class_* — 부모는 classes(academy_id 있음)
+  'class_students',
+  'class_schedules_recurring',
+  'class_waitlist',
+  'teacher_assignments',
+  // attendance_logs — 부모는 attendance(academy_id 있음)
+  'attendance_logs',
+  // lead_activities — 부모는 leads(academy_id 있음)
+  'lead_activities',
+  // student_parents — 부모는 students(academy_id 있음)
+  'student_parents',
+]);
 
 // 정규식 — SQL 문자열 리터럴을 가장한 것까지 잡기 위해 백틱/싱글쿼트 모두 허용
 const CALL_RE = /\b(getOne|getAll|runQuery|runInsert)\s*\(\s*([`'"])([\s\S]*?)\2/g;
@@ -75,7 +102,16 @@ function lineNumberOf(source, index) {
   return line;
 }
 
+// superadmin.js는 플랫폼 최고관리자 전용 (requireSuperAdmin) — 의도적으로 크로스테넌트
+// webhook.js는 결제 webhook 엔드포인트 (인증 없음) — portone_payment_id로 lookup되며 PortOne가 발급하는 글로벌 유니크 ID
+const IGNORE_FILES = new Set([
+  'superadmin.js',
+  'webhook.js',
+]);
+
 function auditFile(file) {
+  const base = path.basename(file);
+  if (IGNORE_FILES.has(base)) return [];
   const src = fs.readFileSync(file, 'utf8');
   const warnings = [];
   let m;

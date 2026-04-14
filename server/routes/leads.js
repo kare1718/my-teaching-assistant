@@ -161,8 +161,8 @@ router.get('/:id', async (req, res) => {
     );
 
     const trials = await getAll(
-      'SELECT * FROM trial_sessions WHERE lead_id = ? ORDER BY trial_date DESC',
-      [req.params.id]
+      'SELECT * FROM trial_sessions WHERE lead_id = ? AND academy_id = ? ORDER BY trial_date DESC',
+      [req.params.id, req.academyId]
     );
 
     res.json({ ...lead, activities, trials });
@@ -263,7 +263,7 @@ router.post('/:id/activities', async (req, res) => {
 
     // next_action이 있으면 리드의 next_contact_memo 업데이트
     if (next_action) {
-      await runQuery('UPDATE leads SET next_contact_memo = ?, updated_at = NOW() WHERE id = ?', [next_action, req.params.id]);
+      await runQuery('UPDATE leads SET next_contact_memo = ?, updated_at = NOW() WHERE id = ? AND academy_id = ?', [next_action, req.params.id, req.academyId]);
     }
 
     res.json({ id, message: '활동이 기록되었습니다.' });
@@ -304,9 +304,9 @@ router.post('/:id/trial', async (req, res) => {
     );
 
     // 리드 상태가 trial 이전이면 자동으로 trial로 변경
-    const currentLead = await getOne('SELECT status FROM leads WHERE id = ?', [req.params.id]);
+    const currentLead = await getOne('SELECT status FROM leads WHERE id = ? AND academy_id = ?', [req.params.id, req.academyId]);
     if (['new', 'contacted', 'consulting'].includes(currentLead?.status)) {
-      await runQuery("UPDATE leads SET status = 'trial', updated_at = NOW() WHERE id = ?", [req.params.id]);
+      await runQuery("UPDATE leads SET status = 'trial', updated_at = NOW() WHERE id = ? AND academy_id = ?", [req.params.id, req.academyId]);
       await runInsert(
         'INSERT INTO lead_activities (lead_id, activity_type, description, created_by) VALUES (?, ?, ?, ?)',
         [req.params.id, 'status_change', `상태 변경: ${currentLead.status} → trial (체험수업 예약)`, req.user.id]
@@ -416,8 +416,8 @@ router.post('/:id/convert', async (req, res) => {
 
     // 5. leads 상태 업데이트
     await runQuery(
-      "UPDATE leads SET status = 'enrolled', converted_student_id = ?, updated_at = NOW() WHERE id = ?",
-      [studentId, req.params.id]
+      "UPDATE leads SET status = 'enrolled', converted_student_id = ?, updated_at = NOW() WHERE id = ? AND academy_id = ?",
+      [studentId, req.params.id, req.academyId]
     );
 
     // 6. 활동 기록

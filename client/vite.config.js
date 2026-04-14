@@ -8,5 +8,19 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:3002'
     }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-query': ['@tanstack/react-query'],
+          'vendor-charts': ['recharts'],
+          'vendor-xlsx': ['xlsx'],
+          'vendor-zustand': ['zustand'],
+        }
+      }
+    },
+    chunkSizeWarningLimit: 700,
   }
 })

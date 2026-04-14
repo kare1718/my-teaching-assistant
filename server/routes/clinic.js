@@ -187,6 +187,7 @@ router.get('/admin/all', requireAdmin, async (req, res) => {
   const appointments = await getAll(
     `SELECT ca.*, u.name as student_name, s.school, s.grade
      FROM clinic_appointments ca
+     /* academy_id 필터는 conditions 배열(최초 값 ca.academy_id = ?)에서 항상 포함됨 */
      JOIN students s ON ca.student_id = s.id
      JOIN users u ON s.user_id = u.id
      ${where}

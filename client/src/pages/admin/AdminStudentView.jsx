@@ -1,15 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../../api';
 import { useTenantConfig } from '../../contexts/TenantContext';
-import OverviewTab from './StudentTabs/OverviewTab';
-import TimelineTab from './StudentTabs/TimelineTab';
-import ClassesTab from './StudentTabs/ClassesTab';
-import ConsultationTab from './StudentTabs/ConsultationTab';
-import TuitionTab from './StudentTabs/TuitionTab';
-import StudyTab from './StudentTabs/StudyTab';
-import ParentsTab from './StudentTabs/ParentsTab';
-import RewardTab from './StudentTabs/RewardTab';
+
+const OverviewTab = lazy(() => import('./StudentTabs/OverviewTab'));
+const TimelineTab = lazy(() => import('./StudentTabs/TimelineTab'));
+const ClassesTab = lazy(() => import('./StudentTabs/ClassesTab'));
+const ConsultationTab = lazy(() => import('./StudentTabs/ConsultationTab'));
+const TuitionTab = lazy(() => import('./StudentTabs/TuitionTab'));
+const StudyTab = lazy(() => import('./StudentTabs/StudyTab'));
+const ParentsTab = lazy(() => import('./StudentTabs/ParentsTab'));
+const RewardTab = lazy(() => import('./StudentTabs/RewardTab'));
+
+const TabFallback = () => <div className="text-sm text-slate-400 py-8 text-center">로딩 중...</div>;
 
 /* ─── StatusBadge ─── */
 function StatusBadge({ status }) {
@@ -313,16 +316,18 @@ export default function AdminStudentView() {
           </div>
 
           {/* 3. Tab Content */}
-          {activeTab === 'overview' && <OverviewTab studentId={id} />}
-          {activeTab === 'timeline' && (
-            <TimelineTab studentId={id} showNoteForm={showNoteForm} setShowNoteForm={setShowNoteForm} />
-          )}
-          {activeTab === 'classes' && <ClassesTab studentId={id} />}
-          {activeTab === 'consultation' && <ConsultationTab studentId={id} />}
-          {activeTab === 'tuition' && <TuitionTab studentId={id} />}
-          {activeTab === 'study' && <StudyTab studentId={id} />}
-          {activeTab === 'parents' && <ParentsTab studentId={id} student={student} />}
-          {activeTab === 'reward' && <RewardTab studentId={id} hasFeature={hasFeature} />}
+          <Suspense fallback={<TabFallback />}>
+            {activeTab === 'overview' && <OverviewTab studentId={id} />}
+            {activeTab === 'timeline' && (
+              <TimelineTab studentId={id} showNoteForm={showNoteForm} setShowNoteForm={setShowNoteForm} />
+            )}
+            {activeTab === 'classes' && <ClassesTab studentId={id} />}
+            {activeTab === 'consultation' && <ConsultationTab studentId={id} />}
+            {activeTab === 'tuition' && <TuitionTab studentId={id} />}
+            {activeTab === 'study' && <StudyTab studentId={id} />}
+            {activeTab === 'parents' && <ParentsTab studentId={id} student={student} />}
+            {activeTab === 'reward' && <RewardTab studentId={id} hasFeature={hasFeature} />}
+          </Suspense>
         </div>
 
         {/* ── Right Sidebar (col-span-4) ── */}

@@ -99,7 +99,7 @@ router.post('/redeem-coupon', async (req, res) => {
         if (sub) {
           const exp = new Date(sub.expires_at || Date.now());
           exp.setDate(exp.getDate() + days);
-          await runQuery('UPDATE subscriptions SET expires_at = ? WHERE id = ?', [exp.toISOString(), sub.id]);
+          await runQuery('UPDATE subscriptions SET expires_at = ? WHERE id = ? AND academy_id = ?', [exp.toISOString(), sub.id, req.academyId]);
         }
         message = `체험 기간이 ${days}일 연장되었습니다.`;
         break;

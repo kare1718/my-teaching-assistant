@@ -185,7 +185,7 @@ router.put('/change-plan', async (req, res) => {
     // 업그레이드: 즉시 적용 (차액은 다음 결제에 반영)
     // 다운그레이드: 다음 결제일부터 적용
     if (isUpgrade) {
-      await runQuery('UPDATE subscriptions SET plan_type = ? WHERE id = ?', [planType, sub.id]);
+      await runQuery('UPDATE subscriptions SET plan_type = ? WHERE id = ? AND academy_id = ?', [planType, sub.id, req.academyId]);
       await runQuery(
         'UPDATE academies SET subscription_tier = ?, max_students = ? WHERE id = ?',
         [planType, limits.maxStudents, req.academyId]
@@ -193,8 +193,8 @@ router.put('/change-plan', async (req, res) => {
     } else {
       // 다운그레이드 예약: 현재 주기 끝나면 변경
       await runQuery(
-        `UPDATE subscriptions SET plan_type = ? WHERE id = ?`,
-        [planType, sub.id]
+        `UPDATE subscriptions SET plan_type = ? WHERE id = ? AND academy_id = ?`,
+        [planType, sub.id, req.academyId]
       );
       // 학생 수 제한은 다음 결제 시 적용 (현재는 유지)
     }
@@ -230,8 +230,8 @@ router.post('/cancel', async (req, res) => {
 
     // 즉시 해지하지 않고, 현재 결제 주기 끝까지 사용
     await runQuery(
-      `UPDATE subscriptions SET status = 'canceled', canceled_at = NOW(), auto_renew = 0 WHERE id = ?`,
-      [sub.id]
+      `UPDATE subscriptions SET status = 'canceled', canceled_at = NOW(), auto_renew = 0 WHERE id = ? AND academy_id = ?`,
+      [sub.id, req.academyId]
     );
 
     await logAction({
