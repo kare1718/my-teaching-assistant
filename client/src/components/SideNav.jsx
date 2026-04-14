@@ -113,6 +113,7 @@ const adminNavGroups = [
     { path: '/admin/subscription', label: '구독 관리' },
     { path: '/admin/profile', label: '프로필' },
     { path: '/admin/backup', label: '백업' },
+    { path: '/admin/audit-logs', label: '감사 로그' },
   ]},
 ];
 

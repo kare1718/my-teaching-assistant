@@ -4,6 +4,7 @@
 const express = require('express');
 const { runQuery, getOne, getAll } = require('../db/database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
+const { logAction } = require('../services/audit');
 const {
   RESOURCES,
   ACTIONS,
@@ -102,6 +103,12 @@ router.put('/', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: 'updates 배열이 필요합니다.' });
     }
 
+    // 변경 전 스냅샷 (감사 로그용)
+    const beforeMatrix = await getAll(
+      'SELECT role, resource, action, allowed FROM permissions WHERE academy_id = ?',
+      [req.academyId]
+    );
+
     let applied = 0;
     for (const u of updates) {
       const { role, resource, action, allowed } = u || {};
@@ -120,6 +127,10 @@ router.put('/', requireAdmin, async (req, res) => {
       applied++;
     }
 
+    await logAction({
+      req, action: 'permissions_update', resourceType: 'permissions',
+      before: beforeMatrix, after: updates,
+    });
     res.json({ ok: true, applied });
   } catch (err) {
     console.error('[PUT /permissions]', err.message);

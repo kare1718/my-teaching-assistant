@@ -3,6 +3,7 @@ const { runQuery, runInsert, getOne, getAll } = require('../db/database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { requirePermission } = require('../middleware/permission');
 const { addEvent } = require('../services/timeline');
+const { logAction } = require('../services/audit');
 
 const router = express.Router();
 router.use(authenticateToken);
@@ -98,10 +99,14 @@ router.put('/:id', async (req, res) => {
 // 상담 기록 삭제
 router.delete('/:id', async (req, res) => {
   try {
-    const record = await getOne('SELECT id FROM consultation_logs WHERE id = ? AND academy_id = ?', [req.params.id, req.academyId]);
+    const record = await getOne('SELECT * FROM consultation_logs WHERE id = ? AND academy_id = ?', [req.params.id, req.academyId]);
     if (!record) return res.status(404).json({ error: '상담 기록을 찾을 수 없습니다.' });
 
     await runQuery('DELETE FROM consultation_logs WHERE id = ? AND academy_id = ?', [req.params.id, req.academyId]);
+    await logAction({
+      req, action: 'consultation_delete', resourceType: 'consultation', resourceId: parseInt(req.params.id),
+      before: record,
+    });
     res.json({ message: '상담 기록이 삭제되었습니다.' });
   } catch (err) {
     console.error('[상담 삭제 오류]', err.message);

@@ -8,6 +8,7 @@ const {
   getMessageType, getByteLength, calculateTotalCost, checkAndDeductCredits, chargeCredits,
   logSentMessages, refundFailedMessages, getCredits, getPricing,
 } = require('../utils/smsBilling');
+const { logAction } = require('../services/audit');
 
 const router = express.Router();
 router.use(authenticateToken);
@@ -335,6 +336,10 @@ router.post('/send', requirePermission('sms', 'create'), async (req, res) => {
     const result = await sendSMS(to, message);
     await logSentMessages(batchId, [{ phone: to, message, messageType: msgType, status: 'sent', solapiMessageId: result?.messageId || null }], req.user.id, req.academyId);
     const credit = await getCredits(req.academyId);
+    await logAction({
+      req, action: 'sms_send', resourceType: 'sms',
+      after: { recipient_count: 1, cost: costResult.totalCost, type: msgType },
+    });
     res.json({ message: 'SMS 전송 완료', result, cost: costResult.totalCost, balance: credit.balance });
   } catch (e) {
     await logSentMessages(batchId, [{ phone: to, message, messageType: msgType, status: 'failed', error: e.message }], req.user.id, req.academyId);
@@ -390,6 +395,10 @@ router.post('/send-bulk', async (req, res) => {
     const logEntries = phones.map(p => ({ phone: p, message, messageType: msgType, status: 'sent' }));
     await logSentMessages(batchId, logEntries, req.user.id, req.academyId);
     const credit = await getCredits(req.academyId);
+    await logAction({
+      req, action: 'sms_send', resourceType: 'sms',
+      after: { recipient_count: phones.length, cost: costResult.totalCost, type: msgType },
+    });
     res.json({
       message: `${phones.length}건 SMS 전송 완료`,
       result, cost: costResult.totalCost, balance: credit.balance,
@@ -510,6 +519,10 @@ router.post('/schedule', async (req, res) => {
      JSON.stringify(recipients), scheduled_at, req.user.id]
   );
 
+  await logAction({
+    req, action: 'sms_schedule', resourceType: 'sms_schedule', resourceId: id,
+    after: { scheduled_at, recipient_count: Array.isArray(recipients) ? recipients.length : null },
+  });
   res.json({ message: '예약 발송이 등록되었습니다.', id, scheduled_at });
 });
 

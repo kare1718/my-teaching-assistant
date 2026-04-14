@@ -3,6 +3,7 @@ const { runQuery, runInsert, getOne, getAll } = require('../db/database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { sendToParent } = require('../services/notification');
 const { addEvent } = require('../services/timeline');
+const { logAction } = require('../services/audit');
 
 const router = express.Router();
 router.use(authenticateToken);
@@ -333,6 +334,10 @@ router.put('/:id', requireAdmin, async (req, res) => {
       onAttendanceMarked(academyId, { student_id: existing.student_id, status, date: dateStr }).catch(e => console.error('[자동화] 출결 트리거 오류:', e.message));
     }
 
+    await logAction({
+      req, action: 'attendance_modify', resourceType: 'attendance', resourceId: parseInt(attendanceId),
+      before: { status: previousStatus }, after: { status, change_reason: change_reason || null },
+    });
     res.json({ message: '출결 상태가 수정되었습니다.', previous: previousStatus, current: status });
   } catch (err) {
     console.error('[출결 정정 오류]', err.message);

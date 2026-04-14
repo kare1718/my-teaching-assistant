@@ -16,6 +16,7 @@ const express = require('express');
 const crypto = require('crypto');
 const { getAll, getOne, runQuery, runInsert } = require('../db/database');
 const { TIER_LIMITS, YEARLY_PRICES } = require('../middleware/subscription');
+const { logAction } = require('../services/audit');
 
 const router = express.Router();
 
@@ -97,13 +98,31 @@ router.post('/portone', async (req, res) => {
     }
 
     // 3. 이벤트 타입별 처리
+    const academyMatch = paymentId && paymentId.match(/^sub_(\d+)_/);
+    const webhookAcademyId = academyMatch ? parseInt(academyMatch[1]) : null;
+    // 웹훅은 req.user/req.academyId 없음 → 감사 로그용 shim
+    const auditReq = {
+      academyId: webhookAcademyId,
+      user: null,
+      headers: req.headers || {},
+      ip: req.ip,
+    };
+
     switch (type) {
       case 'payment.paid':
         await handlePaymentPaid(paymentId, data);
+        await logAction({
+          req: auditReq, action: 'payment_success', resourceType: 'payment',
+          after: { paymentId, amount: data?.amount?.total || data?.amount || null },
+        });
         break;
 
       case 'payment.failed':
         await handlePaymentFailed(paymentId, data);
+        await logAction({
+          req: auditReq, action: 'payment_failed', resourceType: 'payment',
+          after: { paymentId, reason: data?.failure?.message || data?.failReason || null },
+        });
         break;
 
       case 'payment.cancelled':

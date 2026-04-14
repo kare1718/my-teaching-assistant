@@ -64,6 +64,7 @@ import ParentManage from './pages/admin/ParentManage';
 import ProfileManage from './pages/admin/ProfileManage';
 import UserGuide from './pages/admin/UserGuide';
 import AutomationManage from './pages/admin/AutomationManage';
+import AuditLogs from './pages/admin/AuditLogs';
 import AttendanceCheck from './pages/student/AttendanceCheck';
 import Portfolio from './pages/student/Portfolio';
 import AIHub from './pages/student/AIHub';
@@ -237,6 +238,7 @@ function AppLayout() {
             <Route path="/admin/classes" element={<ProtectedRoute role="admin"><ClassManage /></ProtectedRoute>} />
             <Route path="/admin/guide" element={<ProtectedRoute role="admin"><UserGuide /></ProtectedRoute>} />
             <Route path="/admin/automation" element={<ProtectedRoute role="admin"><AutomationManage /></ProtectedRoute>} />
+            <Route path="/admin/audit-logs" element={<ProtectedRoute role="admin"><AuditLogs /></ProtectedRoute>} />
 
             <Route path="/student" element={<ProtectedRoute role="student"><MyPage /></ProtectedRoute>} />
             <Route path="/student/notices" element={<ProtectedRoute role="student"><Notices /></ProtectedRoute>} />

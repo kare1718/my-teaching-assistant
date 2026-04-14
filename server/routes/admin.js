@@ -7,6 +7,7 @@ const { runQuery, runInsert, getOne, getAll } = require('../db/database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { requirePermission } = require('../middleware/permission');
 const { addEvent } = require('../services/timeline');
+const { logAction } = require('../services/audit');
 
 // 프로필 수정 허용 필드 화이트리스트
 const USERS_EDITABLE_FIELDS = ['name', 'phone'];
@@ -89,6 +90,7 @@ router.put('/approve/:userId', async (req, res) => {
     await runInsert('INSERT INTO notifications (user_id, type, title, message, academy_id) VALUES (?, ?, ?, ?, ?)',
       [userId, 'approval', '가입 승인 완료!', '회원가입이 승인되었습니다. 지금부터 모든 기능을 이용할 수 있습니다. 환영합니다! 🎉', req.academyId]);
   } catch(e) { /* 알림 실패해도 승인은 진행 */ }
+  await logAction({ req, action: 'user_approve', resourceType: 'user', resourceId: userId, after: { userId, approved: true } });
   res.json({ message: '승인되었습니다.' });
 });
 
@@ -96,6 +98,7 @@ router.delete('/reject/:userId', async (req, res) => {
   const userId = parseInt(req.params.userId);
   await runQuery('DELETE FROM students WHERE user_id = ? AND academy_id = ?', [userId, req.academyId]);
   await runQuery('DELETE FROM users WHERE id = ? AND role = ? AND academy_id = ?', [userId, 'student', req.academyId]);
+  await logAction({ req, action: 'user_reject', resourceType: 'user', resourceId: userId });
   res.json({ message: '거절 처리되었습니다.' });
 });
 
@@ -195,6 +198,14 @@ router.put('/students/:id', async (req, res) => {
   const { name, phone, school, grade, parentName, parentPhone, memo } = req.body;
   const studentId = parseInt(req.params.id);
 
+  // 변경 전 스냅샷 (감사 로그용)
+  const beforeSnap = await getOne(
+    `SELECT s.school, s.grade, s.parent_name, s.parent_phone, s.memo, u.name, u.phone
+     FROM students s JOIN users u ON s.user_id = u.id
+     WHERE s.id = ? AND s.academy_id = ?`,
+    [studentId, req.academyId]
+  );
+
   // students 테이블 업데이트
   await runQuery(
     `UPDATE students SET school = ?, grade = ?, parent_name = ?, parent_phone = ?, memo = ?
@@ -211,6 +222,12 @@ router.put('/students/:id', async (req, res) => {
     );
   }
 
+  await logAction({
+    req, action: 'student_update', resourceType: 'student', resourceId: studentId,
+    before: beforeSnap,
+    after: { name, phone, school, grade, parent_name: parentName, parent_phone: parentPhone, memo },
+  });
+
   res.json({ message: '학생 정보가 수정되었습니다.' });
 });
 
@@ -220,7 +237,12 @@ router.put('/students/:id/status', async (req, res) => {
   if (!['active', 'inactive'].includes(status)) {
     return res.status(400).json({ error: '유효하지 않은 상태값입니다.' });
   }
+  const beforeRow = await getOne('SELECT status FROM students WHERE id = ? AND academy_id = ?', [parseInt(req.params.id), req.academyId]);
   await runQuery('UPDATE students SET status = ? WHERE id = ? AND academy_id = ?', [status, parseInt(req.params.id), req.academyId]);
+  await logAction({
+    req, action: 'student_status_change', resourceType: 'student', resourceId: parseInt(req.params.id),
+    before: { status: beforeRow?.status }, after: { status },
+  });
 
   // 타임라인 이벤트
   const statusLabel = status === 'active' ? '재원' : '퇴원';
@@ -252,6 +274,7 @@ router.put('/students/:id/reset-password', async (req, res) => {
     const bcrypt = require('bcryptjs');
     const hashed = await bcrypt.hash(newPassword, 10);
     await runQuery('UPDATE users SET password = ? WHERE id = ? AND academy_id = ?', [hashed, student.user_id, req.academyId]);
+    await logAction({ req, action: 'password_reset', resourceType: 'user', resourceId: student.user_id });
     res.json({ message: '비밀번호가 초기화되었습니다.' });
   } catch (err) {
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
@@ -287,12 +310,22 @@ router.delete('/students/:id', requirePermission('students', 'delete'), async (r
   const student = await getOne('SELECT user_id FROM students WHERE id = ? AND academy_id = ?', [studentId, req.academyId]);
   if (!student) return res.status(404).json({ error: '학생을 찾을 수 없습니다.' });
 
+  // 감사 로그용 스냅샷
+  const beforeSnap = await getOne(
+    `SELECT s.*, u.name, u.phone, u.username
+     FROM students s JOIN users u ON s.user_id = u.id
+     WHERE s.id = ? AND s.academy_id = ?`,
+    [studentId, req.academyId]
+  );
+
   // 관련 데이터 삭제
   await runQuery('DELETE FROM scores WHERE student_id = ? AND academy_id = ?', [studentId, req.academyId]);
   await runQuery('DELETE FROM reviews WHERE student_id = ? AND academy_id = ?', [studentId, req.academyId]);
   await runQuery('DELETE FROM profile_edit_requests WHERE student_id = ? AND academy_id = ?', [studentId, req.academyId]);
   await runQuery('DELETE FROM students WHERE id = ? AND academy_id = ?', [studentId, req.academyId]);
   await runQuery('DELETE FROM users WHERE id = ? AND academy_id = ?', [student.user_id, req.academyId]);
+
+  await logAction({ req, action: 'student_delete', resourceType: 'student', resourceId: studentId, before: beforeSnap });
 
   res.json({ message: '학생이 삭제되었습니다.' });
 });

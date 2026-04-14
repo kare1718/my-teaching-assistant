@@ -1,6 +1,7 @@
 const express = require('express');
 const { runQuery, runInsert, getOne, getAll } = require('../db/database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
+const { logAction } = require('../services/audit');
 
 const router = express.Router();
 
@@ -78,6 +79,11 @@ router.put('/settings', authenticateToken, requireAdmin, async (req, res) => {
 
     await runQuery('UPDATE academies SET settings = ? WHERE id = ?', [JSON.stringify(current), req.academyId]);
 
+    await logAction({
+      req, action: 'academy_settings_update', resourceType: 'academy', resourceId: req.academyId,
+      before: (typeof academy.settings === 'string' ? JSON.parse(academy.settings) : (academy.settings || {})),
+      after: current,
+    });
     res.json({ message: '설정이 저장되었습니다.', settings: current });
   } catch (err) {
     console.error(err);

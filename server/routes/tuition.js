@@ -4,6 +4,7 @@ const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { requirePermission } = require('../middleware/permission');
 const { sendBulk } = require('../services/notification');
 const { addEvent } = require('../services/timeline');
+const { logAction } = require('../services/audit');
 
 const router = express.Router();
 router.use(authenticateToken);
@@ -310,6 +311,10 @@ router.post('/records/:id/adjust', async (req, res) => {
       [adjustedAmount, reason, req.params.id]
     );
 
+    await logAction({
+      req, action: 'tuition_adjust', resourceType: 'tuition_record', resourceId: parseInt(req.params.id),
+      after: { type: adjustment_type, amount, reason, adjusted_amount: adjustedAmount },
+    });
     res.json({ message: '금액이 조정되었습니다.', adjusted_amount: adjustedAmount });
   } catch (err) {
     console.error('[금액 조정 오류]', err.message);
@@ -359,6 +364,10 @@ router.post('/records/:id/refund', async (req, res) => {
       [req.params.id, req.academyId, refund_amount, reason, JSON.stringify(calculation_detail || null), refund_method || null, req.userId]
     );
 
+    await logAction({
+      req, action: 'tuition_refund_request', resourceType: 'tuition_refund', resourceId: id,
+      after: { amount: refund_amount, reason, method: refund_method },
+    });
     res.json({ id, message: '환불 요청이 등록되었습니다.' });
   } catch (err) {
     console.error('[환불 요청 오류]', err.message);
@@ -380,6 +389,7 @@ router.put('/refunds/:id/approve', async (req, res) => {
       "UPDATE tuition_refunds SET status = 'approved', approved_by = ? WHERE id = ?",
       [req.userId, req.params.id]
     );
+    await logAction({ req, action: 'tuition_refund_approve', resourceType: 'tuition_refund', resourceId: parseInt(req.params.id) });
     res.json({ message: '환불이 승인되었습니다.' });
   } catch (err) {
     console.error('[환불 승인 오류]', err.message);
@@ -409,6 +419,7 @@ router.put('/refunds/:id/complete', async (req, res) => {
       [refund.refund_amount, refund.reason, refund.refund_method, refund.tuition_record_id]
     );
 
+    await logAction({ req, action: 'tuition_refund_complete', resourceType: 'tuition_refund', resourceId: parseInt(req.params.id) });
     res.json({ message: '환불이 완료되었습니다.' });
   } catch (err) {
     console.error('[환불 완료 오류]', err.message);
@@ -595,6 +606,7 @@ router.post('/settlement/:month/close', async (req, res) => {
       );
     }
 
+    await logAction({ req, action: 'settlement_close', resourceType: 'settlement', after: { month } });
     res.json({ message: `${month} 월마감이 완료되었습니다.` });
   } catch (err) {
     console.error('[월마감 오류]', err.message);

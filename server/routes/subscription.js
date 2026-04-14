@@ -3,6 +3,7 @@ const { runQuery, runInsert, getOne, getAll } = require('../db/database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { TIER_LIMITS, YEARLY_PRICES } = require('../middleware/subscription');
 const { verifyPayment, getBillingKeyInfo, cancelPayment, retryPayment } = require('../services/billing');
+const { logAction } = require('../services/audit');
 
 const router = express.Router();
 router.use(authenticateToken, requireAdmin);
@@ -225,6 +226,10 @@ router.post('/cancel', async (req, res) => {
       [sub.id]
     );
 
+    await logAction({
+      req, action: 'subscription_cancel', resourceType: 'subscription', resourceId: sub.id,
+      before: { status: 'active' }, after: { status: 'canceled', effectiveDate: sub.current_period_end },
+    });
     res.json({
       message: '구독이 해지되었습니다. 현재 결제 주기가 끝날 때까지 사용 가능합니다.',
       effectiveDate: sub.current_period_end,
