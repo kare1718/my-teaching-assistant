@@ -129,6 +129,8 @@ app.use('/api/subscription', require('./routes/subscription'));
 app.use('/api/superadmin', require('./routes/superadmin'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/onboarding', require('./routes/onboarding'));
+app.use('/api/legal-info', require('./routes/legalInfo'));
+app.use('/api/permissions', require('./routes/permissions'));
 
 // 웹훅 라우트 (인증 미들웨어 스킵 — 별도 시그니처 검증)
 app.use('/api/webhook', require('./routes/webhook'));

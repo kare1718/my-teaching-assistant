@@ -17,7 +17,14 @@
 - 모든 테이블에 `academy_id` 컬럼
 - JWT에 `academy_id` 포함
 - 학원별 독립 데이터 격리
-- 구독 티어: trial, basic, standard, pro, enterprise
+- 구독 티어 (확정, 4단 / 모든 가격 VAT 별도):
+  - `free` — 0원 / 15명 (성적·출결·공지·자료·Q&A만)
+  - `starter` — 49,000원 / 50명 (+수납 기본·SMS·보호자 앱·기본 상담)
+  - `pro` — 129,000원 / 100명 (+자동화·상담 CRM·고급 리포트·AI 리포트)
+  - `first_class` — 별도 문의 (+게이미피케이션·AI 문제 생성·브랜딩)
+  - ※ Trial 별도 플랜 없음. 체험은 Free로 일원화.
+  - 레거시 호환 매핑: trial→free, basic→starter, standard|growth→pro, premium→first_class
+  - 상세: `PLAYBOOK.md` 3절 / 구현: `server/middleware/subscription.js`
 
 ## 주요 파일
 - `server/db/database.js` — pg Pool, ?→$N 자동 변환

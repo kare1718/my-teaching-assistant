@@ -1,12 +1,20 @@
 const express = require('express');
 const { runQuery, runInsert, getOne, getAll } = require('../db/database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
+const { requirePermission } = require('../middleware/permission');
 const { sendBulk } = require('../services/notification');
 const { addEvent } = require('../services/timeline');
 
 const router = express.Router();
 router.use(authenticateToken);
 router.use(requireAdmin);
+
+// RBAC: 수납 수정/삭제는 tuition 리소스 권한이 있는 역할만
+router.use((req, res, next) => {
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') return next();
+  const action = req.method === 'DELETE' ? 'delete' : 'edit';
+  return requirePermission('tuition', action)(req, res, next);
+});
 
 // === 수강료 플랜 ===
 

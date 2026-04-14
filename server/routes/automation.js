@@ -1,10 +1,12 @@
 const express = require('express');
 const { runQuery, runInsert, getOne, getAll } = require('../db/database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
+const { requirePermission } = require('../middleware/permission');
 
 const router = express.Router();
 router.use(authenticateToken);
 router.use(requireAdmin);
+router.use(requirePermission('automation', 'edit'));
 
 // ══════════════════════════════════════
 // 규칙 관리

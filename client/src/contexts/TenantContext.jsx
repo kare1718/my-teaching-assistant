@@ -3,6 +3,57 @@ import { apiGet, isLoggedIn } from '../api';
 
 const TenantContext = createContext(null);
 
+// ─────────────────────────────────────────────────────────
+// 요금제 4단 구조 — server/middleware/subscription.js 와 동기화
+// Free / Starter / Pro / First Class (Trial=Pro)
+// ─────────────────────────────────────────────────────────
+const FREE_FEATURES = ['scores', 'attendance', 'notices', 'materials', 'qna'];
+const STARTER_EXTRA = ['students', 'tuition_basic', 'sms', 'parent_app', 'reviews', 'consultation_basic', 'consultation'];
+const PRO_EXTRA = [
+  'automation', 'consultation_crm', 'advanced_reports', 'messaging_policy',
+  'leads_pipeline', 'tuition_exceptions', 'ai_reports',
+  'attendance_alert', 'clinic', 'homework', 'study_timer', 'omr', 'detailed_reports', 'notice_reads',
+];
+const FIRST_CLASS_EXTRA = [
+  'gamification', 'rankings', 'shop', 'titles',
+  'quiz_vocab', 'quiz_knowledge', 'quiz_reading', 'ox_quiz',
+  'avatar', 'ai_quiz_generation', 'portfolio',
+  'branding', 'branding_logo', 'hall_of_fame',
+  'quiz', 'knowledge_quiz', 'reading_quiz',
+];
+
+const _FREE = [...FREE_FEATURES];
+const _STARTER = [..._FREE, ...STARTER_EXTRA];
+const _PRO = [..._STARTER, ...PRO_EXTRA];
+const _FIRST_CLASS = [..._PRO, ...FIRST_CLASS_EXTRA];
+
+export const TIER_FEATURES = {
+  free: _FREE,
+  starter: _STARTER,
+  pro: _PRO,
+  first_class: _FIRST_CLASS,
+  trial: _PRO,
+  // 레거시 호환
+  basic: _STARTER,
+  standard: _PRO,
+  growth: _PRO,
+  premium: _FIRST_CLASS,
+};
+
+export const TIER_LABELS = {
+  free:        'Free',
+  starter:     'Starter',
+  pro:         'Pro',
+  first_class: 'First Class',
+  trial:       'Trial',
+};
+
+export function tierHasFeature(tier, feature) {
+  if (!feature) return false;
+  const feats = TIER_FEATURES[tier] || TIER_FEATURES.starter;
+  return feats.includes('all') || feats.includes(feature);
+}
+
 export function TenantProvider({ children }) {
   const [config, setConfig] = useState(getDefaultConfig());
   const [loading, setLoading] = useState(true);
@@ -39,8 +90,10 @@ export function TenantProvider({ children }) {
     return () => window.removeEventListener('auth-changed', handler);
   }, []);
 
+  const hasFeature = (feature) => tierHasFeature(config?.tier, feature);
+
   return (
-    <TenantContext.Provider value={{ config, loading, setConfig }}>
+    <TenantContext.Provider value={{ config, loading, setConfig, hasFeature }}>
       {children}
     </TenantContext.Provider>
   );
@@ -83,7 +136,14 @@ function getDefaultConfig() {
 
 export function useTenantConfig() {
   const ctx = useContext(TenantContext);
-  if (!ctx) return { config: getDefaultConfig(), loading: false };
+  if (!ctx) {
+    const defaultConfig = getDefaultConfig();
+    return {
+      config: defaultConfig,
+      loading: false,
+      hasFeature: (feature) => tierHasFeature(defaultConfig.tier, feature),
+    };
+  }
   return ctx;
 }
 

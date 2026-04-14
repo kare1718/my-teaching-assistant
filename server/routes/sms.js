@@ -2,6 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const { runQuery, runInsert, getOne, getAll } = require('../db/database');
 const { authenticateToken, requireAdmin, requireAdminOnly } = require('../middleware/auth');
+const { requirePermission } = require('../middleware/permission');
 const { sendSMS, sendBulkSMS, isConfigured } = require('../utils/smsHelper');
 const {
   getMessageType, getByteLength, calculateTotalCost, checkAndDeductCredits, chargeCredits,
@@ -309,7 +310,7 @@ router.post('/send-individual', async (req, res) => {
 });
 
 // 단일 SMS 발송
-router.post('/send', async (req, res) => {
+router.post('/send', requirePermission('sms', 'create'), async (req, res) => {
   const { to, message } = req.body;
   if (!to || !message) return res.status(400).json({ error: '수신번호와 메시지를 입력해주세요.' });
   if (message.length > 2000) return res.status(400).json({ error: '메시지가 너무 깁니다 (최대 2000자).' });

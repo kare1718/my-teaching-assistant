@@ -80,6 +80,10 @@ import ParentAttendance from './pages/parent/ParentAttendance';
 import ParentTuition from './pages/parent/ParentTuition';
 import ParentNotices from './pages/parent/ParentNotices';
 import ParentMore from './pages/parent/ParentMore';
+import Terms from './pages/legal/Terms';
+import Privacy from './pages/legal/Privacy';
+import Refund from './pages/legal/Refund';
+import BusinessInfo from './pages/legal/BusinessInfo';
 
 function Navbar() {
   const navigate = useNavigate();
@@ -191,6 +195,10 @@ function AppLayout() {
             <Route path="/login" element={<RedirectIfLoggedIn><LoginPage /></RedirectIfLoggedIn>} />
             <Route path="/register" element={<RedirectIfLoggedIn><RegisterPage /></RedirectIfLoggedIn>} />
             <Route path="/pay/:token" element={<PaymentPage />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/refund" element={<Refund />} />
+            <Route path="/business-info" element={<BusinessInfo />} />
 
             <Route path="/admin" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/school/:school" element={<ProtectedRoute role="admin"><SchoolPage /></ProtectedRoute>} />

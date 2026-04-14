@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { isLoggedIn, getUser } from '../api';
+import LegalFooter from '../components/LegalFooter';
 
 const C = {
   accent: 'var(--primary)', accentLight: 'var(--primary-light)', accentBg: 'oklch(55% 0.15 250 / 0.05)',
@@ -100,10 +101,29 @@ function MockCard({ children, style }) {
 
 // Data
 const problems = [
-  { icon: '💬', title: '학부모·학생 소통', time: '하루 1시간+ / 한 달 30시간+', desc: '단체방 공지, 개별 문의, 숙제 독촉, 상담 일정 조율까지. 퇴근 후에도 카톡 알림이 울리고, 내 번호가 온 동네에 퍼져 있습니다.', color: 'var(--destructive)', bg: 'var(--destructive-light)' },
-  { icon: '📋', title: '출결·수납', time: '하루 40분 / 한 달 20시간', desc: '매일 수기로 출석 체크. 엑셀 장부에 수납을 기록하다 미납 학생을 놓치고, 한 달 뒤에야 발견. 누락률 12~18%.', color: 'oklch(60% 0.18 50)', bg: 'oklch(95% 0.03 75)' },
-  { icon: '👥', title: '조교 관리', time: '하루 30분 / 한 달 15시간', desc: '업무 지시, 클리닉 스케줄, 숙제 배정, 시간표, 대타 배정까지. 체계 없이 구두로 돌아가다 보니 빠지는 학생이 생깁니다.', color: 'oklch(55% 0.20 290)', bg: 'oklch(94% 0.04 300)' },
-  { icon: '📊', title: '성적·상담 준비', time: '하루 30분 / 한 달 15시간', desc: '상담인데 보여줄 자료가 없습니다. 기억에 의존하면 학부모는 "감으로 가르치나?" 라고 느끼고, 숙제 동기부여 방법도 없습니다.', color: 'var(--warning)', bg: 'var(--warning-light)' },
+  { icon: '🕒', title: '출결 누락', time: '결석 대응이 늦습니다', desc: '등원 확인과 결석 대응이 여전히 사람 손에 의존하고 있지 않나요?', color: 'var(--destructive)', bg: 'var(--destructive-light)' },
+  { icon: '💸', title: '수납 혼선', time: '미납을 뒤늦게 발견합니다', desc: '청구, 입금 확인, 미납 안내가 엑셀과 메시지로 따로 움직이고 있지 않나요?', color: 'oklch(60% 0.18 50)', bg: 'oklch(95% 0.03 75)' },
+  { icon: '🗂️', title: '상담 비효율', time: '이력이 흩어져 있습니다', desc: '학생 이력이 여기저기 흩어져 상담 전마다 다시 정리하고 있지 않나요?', color: 'oklch(55% 0.20 290)', bg: 'oklch(94% 0.04 300)' },
+  { icon: '⚖️', title: '운영 인력 부담', time: '원장 부재 시 흔들립니다', desc: '원장이나 실장이 빠지면 운영이 바로 흔들리고 있지 않나요?', color: 'var(--warning)', bg: 'var(--warning-light)' },
+  { icon: '📨', title: '학부모 소통 과부하', time: '퇴근 후에도 카톡이 옵니다', desc: '개인 번호로 공지와 문의가 쏟아져, 퇴근 후에도 학부모 연락에서 벗어날 수 없지 않나요?', color: 'oklch(55% 0.15 250)', bg: 'oklch(55% 0.15 250 / 0.08)' },
+  { icon: '📉', title: '재원 이탈 징후', time: '이탈을 뒤늦게 알아챕니다', desc: '결석·성적 하락·상담 공백 같은 이탈 신호를 데이터로 보지 못하고 감으로 대응하고 있지 않나요?', color: 'oklch(60% 0.20 20)', bg: 'oklch(95% 0.03 20)' },
+];
+
+const solutionSteps = [
+  { step: '01', title: '학생이 들어오면', desc: '학생, 반, 보호자 정보를 한 번 등록합니다.' },
+  { step: '02', title: '수업이 진행되면', desc: '출결과 일정이 자동 기록되고 보호자와 연결됩니다.' },
+  { step: '03', title: '문제가 생기면', desc: '결석, 미납, 상담 필요 상황을 놓치지 않습니다.' },
+  { step: '04', title: '반복 업무는', desc: '공지, 안내, 후속 메시지를 자동화합니다.' },
+  { step: '05', title: '학생 관리는', desc: '상담 이력과 학습 흐름, 리워드 구조까지 연결됩니다.' },
+];
+
+const differentiators = [
+  { icon: '👤', title: '학생 중심 타임라인', desc: '학생 한 명의 출결·상담·납부·학습 흐름을 한 화면에서 확인합니다.' },
+  { icon: '⚙️', title: '운영 자동화', desc: '결석, 미납, 후속 안내를 시스템이 먼저 챙깁니다.' },
+  { icon: '🏫', title: '학원·수업 운영을 더 편하게', desc: '시간표, 반 편성, 클리닉, 조교 배정까지 한 곳에서 관리하며 현장의 손길을 줄입니다.' },
+  { icon: '💬', title: '학생과의 적극적인 소통', desc: '공지, 숙제 피드백, 상담 요청, 리워드까지. 학생이 먼저 움직이도록 양방향으로 연결합니다.' },
+  { icon: '🤝', title: '보호자 신뢰 경험', desc: '출결, 납부, 공지, 상담 요청이 자연스럽게 연결됩니다.' },
+  { icon: '🚀', title: '프리미엄 확장성', desc: '기본 운영부터 리텐션 강화까지, 성장 단계에 맞춰 사용합니다.' },
 ];
 
 const testimonials1 = [
@@ -182,9 +202,9 @@ export default function LandingPage() {
   const scrolled = useScrolled();
   const { addRef, isVisible } = useReveal();
 
-  const m1 = useCountUp(2847, 0, '');
+  const m1 = useCountUp(120, 0, '');
   const m2 = useCountUp(98.7, 1, '%');
-  const m3 = useCountUp(4.87, 2, '/5.0');
+  const m3 = useCountUp(9.7, 1, '/10');
   const m4 = useCountUp(90, 0, '%');
 
   useEffect(() => {
@@ -227,6 +247,7 @@ export default function LandingPage() {
           .lp-feature-grid { grid-template-columns: 1fr !important; }
           .lp-feature-reverse { direction: ltr !important; }
           .lp-metrics-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .lp-diff-grid { grid-template-columns: 1fr !important; }
           .lp-nav-links { display: none !important; }
           .lp-mobile-btn { display: flex !important; }
         }
@@ -282,19 +303,17 @@ export default function LandingPage() {
       <section style={{ paddingTop: 128, paddingBottom: 80 }}>
         <div className="lp-hero-grid" style={{ maxWidth: 1152, margin: '0 auto', padding: '0 24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center' }}>
           <div>
-            <div ref={addRef} style={{ opacity: 1, transition: 'opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1)' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 500, background: C.accentBg, color: C.accent, marginBottom: 24 }}>
-                <Shield /> 현재 2,800명+ 학생이 사용 중
-              </span>
-            </div>
+            <p ref={addRef} style={{ fontSize: 15, fontWeight: 600, color: C.textSecondary, marginBottom: 12, letterSpacing: '-0.01em' }}>
+              학부모 카톡, 출결 체크, 수납 확인, 조교 지시, 성적 정리…
+            </p>
             <h1 ref={addRef} style={{ fontSize: 'clamp(2.25rem, 5vw, 3.5rem)', fontWeight: 700, letterSpacing: '-0.025em', lineHeight: 1.2, color: C.textPrimary, marginBottom: 24 }}>
               저는 하루 3시간을<br/>돌려받았습니다.
             </h1>
             <p ref={addRef} style={{ fontSize: 18, color: C.textSecondary, lineHeight: 1.7, maxWidth: '48ch', marginBottom: 16 }}>
-              학부모 카톡 1시간, 출결·수납 40분, 조교 관리 30분, 성적 정리 30분. 매일 3시간씩, 수업이 아니라 잡무를 하고 있었습니다.
+              현직 강사로서 매일 같은 잡무에 시간을 빼앗겼습니다. 그래서 다른 원장님들의 힘듦에 깊이 공감하며, 이 프로그램을 직접 개발하게 되었습니다.
             </p>
-            <p ref={addRef} style={{ fontSize: 14, color: C.textTertiary, marginBottom: 32 }}>
-              학원 관리 앱 3개를 써봤지만, 불편하고 안 되는 게 너무 많았습니다. 그래서 직접 만들었습니다.
+            <p ref={addRef} style={{ fontSize: 14, color: C.textTertiary, marginBottom: 28 }}>
+              결석·미납·상담, 필수 요소들을 놓치지 않고 반복 업무는 자동화합니다.
             </p>
             <div ref={addRef} style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-start' }}>
               <button onClick={() => navigate('/onboarding')} style={{
@@ -363,7 +382,7 @@ export default function LandingPage() {
             <div key={i} ref={m.ref}>
               <p style={{ fontSize: 30, fontWeight: 700, color: C.textPrimary }}>{m.value}</p>
               <p style={{ fontSize: 14, color: C.textTertiary, marginTop: 4 }}>
-                {['학생이 매일 사용 중', '수납을 놓치지 않습니다', '선생님 만족도', '학부모 카톡이 줄었습니다'][i]}
+                {['학원·강사가 매일 사용 중', '수납을 놓치지 않습니다', '선생님 만족도', '잡무가 줄었습니다'][i]}
               </p>
             </div>
           ))}
@@ -374,9 +393,9 @@ export default function LandingPage() {
       <section id="problem" style={{ padding: '96px 0' }}>
         <div style={{ maxWidth: 1152, margin: '0 auto', padding: '0 24px' }}>
           <div ref={addRef} style={{ textAlign: 'center', marginBottom: 64 }}>
-            <p style={{ fontSize: 14, fontWeight: 600, color: C.accent, marginBottom: 12 }}>저도 그랬습니다</p>
+            <p style={{ fontSize: 14, fontWeight: 600, color: C.accent, marginBottom: 12 }}>현직 강사가 매일 겪은 문제</p>
             <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.5rem)', fontWeight: 700, letterSpacing: '-0.025em', lineHeight: 1.3 }}>
-              수업은 2시간, 잡무는 3시간. 매일 이랬습니다.
+              이런 문제 겪고 계신가요?
             </h2>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
@@ -398,9 +417,58 @@ export default function LandingPage() {
             ))}
           </div>
           <div ref={addRef} style={{ marginTop: 32, textAlign: 'center' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--destructive-light)', color: 'var(--destructive)', fontWeight: 700, fontSize: 16, padding: '16px 32px', borderRadius: 16 }}>
-              <Clock /> 하루 3시간, 한 달 90시간. 수업 준비를 할 수가 없었습니다.
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: C.accentBg, color: C.accent, fontWeight: 700, fontSize: 16, padding: '16px 32px', borderRadius: 16 }}>
+              <Clock /> 흩어진 운영 흐름을 하나로 연결하면, 재원 유지가 달라집니다.
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* === SOLUTION FLOW === */}
+      <section style={{ padding: '96px 0', background: C.surfaceCard }}>
+        <div style={{ maxWidth: 1152, margin: '0 auto', padding: '0 24px' }}>
+          <div ref={addRef} style={{ textAlign: 'center', marginBottom: 64 }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: C.accent, marginBottom: 12 }}>운영 자동화 흐름</p>
+            <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.5rem)', fontWeight: 700, letterSpacing: '-0.025em', lineHeight: 1.3 }}>
+              학원 운영의 끊어진 흐름을 하나로 연결합니다
+            </h2>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 24 }}>
+            {solutionSteps.map((s, i) => (
+              <div key={i} ref={addRef} style={{
+                background: C.white, borderRadius: 16, padding: 24, border: `1px solid var(--neutral-100)`,
+                boxShadow: '0 1px 3px oklch(0% 0 0 / 0.04)', position: 'relative',
+              }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: C.accent, letterSpacing: 2, marginBottom: 12 }}>STEP {s.step}</div>
+                <h3 style={{ fontSize: 16, fontWeight: 800, color: C.textPrimary, marginBottom: 8, letterSpacing: '-0.01em' }}>{s.title}</h3>
+                <p style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.65 }}>{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* === DIFFERENTIATORS === */}
+      <section style={{ padding: '96px 0' }}>
+        <div style={{ maxWidth: 1152, margin: '0 auto', padding: '0 24px' }}>
+          <div ref={addRef} style={{ textAlign: 'center', marginBottom: 64 }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: C.accent, marginBottom: 12 }}>왜 나만의 조교인가요?</p>
+            <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.5rem)', fontWeight: 700, letterSpacing: '-0.025em', lineHeight: 1.3 }}>
+              운영 자동화부터 재원 유지까지, 한 번에
+            </h2>
+          </div>
+          <div className="lp-diff-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+            {differentiators.map((d, i) => (
+              <div key={i} ref={addRef} style={{
+                background: C.white, borderRadius: 16, padding: 28, border: `1px solid var(--neutral-100)`,
+                boxShadow: '0 1px 3px oklch(0% 0 0 / 0.04)', transition: 'box-shadow 0.2s, transform 0.2s',
+              }} onMouseOver={e => { e.currentTarget.style.boxShadow = '0 8px 24px oklch(0% 0 0 / 0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                 onMouseOut={e => { e.currentTarget.style.boxShadow = '0 1px 3px oklch(0% 0 0 / 0.04)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
+                <div style={{ width: 48, height: 48, borderRadius: 12, background: C.accentBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, marginBottom: 16 }}>{d.icon}</div>
+                <h3 style={{ fontSize: 17, fontWeight: 800, color: C.textPrimary, marginBottom: 8, letterSpacing: '-0.01em' }}>{d.title}</h3>
+                <p style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.65 }}>{d.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -867,6 +935,7 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+      <LegalFooter />
     </div>
   );
 }

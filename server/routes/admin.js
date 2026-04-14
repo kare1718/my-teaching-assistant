@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const { runQuery, runInsert, getOne, getAll } = require('../db/database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
+const { requirePermission } = require('../middleware/permission');
 const { addEvent } = require('../services/timeline');
 
 // 프로필 수정 허용 필드 화이트리스트
@@ -281,7 +282,7 @@ router.put('/bulk-grade', async (req, res) => {
 });
 
 // === 학생 삭제 ===
-router.delete('/students/:id', async (req, res) => {
+router.delete('/students/:id', requirePermission('students', 'delete'), async (req, res) => {
   const studentId = parseInt(req.params.id);
   const student = await getOne('SELECT user_id FROM students WHERE id = ? AND academy_id = ?', [studentId, req.academyId]);
   if (!student) return res.status(404).json({ error: '학생을 찾을 수 없습니다.' });

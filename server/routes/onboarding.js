@@ -59,6 +59,14 @@ router.post('/create-academy', async (req, res) => {
     // 기본 캐릭터/칭호 시드
     await seedDefaults(academyId);
 
+    // RBAC 기본 권한 매트릭스 시드
+    try {
+      const { seedPermissionsForAcademy } = require('../db/seedPermissions');
+      await seedPermissionsForAcademy(academyId);
+    } catch (err) {
+      console.error('[onboarding] 권한 시드 실패:', err.message);
+    }
+
     // 자동 로그인 토큰 발급
     const token = jwt.sign(
       { id: userId, username: adminUsername, name: adminName, role: 'admin', academy_id: academyId },

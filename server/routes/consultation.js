@@ -1,6 +1,7 @@
 const express = require('express');
 const { runQuery, runInsert, getOne, getAll } = require('../db/database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
+const { requirePermission } = require('../middleware/permission');
 const { addEvent } = require('../services/timeline');
 
 const router = express.Router();
@@ -39,7 +40,7 @@ router.get('/', async (req, res) => {
 });
 
 // 상담 기록 생성
-router.post('/', async (req, res) => {
+router.post('/', requirePermission('consultations', 'create'), async (req, res) => {
   try {
     const { student_id, content, counselor_name, tags, date } = req.body;
     if (!student_id || !content) return res.status(400).json({ error: '학생과 상담 내용은 필수입니다.' });

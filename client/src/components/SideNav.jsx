@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { getUser, api } from '../api';
 import ThemeToggle from './ThemeToggle';
 import useMediaQuery from '../hooks/useMediaQuery';
+import { useTenantConfig } from '../contexts/TenantContext';
 
 /* ─── SVG Icon primitives ─────────────────────────────────────────── */
 const Icon = ({ d, size = 16, children, viewBox = '0 0 24 24' }) => (
@@ -55,55 +56,70 @@ const Icons = {
   shield:      <Icon><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></Icon>,
 };
 
-/* ─── Admin nav tree ──────────────────────────────────────────────── */
-const adminPages = [
-  { path: '/admin', label: '대시보드', icon: Icons.home },
+/* ─── Admin nav tree — 마누스 IA 블루프린트 9개 그룹 ───────────────── */
+const adminNavGroups = [
+  { key: 'home', label: '홈', icon: Icons.home, path: '/admin', single: true },
 
-  { divider: true, label: '학생 관리' },
-  { path: '/admin/attendance', label: '출결 관리', desc: '출석/결석 관리', icon: Icons.clipboard },
-  { path: '/admin/pending', label: '가입 승인', desc: '신규 승인/거절', badgeKey: 'pending_users', icon: Icons.userCheck },
-  { path: '/admin/edit-requests', label: '정보 수정 요청', desc: '수정 요청 처리', badgeKey: 'edit_requests', icon: Icons.edit },
-  { path: '/admin/parents', label: '보호자 관리', desc: '보호자 등록/연결', icon: Icons.userCheck },
-  { path: '/admin/consultations', label: '상담 일지', desc: '학생/학부모 상담', icon: Icons.message },
-  { path: '/admin/leads', label: '상담 관리', desc: '리드/신규문의 파이프라인', icon: Icons.barChart },
+  { key: 'students', label: '학생', icon: Icons.userCheck, children: [
+    { path: '/admin/students', label: '학생 목록' },
+    { path: '/admin/parents', label: '보호자 관리' },
+    { path: '/admin/pre-registered', label: '사전 등록' },
+    { path: '/admin/pending', label: '가입 승인', badgeKey: 'pending_users' },
+  ]},
 
-  { divider: true, label: '수업 및 운영' },
-  { path: '/admin/classes', label: '수업 관리', desc: '반/수강생/세션 관리', icon: Icons.book },
-  { path: '/admin/schedules', label: '수업 일정 관리', desc: '일정 등록/관리', icon: Icons.calendar },
-  { path: '/admin/scores', label: '시험 성적 관리', desc: '성적 입력/관리', icon: Icons.barChart },
-  { path: '/admin/clinic', label: '클리닉 관리', desc: '클리닉 승인', badgeKey: 'pending_clinic', icon: Icons.stethoscope },
-  { path: '/admin/ta-schedule', label: '조교 근무표', desc: '근무 일정 관리', icon: Icons.clock },
-  { path: '/admin/homework', label: '과제 관리', desc: '과제 확인/채점', icon: Icons.fileText },
-  { path: '/admin/reports', label: '수업 레포트', desc: '수업 기록', icon: Icons.file },
+  { key: 'classes', label: '수업', icon: Icons.book, children: [
+    { path: '/admin/classes', label: '반 관리' },
+    { path: '/admin/schedules', label: '시간표' },
+    { path: '/admin/attendance', label: '출결' },
+    { path: '/admin/homework', label: '숙제', tier: 'growth' },
+  ]},
 
-  { divider: true, label: '소통' },
-  { path: '/admin/qna', label: '질문 관리', desc: '학생 질문 답변', badgeKey: 'pending_questions', icon: Icons.message },
-  { path: '/admin/sms', label: '문자 발송', desc: '학생/학부모 문자', icon: Icons.mail },
-  { path: '/admin/notices', label: '안내사항 관리', desc: '공지사항 작성', icon: Icons.bell },
+  { key: 'tuition', label: '수납', icon: Icons.dollar, children: [
+    { path: '/admin/tuition', label: '청구/납부' },
+    { path: '/admin/sms-credits', label: 'SMS 충전' },
+  ]},
 
-  { divider: true, label: '콘텐츠 관리' },
-  { path: '/admin/reviews', label: '후기 관리', desc: '후기 승인/반려', badgeKey: 'pending_reviews', icon: Icons.star },
-  { path: '/admin/hall-of-fame', label: '명예의 전당', desc: '우수학생 관리', icon: Icons.award },
-  { path: '/admin/gamification', label: '게임 관리', desc: 'XP/포인트/퀴즈', icon: Icons.zap },
-  { path: '/admin/portfolios', label: '포트폴리오', desc: '포트폴리오 관리', icon: Icons.palette },
-  { path: '/admin/ai', label: 'AI 어시스턴트', desc: 'AI 설정/관리', icon: Icons.robot },
-  { path: '/admin/pre-registered', label: '사전등록', desc: '학생 미리 등록', icon: Icons.userPlus },
-  { path: '/admin/profile', label: '프로필 관리', desc: '강사 프로필 설정', icon: Icons.user },
-  { path: '/admin/backup', label: '백업 관리', desc: '데이터 백업', icon: Icons.save },
+  { key: 'consult', label: '상담', icon: Icons.message, children: [
+    { path: '/admin/consultations', label: '상담 일지' },
+    { path: '/admin/leads', label: '상담 관리(리드)' },
+    { path: '/admin/clinic', label: '클리닉', tier: 'growth', badgeKey: 'pending_clinic' },
+  ]},
 
-  { divider: true, label: '운영 및 결제' },
-  { path: '/admin/tuition', label: '수납 관리', desc: '수업료 수납', icon: Icons.dollar },
-  { path: '/admin/sms-credits', label: 'SMS 충전', desc: 'SMS 크레딧 충전', icon: Icons.phone },
-  { path: '/admin/subscription', label: '구독 관리', desc: '구독 플랜 관리', icon: Icons.diamond },
+  { key: 'messages', label: '메시지', icon: Icons.mail, children: [
+    { path: '/admin/sms', label: '문자 발송' },
+    { path: '/admin/notices', label: '공지 작성' },
+  ]},
 
-  { divider: true, label: '자동화' },
-  { path: '/admin/automation', label: '자동화 관리', desc: '규칙/업무 큐/이력', icon: Icons.zap },
+  { key: 'automation', label: '자동화', icon: Icons.zap, tier: 'growth', children: [
+    { path: '/admin/automation', label: '자동화 관리', tier: 'growth' },
+    { path: '/admin/tasks', label: '업무 큐', tier: 'growth' },
+  ]},
 
-  { divider: true, label: '설정' },
-  { path: '/admin/settings', label: '학원 설정', desc: '학원 기본 설정', icon: Icons.settings },
-  { path: '/admin/settings/roles', label: '역할·권한', desc: '역할별 접근 권한 관리', icon: Icons.shield },
-  { path: '/admin/guide', label: '사용법 가이드', desc: '서비스 사용 안내', icon: Icons.book },
+  { key: 'reports', label: '리포트', icon: Icons.barChart, tier: 'growth', children: [
+    { path: '/admin/reports', label: '수업 레포트', tier: 'growth' },
+    { path: '/admin/scores', label: '성적' },
+    { path: '/admin/hall-of-fame', label: '명예의 전당' },
+  ]},
+
+  { key: 'premium', label: '프리미엄', icon: Icons.diamond, feature: 'gamification', children: [
+    { path: '/admin/gamification', label: '게이미피케이션', tier: 'premium' },
+    { path: '/admin/portfolios', label: '포트폴리오', tier: 'premium' },
+    { path: '/admin/ai', label: 'AI 보조', tier: 'premium' },
+  ]},
+
+  { key: 'settings', label: '설정', icon: Icons.settings, children: [
+    { path: '/admin/settings', label: '학원 정보' },
+    { path: '/admin/settings/roles', label: '역할·권한' },
+    { path: '/admin/subscription', label: '구독 관리' },
+    { path: '/admin/profile', label: '프로필' },
+    { path: '/admin/backup', label: '백업' },
+  ]},
 ];
+
+const TIER_BADGE_STYLE = {
+  growth: { bg: 'oklch(95% 0.04 260)', color: 'oklch(45% 0.15 260)', label: 'Growth' },
+  premium: { bg: 'oklch(95% 0.05 300)', color: 'oklch(45% 0.18 300)', label: 'Premium' },
+};
 
 /* ─── Super admin nav ────────────────────────────────────────────── */
 const superadminPages = [
@@ -149,6 +165,7 @@ export default function SideNav() {
   const navigate  = useNavigate();
   const location  = useLocation();
   const user      = getUser();
+  const { hasFeature } = useTenantConfig();
   if (!user) return null;
 
   const isSuperAdminPage = location.pathname.startsWith('/superadmin');
@@ -301,102 +318,147 @@ export default function SideNav() {
   const onFabClick = () => { if (!hasMoved.current) setOpen(!open); };
   const handleNav  = (path) => { navigate(path); setOpen(false); };
 
-  /* ── shared menu renderer (student FAB / admin sidebar) ── */
-  const getCategoryBadgeSum = (startIdx) => {
-    let sum = 0;
-    for (let i = startIdx + 1; i < adminPages.length; i++) {
-      if (adminPages[i].divider) break;
-      if (adminPages[i].badgeKey && badgeCounts[adminPages[i].badgeKey]) {
-        sum += badgeCounts[adminPages[i].badgeKey];
-      }
-    }
-    return sum;
-  };
+  /* ── admin 9-group accordion renderer ── */
+  const visibleGroups = adminNavGroups.filter(g => !g.feature || hasFeature(g.feature));
 
-  const renderAdminMenu = () => {
-    let currentCat = null;
-    return (
-      <div style={{ flex: 1, overflowY: 'auto', padding: isLg ? '10px 12px' : '8px 10px' }}>
-        {adminPages.map((item, idx) => {
-          if (item.divider) {
-            currentCat = item.label;
-            const catSum = getCategoryBadgeSum(idx);
-            const isCollapsed = collapsedCats[item.label];
-            return (
-              <button key={idx} onClick={() => toggleCategory(item.label)} style={{
-                display: 'flex', alignItems: 'center', gap: 6, width: '100%',
-                fontSize: isLg ? 12 : 11, fontWeight: 700, color: 'var(--neutral-400)',
-                padding: isLg ? '18px 10px 7px' : '16px 10px 6px', letterSpacing: '0.04em',
-                margin: 0, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-              }}>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-                  style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0)', transition: 'transform 0.15s', flexShrink: 0 }}>
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-                {item.label}
-                {catSum > 0 && (
-                  <span style={{
-                    minWidth: 16, height: 16, borderRadius: 8,
-                    background: 'var(--destructive)', color: 'white',
-                    fontSize: 9, fontWeight: 700,
-                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                    padding: '0 4px',
-                  }}>
-                    {catSum > 99 ? '99+' : catSum}
-                  </span>
-                )}
-              </button>
-            );
-          }
+  const isChildActive = (path) =>
+    location.pathname === path ||
+    (path !== '/admin' && location.pathname.startsWith(path + '/'));
 
-          // 대시보드(첫 항목)는 항상 표시, 카테고리 내 항목은 접기 상태 확인
-          if (currentCat && collapsedCats[currentCat]) return null;
-
-          const isActive = location.pathname === item.path ||
-            (item.path !== '/admin' && location.pathname.startsWith(item.path + '/'));
-          const badgeCount = item.badgeKey ? badgeCounts[item.badgeKey] : 0;
-          const isPulse = item.badgeKey === 'pending_users' && badgeCount > 0;
-          return (
-            <button key={item.path} onClick={() => navigate(item.path)} style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              width: '100%', padding: isLg ? '9px 12px' : '8px 10px', borderRadius: 7,
-              border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-              fontSize: isLg ? 15 : 14, fontWeight: isActive ? 600 : 400,
-              background: isActive ? 'var(--primary-lighter)' : 'transparent',
-              color: isActive ? 'var(--primary)' : 'var(--foreground)',
-              transition: 'background 0.12s', marginBottom: 1, textAlign: 'left',
-            }}
-            onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--neutral-50)'; }}
-            onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
-            >
-              <span style={{ color: isActive ? 'var(--primary)' : 'var(--neutral-500)', display: 'flex' }}>
-                {item.icon}
-              </span>
-              <div style={{ flex: 1 }}>
-                <span>{item.label}</span>
-                {item.desc && <div style={{ fontSize: isLg ? 12 : 11, color: 'var(--neutral-400)', fontWeight: 400, marginTop: 2 }}>{item.desc}</div>}
-              </div>
-              {badgeCount > 0 && (
-                <span style={{
-                  minWidth: 18, height: 18, borderRadius: 9,
-                  background: 'var(--destructive)', color: 'white',
-                  fontSize: 11, fontWeight: 700,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  padding: '0 5px', flexShrink: 0,
-                  ...(isPulse ? { animation: 'badgePulse 2s ease-in-out infinite' } : {}),
-                }}>
-                  {badgeCount > 99 ? '99+' : badgeCount}
-                </span>
-              )}
-              {!badgeCount && isActive && (
-                <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--primary)' }} />
-              )}
-            </button>
-          );
-        })}
-      </div>
+  const groupBadgeSum = (group) => {
+    if (!group.children) return 0;
+    return group.children.reduce(
+      (sum, c) => sum + (c.badgeKey && badgeCounts[c.badgeKey] ? badgeCounts[c.badgeKey] : 0),
+      0
     );
   };
+
+  // 현재 경로가 속한 그룹은 자동 펼침 (사용자가 직접 접지 않은 경우)
+  const autoExpandedKey = visibleGroups.find(
+    g => g.children && g.children.some(c => isChildActive(c.path))
+  )?.key;
+
+  const isGroupExpanded = (group) => {
+    const explicit = collapsedCats[group.key];
+    if (explicit === true) return true;          // 사용자가 열었음
+    if (explicit === false) return false;         // 사용자가 닫았음
+    return group.key === autoExpandedKey;         // 기본: 현재 경로 그룹만 열림
+  };
+
+  const renderTierBadge = (tier) => {
+    const style = TIER_BADGE_STYLE[tier];
+    if (!style) return null;
+    return (
+      <span style={{
+        background: style.bg, color: style.color,
+        fontSize: 9, fontWeight: 700,
+        padding: '2px 6px', borderRadius: 999,
+        letterSpacing: '0.02em', flexShrink: 0,
+      }}>{style.label}</span>
+    );
+  };
+
+  const renderAdminMenu = () => (
+    <div style={{ flex: 1, overflowY: 'auto', padding: isLg ? '10px 10px' : '8px 8px' }}>
+      {visibleGroups.map(group => {
+        // single 항목 (홈/대시보드)
+        if (group.single) {
+          const active = isChildActive(group.path);
+          return (
+            <button key={group.key} onClick={() => navigate(group.path)} style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              width: '100%', padding: isLg ? '10px 12px' : '9px 10px', borderRadius: 8,
+              border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              fontSize: isLg ? 14 : 13, fontWeight: active ? 700 : 600,
+              background: active ? 'rgba(16,32,68,0.08)' : 'transparent',
+              color: active ? '#102044' : 'var(--foreground)',
+              marginBottom: 2, textAlign: 'left',
+            }}>
+              <span style={{ color: active ? '#102044' : 'var(--neutral-500)', display: 'flex' }}>{group.icon}</span>
+              <span style={{ flex: 1 }}>{group.label}</span>
+              {active && <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#102044' }} />}
+            </button>
+          );
+        }
+
+        const expanded = isGroupExpanded(group);
+        const catSum = groupBadgeSum(group);
+        const groupContainsActive = group.children?.some(c => isChildActive(c.path));
+
+        return (
+          <div key={group.key} style={{ marginBottom: 2 }}>
+            <button onClick={() => toggleCategory(group.key)} style={{
+              display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+              padding: isLg ? '10px 12px' : '9px 10px', borderRadius: 8,
+              border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              fontSize: isLg ? 14 : 13,
+              fontWeight: groupContainsActive ? 700 : 600,
+              background: groupContainsActive ? 'rgba(16,32,68,0.06)' : 'transparent',
+              color: groupContainsActive ? '#102044' : 'var(--foreground)',
+              textAlign: 'left',
+            }}>
+              <span style={{ color: groupContainsActive ? '#102044' : 'var(--neutral-500)', display: 'flex' }}>
+                {group.icon}
+              </span>
+              <span style={{ flex: 1 }}>{group.label}</span>
+              {group.tier && renderTierBadge(group.tier)}
+              {catSum > 0 && (
+                <span style={{
+                  minWidth: 16, height: 16, borderRadius: 8,
+                  background: 'var(--destructive)', color: 'white',
+                  fontSize: 9, fontWeight: 700,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  padding: '0 4px',
+                }}>{catSum > 99 ? '99+' : catSum}</span>
+              )}
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                style={{ transform: expanded ? 'rotate(0)' : 'rotate(-90deg)', transition: 'transform 0.15s', flexShrink: 0, opacity: 0.5 }}>
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+
+            {expanded && (
+              <div style={{ paddingLeft: 10, marginTop: 2, borderLeft: '1px solid var(--border)', marginLeft: isLg ? 22 : 20 }}>
+                {group.children.map(item => {
+                  const active = isChildActive(item.path);
+                  const badgeCount = item.badgeKey ? badgeCounts[item.badgeKey] : 0;
+                  const isPulse = item.badgeKey === 'pending_users' && badgeCount > 0;
+                  return (
+                    <button key={item.path} onClick={() => navigate(item.path)} style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      width: '100%', padding: isLg ? '7px 10px' : '6px 9px', borderRadius: 6,
+                      border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                      fontSize: isLg ? 13 : 12,
+                      fontWeight: active ? 700 : 500,
+                      background: active ? 'rgba(16,32,68,0.1)' : 'transparent',
+                      color: active ? '#102044' : 'var(--muted-foreground)',
+                      transition: 'background 0.12s', marginBottom: 1, textAlign: 'left',
+                    }}
+                    onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--neutral-50)'; }}
+                    onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}
+                    >
+                      <span style={{ flex: 1 }}>{item.label}</span>
+                      {item.tier && renderTierBadge(item.tier)}
+                      {badgeCount > 0 && (
+                        <span style={{
+                          minWidth: 16, height: 16, borderRadius: 8,
+                          background: 'var(--destructive)', color: 'white',
+                          fontSize: 9, fontWeight: 700,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          padding: '0 4px', flexShrink: 0,
+                          ...(isPulse ? { animation: 'badgePulse 2s ease-in-out infinite' } : {}),
+                        }}>{badgeCount > 99 ? '99+' : badgeCount}</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
 
   const renderSuperAdminMenu = () => (
     <div style={{ flex: 1, overflowY: 'auto', padding: '8px 10px' }}>

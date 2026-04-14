@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const tenantGuard = require('./tenantGuard');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -19,8 +20,11 @@ function authenticateToken(req, res, next) {
       return res.status(403).json({ error: '유효하지 않은 토큰입니다.' });
     }
     req.user = user;
-    req.academyId = user.academy_id || null;
-    next();
+    // academy_id를 숫자로 강제 — JWT 문자열로 내려오는 경우 방어
+    const rawAid = user.academy_id;
+    req.academyId = (rawAid === null || rawAid === undefined || rawAid === '') ? null : Number(rawAid);
+    // 자동으로 테넌트 가드 체인 (superadmin은 내부에서 통과)
+    return tenantGuard(req, res, next);
   });
 }
 

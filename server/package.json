@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "test:tenant": "node tests/tenant-isolation.test.js",
+    "audit:queries": "node tests/audit-queries.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
