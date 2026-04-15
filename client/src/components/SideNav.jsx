@@ -92,7 +92,7 @@ const adminNavGroups = [
 
   { key: 'automation', label: '자동화', icon: Icons.zap, tier: 'growth', children: [
     { path: '/admin/automation', label: '자동화 관리', tier: 'growth' },
-    { path: '/admin/tasks', label: '업무 큐', tier: 'growth' },
+    { path: '/admin/automation?tab=queue', label: '업무 큐', tier: 'growth' },
   ]},
 
   { key: 'reports', label: '리포트', icon: Icons.barChart, tier: 'growth', children: [

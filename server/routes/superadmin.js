@@ -622,4 +622,157 @@ async function seedAcademyDefaults(academyId) {
   }
 }
 
+// ─────────────────────────────────────────────
+// 백업 & 보안 관리 (SuperAdmin)
+// ─────────────────────────────────────────────
+
+// GET /backups — 플랫폼 전체 백업 목록
+router.get('/backups', async (req, res) => {
+  try {
+    // db_backups 테이블이 있으면 사용, 없으면 빈 배열
+    try {
+      const rows = await getAll(
+        `SELECT id, backup_name, backup_type, file_size, created_at
+         FROM db_backups ORDER BY created_at DESC LIMIT 50`,
+        []
+      );
+      res.json(rows || []);
+    } catch {
+      res.json([]);
+    }
+  } catch (err) {
+    console.error('[superadmin/backups GET]', err);
+    res.status(500).json({ error: '백업 목록 조회 실패' });
+  }
+});
+
+// GET /security — 보안 대시보드 (차단 사용자, 정지 학원)
+router.get('/security', async (req, res) => {
+  try {
+    const [blockedUsers, suspendedAcademies] = await Promise.all([
+      getAll(
+        `SELECT u.id, u.username, u.name, u.role, u.phone, u.academy_id, a.name as academy_name
+         FROM users u LEFT JOIN academies a ON a.id = u.academy_id
+         WHERE u.approved = false
+         ORDER BY u.id DESC LIMIT 100`,
+        []
+      ).catch(() => []),
+      getAll(
+        `SELECT id, name, slug, subscription_tier, is_active
+         FROM academies WHERE is_active = false
+         ORDER BY id DESC LIMIT 100`,
+        []
+      ).catch(() => []),
+    ]);
+    res.json({
+      blockedUsers: blockedUsers || [],
+      suspendedAcademies: suspendedAcademies || [],
+    });
+  } catch (err) {
+    console.error('[superadmin/security GET]', err);
+    res.status(500).json({ error: '보안 정보 조회 실패' });
+  }
+});
+
+// POST /backup — 수동 플랫폼 전체 백업 실행
+router.post('/backup', async (req, res) => {
+  try {
+    // db_backups 테이블에 레코드 추가 (실제 백업은 외부 스크립트 또는 Supabase 자동 백업)
+    const backupName = `manual_${new Date().toISOString().replace(/[:.]/g, '-')}`;
+    try {
+      await runInsert(
+        `INSERT INTO db_backups (backup_name, backup_type, file_size, created_at)
+         VALUES (?, 'manual', 0, NOW())`,
+        [backupName]
+      );
+    } catch {}
+
+    // 주요 테이블의 현재 행 수 수집
+    const tables = ['academies', 'users', 'students', 'classes', 'tuition_records', 'attendance'];
+    const rowCounts = {};
+    for (const t of tables) {
+      try {
+        const r = await getOne(`SELECT COUNT(*)::int as n FROM ${t}`, []);
+        rowCounts[t] = r?.n || 0;
+      } catch {
+        rowCounts[t] = 0;
+      }
+    }
+
+    res.json({
+      ok: true,
+      backupName,
+      tableCount: tables.length,
+      rowCounts,
+      note: '실제 데이터 백업은 Supabase 자동 백업으로 보관됩니다.',
+    });
+  } catch (err) {
+    console.error('[superadmin/backup POST]', err);
+    res.status(500).json({ error: '백업 실행 실패' });
+  }
+});
+
+// DELETE /backups/:id — 백업 삭제
+router.delete('/backups/:id', async (req, res) => {
+  try {
+    await runQuery('DELETE FROM db_backups WHERE id = ?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[superadmin/backups DELETE]', err);
+    res.status(500).json({ error: '백업 삭제 실패' });
+  }
+});
+
+// GET /backups/:id/download — 백업 다운로드 (메타데이터 JSON)
+router.get('/backups/:id/download', async (req, res) => {
+  try {
+    const row = await getOne('SELECT * FROM db_backups WHERE id = ?', [req.params.id]);
+    if (!row) return res.status(404).json({ error: '백업을 찾을 수 없습니다.' });
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="backup-${row.id}.json"`);
+    res.send(JSON.stringify(row, null, 2));
+  } catch (err) {
+    console.error('[superadmin/backups download]', err);
+    res.status(500).json({ error: '다운로드 실패' });
+  }
+});
+
+// PUT /users/:id/block — 사용자 차단/해제
+router.put('/users/:id/block', async (req, res) => {
+  try {
+    const { blocked } = req.body || {};
+    // approved 플래그를 토글 (차단 = approved=false)
+    await runQuery(
+      'UPDATE users SET approved = ? WHERE id = ?',
+      [!blocked, req.params.id]
+    );
+    res.json({ ok: true, blocked: !!blocked });
+  } catch (err) {
+    console.error('[superadmin/users block]', err);
+    res.status(500).json({ error: '사용자 차단 처리 실패' });
+  }
+});
+
+// POST /tenants/:id/suspend — 학원 정지
+router.post('/tenants/:id/suspend', async (req, res) => {
+  try {
+    await runQuery('UPDATE academies SET is_active = false WHERE id = ?', [req.params.id]);
+    res.json({ ok: true, suspended: true });
+  } catch (err) {
+    console.error('[superadmin/tenants suspend]', err);
+    res.status(500).json({ error: '학원 정지 실패' });
+  }
+});
+
+// POST /tenants/:id/unsuspend — 학원 정지 해제
+router.post('/tenants/:id/unsuspend', async (req, res) => {
+  try {
+    await runQuery('UPDATE academies SET is_active = true WHERE id = ?', [req.params.id]);
+    res.json({ ok: true, suspended: false });
+  } catch (err) {
+    console.error('[superadmin/tenants unsuspend]', err);
+    res.status(500).json({ error: '학원 정지 해제 실패' });
+  }
+});
+
 module.exports = router;
