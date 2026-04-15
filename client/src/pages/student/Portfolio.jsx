@@ -49,7 +49,7 @@ export default function Portfolio() {
   };
 
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto', padding: '20px 16px 100px' }}>
+    <div style={{ maxWidth: 512, margin: '0 auto', padding: '20px 16px 100px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h2 style={{ fontSize: '1.4em', fontWeight: 800 }}>내 포트폴리오</h2>
         <button onClick={() => setShowUpload(true)}

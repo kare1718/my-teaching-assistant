@@ -922,7 +922,7 @@ export default function AdminDashboard() {
   const roleLabel = role === 'admin' ? '원장' : role === 'teacher' ? '강사' : role === 'assistant' ? '조교' : role === 'counselor' ? '상담' : '';
 
   return (
-    <div className="content">
+    <div className="content max-w-7xl mx-auto">
 
       {/* Password Modal */}
       {showPwModal && (

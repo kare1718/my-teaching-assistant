@@ -119,9 +119,10 @@ export default function KPIDashboard() {
   const maxFeature = Math.max(1, ...featureUsage.map(f => f.academies || 0));
 
   return (
-    <div className="p-8 min-h-screen" style={{ fontFamily: FONT, background: '#f8f9fa' }}>
+    <div className="p-4 md:p-8 min-h-screen" style={{ fontFamily: FONT, background: '#f8f9fa' }}>
+      <div className="max-w-7xl mx-auto">
       {/* 헤더 */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
           <div className={labelCls}>SUPERADMIN · ANALYTICS</div>
           <h1 className={titleCls + ' mt-1'}>KPI 대시보드</h1>
@@ -129,7 +130,7 @@ export default function KPIDashboard() {
         </div>
 
         {/* 기간 필터 */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {[7, 30, 90].map(d => (
             <button key={d} onClick={() => setRange(d)}
               className={`rounded-full px-3 py-1.5 text-xs font-bold border transition ${
@@ -168,7 +169,7 @@ export default function KPIDashboard() {
         <>
           {/* 북극성 지표 */}
           <div className={labelCls + ' mb-3'}>NORTH STAR</div>
-          <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div className={cardBase + ' p-6'}>
               <div className={labelCls}>활성 운영 학원</div>
               <div className="text-4xl font-extrabold text-[#102044] mt-2">{northStar?.active_academies ?? 0}</div>
@@ -216,9 +217,9 @@ export default function KPIDashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
             {/* 기능 사용률 */}
-            <div className={cardBase + ' p-6 col-span-2'}>
+            <div className={cardBase + ' p-6 lg:col-span-2'}>
               <div className={labelCls + ' mb-3'}>기능 사용률 (최근 30일)</div>
               {featureUsage.length === 0 ? (
                 <div className="text-sm text-slate-400 py-6 text-center">아직 이벤트 데이터가 없습니다.</div>
@@ -318,6 +319,7 @@ export default function KPIDashboard() {
           </div>
         </>
       )}
+      </div>
     </div>
   );
 }

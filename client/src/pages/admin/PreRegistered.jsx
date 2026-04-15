@@ -84,7 +84,7 @@ export default function PreRegistered() {
   const inputStyle = { width: '100%', padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13, boxSizing: 'border-box' };
 
   return (
-    <div className="content">
+    <div className="content max-w-4xl mx-auto">
       <div className="breadcrumb">
         <Link to="/admin">대시보드</Link> &gt; <span>학생 사전등록</span>
       </div>

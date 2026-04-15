@@ -167,7 +167,7 @@ export default function Rankings() {
   const showRewardPanel = tab === 'weekly' || tab === 'monthly';
 
   return (
-    <div className="content" style={{ paddingBottom: 80 }}>
+    <div className="content s-page" style={{ paddingBottom: 96 }}>
       {/* 헤더 */}
       <div className="card" style={{ padding: 20, textAlign: 'center' }}>
         <h2 style={{ fontSize: 20, marginBottom: 4 }}>🏆 랭킹</h2>

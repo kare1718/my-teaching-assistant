@@ -169,7 +169,7 @@ export default function StudentManage() {
   };
 
   return (
-    <div className="content">
+    <div className="content max-w-6xl mx-auto">
       <div className="breadcrumb">
         <Link to="/admin">대시보드</Link> &gt;{' '}
         <Link to={`/admin/school/${encodeURIComponent(student.school)}`}>{student.school}</Link> &gt;{' '}

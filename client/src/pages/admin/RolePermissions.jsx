@@ -262,7 +262,7 @@ export default function RolePermissions() {
 
             {/* Table */}
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full min-w-[680px] text-left border-collapse">
                 <thead>
                   <tr className="bg-[#f3f4f5]">
                     <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">기능 구분</th>

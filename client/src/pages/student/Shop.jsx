@@ -48,7 +48,7 @@ export default function Shop() {
   if (loading) return <div className="content" style={{ textAlign: 'center', padding: 40 }}>로딩 중...</div>;
 
   return (
-    <div className="content" style={{ paddingBottom: 80 }}>
+    <div className="content s-page s-page-wide" style={{ paddingBottom: 96 }}>
       {/* 헤더 */}
       <div className="card" style={{ padding: 16, textAlign: 'center' }}>
         <h2 style={{ fontSize: 20, marginBottom: 4 }}>🛒 포인트 상점</h2>

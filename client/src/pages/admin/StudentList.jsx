@@ -50,8 +50,8 @@ export default function StudentList() {
           등록된 학생이 없습니다.
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-          <table className="w-full">
+        <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-x-auto">
+          <table className="w-full min-w-[640px]">
             <thead className="bg-[#f3f4f5]">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">이름</th>

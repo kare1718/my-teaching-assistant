@@ -227,7 +227,7 @@ export default function AdminStudentView() {
     : '-';
 
   return (
-    <div className="bg-[#f8f9fa] min-h-screen p-8 pb-20">
+    <div className="bg-[#f8f9fa] min-h-screen p-8 pb-20 max-w-7xl mx-auto w-full">
       {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-sm text-slate-400 mb-6 font-medium">
         <Link to="/admin" className="text-slate-400 hover:text-[#102044] transition-colors no-underline">대시보드</Link>

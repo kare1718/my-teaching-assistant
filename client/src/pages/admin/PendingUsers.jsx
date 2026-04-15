@@ -26,7 +26,7 @@ export default function PendingUsers() {
   };
 
   return (
-    <div className="content">
+    <div className="content max-w-4xl mx-auto">
       <div className="breadcrumb">
         <Link to="/admin">대시보드</Link> &gt; <span>가입 승인 관리</span>
       </div>

@@ -193,7 +193,8 @@ export default function AuditLogs() {
         {error && (
           <div className="p-4 bg-red-50 text-red-700 text-sm">{error}</div>
         )}
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[720px]">
           <thead className="bg-[#f3f4f5]">
             <tr>
               <th className="text-left px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-widest">시간</th>
@@ -229,6 +230,7 @@ export default function AuditLogs() {
             ))}
           </tbody>
         </table>
+        </div>
 
         {/* 페이지네이션 */}
         <div className="flex items-center justify-between px-5 py-4 border-t border-slate-100">

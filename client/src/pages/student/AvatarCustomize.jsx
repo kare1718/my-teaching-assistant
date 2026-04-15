@@ -117,7 +117,7 @@ export default function AvatarCustomize() {
   const sectionLabel = currentSection ? currentSection.label : '';
 
   return (
-    <div className="content" style={{ paddingBottom: 80 }}>
+    <div className="content s-page s-page-wide" style={{ paddingBottom: 96 }}>
       <div className="card" style={{ textAlign: 'center', padding: '20px 16px' }}>
         <div style={{ position: 'relative', display: 'inline-block' }}>
           <AvatarSVG config={config} size={120} />

@@ -175,7 +175,7 @@ export default function VocabQuiz() {
   // 카테고리 선택
   if (phase === 'select') {
     return (
-      <div className="content" style={{ paddingBottom: 80 }}>
+      <div className="content s-page s-page-wide" style={{ paddingBottom: 96 }}>
         <div className="card" style={{ padding: 20, textAlign: 'center' }}>
           <h2 style={{ fontSize: 20, marginBottom: 4 }}>📝 어휘 퀴즈</h2>
           <p style={{ fontSize: 13, color: 'var(--muted-foreground)' }}>카테고리를 선택하고 퀴즈를 시작하세요!</p>
@@ -241,7 +241,7 @@ export default function VocabQuiz() {
     const isUrgent = timeLeft <= 3 && timeLeft > 0 && !showAnswer;
 
     return (
-      <div className="content" style={{ paddingBottom: 80 }}>
+      <div className="content s-page s-page-wide" style={{ paddingBottom: 96 }}>
         {/* 진행 바 */}
         <div style={{ marginBottom: 8 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 4 }}>
@@ -394,7 +394,7 @@ export default function VocabQuiz() {
     else if (pct >= 50) emoji = '🙂';
 
     return (
-      <div className="content" style={{ paddingBottom: 80 }}>
+      <div className="content s-page s-page-wide" style={{ paddingBottom: 96 }}>
         <div className="card" style={{ padding: 24, textAlign: 'center' }}>
           <div style={{ fontSize: 48, marginBottom: 8 }}>{emoji}</div>
           <h2 style={{ fontSize: 22, marginBottom: 4 }}>퀴즈 완료!</h2>

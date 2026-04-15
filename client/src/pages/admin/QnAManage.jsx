@@ -76,7 +76,7 @@ export default function QnAManage() {
   const displayQuestions = viewMode === 'students' && selectedStudent ? studentQuestions : filtered;
 
   return (
-    <div className="content">
+    <div className="content max-w-7xl mx-auto w-full">
       <div className="breadcrumb">
         <Link to="/admin">대시보드</Link> &gt; <span>질문 관리</span>
       </div>

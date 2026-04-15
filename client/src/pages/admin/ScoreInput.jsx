@@ -485,7 +485,7 @@ export default function ScoreInput() {
   };
 
   return (
-    <div className="content">
+    <div className="content max-w-7xl mx-auto">
       <div className="breadcrumb">
         <Link to="/admin">대시보드</Link> &gt; <span>시험 성적</span>
       </div>

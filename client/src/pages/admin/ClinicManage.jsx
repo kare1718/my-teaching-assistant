@@ -749,7 +749,7 @@ export default function ClinicManage() {
   };
 
   return (
-    <div className="content">
+    <div className="content max-w-7xl mx-auto w-full">
       <div className="breadcrumb">
         <Link to="/admin">대시보드</Link> &gt; <span>클리닉 관리</span>
       </div>

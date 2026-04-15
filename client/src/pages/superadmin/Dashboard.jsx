@@ -61,7 +61,7 @@ export default function SuperAdminDashboard() {
   const maxRevenue = Math.max(...(stats?.revenueTrend || []).map(r => r.total), 1);
 
   return (
-    <div style={{ padding: '32px 24px', maxWidth: 1200, margin: '0 auto', fontFamily: FONT }}>
+    <div style={{ padding: '32px 24px', maxWidth: 1280, margin: '0 auto', fontFamily: FONT }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--foreground)', margin: 0 }}>플랫폼 관리</h1>
@@ -221,7 +221,8 @@ export default function SuperAdminDashboard() {
 
       {/* 학원 목록 */}
       <div style={{ background: 'var(--card)', borderRadius: 16, border: '1px solid var(--border)', padding: 0, overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+        <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, minWidth: 720 }}>
           <thead>
             <tr style={{ background: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>
               {['학원명', '슬러그', '학생 수', '사용자 수', '티어', '상태', '생성일'].map(h => (
@@ -263,6 +264,7 @@ export default function SuperAdminDashboard() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

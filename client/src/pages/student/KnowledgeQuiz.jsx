@@ -118,7 +118,7 @@ export default function KnowledgeQuiz() {
   // ===== SELECT 화면 =====
   if (phase === 'select') {
     return (
-      <div className="content" style={{ paddingBottom: 80 }}>
+      <div className="content s-page s-page-wide" style={{ paddingBottom: 96 }}>
         <div className="card" style={{ padding: 24, textAlign: 'center' }}>
           <div style={{ fontSize: 40, marginBottom: 8 }}>🧠</div>
           <h2 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 6px' }}>지식 퀴즈</h2>
@@ -187,7 +187,7 @@ export default function KnowledgeQuiz() {
     const isCorrect = showAnswer && !isTimeout && selected === q?.correctAnswer;
 
     return (
-      <div className="content" style={{ paddingBottom: 80 }}>
+      <div className="content s-page s-page-wide" style={{ paddingBottom: 96 }}>
         {/* 진행 상태 */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)' }}>
@@ -325,7 +325,7 @@ export default function KnowledgeQuiz() {
     const gradeMsg = { S: '완벽해요! 🏆', A: '잘했어요! 👍', B: '괜찮아요 💪', C: '다시 도전! 🔥' }[grade];
 
     return (
-      <div className="content" style={{ paddingBottom: 80 }}>
+      <div className="content s-page s-page-wide" style={{ paddingBottom: 96 }}>
         <div className="card" style={{ padding: 28, textAlign: 'center' }}>
           <div style={{ fontSize: 56, fontWeight: 900, color: gradeColor, lineHeight: 1 }}>{grade}</div>
           <div style={{ fontSize: 16, fontWeight: 700, color: gradeColor, marginTop: 4 }}>{gradeMsg}</div>

@@ -139,7 +139,7 @@ export default function GameHub() {
   const xpPct = getXpPercent(levelInfo);
 
   return (
-    <div className="content" style={{ paddingBottom: 80 }}>
+    <div className="content s-page s-page-wide" style={{ paddingBottom: 96 }}>
       {/* 캐릭터 카드 */}
       <div className="card" style={{ textAlign: 'center', padding: '24px 16px' }}>
         <div onClick={() => navigate('/student/avatar')} style={{ cursor: 'pointer', position: 'relative', display: 'inline-block' }}>

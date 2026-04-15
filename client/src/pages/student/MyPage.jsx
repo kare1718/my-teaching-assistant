@@ -198,7 +198,7 @@ export default function MyPage() {
   if (!info) return <div className="content"><p style={{ color: 'var(--muted-foreground)' }}>로딩 중...</p></div>;
 
   return (
-    <div className="content" style={{ position: 'relative', overflowX: 'hidden', maxWidth: '100vw' }}>
+    <div className="content s-page" style={{ position: 'relative', overflowX: 'hidden' }}>
       {/* 배경 이미지 그리드 */}
       <div style={{ position: 'fixed', top: 56, left: 0, right: 0, bottom: 0, zIndex: 0, overflow: 'hidden' }}>
         <div style={{

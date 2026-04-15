@@ -94,7 +94,7 @@ export default function ReviewManage() {
     : reviews.filter(r => r.is_best);
 
   return (
-    <div className="content">
+    <div className="content max-w-7xl mx-auto w-full">
       <div className="breadcrumb">
         <Link to="/admin">대시보드</Link> &gt; <span>후기 관리</span>
       </div>

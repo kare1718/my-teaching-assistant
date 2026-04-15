@@ -48,7 +48,7 @@ export default function GamificationManage() {
   const activeSubTab = subTab && currentGroup.subs.find(s => s.id === subTab) ? subTab : currentGroup.subs[0]?.id;
 
   return (
-    <div className="content">
+    <div className="content max-w-7xl mx-auto w-full">
       {/* 헤더 */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <button className="btn btn-outline btn-sm" onClick={() => navigate('/admin')}>← 대시보드</button>
@@ -57,7 +57,7 @@ export default function GamificationManage() {
       </div>
 
       {/* 메인 그룹 탭 (3개) */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
         {groups.map(g => (
           <button key={g.id} onClick={() => { setGroup(g.id); setSubTab(g.subs[0]?.id || ''); }}
             style={{
@@ -71,7 +71,7 @@ export default function GamificationManage() {
       </div>
 
       {/* 서브 탭 */}
-      <div style={{ display: 'flex', gap: 3, marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid var(--border)' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid var(--border)', overflowX: 'auto' }}>
         {currentGroup.subs.map(s => (
           <button key={s.id} onClick={() => setSubTab(s.id)}
             style={{

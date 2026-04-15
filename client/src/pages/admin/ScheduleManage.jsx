@@ -438,7 +438,7 @@ export default function ScheduleManage() {
   const labelStyle = { fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--neutral-600)', display: 'block', marginBottom: 'var(--space-1)' };
 
   return (
-    <div className="content">
+    <div className="content max-w-7xl mx-auto">
       <div className="breadcrumb">
         <Link to="/admin">대시보드</Link> &gt; <span>수업/시험</span>
       </div>

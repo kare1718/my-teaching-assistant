@@ -40,7 +40,7 @@ export default function ProfileManage() {
   if (!profile) return <div className="content"><p style={{ color: 'var(--muted-foreground)' }}>로딩 중...</p></div>;
 
   return (
-    <div className="content">
+    <div className="content max-w-4xl mx-auto w-full">
       <h1>👨‍🏫 강사 프로필 관리</h1>
       <p style={{ fontSize: 13, color: 'var(--muted-foreground)', marginBottom: 'var(--space-4)' }}>
         로그인 페이지에 표시되는 강사 약력을 수정합니다.

@@ -124,7 +124,7 @@ export default function BackupSecurity() {
   const autoBackups = backups.filter(b => b.backup_type.startsWith('auto_'));
 
   return (
-    <div style={{ padding: '24px', maxWidth: 1100, margin: '0 auto' }}>
+    <div style={{ padding: '24px', maxWidth: 1280, margin: '0 auto' }}>
       <button onClick={() => navigate('/superadmin')} style={{
         padding: '6px 14px', borderRadius: 6, border: '1px solid var(--border)',
         background: 'var(--card)', cursor: 'pointer', fontSize: 13, marginBottom: 16, fontFamily: 'inherit',
@@ -225,7 +225,8 @@ export default function BackupSecurity() {
           {/* 플랫폼 수동 백업 목록 */}
           <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>수동 백업 이력</h3>
           <div style={{ background: 'var(--card)', borderRadius: 12, border: '1px solid var(--border)', overflow: 'hidden' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 640 }}>
               <thead>
                 <tr style={{ background: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>
                   <th style={{ padding: '10px 16px', textAlign: 'left' }}>백업명</th>
@@ -266,6 +267,7 @@ export default function BackupSecurity() {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         </>
       )}
@@ -321,7 +323,8 @@ export default function BackupSecurity() {
           {/* 최근 가입 사용자 */}
           <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>최근 가입 사용자</h3>
           <div style={{ background: 'var(--card)', borderRadius: 12, border: '1px solid var(--border)', overflow: 'hidden' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 640 }}>
               <thead>
                 <tr style={{ background: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>
                   <th style={{ padding: '10px 16px', textAlign: 'left' }}>이름</th>
@@ -357,6 +360,7 @@ export default function BackupSecurity() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         </>
       )}

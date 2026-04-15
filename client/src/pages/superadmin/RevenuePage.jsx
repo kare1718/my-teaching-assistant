@@ -47,7 +47,7 @@ export default function RevenuePage() {
   const maxRevenue = Math.max(...(summary?.revenueTrend || []).map(r => r.total), 1);
 
   return (
-    <div style={{ padding: '32px 24px', maxWidth: 1200, margin: '0 auto', fontFamily: FONT }}>
+    <div style={{ padding: '32px 24px', maxWidth: 1280, margin: '0 auto', fontFamily: FONT }}>
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--foreground)', margin: 0 }}>매출 관리</h1>
         <p style={{ color: 'var(--muted-foreground)', margin: '4px 0 0', fontSize: 14 }}>결제 내역, MRR/ARR, 매출 트렌드</p>
@@ -109,7 +109,8 @@ export default function RevenuePage() {
           </select>
         </div>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+        <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, minWidth: 720 }}>
           <thead>
             <tr style={{ background: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>
               {['학원', '금액', '상태', '결제방법', '결제일', '생성일'].map(h => (
@@ -143,6 +144,7 @@ export default function RevenuePage() {
             })}
           </tbody>
         </table>
+        </div>
 
         {/* 페이징 */}
         {totalPages > 1 && (

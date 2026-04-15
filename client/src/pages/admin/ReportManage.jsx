@@ -190,7 +190,7 @@ export default function ReportManage() {
   ];
 
   return (
-    <div className="content">
+    <div className="content max-w-7xl mx-auto w-full">
       <div className="card" style={{ padding: 16, textAlign: 'center' }}>
         <h2 style={{ fontSize: 20, margin: 0 }}>📄 수업 레포트</h2>
       </div>

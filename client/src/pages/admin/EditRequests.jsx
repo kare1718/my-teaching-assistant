@@ -56,7 +56,7 @@ export default function EditRequests() {
   };
 
   return (
-    <div className="content">
+    <div className="content max-w-4xl mx-auto">
       <div className="breadcrumb">
         <Link to="/admin">대시보드</Link> &gt; <span>정보 수정 요청</span>
       </div>

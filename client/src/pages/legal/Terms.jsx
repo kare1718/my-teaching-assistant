@@ -5,13 +5,13 @@ export default function Terms() {
   return (
     <div className="min-h-screen bg-[#f8f9fa] flex flex-col">
       <header className="bg-white border-b border-slate-100">
-        <div className="max-w-4xl mx-auto px-6 py-5 flex items-center justify-between">
+        <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
           <Link to="/" className="text-xl font-extrabold text-[#102044] tracking-tight">나만의 조교</Link>
           <Link to="/" className="text-xs font-bold text-slate-400 uppercase tracking-widest hover:text-[#004bf0]">홈으로</Link>
         </div>
       </header>
 
-      <main className="flex-1 max-w-4xl w-full mx-auto px-6 py-12">
+      <main className="flex-1 max-w-3xl w-full mx-auto px-6 py-12">
         <h1 className="text-3xl font-extrabold text-[#102044] tracking-tight mb-2">이용약관</h1>
         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-8">시행일: 2026년 4월 15일</p>
 

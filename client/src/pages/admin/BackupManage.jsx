@@ -96,7 +96,7 @@ export default function BackupManage() {
   };
 
   return (
-    <div className="content">
+    <div className="content max-w-4xl mx-auto w-full">
       <div className="breadcrumb">
         <a href="#" onClick={(e) => { e.preventDefault(); navigate('/admin'); }}>대시보드</a> &gt; <span>백업 관리</span>
       </div>

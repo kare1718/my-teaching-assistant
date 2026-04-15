@@ -82,7 +82,7 @@ export default function NoticeCreate() {
   const gradeOptions = form.targetSchool ? (schools.find(s => s.name === form.targetSchool)?.grades || []) : [];
 
   return (
-    <div className="content">
+    <div className="content max-w-4xl mx-auto w-full">
       <div className="breadcrumb">
         <Link to="/admin">대시보드</Link> &gt; <span>안내사항 관리</span>
       </div>

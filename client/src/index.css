@@ -762,8 +762,21 @@
   to   { transform: translateY(0); }
 }
 
-/* Student page overrides — warm bg for content */
-.s-page .content { background: var(--student-bg); max-width: 600px; }
+/* Student page overrides — 모바일 우선 (max-w-lg 512px) */
+.s-page .content {
+  background: var(--student-bg);
+  max-width: 512px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0));
+}
+/* 퀴즈/게임 풀스크린 페이지는 조금 더 여유 (max-w-xl 576px) */
+.s-page.s-page-wide .content,
+.s-page .content.content-wide { max-width: 576px; }
+/* Rankings 는 시상대 표시를 위해 max-w-md (448px) */
+.s-page .content.content-narrow { max-width: 448px; }
+/* Parent page content wrapper — max-w-md 460px */
+.p-page { max-width: 460px; margin: 0 auto; padding-bottom: calc(80px + env(safe-area-inset-bottom, 0)); }
 
 /* ═══ End Student Redesign ═══ */
 

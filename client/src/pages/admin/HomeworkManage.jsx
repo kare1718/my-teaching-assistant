@@ -385,7 +385,7 @@ export default function HomeworkManage() {
   };
 
   return (
-    <div className="content">
+    <div className="content max-w-7xl mx-auto">
       {/* === 가로 배치: 좌측 필터 + 우측 테이블 === */}
       <div className="hw-layout" style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
 

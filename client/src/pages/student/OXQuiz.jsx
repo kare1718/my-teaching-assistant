@@ -128,7 +128,7 @@ export default function OXQuiz() {
   // === SELECT PHASE ===
   if (phase === 'select') {
     return (
-      <div className="content">
+      <div className="content s-page s-page-wide">
         {/* 헤더 */}
         <div style={{
           padding: '18px 16px', textAlign: 'center', borderRadius: 14,
@@ -282,7 +282,7 @@ export default function OXQuiz() {
     const progress = ((currentIdx + (showAnswer ? 1 : 0)) / questions.length) * 100;
 
     return (
-      <div className="content">
+      <div className="content s-page s-page-wide">
         {/* 진행바 */}
         <div style={{ background: 'var(--muted)', borderRadius: 20, height: 8, marginBottom: 12, overflow: 'hidden' }}>
           <div style={{ background: 'linear-gradient(90deg, oklch(48% 0.18 260), oklch(62% 0.16 200))', height: '100%', width: `${progress}%`, transition: 'width 0.3s', borderRadius: 20 }} />
@@ -373,7 +373,7 @@ export default function OXQuiz() {
 
   // === RESULT PHASE ===
   return (
-    <div className="content">
+    <div className="content s-page s-page-wide">
       {/* 점수 카드 */}
       <div style={{
         background: percentage >= 70 ? 'linear-gradient(135deg, oklch(52% 0.14 160), oklch(58% 0.14 160))' : percentage >= 50 ? 'linear-gradient(135deg, oklch(55% 0.14 70), var(--warning))' : 'linear-gradient(135deg, oklch(48% 0.20 25), var(--destructive))',

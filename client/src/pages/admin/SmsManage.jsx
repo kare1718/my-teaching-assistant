@@ -455,7 +455,7 @@ export default function SmsManage() {
   };
 
   return (
-    <div className="content">
+    <div className="content max-w-7xl mx-auto w-full">
       <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center' }}>
         <h2 style={{ fontSize: 'var(--text-lg)', margin: 0 }}>📱 메시지 정책 관리</h2>
       </div>

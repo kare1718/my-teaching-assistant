@@ -193,7 +193,7 @@ export default function QnA() {
   const displayQuestions = [...questions].reverse();
 
   return (
-    <div className="content" style={{ paddingBottom: 80, display: 'flex', flexDirection: 'column', height: 'calc(100vh - 56px)' }}>
+    <div className="content s-page" style={{ paddingBottom: 96, display: 'flex', flexDirection: 'column', height: 'calc(100vh - 56px)' }}>
       <div className="breadcrumb" style={{ flexShrink: 0 }}><Link to="/student">홈</Link> &gt; <span>질문하기</span></div>
 
       {/* 채팅 스크롤 영역 */}

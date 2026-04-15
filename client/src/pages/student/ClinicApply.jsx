@@ -120,7 +120,7 @@ export default function ClinicApply() {
     : '';
 
   return (
-    <div className="content" style={{ paddingBottom: 80 }}>
+    <div className="content s-page" style={{ paddingBottom: 96 }}>
       <div className="card" style={{ textAlign: 'center', padding: 20 }}>
         <h2 style={{ fontSize: 20, marginBottom: 4 }}>📋 개별 클리닉 신청</h2>
         <p style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>

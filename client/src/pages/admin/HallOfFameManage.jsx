@@ -162,7 +162,7 @@ export default function HallOfFameManage() {
   const labelStyle = { fontSize: 'var(--text-xs)', fontWeight: 600, marginBottom: 'var(--space-1)', display: 'block' };
 
   return (
-    <div className="content">
+    <div className="content max-w-7xl mx-auto w-full">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
         <button className="btn btn-outline btn-sm" onClick={() => navigate('/admin')}>← 대시보드</button>
         <button onClick={() => { setEditCats([...categories]); setShowCatSettings(true); }}

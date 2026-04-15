@@ -279,7 +279,8 @@ export default function AcademyDetail() {
       {/* 결제 내역 탭 */}
       {tab === 'payments' && (
         <div style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+          <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, minWidth: 560 }}>
             <thead>
               <tr style={{ background: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>
                 {['금액', '상태', '결제방법', '결제일'].map(h => (
@@ -308,6 +309,7 @@ export default function AcademyDetail() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

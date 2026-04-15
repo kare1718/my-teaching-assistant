@@ -885,7 +885,7 @@ export default function TAScheduleManage() {
   );
 
   return (
-    <div className="content">
+    <div className="content max-w-7xl mx-auto w-full">
       <div className="card" style={{ textAlign: 'center', padding: '20px 16px' }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>📅 조교 근무표</h1>
       </div>
