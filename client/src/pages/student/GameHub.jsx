@@ -223,12 +223,12 @@ export default function GameHub() {
         {/* 포인트 */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginTop: 12 }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--primary)' }}>{charData.xp.toLocaleString()}</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--primary)' }}>{(charData.xp || 0).toLocaleString()}</div>
             <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>총 XP</div>
           </div>
           <div style={{ width: 1, background: 'var(--border)' }} />
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--warning)' }}>{charData.points.toLocaleString()}</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--warning)' }}>{(charData.points || 0).toLocaleString()}</div>
             <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>포인트</div>
           </div>
         </div>

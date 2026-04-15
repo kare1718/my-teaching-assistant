@@ -135,7 +135,7 @@ export default function ScoreView() {
     );
   };
 
-  const distData = distribution ? Object.entries(distribution.distribution).map(([range, count]) => ({
+  const distData = distribution?.distribution ? Object.entries(distribution.distribution).map(([range, count]) => ({
     range, 학생수: count,
     isMyRange: distribution.myScore !== null && parseInt(range.split('-')[0]) <= distribution.myScore && distribution.myScore <= parseInt(range.split('-')[1])
   })) : [];
