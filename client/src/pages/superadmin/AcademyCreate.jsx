@@ -5,11 +5,10 @@ import { apiPost } from '../../api';
 const FONT = "'Paperlogy', 'Noto Sans KR', system-ui, sans-serif";
 
 const TIERS = [
-  { value: 'trial', label: '체험' },
-  { value: 'basic', label: '베이직' },
-  { value: 'standard', label: '스탠다드' },
-  { value: 'pro', label: '프로' },
-  { value: 'enterprise', label: '엔터프라이즈' },
+  { value: 'free', label: 'Free (15명)' },
+  { value: 'starter', label: 'Starter (50명)' },
+  { value: 'pro', label: 'Pro (100명)' },
+  { value: 'first_class', label: 'First Class (무제한)' },
 ];
 
 const inputStyle = {
@@ -22,7 +21,7 @@ const labelStyle = { display: 'block', fontSize: 13, fontWeight: 600, color: 'va
 export default function AcademyCreate() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
-    name: '', slug: '', tier: 'trial',
+    name: '', slug: '', tier: 'free',
     ownerUsername: '', ownerPassword: '', ownerName: '', ownerPhone: '',
   });
   const [error, setError] = useState('');

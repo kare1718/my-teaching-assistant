@@ -68,7 +68,7 @@ const adminNavGroups = [
   { key: 'classes', label: '수업', icon: Icons.book, children: [
     { path: '/admin/classes', label: '수업/시간표' },
     { path: '/admin/attendance', label: '출결' },
-    { path: '/admin/homework', label: '과제 관리', tier: 'growth' },
+    { path: '/admin/homework', label: '과제 관리', tier: 'pro' },
   ]},
 
   { key: 'tuition', label: '수납', icon: Icons.dollar, children: [
@@ -79,7 +79,7 @@ const adminNavGroups = [
   { key: 'consult', label: '상담', icon: Icons.message, children: [
     { path: '/admin/consultations', label: '상담 일지' },
     { path: '/admin/leads', label: '상담 관리(리드)' },
-    { path: '/admin/clinic', label: '클리닉', tier: 'growth', badgeKey: 'pending_clinic' },
+    { path: '/admin/clinic', label: '클리닉', tier: 'pro', badgeKey: 'pending_clinic' },
   ]},
 
   { key: 'messages', label: '메시지', icon: Icons.mail, children: [
@@ -87,21 +87,21 @@ const adminNavGroups = [
     { path: '/admin/notices', label: '공지 작성' },
   ]},
 
-  { key: 'automation', label: '자동화', icon: Icons.zap, tier: 'growth', children: [
-    { path: '/admin/automation', label: '자동화 관리', tier: 'growth' },
-    { path: '/admin/automation?tab=queue', label: '업무 큐', tier: 'growth' },
+  { key: 'automation', label: '자동화', icon: Icons.zap, tier: 'pro', children: [
+    { path: '/admin/automation', label: '자동화 관리', tier: 'pro' },
+    { path: '/admin/automation?tab=queue', label: '업무 큐', tier: 'pro' },
   ]},
 
-  { key: 'reports', label: '리포트', icon: Icons.barChart, tier: 'growth', children: [
-    { path: '/admin/reports', label: '수업 레포트', tier: 'growth' },
+  { key: 'reports', label: '리포트', icon: Icons.barChart, tier: 'pro', children: [
+    { path: '/admin/reports', label: '수업 레포트', tier: 'pro' },
     { path: '/admin/scores', label: '성적' },
     { path: '/admin/hall-of-fame', label: '명예의 전당' },
   ]},
 
-  { key: 'premium', label: '프리미엄', icon: Icons.diamond, feature: 'gamification', children: [
-    { path: '/admin/gamification', label: '게이미피케이션', tier: 'premium' },
-    { path: '/admin/portfolios', label: '포트폴리오', tier: 'premium' },
-    { path: '/admin/ai', label: 'AI 보조', tier: 'premium' },
+  { key: 'premium', label: 'First Class', icon: Icons.diamond, feature: 'gamification', children: [
+    { path: '/admin/gamification', label: '게이미피케이션', tier: 'first_class' },
+    { path: '/admin/portfolios', label: '포트폴리오', tier: 'first_class' },
+    { path: '/admin/ai', label: 'AI 보조', tier: 'first_class' },
   ]},
 
   { key: 'settings', label: '설정', icon: Icons.settings, children: [
@@ -115,8 +115,11 @@ const adminNavGroups = [
 ];
 
 const TIER_BADGE_STYLE = {
-  growth: { bg: 'oklch(95% 0.04 260)', color: 'oklch(45% 0.15 260)', label: 'Growth' },
-  premium: { bg: 'oklch(95% 0.05 300)', color: 'oklch(45% 0.18 300)', label: 'Premium' },
+  pro: { bg: 'oklch(95% 0.04 260)', color: 'oklch(45% 0.15 260)', label: 'Pro' },
+  first_class: { bg: 'oklch(95% 0.05 300)', color: 'oklch(45% 0.18 300)', label: 'First Class' },
+  // 레거시 호환 (기존 데이터/코드 호환용)
+  growth: { bg: 'oklch(95% 0.04 260)', color: 'oklch(45% 0.15 260)', label: 'Pro' },
+  premium: { bg: 'oklch(95% 0.05 300)', color: 'oklch(45% 0.18 300)', label: 'First Class' },
 };
 
 /* ─── Super admin nav ────────────────────────────────────────────── */

@@ -14,14 +14,20 @@ router.get('/owner', async (req, res) => {
     const today = new Date().toISOString().slice(0, 10);
 
     // ── 1. today_summary ──
+    // role='student' 필터로 관리자/조교/선생님 제외
     const totalStudents = await getOne(
-      `SELECT COUNT(*) AS cnt FROM students WHERE academy_id = ? AND status = 'active'`, [aid]
+      `SELECT COUNT(*) AS cnt FROM students s JOIN users u ON u.id = s.user_id
+       WHERE s.academy_id = ? AND s.status = 'active' AND u.role = 'student'`, [aid]
     );
     const newThisMonth = await getOne(
-      `SELECT COUNT(*) AS cnt FROM students WHERE academy_id = ? AND enrolled_at >= date_trunc('month', CURRENT_DATE)`, [aid]
+      `SELECT COUNT(*) AS cnt FROM students s JOIN users u ON u.id = s.user_id
+       WHERE s.academy_id = ? AND u.role = 'student'
+         AND s.enrolled_at >= date_trunc('month', CURRENT_DATE)`, [aid]
     );
     const withdrawnThisMonth = await getOne(
-      `SELECT COUNT(*) AS cnt FROM students WHERE academy_id = ? AND withdrawn_at >= date_trunc('month', CURRENT_DATE)`, [aid]
+      `SELECT COUNT(*) AS cnt FROM students s JOIN users u ON u.id = s.user_id
+       WHERE s.academy_id = ? AND u.role = 'student'
+         AND s.withdrawn_at >= date_trunc('month', CURRENT_DATE)`, [aid]
     );
 
     // ── 2. attendance_today ──

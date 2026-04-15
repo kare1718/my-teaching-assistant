@@ -4,9 +4,16 @@ import { api, apiPost, apiPut, apiDelete } from '../../api';
 
 const FONT = "'Paperlogy', 'Noto Sans KR', system-ui, sans-serif";
 
-const TIERS = ['trial', 'free', 'basic', 'standard', 'pro', 'enterprise'];
+// 현행 4단 + 레거시 호환 (기존 DB 데이터 수정 가능하도록 alias 유지)
+const TIERS = ['free', 'starter', 'pro', 'first_class'];
 const TIER_LABELS = {
-  trial: '체험', free: '무료', basic: '베이직', standard: '스탠다드', pro: '프로', enterprise: '엔터프라이즈',
+  free: 'Free', starter: 'Starter', pro: 'Pro', first_class: 'First Class',
+  // 레거시 호환 (표시만)
+  trial: 'Free (legacy: trial)',
+  basic: 'Starter (legacy: basic)',
+  standard: 'Pro (legacy: standard)',
+  growth: 'Pro (legacy: growth)',
+  premium: 'First Class (legacy: premium)',
 };
 
 const cardStyle = {

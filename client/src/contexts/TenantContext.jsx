@@ -5,7 +5,8 @@ const TenantContext = createContext(null);
 
 // ─────────────────────────────────────────────────────────
 // 요금제 4단 구조 — server/middleware/subscription.js 와 동기화
-// Free / Starter / Pro / First Class (Trial=Pro)
+// Free / Starter / Pro / First Class
+// 레거시 매핑: trial→free, basic→starter, standard|growth→pro, premium→first_class
 // ─────────────────────────────────────────────────────────
 const FREE_FEATURES = ['scores', 'attendance', 'notices', 'materials', 'qna'];
 const STARTER_EXTRA = ['students', 'tuition_basic', 'sms', 'parent_app', 'reviews', 'consultation_basic', 'consultation'];
@@ -32,8 +33,8 @@ export const TIER_FEATURES = {
   starter: _STARTER,
   pro: _PRO,
   first_class: _FIRST_CLASS,
-  trial: _PRO,
-  // 레거시 호환
+  // 레거시 호환 매핑 (기존 DB 데이터 보호)
+  trial: _FREE,
   basic: _STARTER,
   standard: _PRO,
   growth: _PRO,
@@ -45,7 +46,6 @@ export const TIER_LABELS = {
   starter:     'Starter',
   pro:         'Pro',
   first_class: 'First Class',
-  trial:       'Trial',
 };
 
 export function tierHasFeature(tier, feature) {
@@ -122,7 +122,7 @@ function getDefaultConfig() {
     academyId: null,
     academyName: '나만의 조교',
     slug: '',
-    tier: 'trial',
+    tier: 'free',
     schools: [],
     examTypes: [],
     siteTitle: '나만의 조교',

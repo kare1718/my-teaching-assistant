@@ -142,11 +142,11 @@ export default function PromotionsPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
               <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--muted-foreground)', display: 'block', marginBottom: 6 }}>업그레이드 티어</label>
-              <select style={inputStyle} value={form.value.tier || 'standard'}
+              <select style={inputStyle} value={form.value.tier || 'pro'}
                 onChange={e => setForm({ ...form, value: { ...form.value, tier: e.target.value } })}>
-                <option value="basic">베이직</option>
-                <option value="standard">스탠다드</option>
-                <option value="pro">프로</option>
+                <option value="starter">Starter</option>
+                <option value="pro">Pro</option>
+                <option value="first_class">First Class</option>
               </select>
             </div>
             <div>

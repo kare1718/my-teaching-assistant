@@ -13,7 +13,9 @@ export default function StudentList() {
     api('/admin/students')
       .then(data => {
         const rows = Array.isArray(data) ? data : (data?.rows || []);
-        setStudents(rows);
+        // 안전장치: 관리자/조교/선생님 제외 (role이 없거나 student인 경우만)
+        const studentsOnly = rows.filter(s => !s.role || s.role === 'student');
+        setStudents(studentsOnly);
       })
       .catch(() => {})
       .finally(() => setLoading(false));

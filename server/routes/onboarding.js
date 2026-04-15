@@ -42,10 +42,10 @@ router.post('/create-academy', async (req, res) => {
       branding: {},
     };
 
-    // 학원 생성 (trial 플랜)
+    // 학원 생성 (Free 플랜 — Trial 별도 플랜 없음, 체험은 Free로 일원화)
     const academyId = await runInsert(
       'INSERT INTO academies (name, slug, subscription_tier, max_students, settings) VALUES (?, ?, ?, ?, ?)',
-      [academyName, slug, 'trial', TIER_LIMITS.trial.maxStudents, JSON.stringify(defaultSettings)]
+      [academyName, slug, 'free', TIER_LIMITS.free.maxStudents, JSON.stringify(defaultSettings)]
     );
 
     // 관리자 계정 생성

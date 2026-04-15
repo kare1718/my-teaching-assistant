@@ -54,15 +54,21 @@ router.get('/', async (req, res) => {
 // 요금제 목록 (프론트엔드용)
 // ─────────────────────────────────────────────
 router.get('/plans', (req, res) => {
-  const plans = Object.entries(TIER_LIMITS)
-    .filter(([key]) => key !== 'trial')
-    .map(([key, val]) => ({
+  // 현행 4단 (Free/Starter/Pro/First Class)만 노출 — 레거시 alias는 숨김
+  const OFFICIAL_TIERS = ['free', 'starter', 'pro', 'first_class'];
+  const LABELS = { free: 'Free', starter: 'Starter', pro: 'Pro', first_class: 'First Class' };
+  const plans = OFFICIAL_TIERS.map((key) => {
+    const val = TIER_LIMITS[key] || {};
+    return {
       id: key,
-      name: key === 'free' ? 'Free' : key === 'basic' ? 'Basic' : key === 'standard' ? 'Standard' : 'Pro',
-      price: val.price,
+      name: LABELS[key] || key,
+      price: val.price ?? null,
       yearlyPrice: YEARLY_PRICES[key] || null,
-      maxStudents: val.maxStudents === 9999 ? '무제한' : `${val.maxStudents}명`,
-    }));
+      maxStudents: val.maxStudents == null ? '무제한' : `${val.maxStudents}명`,
+      inquiry: !!val.inquiry,
+      vatIncluded: val.vatIncluded === true,
+    };
+  });
   res.json(plans);
 });
 
@@ -73,8 +79,11 @@ router.post('/subscribe', async (req, res) => {
   try {
     const { planType, billingCycle, billingKey, paymentId } = req.body;
 
-    if (!planType || !['basic', 'standard', 'pro'].includes(planType)) {
-      return res.status(400).json({ error: '유효한 플랜을 선택해주세요.' });
+    // 결제 가능 플랜: Starter / Pro (Free는 무료, First Class는 별도 문의)
+    // 레거시 호환: basic→starter, standard|growth→pro
+    const PAYABLE_TIERS = ['starter', 'pro', 'basic', 'standard', 'growth'];
+    if (!planType || !PAYABLE_TIERS.includes(planType)) {
+      return res.status(400).json({ error: '유효한 플랜을 선택해주세요. (Starter 또는 Pro)' });
     }
     if (!billingKey && !paymentId) {
       return res.status(400).json({ error: '결제 정보가 필요합니다.' });
@@ -339,8 +348,8 @@ router.post('/verify-payment', async (req, res) => {
       return res.status(400).json({ error: '결제 검증에 실패했습니다.' });
     }
 
-    const tier = planType || 'basic';
-    const limits = TIER_LIMITS[tier] || TIER_LIMITS.basic;
+    const tier = planType || 'starter';
+    const limits = TIER_LIMITS[tier] || TIER_LIMITS.starter;
     const cycle = billingCycle === 'yearly' ? 'yearly' : 'monthly';
 
     // 구독 생성

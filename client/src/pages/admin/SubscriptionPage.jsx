@@ -3,14 +3,25 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { api, apiPost, apiPut, getUser } from '../../api';
 import { requestBillingKey } from '../../utils/payment';
 
+// 요금제 4단 — server/middleware/subscription.js 와 동기화 (모든 가격 VAT 별도)
 const PLANS = [
-  { id: 'free', name: 'Free', price: 0, yearlyPrice: 0, maxStudents: '10명', features: ['학생 10명', '성적 관리', '게이미피케이션', '기본 기능'], desc: '소규모 수업에 딱' },
-  { id: 'basic', name: 'Basic', price: 79000, yearlyPrice: 67000, maxStudents: '50명', features: ['학생 50명', '성적 관리', '게이미피케이션', '랭킹/상점', '안내사항/자료'], desc: '성장하는 학원을 위한' },
-  { id: 'standard', name: 'Standard', price: 159000, yearlyPrice: 135000, maxStudents: '100명', features: ['학생 100명', 'Basic 전체 포함', 'AI 리포트', 'SMS 발송', '클리닉/숙제', '출결 알림'], desc: '가장 인기 있는 플랜', popular: true },
-  { id: 'pro', name: 'Pro', price: 0, yearlyPrice: 0, maxStudents: '100명 이상', features: ['학생 무제한', 'Standard 전체 포함', '조교 관리', '수납 관리', 'API 내보내기', '전담 매니저'], desc: '대형 학원 맞춤', inquiry: true },
+  { id: 'free', name: 'Free', price: 0, yearlyPrice: 0, maxStudents: '15명', features: ['학생 15명', '성적 관리', '출결', '공지', '수업 자료', 'Q&A'], desc: '1인 과외·소규모 체험' },
+  { id: 'starter', name: 'Starter', price: 49000, yearlyPrice: 41650, maxStudents: '50명', features: ['학생 50명', 'Free 기능 전체', '학생 관리 고급', '수납 기본', 'SMS 발송', '보호자 앱', '기본 상담 메모'], desc: '소형 학원 운영 기본팩', popular: true },
+  { id: 'pro', name: 'Pro', price: 129000, yearlyPrice: 109650, maxStudents: '100명', features: ['학생 100명', 'Starter 기능 전체', '자동화 엔진', '상담 CRM + 리드', '수납 예외 처리', '고급 리포트', 'AI 리포트'], desc: '성장 학원' },
+  { id: 'first_class', name: 'First Class', price: 0, yearlyPrice: 0, maxStudents: '무제한', features: ['학생 무제한', 'Pro 기능 전체', '게이미피케이션', '아바타/상점', 'AI 문제 생성', '브랜딩', '전담 지원'], desc: '관리형/입시형 학원', inquiry: true },
 ];
 
-const TIER_ORDER = ['free', 'trial', 'basic', 'standard', 'pro'];
+const TIER_ORDER = ['free', 'starter', 'pro', 'first_class'];
+
+// 레거시 tier → 현행 4단 매핑 (기존 DB 데이터 호환)
+const LEGACY_TIER_MAP = {
+  trial: 'free',
+  basic: 'starter',
+  standard: 'pro',
+  growth: 'pro',
+  premium: 'first_class',
+};
+const normalizeTier = (t) => LEGACY_TIER_MAP[t] || t || 'free';
 
 const STATUS_MAP = {
   trial: { label: '무료 체험', cls: 'bg-amber-100 text-amber-700' },
@@ -76,9 +87,10 @@ export default function SubscriptionPage() {
     }
   };
 
-  const currentTier = subInfo?.academy?.subscription_tier || 'trial';
+  const rawTier = subInfo?.academy?.subscription_tier || 'free';
+  const currentTier = normalizeTier(rawTier);
   const subscription = subInfo?.subscription;
-  const status = subscription?.status || (currentTier === 'trial' ? 'trial' : 'active');
+  const status = subscription?.status || (rawTier === 'trial' ? 'trial' : 'active');
 
   const trialDaysLeft = () => {
     if (!subscription?.trial_ends_at) return null;
@@ -163,12 +175,12 @@ export default function SubscriptionPage() {
 
   const getPlanAction = (plan) => {
     if (plan.inquiry) {
-      return { label: '도입 문의', disabled: false, style: 'inquiry', action: () => window.open('mailto:support@najogyo.com?subject=Pro 플랜 도입 문의', '_blank') };
+      return { label: '도입 문의', disabled: false, style: 'inquiry', action: () => window.open('mailto:support@najogyo.com?subject=First Class 플랜 도입 문의', '_blank') };
     }
-    const currentIdx = TIER_ORDER.indexOf(currentTier === 'trial' ? 'free' : currentTier);
+    const currentIdx = TIER_ORDER.indexOf(currentTier);
     const planIdx = TIER_ORDER.indexOf(plan.id);
 
-    if (plan.id === currentTier || (currentTier === 'trial' && plan.id === 'free')) {
+    if (plan.id === currentTier) {
       return { label: '현재 플랜', disabled: true, style: 'current' };
     }
     if (plan.id === 'free') {
@@ -240,7 +252,7 @@ export default function SubscriptionPage() {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <h2 className="text-2xl font-bold text-[#102044]">
-                  {currentTier === 'trial' ? '무료 체험' : (currentPlan?.name || currentTier)} 플랜
+                  {(currentPlan?.name || currentTier)} 플랜
                 </h2>
                 <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusInfo.cls}`}>
                   {statusInfo.label}
@@ -411,7 +423,7 @@ export default function SubscriptionPage() {
         {/* Plan Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           {PLANS.map(plan => {
-            const isCurrent = plan.id === currentTier || (currentTier === 'trial' && plan.id === 'free');
+            const isCurrent = plan.id === currentTier;
             const price = isYearly ? plan.yearlyPrice : plan.price;
             const originalPrice = plan.price;
             const action = getPlanAction(plan);

@@ -41,9 +41,9 @@ async function checkTrialExpiry() {
           [sub.id]
         );
 
-        // 2) 학원 tier를 free로, max_students를 5로 제한
+        // 2) 학원 tier를 free로, max_students를 15로 제한 (Free 플랜 기준)
         await runQuery(
-          `UPDATE academies SET subscription_tier = 'free', max_students = 5 WHERE id = ?`,
+          `UPDATE academies SET subscription_tier = 'free', max_students = 15 WHERE id = ?`,
           [sub.academy_id]
         );
 

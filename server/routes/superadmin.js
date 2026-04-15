@@ -65,7 +65,7 @@ router.post('/academies', async (req, res) => {
 
     const academyId = await runInsert(
       'INSERT INTO academies (name, slug, subscription_tier, max_students, settings) VALUES (?, ?, ?, ?, ?)',
-      [name, slug, tier || 'trial', TIER_LIMITS[tier || 'trial']?.maxStudents || 10, JSON.stringify(defaultSettings)]
+      [name, slug, tier || 'free', TIER_LIMITS[tier || 'free']?.maxStudents || 15, JSON.stringify(defaultSettings)]
     );
 
     // 관리자 계정 생성
@@ -131,14 +131,16 @@ router.get('/stats', async (req, res) => {
       'SELECT subscription_tier, COUNT(*) as count FROM academies WHERE is_active = 1 GROUP BY subscription_tier'
     );
 
-    // MRR 계산 (active subscriptions)
+    // MRR 계산 (active subscriptions) — VAT 별도, 현행 4단 + 레거시 매핑
     const mrr = await getOne(
       `SELECT COALESCE(SUM(CASE
-        WHEN a.subscription_tier = 'basic' THEN 77000
-        WHEN a.subscription_tier = 'standard' THEN 149000
+        WHEN a.subscription_tier = 'starter' THEN 49000
+        WHEN a.subscription_tier = 'pro' THEN 129000
+        WHEN a.subscription_tier = 'basic' THEN 49000
+        WHEN a.subscription_tier IN ('standard', 'growth') THEN 129000
         ELSE 0
       END), 0) as total
-      FROM academies a WHERE a.is_active = 1 AND a.subscription_tier NOT IN ('free', 'trial')`
+      FROM academies a WHERE a.is_active = 1 AND a.subscription_tier NOT IN ('free', 'trial', 'first_class', 'premium')`
     );
 
     // 이번달 신규 학원
@@ -464,11 +466,13 @@ router.get('/revenue/summary', async (req, res) => {
 
     const mrr = await getOne(
       `SELECT COALESCE(SUM(CASE
-        WHEN subscription_tier = 'basic' THEN 77000
-        WHEN subscription_tier = 'standard' THEN 149000
+        WHEN subscription_tier = 'starter' THEN 49000
+        WHEN subscription_tier = 'pro' THEN 129000
+        WHEN subscription_tier = 'basic' THEN 49000
+        WHEN subscription_tier IN ('standard', 'growth') THEN 129000
         ELSE 0
       END), 0) as total
-      FROM academies WHERE is_active = 1 AND subscription_tier NOT IN ('free', 'trial')`
+      FROM academies WHERE is_active = 1 AND subscription_tier NOT IN ('free', 'trial', 'first_class', 'premium')`
     );
 
     const monthlyRevenue = await getOne(

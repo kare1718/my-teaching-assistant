@@ -109,7 +109,7 @@ router.get('/schools', async (req, res) => {
   const schools = await getAll(
     `SELECT school, COUNT(*) as student_count
      FROM students s JOIN users u ON s.user_id = u.id
-     WHERE u.approved = 1 AND s.academy_id = ?
+     WHERE u.approved = 1 AND u.role = 'student' AND s.academy_id = ?
      GROUP BY school ORDER BY school`,
     [req.academyId]
   );
@@ -120,7 +120,7 @@ router.get('/schools/:school/grades', async (req, res) => {
   const grades = await getAll(
     `SELECT grade, COUNT(*) as student_count
      FROM students s JOIN users u ON s.user_id = u.id
-     WHERE s.school = ? AND u.approved = 1 AND s.academy_id = ?
+     WHERE s.school = ? AND u.approved = 1 AND u.role = 'student' AND s.academy_id = ?
      GROUP BY grade ORDER BY grade`,
     [req.params.school, req.academyId]
   );
@@ -132,7 +132,7 @@ router.get('/schools/:school/grades/:grade/students', async (req, res) => {
     `SELECT s.id, s.user_id, u.name, u.phone, s.school, s.grade,
             s.parent_name, s.parent_phone, s.memo, s.status, u.blocked
      FROM students s JOIN users u ON s.user_id = u.id
-     WHERE s.school = ? AND s.grade = ? AND u.approved = 1 AND s.academy_id = ?
+     WHERE s.school = ? AND s.grade = ? AND u.approved = 1 AND u.role = 'student' AND s.academy_id = ?
      ORDER BY u.name`,
     [req.params.school, req.params.grade, req.academyId]
   );
