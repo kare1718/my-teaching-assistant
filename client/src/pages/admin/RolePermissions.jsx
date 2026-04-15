@@ -169,7 +169,7 @@ export default function RolePermissions() {
   }
 
   return (
-    <div className="p-8 max-w-[1400px] mx-auto">
+    <div className="p-8 max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-2xl font-extrabold text-[#102044] tracking-tight">권한 설정</h3>
@@ -183,25 +183,23 @@ export default function RolePermissions() {
         </div>
       )}
 
-      <div className="grid grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-12 gap-6 items-start">
         {/* Role List Sidebar */}
-        <div className="col-span-12 lg:col-span-3 bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest px-3 mb-4">사용자 역할</h4>
-          <div className="space-y-1">
+        <div className="col-span-12 lg:col-span-3 bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">사용자 역할</h3>
+          <div className="space-y-2">
             {allRoles.map(role => (
               <button
                 key={role.key}
                 onClick={() => setSelectedRole(role.key)}
-                className={`w-full text-left px-4 py-3 rounded-lg text-sm font-semibold flex items-center justify-between transition-colors ${
+                className={`w-full px-4 py-3 rounded-lg text-sm font-bold text-left transition-colors flex items-center justify-between ${
                   selectedRole === role.key
-                    ? 'bg-[#102044] text-white'
-                    : 'text-slate-500 hover:bg-[#f3f4f5]'
+                    ? 'bg-[#102044] text-white shadow-sm'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:text-[#102044] hover:border-[#102044]/30'
                 }`}
               >
-                {role.label}
-                <svg className={`w-4 h-4 ${selectedRole === role.key ? 'opacity-100' : 'opacity-0'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
+                <span>{role.label}</span>
+                {selectedRole === role.key && <span>›</span>}
               </button>
             ))}
           </div>
@@ -214,7 +212,7 @@ export default function RolePermissions() {
                 onChange={e => setNewRoleName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleAddRole()}
                 placeholder="역할 이름"
-                className="w-full px-4 py-2.5 bg-[#edeeef] rounded-lg border-transparent text-sm focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 focus:outline-none"
+                className="w-full px-4 py-2.5 bg-white rounded-lg border border-slate-200 text-sm focus:border-[#004bf0]/40 focus:ring-4 focus:ring-[#004bf0]/5 focus:outline-none"
                 autoFocus
               />
               <div className="flex gap-2">
@@ -235,12 +233,9 @@ export default function RolePermissions() {
           ) : (
             <button
               onClick={() => setShowAddRole(true)}
-              className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-bold text-[#004bf0] border border-[#004bf0]/20 hover:bg-[#004bf0]/5 transition-all"
+              className="w-full mt-4 px-4 py-3 rounded-lg text-sm font-bold border border-dashed border-[#004bf0]/30 text-[#004bf0] hover:bg-[#004bf0]/5 transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              역할 추가
+              + 역할 추가
             </button>
           )}
         </div>

@@ -189,24 +189,27 @@ export default function AutomationManage() {
         </div>
 
         {/* ── Tabs ───────────────────────────────────────────────── */}
-        <div className="flex gap-8 border-b border-slate-200/60 mb-8">
+        <div className="flex gap-2 mb-8 flex-wrap">
           {[
             { key: 'rules', label: '규칙 관리' },
             { key: 'queue', label: '업무 큐' },
             { key: 'logs',  label: '실행 이력' },
-          ].map(t => (
-            <button
-              key={t.key}
-              onClick={() => { setTab(t.key); if (t.key === 'logs') loadLogs(1); }}
-              className={`pb-4 text-sm font-bold px-1 transition-colors ${
-                tab === t.key
-                  ? 'text-[#004bf0] border-b-2 border-[#004bf0]'
-                  : 'text-slate-500 hover:text-[#102044]'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
+          ].map(t => {
+            const active = tab === t.key;
+            return (
+              <button
+                key={t.key}
+                onClick={() => { setTab(t.key); if (t.key === 'logs') loadLogs(1); }}
+                className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-colors ${
+                  active
+                    ? 'bg-[#102044] text-white shadow-sm'
+                    : 'bg-white border border-slate-200 text-slate-500 hover:text-[#102044] hover:border-[#102044]/30'
+                }`}
+              >
+                {t.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* ═══════════════════════════════════════════════════════════

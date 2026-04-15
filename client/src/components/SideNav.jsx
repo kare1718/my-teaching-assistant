@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getUser, api } from '../api';
-import ThemeToggle from './ThemeToggle';
 import useMediaQuery from '../hooks/useMediaQuery';
 import { useTenantConfig } from '../contexts/TenantContext';
 
@@ -324,9 +323,15 @@ export default function SideNav() {
   /* ── admin 9-group accordion renderer ── */
   const visibleGroups = adminNavGroups.filter(g => !g.feature || hasFeature(g.feature));
 
-  const isChildActive = (path) =>
-    location.pathname === path ||
-    (path !== '/admin' && location.pathname.startsWith(path + '/'));
+  // 정확 매칭이 필요한 경로들 (상위 경로가 하위 경로를 포함하지 않도록)
+  const EXACT_MATCH_PATHS = new Set(['/admin/settings']);
+  const isChildActive = (path) => {
+    if (EXACT_MATCH_PATHS.has(path)) return location.pathname === path;
+    return (
+      location.pathname === path ||
+      (path !== '/admin' && location.pathname.startsWith(path + '/'))
+    );
+  };
 
   const groupBadgeSum = (group) => {
     if (!group.children) return 0;
@@ -532,9 +537,6 @@ export default function SideNav() {
 
   const renderSwitchButton = (onNavigate) => (
     <div style={{ marginTop: 'auto' }}>
-      <div style={{ padding: '8px 14px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'center' }}>
-        <ThemeToggle />
-      </div>
       {user.role === 'superadmin' && !isSuperAdminPage && (
         <div style={{ padding: '10px 14px', borderTop: '1px solid var(--border)' }}>
           <button onClick={() => onNavigate('/superadmin')} style={{

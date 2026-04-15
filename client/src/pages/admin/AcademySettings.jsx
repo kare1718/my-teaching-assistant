@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { api, apiPut } from '../../api';
+import { api, apiPut, apiGet, apiPost } from '../../api';
 import { useTenantConfig } from '../../contexts/TenantContext';
 import { useUIStore } from '../../stores/useUIStore';
 
@@ -30,6 +30,43 @@ export default function AcademySettings() {
   const [sidebarPinned, setSidebarPinned] = useState(
     () => localStorage.getItem('adminSidebarPinned') === 'true'
   );
+  const [inviteCodes, setInviteCodes] = useState({ student_invite_code: '', parent_invite_code: '' });
+  const [inviteLoading, setInviteLoading] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await apiGet('/academies/invite-codes');
+        setInviteCodes({
+          student_invite_code: data.student_invite_code || '',
+          parent_invite_code: data.parent_invite_code || '',
+        });
+      } catch (_) { /* 권한 없음 등은 무시 */ }
+    })();
+  }, []);
+
+  const regenerateInviteCode = async (type) => {
+    const label = type === 'student' ? '학생' : '학부모';
+    if (!window.confirm(`${label}용 초대 코드를 재발급하시겠습니까?\n기존 코드는 즉시 무효화되며, 재발급 후에는 새 코드로만 가입할 수 있습니다.`)) return;
+    setInviteLoading(true);
+    try {
+      const result = await apiPost('/academies/invite-codes/regenerate', { type });
+      setInviteCodes(prev => ({ ...prev, ...result }));
+      setMessage(`${label}용 초대 코드가 재발급되었습니다.`);
+    } catch (err) {
+      setMessage('재발급 실패: ' + (err.message || ''));
+    } finally {
+      setInviteLoading(false);
+    }
+  };
+
+  const copyCode = async (code) => {
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code);
+      setMessage('초대 코드가 복사되었습니다.');
+    } catch (_) { /* ignore */ }
+  };
 
   useEffect(() => {
     if (config) {
@@ -118,22 +155,27 @@ export default function AcademySettings() {
   return (
     <div className="p-10 space-y-8 max-w-7xl mx-auto w-full">
       {/* Settings Tabs */}
-      <div className="flex items-center gap-6 border-b border-slate-200/50 -mt-2 mb-2">
-        {SETTINGS_TABS.map(tab => (
-          <button
-            key={tab.label}
-            onClick={() => tab.path && navigate(tab.path)}
-            className={`pb-3 text-sm font-semibold uppercase tracking-wider transition-all ${
-              tab.path === location.pathname
-                ? 'text-[#102044] border-b-2 border-[#102044] font-bold'
-                : tab.path
-                  ? 'text-slate-500 hover:text-[#102044]'
-                  : 'text-slate-300 cursor-default'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="flex gap-2 flex-wrap mb-2">
+        {SETTINGS_TABS.map(tab => {
+          const isCurrent = tab.path === location.pathname;
+          const disabled = !tab.path;
+          return (
+            <button
+              key={tab.label}
+              onClick={() => tab.path && navigate(tab.path)}
+              disabled={disabled}
+              className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-colors ${
+                isCurrent
+                  ? 'bg-[#102044] text-white shadow-sm'
+                  : disabled
+                    ? 'bg-white border border-slate-200 text-slate-300 cursor-default'
+                    : 'bg-white border border-slate-200 text-slate-500 hover:text-[#102044] hover:border-[#102044]/30'
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Page Title */}
@@ -150,6 +192,73 @@ export default function AcademySettings() {
           {message}
         </div>
       )}
+
+      {/* Invite Codes */}
+      <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-8">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="material-symbols-outlined text-[#102044]">qr_code_2</span>
+          <h4 className="text-lg font-bold text-[#102044]">초대 코드</h4>
+        </div>
+        <p className="text-sm text-slate-500 mb-6">
+          학생과 학부모가 회원가입할 때 이 코드를 입력해야 본 학원에 속하게 됩니다. 외부에 유출되면 재발급하세요.
+        </p>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-4 p-5 bg-slate-50 rounded-xl">
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">학생용 코드</p>
+              <p className="text-xl font-extrabold text-[#102044] mt-1 font-mono truncate">
+                {inviteCodes.student_invite_code || '발급 중...'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => copyCode(inviteCodes.student_invite_code)}
+                disabled={!inviteCodes.student_invite_code}
+                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:border-[#102044]/30 disabled:opacity-50"
+              >
+                복사
+              </button>
+              <button
+                type="button"
+                onClick={() => regenerateInviteCode('student')}
+                disabled={inviteLoading}
+                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:border-[#004bf0]/40 hover:text-[#004bf0] disabled:opacity-50"
+              >
+                재발급
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-4 p-5 bg-slate-50 rounded-xl">
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">학부모용 코드</p>
+              <p className="text-xl font-extrabold text-[#102044] mt-1 font-mono truncate">
+                {inviteCodes.parent_invite_code || '발급 중...'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => copyCode(inviteCodes.parent_invite_code)}
+                disabled={!inviteCodes.parent_invite_code}
+                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:border-[#102044]/30 disabled:opacity-50"
+              >
+                복사
+              </button>
+              <button
+                type="button"
+                onClick={() => regenerateInviteCode('parent')}
+                disabled={inviteLoading}
+                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:border-[#004bf0]/40 hover:text-[#004bf0] disabled:opacity-50"
+              >
+                재발급
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Theme Setting */}
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-8">

@@ -223,6 +223,38 @@ async function runMigrations() {
   }
 }
 
+// ── 초대 코드 보장 ──
+async function ensureInviteCodes() {
+  const { generateUniqueStudentCode, generateUniqueParentCode } = require('./utils/inviteCode');
+  const { rows } = await pool.query(
+    'SELECT id, student_invite_code, parent_invite_code FROM academies WHERE student_invite_code IS NULL OR parent_invite_code IS NULL'
+  );
+  for (const row of rows) {
+    const sets = [];
+    const values = [];
+    if (!row.student_invite_code) {
+      const code = await generateUniqueStudentCode();
+      sets.push(`student_invite_code = $${values.length + 1}`);
+      values.push(code);
+    }
+    if (!row.parent_invite_code) {
+      const code = await generateUniqueParentCode();
+      sets.push(`parent_invite_code = $${values.length + 1}`);
+      values.push(code);
+    }
+    if (sets.length > 0) {
+      values.push(row.id);
+      await pool.query(
+        `UPDATE academies SET ${sets.join(', ')} WHERE id = $${values.length}`,
+        values
+      );
+    }
+  }
+  if (rows.length > 0) {
+    console.log(`[초대 코드] ${rows.length}개 학원에 코드 발급 완료`);
+  }
+}
+
 // ── 서버 시작 ──
 async function start() {
   try {
@@ -231,6 +263,13 @@ async function start() {
 
     await runMigrations();
     console.log('[DB] 마이그레이션 완료');
+
+    // 학원별 초대 코드 보장 (누락된 학원 자동 발급)
+    try {
+      await ensureInviteCodes();
+    } catch (e) {
+      console.error('[초대 코드] 초기화 실패:', e.message);
+    }
 
     try {
       const { runSeeds } = require('./db/seed');

@@ -6,9 +6,14 @@ import { BarChart, Bar, AreaChart, Area, ScatterChart, Scatter, XAxis, YAxis, Ca
 
 export default function ScoreInput() {
   const { config } = useTenantConfig();
-  const schools = config.schools || [];
-  const EXAM_TYPES = config.examTypes?.flatMap(c => c.types) || [];
-  const EXAM_MAJOR_CATEGORIES = config.examTypes || [];
+  const schools = config?.schools || [];
+  const EXAM_MAJOR_CATEGORIES = (config?.examTypes || []).map(c => ({
+    ...c,
+    key: c?.key || c?.label || '',
+    label: c?.label || '',
+    types: Array.isArray(c?.types) ? c.types.filter(Boolean) : [],
+  }));
+  const EXAM_TYPES = EXAM_MAJOR_CATEGORIES.flatMap(c => c.types);
   const [searchParams] = useSearchParams();
   const [exams, setExams] = useState([]);
   const [students, setStudents] = useState([]);
@@ -434,7 +439,7 @@ export default function ScoreInput() {
       }
     });
     setSmsTargets(targets);
-    const defaultTmpl = `[${config.academyName || '나만의 조교'}]\n${exam.name} 성적 안내\n\n{name} 학생: {score}점 / ${exam.max_score}점{rank}\n\n감사합니다.`;
+    const defaultTmpl = `[${config?.academyName || '나만의 조교'}]\n${exam.name} 성적 안내\n\n{name} 학생: {score}점 / ${exam.max_score}점{rank}\n\n감사합니다.`;
     setSmsTemplate(defaultTmpl);
     setSmsMode(true);
   };

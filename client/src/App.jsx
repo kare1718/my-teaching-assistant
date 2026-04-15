@@ -4,6 +4,7 @@ import { getUser, logout, isLoggedIn, checkTokenExpiry } from './api';
 import { TenantProvider, useTenantConfig } from './contexts/TenantContext';
 import LoadingScreen from './components/LoadingScreen';
 import SideNav from './components/SideNav';
+import ThemeToggle from './components/ThemeToggle';
 import OnboardingChecklist from './components/OnboardingChecklist';
 import PlatformNotificationBell from './components/PlatformNotificationBell';
 import ParentBottomNav from './components/ParentBottomNav';
@@ -29,6 +30,7 @@ const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
 const SchoolPage = lazy(() => import('./pages/admin/SchoolPage'));
 const GradePage = lazy(() => import('./pages/admin/GradePage'));
 const StudentManage = lazy(() => import('./pages/admin/StudentManage'));
+const StudentList = lazy(() => import('./pages/admin/StudentList'));
 const ScoreInput = lazy(() => import('./pages/admin/ScoreInput'));
 const NoticeCreate = lazy(() => import('./pages/admin/NoticeCreate'));
 const PendingUsers = lazy(() => import('./pages/admin/PendingUsers'));
@@ -127,6 +129,7 @@ function Navbar() {
       <div className="nav-right" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {(user.role === 'admin' || user.school === '조교') && <PlatformNotificationBell />}
         <span>{user.name}님 ({user.role === 'superadmin' ? '플랫폼 관리자' : user.role === 'admin' ? '관리자' : user.role === 'parent' ? '보호자' : user.school === '조교' ? '조교' : user.school === '선생님' ? '선생님' : '학생'})</span>
+        <ThemeToggle />
         <button onClick={handleLogout}>로그아웃</button>
       </div>
     </nav>
@@ -226,6 +229,7 @@ function AppLayout() {
             <Route path="/admin" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/school/:school" element={<ProtectedRoute role="admin"><SchoolPage /></ProtectedRoute>} />
             <Route path="/admin/school/:school/grade/:grade" element={<ProtectedRoute role="admin"><GradePage /></ProtectedRoute>} />
+            <Route path="/admin/students" element={<ProtectedRoute role="admin"><StudentList /></ProtectedRoute>} />
             <Route path="/admin/student/:id" element={<ProtectedRoute role="admin"><StudentManage /></ProtectedRoute>} />
             <Route path="/admin/scores" element={<ProtectedRoute role="admin"><ScoreInput /></ProtectedRoute>} />
             <Route path="/admin/notices" element={<ProtectedRoute role="admin"><NoticeCreate /></ProtectedRoute>} />

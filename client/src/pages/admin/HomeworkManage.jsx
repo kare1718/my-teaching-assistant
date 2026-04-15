@@ -456,14 +456,15 @@ export default function HomeworkManage() {
         <div style={{
           padding: '14px 18px', marginBottom: 12, borderRadius: 'var(--radius)',
           background: 'var(--info-light)', border: '1px solid oklch(82% 0.06 260)', position: 'relative',
+          maxWidth: 896, marginLeft: 'auto', marginRight: 'auto', boxSizing: 'border-box',
         }}>
           <button onClick={dismissGuide}
             style={{ position: 'absolute', top: 8, right: 10, background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: 'var(--muted-foreground)' }}>✕</button>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'oklch(30% 0.08 230)', marginBottom: 10 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'oklch(30% 0.08 230)', marginBottom: 10, paddingRight: 20 }}>
             특이사항 작성 가이드 — 구체적으로 적어주실수록 학생에게 큰 도움이 됩니다!
           </div>
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: 200 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
+            <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: 'oklch(30% 0.12 145)', marginBottom: 6 }}>좋은 예시</div>
               {[
                 '문법 파트 중 조사 활용에서 반복적 오류 발생, 조사 구분 연습 프린트 추가 배부 예정',
@@ -472,10 +473,10 @@ export default function HomeworkManage() {
                 '고전시가 해석 능력 우수, 현대시와 비교 감상 활동 시 적극적으로 참여',
                 '지난주 미제출이었으나 이번 주 과제 완성도 크게 향상. 꾸준히 격려 필요',
               ].map(ex => (
-                <div key={ex} style={{ padding: '4px 8px', marginBottom: 4, borderRadius: 4, fontSize: 11, background: 'var(--success-light)', color: 'oklch(30% 0.12 145)', border: '1px solid oklch(90% 0.06 145)' }}>{ex}</div>
+                <div key={ex} style={{ padding: '4px 8px', marginBottom: 4, borderRadius: 4, fontSize: 11, lineHeight: 1.5, background: 'var(--success-light)', color: 'oklch(30% 0.12 145)', border: '1px solid oklch(90% 0.06 145)', whiteSpace: 'normal', wordBreak: 'keep-all' }}>{ex}</div>
               ))}
             </div>
-            <div style={{ flex: 1, minWidth: 200 }}>
+            <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: 'oklch(35% 0.15 25)', marginBottom: 6 }}>나쁜 예시 (너무 짧거나 모호함)</div>
               {[
                 '좋음',
@@ -484,7 +485,7 @@ export default function HomeworkManage() {
                 '잘함',
                 '미흡',
               ].map(ex => (
-                <div key={ex} style={{ padding: '4px 8px', marginBottom: 4, borderRadius: 4, fontSize: 11, background: 'var(--destructive-light)', color: 'oklch(35% 0.15 25)', border: '1px solid oklch(88% 0.06 25)', textDecoration: 'line-through' }}>{ex}</div>
+                <div key={ex} style={{ padding: '4px 8px', marginBottom: 4, borderRadius: 4, fontSize: 11, lineHeight: 1.5, background: 'var(--destructive-light)', color: 'oklch(35% 0.15 25)', border: '1px solid oklch(88% 0.06 25)', textDecoration: 'line-through', whiteSpace: 'normal', wordBreak: 'keep-all' }}>{ex}</div>
               ))}
             </div>
           </div>

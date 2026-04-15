@@ -10,7 +10,7 @@ const router = express.Router();
 // 회원가입
 router.post('/register', async (req, res) => {
   try {
-    const { username, password, name, phone, school, grade, parentName, parentPhone, academySlug, agreePrivacy, agreeMarketing } = req.body;
+    const { username, password, name, phone, school, grade, parentName, parentPhone, academySlug, inviteCode, invite_code, agreePrivacy, agreeMarketing } = req.body;
 
     const isStaff = school === '조교' || school === '선생님';
     if (!username || !password || !name || !phone || !school || !grade) {
@@ -30,13 +30,44 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: '아이디는 3~20자의 영문, 숫자, 밑줄(_)만 사용 가능합니다.' });
     }
 
-    // 학원 슬러그로 academy 조회
-    if (!academySlug) {
-      return res.status(400).json({ error: '학원 정보가 필요합니다.' });
-    }
-    const academy = await getOne('SELECT id, max_students FROM academies WHERE slug = ? AND is_active = 1', [academySlug]);
-    if (!academy) {
-      return res.status(400).json({ error: '유효하지 않은 학원입니다.' });
+    // 학원 식별: 우선순위 - invite_code(student/parent) > academySlug(레거시)
+    const rawCode = inviteCode || invite_code;
+    let academy = null;
+
+    if (rawCode) {
+      // 학생 가입인지 staff 인지에 따라 필드 우선순위 조정
+      const primaryField = isStaff ? 'student_invite_code' : 'student_invite_code';
+      academy = await getOne(
+        `SELECT id, max_students FROM academies WHERE ${primaryField} = ? AND is_active = 1`,
+        [rawCode]
+      );
+      // 학부모 코드 fallback
+      if (!academy) {
+        academy = await getOne(
+          'SELECT id, max_students FROM academies WHERE parent_invite_code = ? AND is_active = 1',
+          [rawCode]
+        );
+      }
+      // 레거시 slug fallback
+      if (!academy) {
+        academy = await getOne(
+          'SELECT id, max_students FROM academies WHERE slug = ? AND is_active = 1',
+          [rawCode]
+        );
+      }
+      if (!academy) {
+        return res.status(400).json({ error: '유효하지 않은 초대 코드입니다.' });
+      }
+    } else if (academySlug) {
+      academy = await getOne(
+        'SELECT id, max_students FROM academies WHERE slug = ? AND is_active = 1',
+        [academySlug]
+      );
+      if (!academy) {
+        return res.status(400).json({ error: '유효하지 않은 학원입니다.' });
+      }
+    } else {
+      return res.status(400).json({ error: '학원 초대 코드가 필요합니다.' });
     }
     const academyId = academy.id;
 
@@ -294,13 +325,62 @@ router.put('/notifications/read-all', authenticateToken, async (req, res) => {
 });
 
 // 초대 코드 확인 (공개 - 가입 페이지에서 사용)
+// 레거시: slug 기반. 신규: student_invite_code / parent_invite_code 지원.
 router.get('/verify-invite-code/:code', async (req, res) => {
   try {
-    const academy = await getOne('SELECT id, name, slug FROM academies WHERE slug = ? AND is_active = 1', [req.params.code]);
+    const code = req.params.code;
+    // 1) 신규 학생 코드
+    let academy = await getOne(
+      'SELECT id, name, slug FROM academies WHERE student_invite_code = ? AND is_active = 1',
+      [code]
+    );
+    let type = academy ? 'student' : null;
+    // 2) 신규 학부모 코드
+    if (!academy) {
+      academy = await getOne(
+        'SELECT id, name, slug FROM academies WHERE parent_invite_code = ? AND is_active = 1',
+        [code]
+      );
+      if (academy) type = 'parent';
+    }
+    // 3) 레거시 slug
+    if (!academy) {
+      academy = await getOne(
+        'SELECT id, name, slug FROM academies WHERE slug = ? AND is_active = 1',
+        [code]
+      );
+      if (academy) type = 'legacy';
+    }
     if (!academy) return res.status(404).json({ error: '유효하지 않은 초대 코드입니다.' });
-    res.json({ academyName: academy.name, slug: academy.slug });
+    res.json({ academyName: academy.name, slug: academy.slug, academyId: academy.id, type });
   } catch (err) {
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// 타입 지정 공개 검증 API — ?code=XXX&type=student|parent
+router.get('/verify-invite-code', async (req, res) => {
+  try {
+    const { code, type } = req.query;
+    if (!code) return res.status(400).json({ error: '코드가 필요합니다.' });
+
+    const field = type === 'parent' ? 'parent_invite_code' : 'student_invite_code';
+    let academy = await getOne(
+      `SELECT id, name, slug FROM academies WHERE ${field} = ? AND is_active = 1`,
+      [code]
+    );
+    // 레거시 slug fallback
+    if (!academy) {
+      academy = await getOne(
+        'SELECT id, name, slug FROM academies WHERE slug = ? AND is_active = 1',
+        [code]
+      );
+    }
+    if (!academy) return res.status(404).json({ error: '유효하지 않은 초대 코드입니다.' });
+    res.json({ valid: true, academyId: academy.id, academyName: academy.name, slug: academy.slug });
+  } catch (err) {
+    console.error('[verify-invite-code]', err);
+    res.status(500).json({ error: '검증 실패' });
   }
 });
 

@@ -538,7 +538,7 @@ export default function ScheduleManage() {
           </div>
 
           {/* 오른쪽: 등록/수정 폼 */}
-          <div className="schedule-form" style={{ flex: 1, minWidth: 0 }}>
+          <div className="schedule-form" style={{ flex: 1, minWidth: 0, maxWidth: 560 }}>
             <div className="card" style={{ padding: 'var(--space-4)' }}>
               <h3 style={{ marginBottom: 14, fontSize: 'var(--text-base)' }}>
                 {editId ? '수업 일정 수정' : '수업 일정 추가'}
@@ -570,7 +570,7 @@ export default function ScheduleManage() {
               {classType === 'regular' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {/* 학교 + 학년 → 수업명 자동 */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 8 }}>
                     <div>
                       <label style={labelStyle}>학교 *</label>
                       <select value={form.target_school}
@@ -613,16 +613,16 @@ export default function ScheduleManage() {
                   </div>
 
                   {/* 수업 시간 (시작~끝, 시/분 분리) */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12 }}>
                     <div>
                       <label style={labelStyle}>시작 시간</label>
                       <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                        <select value={form.time_start_h} onChange={e => setForm({ ...form, time_start_h: e.target.value })} style={{ ...inputStyle, flex: 1 }}>
+                        <select value={form.time_start_h} onChange={e => setForm({ ...form, time_start_h: e.target.value })} style={{ ...inputStyle, flex: 1, minWidth: 0 }}>
                           <option value="">시</option>
                           {HOURS.map(h => <option key={h} value={h}>{h}시</option>)}
                         </select>
                         <span style={{ fontWeight: 700, color: 'var(--neutral-400)' }}>:</span>
-                        <select value={form.time_start_m} onChange={e => setForm({ ...form, time_start_m: e.target.value })} style={{ ...inputStyle, flex: 1 }}>
+                        <select value={form.time_start_m} onChange={e => setForm({ ...form, time_start_m: e.target.value })} style={{ ...inputStyle, flex: 1, minWidth: 0 }}>
                           {MINUTES.map(m => <option key={m} value={m}>{m}분</option>)}
                         </select>
                       </div>
@@ -630,12 +630,12 @@ export default function ScheduleManage() {
                     <div>
                       <label style={labelStyle}>끝 시간</label>
                       <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                        <select value={form.time_end_h} onChange={e => setForm({ ...form, time_end_h: e.target.value })} style={{ ...inputStyle, flex: 1 }}>
+                        <select value={form.time_end_h} onChange={e => setForm({ ...form, time_end_h: e.target.value })} style={{ ...inputStyle, flex: 1, minWidth: 0 }}>
                           <option value="">시</option>
                           {HOURS.filter(h => !form.time_start_h || h >= form.time_start_h).map(h => <option key={h} value={h}>{h}시</option>)}
                         </select>
                         <span style={{ fontWeight: 700, color: 'var(--neutral-400)' }}>:</span>
-                        <select value={form.time_end_m} onChange={e => setForm({ ...form, time_end_m: e.target.value })} style={{ ...inputStyle, flex: 1 }}>
+                        <select value={form.time_end_m} onChange={e => setForm({ ...form, time_end_m: e.target.value })} style={{ ...inputStyle, flex: 1, minWidth: 0 }}>
                           {MINUTES.filter(m => {
                             if (!form.time_end_h || !form.time_start_h) return true;
                             if (form.time_end_h > form.time_start_h) return true;
@@ -689,16 +689,16 @@ export default function ScheduleManage() {
                   </div>
 
                   {/* 수업 시간 (시/분 분리) */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12 }}>
                     <div>
                       <label style={labelStyle}>시작 시간</label>
                       <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                        <select value={form.time_start_h} onChange={e => setForm({ ...form, time_start_h: e.target.value })} style={{ ...inputStyle, flex: 1 }}>
+                        <select value={form.time_start_h} onChange={e => setForm({ ...form, time_start_h: e.target.value })} style={{ ...inputStyle, flex: 1, minWidth: 0 }}>
                           <option value="">시</option>
                           {HOURS.map(h => <option key={h} value={h}>{h}시</option>)}
                         </select>
                         <span style={{ fontWeight: 700, color: 'var(--neutral-400)' }}>:</span>
-                        <select value={form.time_start_m} onChange={e => setForm({ ...form, time_start_m: e.target.value })} style={{ ...inputStyle, flex: 1 }}>
+                        <select value={form.time_start_m} onChange={e => setForm({ ...form, time_start_m: e.target.value })} style={{ ...inputStyle, flex: 1, minWidth: 0 }}>
                           {MINUTES.map(m => <option key={m} value={m}>{m}분</option>)}
                         </select>
                       </div>
@@ -706,12 +706,12 @@ export default function ScheduleManage() {
                     <div>
                       <label style={labelStyle}>끝 시간</label>
                       <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                        <select value={form.time_end_h} onChange={e => setForm({ ...form, time_end_h: e.target.value })} style={{ ...inputStyle, flex: 1 }}>
+                        <select value={form.time_end_h} onChange={e => setForm({ ...form, time_end_h: e.target.value })} style={{ ...inputStyle, flex: 1, minWidth: 0 }}>
                           <option value="">시</option>
                           {HOURS.filter(h => !form.time_start_h || h >= form.time_start_h).map(h => <option key={h} value={h}>{h}시</option>)}
                         </select>
                         <span style={{ fontWeight: 700, color: 'var(--neutral-400)' }}>:</span>
-                        <select value={form.time_end_m} onChange={e => setForm({ ...form, time_end_m: e.target.value })} style={{ ...inputStyle, flex: 1 }}>
+                        <select value={form.time_end_m} onChange={e => setForm({ ...form, time_end_m: e.target.value })} style={{ ...inputStyle, flex: 1, minWidth: 0 }}>
                           {MINUTES.filter(m => {
                             if (!form.time_end_h || !form.time_start_h) return true;
                             if (form.time_end_h > form.time_start_h) return true;
@@ -866,7 +866,7 @@ export default function ScheduleManage() {
               })()}
             </div>
 
-            <div className="schedule-form" style={{ flex: 1, minWidth: 0 }}>
+            <div className="schedule-form" style={{ flex: 1, minWidth: 0, maxWidth: 560 }}>
               <div className="card" style={{ padding: 'var(--space-4)' }}>
                 <h3 style={{ marginBottom: 'var(--space-3)', fontSize: 'var(--text-base)' }}>{examEditId ? '시험 수정' : '시험 등록'}</h3>
                 <form onSubmit={handleExamSubmit}>

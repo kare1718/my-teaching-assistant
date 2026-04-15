@@ -200,22 +200,27 @@ export default function SubscriptionPage() {
   return (
     <div className="p-10 space-y-8 max-w-7xl mx-auto w-full">
       {/* Settings Tabs */}
-      <div className="flex items-center gap-6 border-b border-slate-200/50 -mt-2 mb-2">
-        {SETTINGS_TABS.map(tab => (
-          <button
-            key={tab.label}
-            onClick={() => tab.path && navigate(tab.path)}
-            className={`pb-3 text-sm font-semibold uppercase tracking-wider transition-all ${
-              tab.path === location.pathname
-                ? 'text-[#102044] border-b-2 border-[#102044] font-bold'
-                : tab.path
-                  ? 'text-slate-500 hover:text-[#102044]'
-                  : 'text-slate-300 cursor-default'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="flex gap-2 flex-wrap mb-2">
+        {SETTINGS_TABS.map(tab => {
+          const isCurrent = tab.path === location.pathname;
+          const disabled = !tab.path;
+          return (
+            <button
+              key={tab.label}
+              onClick={() => tab.path && navigate(tab.path)}
+              disabled={disabled}
+              className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-colors ${
+                isCurrent
+                  ? 'bg-[#102044] text-white shadow-sm'
+                  : disabled
+                    ? 'bg-white border border-slate-200 text-slate-300 cursor-default'
+                    : 'bg-white border border-slate-200 text-slate-500 hover:text-[#102044] hover:border-[#102044]/30'
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Message */}
