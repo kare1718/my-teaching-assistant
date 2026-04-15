@@ -106,7 +106,7 @@ export default function SmsManage() {
     api('/sms/templates').then(setTemplates).catch(console.error);
     api('/scores/exams').then(setExams).catch(console.error);
     fetchCredits();
-    api('/sms/pricing').then(setPricing).catch(console.error);
+    api('/sms/pricing').then(d => setPricing(d || { SMS: 13, LMS: 29, MMS: 60, ALIMTALK: 8 })).catch(console.error);
   }, []);
 
   // 탭별 데이터 로드
@@ -1100,9 +1100,9 @@ export default function SmsManage() {
                             <td style={{ ...S.td, whiteSpace: 'nowrap' }}>{new Date(tx.created_at).toLocaleString('ko-KR')}</td>
                             <td style={{ ...S.td, textAlign: 'center' }}><span style={S.badge(typeBg, typeColor)}>{typeLabel}</span></td>
                             <td style={{ ...S.td, textAlign: 'right', fontWeight: 700, color: tx.amount > 0 ? 'oklch(52% 0.14 160)' : 'oklch(48% 0.20 25)' }}>
-                              {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString()}원
+                              {tx.amount > 0 ? '+' : ''}{(tx.amount || 0).toLocaleString()}원
                             </td>
-                            <td style={{ ...S.td, textAlign: 'right', fontWeight: 600 }}>{tx.balance_after.toLocaleString()}원</td>
+                            <td style={{ ...S.td, textAlign: 'right', fontWeight: 600 }}>{(tx.balance_after || 0).toLocaleString()}원</td>
                             <td style={{ ...S.td, color: 'var(--muted-foreground)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.description || '-'}</td>
                           </tr>
                         );

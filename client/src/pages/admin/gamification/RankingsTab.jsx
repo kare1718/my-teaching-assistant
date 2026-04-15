@@ -124,8 +124,8 @@ export default function RankingsTab() {
                   </span>
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
-                  Lv.{r.level} · {xpLabel}: {(rankType !== 'all' ? (r.period_xp || 0) : r.xp).toLocaleString()} · 포인트: {r.points.toLocaleString()}
-                  {rankType !== 'all' && <span style={{ marginLeft: 'var(--space-1)', color: 'var(--muted-foreground)' }}>(총 XP: {r.xp.toLocaleString()})</span>}
+                  Lv.{r.level} · {xpLabel}: {(rankType !== 'all' ? (r.period_xp || 0) : (r.xp || 0)).toLocaleString()} · 포인트: {(r.points || 0).toLocaleString()}
+                  {rankType !== 'all' && <span style={{ marginLeft: 'var(--space-1)', color: 'var(--muted-foreground)' }}>(총 XP: {(r.xp || 0).toLocaleString()})</span>}
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 'var(--space-1)' }}>

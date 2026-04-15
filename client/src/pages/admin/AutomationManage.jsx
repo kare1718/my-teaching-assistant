@@ -61,7 +61,7 @@ export default function AutomationManage() {
 
   /* ─── Data loaders ─────────────────────────────────────────────── */
   const loadRules = useCallback(() => {
-    api('/automation/rules').then(setRules).catch(() => setRules([]));
+    api('/automation/rules').then(d => setRules(Array.isArray(d) ? d : [])).catch(() => setRules([]));
   }, []);
 
   const loadTasks = useCallback(() => {
@@ -79,7 +79,7 @@ export default function AutomationManage() {
 
   useEffect(() => {
     Promise.all([
-      api('/automation/rules').then(setRules).catch(() => []),
+      api('/automation/rules').then(d => setRules(Array.isArray(d) ? d : [])).catch(() => []),
       api('/automation/tasks').then(d => setTasks(d.tasks || [])).catch(() => []),
       api('/automation/tasks/summary').then(setTaskSummary).catch(() => {}),
       api('/automation/logs?page=1&limit=20').then(d => { setLogs(d.logs || []); setLogTotal(d.total || 0); }).catch(() => {}),

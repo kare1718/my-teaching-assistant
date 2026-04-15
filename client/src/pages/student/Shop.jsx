@@ -136,7 +136,7 @@ export default function Shop() {
                   )}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
                     <span style={{ fontWeight: 700, color: 'var(--warning)', fontSize: 15 }}>
-                      {item.price.toLocaleString()} P
+                      {(item.price || 0).toLocaleString()} P
                     </span>
                     <button
                       onClick={() => handlePurchase(item)}

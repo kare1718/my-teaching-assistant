@@ -147,10 +147,10 @@ function SidebarOpenTasks({ studentId }) {
   );
 }
 
-function SidebarAlerts({ student, overview }) {
+function SidebarAlerts({ student = {}, overview }) {
   const alerts = [];
-  if (student.status === 'inactive') alerts.push({ text: '퇴원 상태입니다', severity: 'high' });
-  if (student.blocked) alerts.push({ text: '접속이 차단된 상태입니다', severity: 'high' });
+  if (student?.status === 'inactive') alerts.push({ text: '퇴원 상태입니다', severity: 'high' });
+  if (student?.blocked) alerts.push({ text: '접속이 차단된 상태입니다', severity: 'high' });
   if (overview?.consecutiveAbsent >= 2) alerts.push({ text: `${overview.consecutiveAbsent}회 연속 결석`, severity: 'high' });
   if (overview?.tuition?.overdueCount > 0) alerts.push({ text: `${overview.tuition.overdueCount}건 미납`, severity: 'high' });
 
@@ -205,7 +205,8 @@ export default function AdminStudentView() {
     );
   }
 
-  const { student } = data;
+  const { student = {} } = data || {};
+  if (!id) return null;
 
   const tabs = [
     { key: 'overview', label: '개요' },

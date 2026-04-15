@@ -167,10 +167,10 @@ function OwnerDashboard({ isLg }) {
   if (!data) return <ErrorState />;
 
   const {
-    today_summary: ts, attendance_today: att, tuition_summary: tui,
-    risk_alerts, tasks_summary: tasks, recent_events, class_occupancy,
-    today_tasks, today_tasks_total, quick_actions, quick_stats,
-  } = data;
+    today_summary: ts = {}, attendance_today: att = {}, tuition_summary: tui = {},
+    risk_alerts = [], tasks_summary: tasks = {}, recent_events = [], class_occupancy = [],
+    today_tasks = [], today_tasks_total = 0, quick_actions = [], quick_stats = {},
+  } = data || {};
 
   // 빈 학원 상태 — 학생이 0명일 때 첫 시작 가이드 표시
   if (!ts.total_students) {
@@ -215,8 +215,8 @@ function OwnerDashboard({ isLg }) {
     );
   }
 
-  const attTotal = att.present + att.absent + att.late + att.excused;
-  const attRate = (quick_stats?.attendance_rate_today ?? (attTotal > 0 ? Math.round(((att.present + att.late) / attTotal) * 100) : 0));
+  const attTotal = (att.present || 0) + (att.absent || 0) + (att.late || 0) + (att.excused || 0);
+  const attRate = (quick_stats?.attendance_rate_today ?? (attTotal > 0 ? Math.round((((att.present || 0) + (att.late || 0)) / attTotal) * 100) : 0));
 
   const kpiItems = [
     { label: '재원생', value: fmt(ts.total_students), unit: '명', color: '#102044', path: '/admin/students' },
@@ -405,7 +405,7 @@ function TeacherDashboard({ isLg }) {
   if (loading) return <LoadingState />;
   if (!data) return <ErrorState />;
 
-  const { today_classes, attendance_pending, student_alerts, today_tasks, today_tasks_total } = data;
+  const { today_classes = [], attendance_pending = 0, student_alerts = [], today_tasks = [], today_tasks_total = 0 } = data || {};
 
   return (
     <>
@@ -504,7 +504,7 @@ function CounselorDashboard({ isLg }) {
   if (loading) return <LoadingState />;
   if (!data) return <ErrorState />;
 
-  const { today_consultations, follow_up_due, new_inquiries, conversion_stats: cs, today_tasks, today_tasks_total } = data;
+  const { today_consultations = [], follow_up_due = [], new_inquiries = [], conversion_stats: cs = {}, today_tasks = [], today_tasks_total = 0 } = data || {};
 
   return (
     <>
@@ -629,7 +629,7 @@ function StaffDashboard({ isLg }) {
   if (loading) return <LoadingState />;
   if (!data) return <ErrorState />;
 
-  const { tuition_today: tt, overdue_list, sms_balance, today_tasks, today_tasks_total } = data;
+  const { tuition_today: tt = {}, overdue_list = [], sms_balance = {}, today_tasks = [], today_tasks_total = 0 } = data || {};
 
   return (
     <>

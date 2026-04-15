@@ -8,6 +8,8 @@ import ThemeToggle from './components/ThemeToggle';
 import OnboardingChecklist from './components/OnboardingChecklist';
 import PlatformNotificationBell from './components/PlatformNotificationBell';
 import ParentBottomNav from './components/ParentBottomNav';
+import ErrorBoundary from './components/ErrorBoundary';
+import RouteErrorBoundary from './components/RouteErrorBoundary';
 
 // 빠른 로드 필요 (정적 유지)
 import LandingPage from './pages/LandingPage';
@@ -175,26 +177,31 @@ function App() {
   }, []);
 
   return (
-    <BrowserRouter key={authKey}>
-      <TenantProvider>
-        <AppLayout />
-      </TenantProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter key={authKey}>
+        <TenantProvider>
+          <AppLayout />
+        </TenantProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 
 function ParentLayout() {
+  const location = useLocation();
   return (
     <>
       <div style={{ paddingBottom: 60 }}>
         <Suspense fallback={<LoadingScreen />}>
-          <Routes>
-            <Route index element={<ParentHome />} />
-            <Route path="attendance" element={<ParentAttendance />} />
-            <Route path="tuition" element={<ParentTuition />} />
-            <Route path="notices" element={<ParentNotices />} />
-            <Route path="more" element={<ParentMore />} />
-          </Routes>
+          <RouteErrorBoundary key={location.pathname} pathname={location.pathname}>
+            <Routes>
+              <Route index element={<ParentHome />} />
+              <Route path="attendance" element={<ParentAttendance />} />
+              <Route path="tuition" element={<ParentTuition />} />
+              <Route path="notices" element={<ParentNotices />} />
+              <Route path="more" element={<ParentMore />} />
+            </Routes>
+          </RouteErrorBoundary>
         </Suspense>
       </div>
       <ParentBottomNav />
@@ -215,6 +222,7 @@ function AppLayout() {
       {!isPublicPayment && !isParentRoute && <OnboardingChecklist />}
       {isParentRoute && <Navbar />}
       <Suspense fallback={<LoadingScreen />}>
+      <RouteErrorBoundary key={location.pathname} pathname={location.pathname}>
       <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/onboarding" element={<OnboardingPage />} />
@@ -301,6 +309,7 @@ function AppLayout() {
 
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
+      </RouteErrorBoundary>
       </Suspense>
     </div>
   );
