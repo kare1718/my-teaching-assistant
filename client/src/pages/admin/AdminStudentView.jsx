@@ -227,7 +227,7 @@ export default function AdminStudentView() {
     : '-';
 
   return (
-    <div className="bg-[#f8f9fa] min-h-screen p-8 pb-20 max-w-7xl mx-auto w-full">
+    <div className="bg-[#f8f9fa] min-h-screen p-4 md:p-8 pb-20 max-w-7xl mx-auto w-full">
       {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-sm text-slate-400 mb-6 font-medium">
         <Link to="/admin" className="text-slate-400 hover:text-[#102044] transition-colors no-underline">대시보드</Link>
@@ -238,9 +238,9 @@ export default function AdminStudentView() {
       </div>
 
       {/* 12-Column Grid Layout */}
-      <div className="grid grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* ── Left Column (col-span-8) ── */}
-        <div className="col-span-8 space-y-6">
+        <div className="lg:col-span-8 space-y-6 min-w-0">
 
           {/* 1. Summary Card */}
           <section className="bg-white rounded-xl p-8 border border-slate-100 shadow-sm">
@@ -276,7 +276,7 @@ export default function AdminStudentView() {
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-4 gap-3 mt-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-8">
               <button className="flex items-center justify-center gap-2 py-3 rounded-lg border border-slate-200 text-[#102044] font-bold hover:bg-[#f3f4f5] transition-colors">
                 <Icon name="how_to_reg" className="text-[20px]" />
                 <span className="text-sm">출결 입력</span>
@@ -332,7 +332,7 @@ export default function AdminStudentView() {
         </div>
 
         {/* ── Right Sidebar (col-span-4) ── */}
-        <aside className="col-span-4">
+        <aside className="lg:col-span-4 min-w-0">
           <div className="sticky top-24 space-y-6">
             <SidebarNextSchedule studentId={id} />
             <SidebarOpenTasks studentId={id} />

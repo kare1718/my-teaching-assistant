@@ -180,7 +180,7 @@ export default function OnboardingPage() {
 
           {/* Step 1: 학원 정보 */}
           {step === 1 && (
-            <div className="w-full bg-white rounded-xl p-10 shadow-sm border border-slate-100">
+            <div className="w-full bg-white rounded-xl p-5 md:p-10 shadow-sm border border-slate-100">
               <form className="flex flex-col gap-6" onSubmit={e => e.preventDefault()}>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-[#45464e] uppercase tracking-widest ml-1">학원명</label>
@@ -260,7 +260,7 @@ export default function OnboardingPage() {
 
           {/* Step 2: 관리자 계정 */}
           {step === 2 && (
-            <div className="w-full bg-white rounded-xl p-10 shadow-sm border border-slate-100">
+            <div className="w-full bg-white rounded-xl p-5 md:p-10 shadow-sm border border-slate-100">
               <form className="flex flex-col gap-6" onSubmit={e => e.preventDefault()}>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-[#45464e] uppercase tracking-widest ml-1">이름</label>
@@ -301,7 +301,7 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-[#45464e] uppercase tracking-widest ml-1">비밀번호</label>
                     <input
@@ -375,7 +375,7 @@ export default function OnboardingPage() {
 
           {/* Step 3: 확인 */}
           {step === 3 && (
-            <div className="w-full bg-white rounded-xl p-10 shadow-sm border border-slate-100">
+            <div className="w-full bg-white rounded-xl p-5 md:p-10 shadow-sm border border-slate-100">
               <div className="flex flex-col gap-6">
                 {/* Summary */}
                 <div className="bg-[#f3f4f5] rounded-xl p-6 flex flex-col gap-4">

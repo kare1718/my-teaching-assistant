@@ -122,7 +122,7 @@ export default function AuditLogs() {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto" style={{ fontFamily: 'Paperlogy, sans-serif' }}>
+    <div className="p-4 md:p-8 max-w-7xl mx-auto" style={{ fontFamily: 'Paperlogy, sans-serif' }}>
       <div className="mb-6">
         <h1 className="text-2xl font-extrabold text-[#102044] tracking-tight">감사 로그</h1>
         <p className="text-sm text-slate-500 mt-1">누가 언제 무엇을 바꿨는지 전체 이력을 확인합니다.</p>

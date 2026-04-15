@@ -36,7 +36,7 @@ export default function RewardTab({ studentId, hasFeature }) {
   return (
     <div className="space-y-6">
       <Card label="리워드 상태" title={character.char_name || '캐릭터'}>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2 md:gap-3">
           <Stat label="레벨" value={`Lv.${character.level || 1}`} accent="#004bf0" />
           <Stat label="XP" value={(character.xp || 0).toLocaleString()} />
           <Stat label="포인트" value={(character.points || 0).toLocaleString()} accent="#f59e0b" />

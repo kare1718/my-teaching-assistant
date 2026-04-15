@@ -32,7 +32,7 @@ export default function TuitionTab({ studentId }) {
   return (
     <div className="space-y-6">
       <Card label="수납 요약" title="납부 현황">
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2 md:gap-3">
           <Stat label="총 청구" value={formatMoney(totalBilled)} />
           <Stat label="총 납부" value={formatMoney(totalPaid)} accent="#10b981" />
           <Stat label="미납 건" value={`${overdueCount}건`} accent={overdueCount > 0 ? '#ba1a1a' : '#102044'} />

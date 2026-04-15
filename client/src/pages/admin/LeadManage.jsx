@@ -380,8 +380,8 @@ export default function LeadManage() {
                 <div className="text-xs mt-1">"리드 등록" 버튼으로 신규 문의를 추가하세요.</div>
               </div>
             ) : (
-              <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-                <table className="w-full text-sm">
+              <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-x-auto">
+                <table className="w-full min-w-[780px] text-sm">
                   <thead>
                     <tr className="bg-[#f3f4f5]">
                       <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">학생</th>

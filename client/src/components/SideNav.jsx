@@ -219,17 +219,42 @@ export default function SideNav() {
     }
   }, [isDesktop, isAdminPage]);
 
-  // 다른 곳 클릭 시 닫기 (모바일에서만, 고정 안 된 경우)
+  // 사이드바 외부 클릭 시 자동 접힘 처리 (PC/모바일 모두)
+  // - 모바일(고정 안 됨): 사이드바 자체를 닫음 + 사용자가 펼친 카테고리도 접음
+  // - 데스크탑: 사용자가 펼친 카테고리만 접음 (사이드바는 유지)
   useEffect(() => {
-    if (!isAdminPage || isDesktop || pinned || !sidebarOpen) return;
+    if (!isAdminPage) return;
+
     const handleClick = (e) => {
       const sidebar = document.getElementById('admin-sidebar');
       const openBtn = document.getElementById('sidebar-open-btn');
-      if (sidebar && !sidebar.contains(e.target) && openBtn && !openBtn.contains(e.target)) {
+      // 사이드바 내부 또는 햄버거 버튼 클릭은 무시
+      if (sidebar && sidebar.contains(e.target)) return;
+      if (openBtn && openBtn.contains(e.target)) return;
+
+      // 1) 사용자가 명시적으로 펼친 카테고리만 자동 접기 (자동 펼침은 유지)
+      setCollapsedCats(prev => {
+        let changed = false;
+        const next = {};
+        Object.keys(prev).forEach(key => {
+          if (prev[key] === false) {
+            next[key] = false; // 사용자가 닫은 것은 그대로 유지
+          } else if (prev[key] === true) {
+            changed = true; // explicit true는 제거 → 자동 펼침 동작으로 복귀
+          }
+        });
+        if (!changed) return prev;
+        localStorage.setItem(COLLAPSED_KEY, JSON.stringify(next));
+        return next;
+      });
+
+      // 2) 모바일(비고정)에서는 사이드바 자체도 닫음
+      if (!isDesktop && !pinned && sidebarOpen) {
         setSidebarOpen(false);
         localStorage.setItem(SIDEBAR_KEY, 'false');
       }
     };
+
     const timer = setTimeout(() => document.addEventListener('click', handleClick), 100);
     return () => { clearTimeout(timer); document.removeEventListener('click', handleClick); };
   }, [isAdminPage, isDesktop, pinned, sidebarOpen]);

@@ -153,7 +153,7 @@ export default function AcademySettings() {
   const inputCls = 'w-full px-5 py-4 bg-[#edeeef] rounded-lg border border-transparent text-sm outline-none focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 transition-all';
 
   return (
-    <div className="p-10 space-y-8 max-w-7xl mx-auto w-full">
+    <div className="p-4 md:p-10 space-y-6 md:space-y-8 max-w-7xl mx-auto w-full">
       {/* Settings Tabs */}
       <div className="flex gap-2 flex-wrap mb-2">
         {SETTINGS_TABS.map(tab => {
@@ -266,7 +266,7 @@ export default function AcademySettings() {
           <span className="material-symbols-outlined text-[#102044]">palette</span>
           <h4 className="text-lg font-bold text-[#102044]">테마 설정</h4>
         </div>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {themeOptions.map(opt => (
             <button
               key={opt.value}

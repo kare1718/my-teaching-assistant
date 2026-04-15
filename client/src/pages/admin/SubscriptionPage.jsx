@@ -184,7 +184,7 @@ export default function SubscriptionPage() {
   };
 
   if (loading) return (
-    <div className="p-10 max-w-7xl mx-auto">
+    <div className="p-4 md:p-10 max-w-7xl mx-auto">
       <p className="text-sm text-slate-500">로딩 중...</p>
     </div>
   );
@@ -198,7 +198,7 @@ export default function SubscriptionPage() {
   const usagePercent = maxStudents > 0 ? Math.min(100, Math.round((currentStudents / maxStudents) * 100)) : 0;
 
   return (
-    <div className="p-10 space-y-8 max-w-7xl mx-auto w-full">
+    <div className="p-4 md:p-10 space-y-6 md:space-y-8 max-w-7xl mx-auto w-full">
       {/* Settings Tabs */}
       <div className="flex gap-2 flex-wrap mb-2">
         {SETTINGS_TABS.map(tab => {
@@ -233,7 +233,7 @@ export default function SubscriptionPage() {
       )}
 
       {/* Section 1: Current Plan + Quick Actions (Bento) */}
-      <div className="grid grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
         {/* Current Plan Card */}
         <div className="col-span-12 lg:col-span-8 bg-white p-8 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
           <div>

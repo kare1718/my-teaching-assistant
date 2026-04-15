@@ -28,7 +28,7 @@ export default function StudentList() {
   });
 
   return (
-    <div className="p-10 max-w-7xl mx-auto w-full">
+    <div className="p-4 md:p-10 max-w-7xl mx-auto w-full">
       <div className="mb-6">
         <h2 className="text-2xl font-extrabold text-[#102044] tracking-tight">학생 목록</h2>
         <p className="text-sm text-slate-500 mt-1">총 {filtered.length}명 / 전체 {students.length}명</p>

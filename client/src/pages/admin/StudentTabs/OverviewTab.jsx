@@ -24,7 +24,7 @@ export default function OverviewTab({ studentId }) {
   return (
     <div className="space-y-6">
       <Card label="상태 요약" title="최근 30일 핵심 지표">
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Stat label="출석률" value={attendance.rate != null ? `${attendance.rate}%` : '-'} accent="#004bf0" />
           <Stat label="출석/결석/지각" value={`${attendance.present}/${attendance.absent}/${attendance.late}`} />
           <Stat label="미납 건" value={`${tuition.overdueCount}건`} accent={tuition.overdueCount > 0 ? '#ba1a1a' : '#102044'} />

@@ -161,7 +161,7 @@ export default function AutomationManage() {
 
   return (
     <div className="main-content min-h-screen bg-[#f8f9fa]">
-      <div className="max-w-7xl mx-auto p-10">
+      <div className="max-w-7xl mx-auto p-4 md:p-10">
         {/* Toast */}
         {msg && (
           <div className="fixed top-20 right-8 z-50 bg-[#102044] text-white px-5 py-3 rounded-xl text-sm font-bold shadow-lg animate-fade-in">
@@ -216,7 +216,7 @@ export default function AutomationManage() {
             TAB: 규칙 관리
         ═══════════════════════════════════════════════════════════ */}
         {tab === 'rules' && (
-          <div className="grid grid-cols-12 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8">
             {/* Rule List (col-span-8) */}
             <div className="col-span-12 lg:col-span-8 space-y-4">
               {rules.length === 0 && (
@@ -408,8 +408,8 @@ export default function AutomationManage() {
         {tab === 'logs' && (
           <div>
             <h3 className="text-2xl font-extrabold text-[#102044] tracking-tight mb-6">실행 이력</h3>
-            <div className="bg-white rounded-2xl overflow-hidden">
-              <table className="w-full">
+            <div className="bg-white rounded-2xl overflow-x-auto">
+              <table className="w-full min-w-[720px]">
                 <thead>
                   <tr className="bg-[#f3f4f5]">
                     <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">규칙</th>

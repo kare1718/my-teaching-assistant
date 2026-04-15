@@ -169,7 +169,7 @@ export default function RolePermissions() {
   }
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-2xl font-extrabold text-[#102044] tracking-tight">권한 설정</h3>
@@ -183,7 +183,7 @@ export default function RolePermissions() {
         </div>
       )}
 
-      <div className="grid grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-start">
         {/* Role List Sidebar */}
         <div className="col-span-12 lg:col-span-3 bg-white rounded-xl p-6 shadow-sm border border-slate-100">
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">사용자 역할</h3>
