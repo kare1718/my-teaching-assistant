@@ -198,6 +198,7 @@ export default function TuitionManage() {
     <button key={key} onClick={() => setTab(key)} style={{
       padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer',
       fontFamily: 'inherit', fontSize: 14, fontWeight: tab === key ? 700 : 500,
+      whiteSpace: 'nowrap', flexShrink: 0,
       background: tab === key ? 'var(--primary)' : 'var(--muted)',
       color: tab === key ? 'white' : 'var(--foreground)',
     }}>{label}</button>

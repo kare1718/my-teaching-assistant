@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 
 const CLASS_TYPES = [
@@ -170,7 +171,16 @@ export default function ClassManage() {
 
   return (
     <div className="main-content" style={{ padding: 20, maxWidth: 1200, margin: '0 auto' }}>
-      <h2 style={{ fontSize: '1.5em', fontWeight: 800, marginBottom: 20 }}>수업 관리</h2>
+      <h2 style={{ fontSize: '1.5em', fontWeight: 800, marginBottom: 16 }}>수업 관리</h2>
+
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        <button style={{ padding: '10px 20px', background: '#102044', color: 'white', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'default' }}>
+          반 관리
+        </button>
+        <Link to="/admin/schedules" style={{ padding: '10px 20px', background: 'white', border: '1px solid #e2e8f0', color: '#64748b', borderRadius: 8, fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
+          시간표
+        </Link>
+      </div>
 
       {msg && (
         <div style={{ padding: '10px 16px', borderRadius: 8, background: 'var(--success-light)', color: 'oklch(52% 0.14 160)', marginBottom: 16, fontSize: 14, fontWeight: 600 }}>
@@ -214,18 +224,18 @@ export default function ClassManage() {
             }}
               onMouseEnter={e => e.currentTarget.style.boxShadow = '0 2px 12px oklch(0% 0 0 / 0.08)'}
               onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                <div>
-                  <span style={{ fontWeight: 700, fontSize: 15 }}>{cls.name}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
+                <div style={{ minWidth: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontWeight: 700, fontSize: 15 }} title={cls.name}>{cls.name}</span>
                   <span style={{
-                    marginLeft: 8, padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600,
+                    marginLeft: 8, padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
                     background: badgeColor(cls.class_type) + '20', color: badgeColor(cls.class_type),
                   }}>
                     {CLASS_TYPES.find(t => t.value === cls.class_type)?.label || cls.class_type}
                   </span>
                 </div>
                 <span style={{
-                  padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600,
+                  padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
                   background: cls.status === 'active' ? 'var(--success-light)' : 'var(--muted)',
                   color: cls.status === 'active' ? 'oklch(52% 0.14 160)' : 'var(--neutral-500)',
                 }}>

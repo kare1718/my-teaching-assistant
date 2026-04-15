@@ -238,13 +238,34 @@ router.get('/owner', async (req, res) => {
     );
     const todayTasksTop = todayTasks.slice(0, 10);
 
-    // ── 9. quick_actions (고정) ──
+    // ── 9. quick_actions (고정, 6종) ──
     const quickActions = [
       { label: '출결 입력', icon: 'how_to_reg', url: '/admin/attendance' },
-      { label: '공지 발송', icon: 'campaign', url: '/admin/sms' },
+      { label: '학생 추가', icon: 'person_add', url: '/admin/students' },
       { label: '수강료 청구', icon: 'receipt_long', url: '/admin/tuition' },
+      { label: '공지 발송', icon: 'campaign', url: '/admin/sms' },
       { label: '상담 기록', icon: 'edit_note', url: '/admin/consultation' },
+      { label: '메시지', icon: 'chat', url: '/admin/messages' },
     ];
+
+    // ── 10. 최근 7일 평균 출결률 (비교용) ──
+    const last7Att = await getOne(
+      `SELECT
+         COUNT(*) FILTER (WHERE status IN ('present','late')) AS ok,
+         COUNT(*) AS total
+       FROM attendance
+       WHERE academy_id = ? AND date >= CURRENT_DATE - INTERVAL '7 days' AND date < CURRENT_DATE`, [aid]
+    );
+    const last7Total = parseInt(last7Att?.total || 0);
+    const last7Rate = last7Total > 0 ? Math.round((parseInt(last7Att?.ok || 0) / last7Total) * 100) : 0;
+
+    // ── 11. 다음 결제 예정일 ──
+    const nextPayment = await getOne(
+      `SELECT MIN(due_date) AS next_due FROM tuition_records
+       WHERE academy_id = ? AND status = 'pending' AND due_date >= CURRENT_DATE`, [aid]
+    );
+
+    const attTotal = present + absent + late + excused;
 
     res.json({
       today_summary: {
@@ -258,6 +279,14 @@ router.get('/owner', async (req, res) => {
         this_month_collected: parseInt(thisMonthCollected?.total || 0),
         outstanding_total: parseInt(outstandingTotal?.total || 0),
         overdue_count: parseInt(overdueCount?.cnt || 0),
+        collection_rate: parseInt(thisMonthBilled?.total || 0) > 0
+          ? Math.round((parseInt(thisMonthCollected?.total || 0) / parseInt(thisMonthBilled?.total || 0)) * 100)
+          : 0,
+        next_payment_date: nextPayment?.next_due || null,
+      },
+      attendance_trend: {
+        today_rate: attTotal > 0 ? Math.round(((present + late) / attTotal) * 100) : 0,
+        last7_rate: last7Rate,
       },
       risk_alerts: riskAlerts,
       tasks_summary: {

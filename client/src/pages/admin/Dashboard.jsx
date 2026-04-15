@@ -170,6 +170,7 @@ function OwnerDashboard({ isLg }) {
     today_summary: ts = {}, attendance_today: att = {}, tuition_summary: tui = {},
     risk_alerts = [], tasks_summary: tasks = {}, recent_events = [], class_occupancy = [],
     today_tasks = [], today_tasks_total = 0, quick_actions = [], quick_stats = {},
+    attendance_trend: attTrend = {},
   } = data || {};
 
   // 빈 학원 상태 — 학생이 0명일 때 첫 시작 가이드 표시
@@ -218,12 +219,45 @@ function OwnerDashboard({ isLg }) {
   const attTotal = (att.present || 0) + (att.absent || 0) + (att.late || 0) + (att.excused || 0);
   const attRate = (quick_stats?.attendance_rate_today ?? (attTotal > 0 ? Math.round((((att.present || 0) + (att.late || 0)) / attTotal) * 100) : 0));
 
+  // 추세: 이번달 신규-퇴원 순증감 / 출결률 vs 최근7일 평균 / 수납률
+  const netNew = (ts.new_this_month || 0) - (ts.withdrawn_this_month || 0);
+  const attDelta = attRate - (attTrend.last7_rate || 0);
+  const collectionRate = tui.collection_rate || 0;
+
   const kpiItems = [
-    { label: '재원생', value: fmt(ts.total_students), unit: '명', color: '#102044', path: '/admin/students' },
-    { label: '오늘 출결률', value: `${attRate}`, unit: '%', color: attRate >= 90 ? '#059669' : attRate >= 70 ? '#d97706' : '#dc2626', path: '/admin/attendance' },
-    { label: '이번달 수납', value: fmtWon(tui.this_month_collected), unit: '원', color: '#102044', path: '/admin/tuition' },
-    { label: '미납', value: fmtWon(tui.outstanding_total), unit: '원', color: tui.overdue_count > 0 ? '#dc2626' : '#059669', path: '/admin/tuition' },
+    {
+      label: '재원생', value: fmt(ts.total_students), unit: '명', color: '#102044', path: '/admin/students',
+      trend: netNew === 0 ? `신규 ${ts.new_this_month || 0} · 퇴원 ${ts.withdrawn_this_month || 0}` : `${netNew > 0 ? '+' : ''}${netNew} (이번달)`,
+      trendColor: netNew > 0 ? '#059669' : netNew < 0 ? '#dc2626' : '#64748b',
+    },
+    {
+      label: '오늘 출결률', value: `${attRate}`, unit: '%',
+      color: attRate >= 90 ? '#059669' : attRate >= 70 ? '#d97706' : '#dc2626', path: '/admin/attendance',
+      trend: attTrend.last7_rate != null ? `7일 평균 대비 ${attDelta >= 0 ? '+' : ''}${attDelta}%p` : null,
+      trendColor: attDelta >= 0 ? '#059669' : '#dc2626',
+    },
+    {
+      label: '이번달 수납', value: fmtWon(tui.this_month_collected), unit: '원', color: '#102044', path: '/admin/tuition',
+      trend: `목표 대비 ${collectionRate}%`,
+      trendColor: collectionRate >= 80 ? '#059669' : collectionRate >= 50 ? '#d97706' : '#dc2626',
+    },
+    {
+      label: '미납', value: fmtWon(tui.outstanding_total), unit: '원',
+      color: tui.overdue_count > 0 ? '#dc2626' : '#059669', path: '/admin/tuition',
+      trend: `${tui.overdue_count || 0}건 연체`,
+      trendColor: tui.overdue_count > 0 ? '#dc2626' : '#64748b',
+    },
   ];
+
+  // 오늘의 수업 현황 요약
+  const totalChecked = (att.present || 0) + (att.absent || 0) + (att.late || 0) + (att.excused || 0);
+  const attCheckedRate = ts.total_students ? Math.round((totalChecked / ts.total_students) * 100) : 0;
+
+  // 반 충원율: TOP 5만, 정렬(낮은 순 — 채워야 할 반 먼저)
+  const topClasses = [...class_occupancy]
+    .filter(c => c.capacity > 0)
+    .sort((a, b) => a.rate - b.rate)
+    .slice(0, 5);
 
   return (
     <>
@@ -243,20 +277,92 @@ function OwnerDashboard({ isLg }) {
             background: '#fff', border: '1px solid #f1f5f9', borderRadius: 12,
             padding: isLg ? '14px 18px' : '10px 12px', cursor: 'pointer',
             display: 'flex', flexDirection: 'column', justifyContent: 'center',
-            minHeight: isLg ? 84 : 68, transition: 'all 0.15s',
+            minHeight: isLg ? 96 : 78, transition: 'all 0.15s', overflow: 'hidden',
           }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(0,75,240,0.3)'; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = '#f1f5f9'; }}
           >
-            <p style={{ margin: 0, fontSize: isLg ? 11 : 9, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <p style={{ margin: 0, fontSize: isLg ? 11 : 9, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {kpi.label}
             </p>
-            <div style={{ marginTop: 4, fontSize: isLg ? 22 : 17, fontWeight: 800, color: kpi.color, lineHeight: 1.1 }}>
+            <div style={{ marginTop: 4, fontSize: isLg ? 24 : 18, fontWeight: 800, color: kpi.color, lineHeight: 1.1, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {kpi.value}
               <span style={{ fontSize: isLg ? 12 : 10, fontWeight: 600, color: '#94a3b8', marginLeft: 2 }}>{kpi.unit}</span>
             </div>
+            {kpi.trend && (
+              <p style={{ margin: '6px 0 0', fontSize: isLg ? 11 : 9, fontWeight: 700, color: kpi.trendColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {kpi.trend}
+              </p>
+            )}
           </div>
         ))}
+      </div>
+
+      {/* 3b. 오늘의 수업 현황 + 이번달 수납 추세 */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isLg ? 'repeat(2, minmax(0, 1fr))' : '1fr',
+        gap: 12, marginBottom: isLg ? 18 : 14,
+      }}>
+        <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #f1f5f9', padding: isLg ? 20 : 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h3 style={{ margin: 0, fontSize: isLg ? 14 : 12, fontWeight: 800, color: '#102044' }}>오늘의 출결 현황</h3>
+            <span onClick={() => navigate('/admin/attendance')} style={{ fontSize: isLg ? 12 : 10, color: '#004bf0', cursor: 'pointer', fontWeight: 700 }}>출결 입력 →</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
+            {[
+              { label: '출석', value: att.present || 0, bg: '#d1fae5', color: '#059669' },
+              { label: '지각', value: att.late || 0, bg: '#fef3c7', color: '#b45309' },
+              { label: '결석', value: att.absent || 0, bg: '#fee2e2', color: '#b91c1c' },
+              { label: '인정', value: att.excused || 0, bg: '#dbeafe', color: '#1d4ed8' },
+              { label: '미체크', value: att.not_checked || 0, bg: '#f1f5f9', color: '#475569' },
+            ].map((s, i) => (
+              <div key={i} style={{ background: s.bg, borderRadius: 8, padding: '10px 4px', textAlign: 'center' }}>
+                <p style={{ margin: 0, fontSize: isLg ? 18 : 15, fontWeight: 800, color: s.color, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{s.value}</p>
+                <p style={{ margin: '4px 0 0', fontSize: isLg ? 10 : 9, fontWeight: 700, color: s.color, whiteSpace: 'nowrap' }}>{s.label}</p>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 10, height: 6, borderRadius: 3, background: '#f1f5f9', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${Math.min(attCheckedRate, 100)}%`, background: attCheckedRate >= 80 ? '#059669' : '#d97706', transition: 'width 0.3s' }} />
+          </div>
+          <p style={{ margin: '6px 0 0', fontSize: isLg ? 11 : 10, color: '#64748b', whiteSpace: 'nowrap' }}>
+            체크 진행률 <b style={{ color: '#102044' }}>{attCheckedRate}%</b> · 전체 {ts.total_students || 0}명 중 {totalChecked}명
+          </p>
+        </div>
+
+        <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #f1f5f9', padding: isLg ? 20 : 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h3 style={{ margin: 0, fontSize: isLg ? 14 : 12, fontWeight: 800, color: '#102044' }}>이번달 수납 진행률</h3>
+            <span onClick={() => navigate('/admin/tuition')} style={{ fontSize: isLg ? 12 : 10, color: '#004bf0', cursor: 'pointer', fontWeight: 700 }}>수납 관리 →</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
+            <span style={{ fontSize: isLg ? 28 : 22, fontWeight: 800, color: '#102044', fontVariantNumeric: 'tabular-nums' }}>{collectionRate}%</span>
+            <span style={{ fontSize: isLg ? 12 : 10, color: '#64748b', fontWeight: 600 }}>청구 대비</span>
+          </div>
+          <div style={{ height: 8, borderRadius: 4, background: '#f1f5f9', overflow: 'hidden', marginBottom: 10 }}>
+            <div style={{ height: '100%', width: `${Math.min(collectionRate, 100)}%`, background: collectionRate >= 80 ? '#059669' : collectionRate >= 50 ? '#d97706' : '#dc2626', transition: 'width 0.3s' }} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, fontSize: isLg ? 11 : 10 }}>
+            <div>
+              <p style={{ margin: 0, color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>청구</p>
+              <p style={{ margin: '2px 0 0', color: '#102044', fontWeight: 800, fontSize: isLg ? 14 : 12, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{fmtWon(tui.this_month_billed || 0)}</p>
+            </div>
+            <div>
+              <p style={{ margin: 0, color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>수납</p>
+              <p style={{ margin: '2px 0 0', color: '#059669', fontWeight: 800, fontSize: isLg ? 14 : 12, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{fmtWon(tui.this_month_collected || 0)}</p>
+            </div>
+            <div>
+              <p style={{ margin: 0, color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>미수</p>
+              <p style={{ margin: '2px 0 0', color: '#dc2626', fontWeight: 800, fontSize: isLg ? 14 : 12, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{fmtWon(tui.outstanding_total || 0)}</p>
+            </div>
+          </div>
+          {tui.next_payment_date && (
+            <p style={{ margin: '10px 0 0', fontSize: isLg ? 11 : 10, color: '#64748b', whiteSpace: 'nowrap' }}>
+              다음 결제 예정: <b style={{ color: '#102044' }}>{tui.next_payment_date}</b>
+            </p>
+          )}
+        </div>
       </div>
 
       {/* 4. 위험 알림 + 최근 활동 */}
@@ -283,15 +389,15 @@ function OwnerDashboard({ isLg }) {
                     padding: isLg ? '10px 14px' : '8px 12px', borderRadius: 8,
                     background: sev.bg, border: `1px solid ${sev.border}`,
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                      <span style={{ fontSize: isLg ? 14 : 12, fontWeight: 700, color: 'var(--foreground)', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'transparent', transition: 'text-decoration-color 0.15s' }}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                      <span style={{ fontSize: isLg ? 14 : 12, fontWeight: 700, color: 'var(--foreground)', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'transparent', transition: 'text-decoration-color 0.15s', whiteSpace: 'nowrap', flexShrink: 0 }}
                         onClick={() => navigate(`/admin/student/${alert.student_id}`)}
                         onMouseEnter={e => e.currentTarget.style.textDecorationColor = 'var(--foreground)'}
                         onMouseLeave={e => e.currentTarget.style.textDecorationColor = 'transparent'}
                       >
                         {alert.student_name}
                       </span>
-                      <span style={{ fontSize: isLg ? 13 : 11, color: sev.text, fontWeight: 600 }}>{alert.message}</span>
+                      <span style={{ fontSize: isLg ? 13 : 11, color: sev.text, fontWeight: 600, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={alert.message}>{alert.message}</span>
                     </div>
                     <span style={{ fontSize: isLg ? 11 : 10, fontWeight: 600, padding: '2px 8px', borderRadius: 4, background: sev.border, color: sev.text, whiteSpace: 'nowrap' }}>
                       {alert.type === 'consecutive_absence' ? '연속 결석' : '수납 연체'}
@@ -332,27 +438,29 @@ function OwnerDashboard({ isLg }) {
             <h2 style={{ margin: 0, fontSize: isLg ? 16 : 14, fontWeight: 700 }}>반 충원율</h2>
             <span onClick={() => navigate('/admin/classes')} style={{ fontSize: isLg ? 13 : 11, color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}>관리 &rarr;</span>
           </div>
-          {class_occupancy.length === 0 ? (
+          {topClasses.length === 0 ? (
             <p style={{ fontSize: isLg ? 14 : 12, color: 'var(--muted-foreground)', textAlign: 'center', padding: '12px 0' }}>등록된 반이 없습니다</p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {class_occupancy.map(c => (
-                <div key={c.id}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                    <span style={{ fontSize: isLg ? 13 : 11, fontWeight: 600 }}>{c.name}</span>
-                    <span style={{ fontSize: isLg ? 12 : 10, color: 'var(--muted-foreground)' }}>
-                      {c.current_count}/{c.capacity || '-'} ({c.rate}%)
-                    </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {topClasses.map(c => {
+                const barColor = c.rate >= 90 ? '#059669' : c.rate >= 70 ? '#004bf0' : c.rate >= 50 ? '#d97706' : '#dc2626';
+                return (
+                  <div key={c.id}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, gap: 8 }}>
+                      <span style={{ fontSize: isLg ? 13 : 11, fontWeight: 700, color: '#102044', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0, flex: 1 }}>{c.name}</span>
+                      <span style={{ fontSize: isLg ? 11 : 10, color: barColor, fontWeight: 800, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
+                        {c.current_count}/{c.capacity || '-'} · {c.rate}%
+                      </span>
+                    </div>
+                    <div style={{ height: 6, borderRadius: 3, background: '#f1f5f9', overflow: 'hidden' }}>
+                      <div style={{
+                        height: '100%', borderRadius: 3, transition: 'width 0.3s',
+                        width: `${Math.min(c.rate, 100)}%`, background: barColor,
+                      }} />
+                    </div>
                   </div>
-                  <div style={{ height: 6, borderRadius: 3, background: 'var(--neutral-100)', overflow: 'hidden' }}>
-                    <div style={{
-                      height: '100%', borderRadius: 3, transition: 'width 0.3s',
-                      width: `${Math.min(c.rate, 100)}%`,
-                      background: c.rate >= 90 ? 'var(--success)' : c.rate >= 70 ? 'var(--primary)' : 'var(--warning)',
-                    }} />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -370,8 +478,8 @@ function OwnerDashboard({ isLg }) {
                 return (
                   <div key={ev.id} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
                     <span style={{ fontSize: isLg ? 12 : 10, color: 'var(--muted-foreground)', whiteSpace: 'nowrap', paddingTop: 2 }}>{dateStr}</span>
-                    <div style={{ minWidth: 0 }}>
-                      <p style={{ fontSize: isLg ? 13 : 11, fontWeight: 600, margin: 0, color: 'var(--foreground)' }}>{ev.title}</p>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <p style={{ fontSize: isLg ? 13 : 11, fontWeight: 600, margin: 0, color: 'var(--foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={ev.title}>{ev.title}</p>
                       {ev.student_name && (
                         <p style={{ fontSize: isLg ? 12 : 10, color: 'var(--muted-foreground)', margin: '2px 0 0' }}>{ev.student_name}</p>
                       )}
@@ -446,8 +554,8 @@ function TeacherDashboard({ isLg }) {
                 padding: isLg ? '12px 16px' : '10px 12px', borderRadius: 8,
                 background: 'var(--neutral-50)', border: '1px solid var(--border)',
               }}>
-                <div>
-                  <p style={{ fontSize: isLg ? 14 : 12, fontWeight: 700, margin: 0, color: 'var(--foreground)' }}>{cls.name}</p>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <p style={{ fontSize: isLg ? 14 : 12, fontWeight: 700, margin: 0, color: 'var(--foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={cls.name}>{cls.name}</p>
                   <p style={{ fontSize: isLg ? 12 : 10, color: 'var(--muted-foreground)', margin: '2px 0 0' }}>
                     {cls.start_time?.slice(0, 5)}~{cls.end_time?.slice(0, 5)} {cls.room ? `| ${cls.room}` : ''}
                   </p>

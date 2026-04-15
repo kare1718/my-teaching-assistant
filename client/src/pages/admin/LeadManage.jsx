@@ -259,7 +259,7 @@ export default function LeadManage() {
     return (
       <div className="main-content bg-[#f8f9fa] min-h-screen flex items-center justify-center">
         <div className="text-center text-slate-400">
-          <span className="material-icons text-5xl mb-2 block animate-spin">hourglass_empty</span>
+          <span className="material-symbols-outlined text-5xl mb-2 block animate-spin">hourglass_empty</span>
           <div className="text-sm">로딩 중...</div>
         </div>
       </div>
@@ -307,7 +307,7 @@ export default function LeadManage() {
 
           {/* 검색바 */}
           <div className="relative">
-            <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-[#75777f] text-sm">search</span>
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#75777f] text-sm">search</span>
             <input
               type="text"
               placeholder="리드 검색..."
@@ -323,7 +323,7 @@ export default function LeadManage() {
             onClick={() => { setShowForm(true); setEditingLead(null); resetForm(); }}
             className="bg-[#102044] text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 transition-all flex items-center gap-2"
           >
-            <span className="material-icons text-sm">add</span>
+            <span className="material-symbols-outlined text-sm">add</span>
             리드 등록
           </button>
         </div>
@@ -348,14 +348,14 @@ export default function LeadManage() {
                         {colLeads.length}
                       </span>
                     </div>
-                    <button className="material-icons text-[#75777f] text-lg">more_horiz</button>
+                    <button className="material-symbols-outlined text-[#75777f] text-lg">more_horiz</button>
                   </div>
 
                   {/* 카드 리스트 */}
                   <div className="space-y-3 overflow-y-auto pr-2 pb-4">
                     {col.key === 'enrolled' && colLeads.length === 0 ? (
                       <div className="bg-[#edeeef] rounded-lg p-4 flex flex-col items-center justify-center opacity-40 border-2 border-dashed border-[#c5c6cf]">
-                        <span className="material-icons text-4xl mb-2">inventory_2</span>
+                        <span className="material-symbols-outlined text-4xl mb-2">inventory_2</span>
                         <p className="text-xs font-bold">기록 보관됨</p>
                       </div>
                     ) : colLeads.length === 0 ? (
@@ -375,7 +375,7 @@ export default function LeadManage() {
           <div className="p-6 overflow-auto flex-1">
             {filteredLeads.length === 0 ? (
               <div className="p-12 text-center text-slate-400 bg-white rounded-xl border border-slate-100">
-                <span className="material-icons text-5xl mb-2 block">inbox</span>
+                <span className="material-symbols-outlined text-5xl mb-2 block">inbox</span>
                 <div className="text-sm">리드가 없습니다</div>
                 <div className="text-xs mt-1">"리드 등록" 버튼으로 신규 문의를 추가하세요.</div>
               </div>
@@ -518,7 +518,7 @@ export default function LeadManage() {
                 {editingLead ? '리드 수정' : '리드 등록'}
               </h3>
               <button onClick={() => setShowForm(false)} className="p-1 hover:bg-[#e7e8e9] rounded-full transition-colors">
-                <span className="material-icons text-slate-400 text-xl">close</span>
+                <span className="material-symbols-outlined text-slate-400 text-xl">close</span>
               </button>
             </div>
             <div className="flex flex-col gap-3">
@@ -600,7 +600,7 @@ export default function LeadManage() {
                   onClick={() => { setShowDetail(null); setDetailData(null); }}
                   className="p-2 hover:bg-[#e7e8e9] rounded-full transition-colors"
                 >
-                  <span className="material-icons">close</span>
+                  <span className="material-symbols-outlined">close</span>
                 </button>
               </div>
 
@@ -610,14 +610,14 @@ export default function LeadManage() {
                   onClick={() => document.getElementById('act-section')?.scrollIntoView({ behavior: 'smooth' })}
                   className="flex items-center justify-center gap-2 py-2.5 bg-[#e7e8e9] text-[#102044] rounded-lg font-bold text-sm hover:opacity-80 transition-all"
                 >
-                  <span className="material-icons text-lg">add_circle</span>
+                  <span className="material-symbols-outlined text-lg">add_circle</span>
                   활동 추가
                 </button>
                 <button
                   onClick={() => setShowTrialForm(true)}
                   className="flex items-center justify-center gap-2 py-2.5 bg-purple-100 text-purple-700 rounded-lg font-bold text-sm hover:opacity-80 transition-all"
                 >
-                  <span className="material-icons text-lg">event_available</span>
+                  <span className="material-symbols-outlined text-lg">event_available</span>
                   체험 예약
                 </button>
               </div>
@@ -792,7 +792,7 @@ export default function LeadManage() {
                           <div className={`absolute left-0 w-8 h-8 rounded-full flex items-center justify-center z-10 border-4 border-white ${
                             isCall ? 'bg-[#004bf0]/10' : isStatusChange ? 'bg-purple-100' : 'bg-[#e7e8e9]'
                           }`}>
-                            <span className={`material-icons text-sm ${
+                            <span className={`material-symbols-outlined text-sm ${
                               isCall ? 'text-[#004bf0]' : isStatusChange ? 'text-purple-500' : 'text-[#45464e]'
                             }`}>{typeInfo.icon}</span>
                           </div>
@@ -848,23 +848,23 @@ function KanbanCard({ lead, onClick }) {
       className="bg-white p-4 rounded-lg shadow-sm border border-transparent hover:border-[#004bf0]/20 transition-all cursor-pointer group"
     >
       {/* 상단: 채널 배지 + 우선순위 */}
-      <div className="flex justify-between items-start mb-2">
+      <div className="flex justify-between items-start mb-2 gap-2">
         {lead.source ? (
-          <span className="bg-[#f3f4f5] text-[#45464e] text-[10px] font-bold px-2 py-0.5 rounded-full">
+          <span className="bg-[#f3f4f5] text-[#45464e] text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap truncate max-w-[180px]" title={lead.source}>
             {lead.source}
           </span>
         ) : <span />}
-        <span className="text-xs">{pr.emoji}</span>
+        <span className="text-xs flex-shrink-0">{pr.emoji}</span>
       </div>
 
       {/* 이름 + 학년 */}
-      <h4 className="font-bold text-base mb-1 text-[#102044]">
+      <h4 className="font-bold text-base mb-1 text-[#102044] truncate" title={lead.student_name}>
         {lead.student_name}
-        {lead.grade && <span className="text-xs font-normal text-[#75777f] ml-1.5">{lead.grade}</span>}
+        {lead.grade && <span className="text-xs font-normal text-[#75777f] ml-1.5 whitespace-nowrap">{lead.grade}</span>}
       </h4>
 
       {/* 연락처 */}
-      <p className="text-xs text-[#45464e] mb-4">{maskPhone(lead.parent_phone)}</p>
+      <p className="text-xs text-[#45464e] mb-4 whitespace-nowrap">{maskPhone(lead.parent_phone)}</p>
 
       {/* 하단: 담당자 + N일째 */}
       <div className="flex items-center justify-between">

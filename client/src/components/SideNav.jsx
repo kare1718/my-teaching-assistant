@@ -60,18 +60,15 @@ const adminNavGroups = [
   { key: 'home', label: '홈', icon: Icons.home, path: '/admin', single: true },
 
   { key: 'students', label: '학생', icon: Icons.userCheck, children: [
-    { path: '/admin/students', label: '학생 목록' },
+    { path: '/admin/students', label: '학생 명단', badgeKey: 'pending_users' },
     { path: '/admin/parents', label: '보호자 관리' },
-    { path: '/admin/pre-registered', label: '사전 등록' },
     { path: '/admin/data-import', label: '데이터 가져오기' },
-    { path: '/admin/pending', label: '가입 승인', badgeKey: 'pending_users' },
   ]},
 
   { key: 'classes', label: '수업', icon: Icons.book, children: [
-    { path: '/admin/classes', label: '반 관리' },
-    { path: '/admin/schedules', label: '시간표' },
+    { path: '/admin/classes', label: '수업/시간표' },
     { path: '/admin/attendance', label: '출결' },
-    { path: '/admin/homework', label: '숙제', tier: 'growth' },
+    { path: '/admin/homework', label: '과제 관리', tier: 'growth' },
   ]},
 
   { key: 'tuition', label: '수납', icon: Icons.dollar, children: [
@@ -219,28 +216,26 @@ export default function SideNav() {
     }
   }, [isDesktop, isAdminPage]);
 
-  // 사이드바 외부 클릭 시 자동 접힘 처리 (PC/모바일 모두)
-  // - 모바일(고정 안 됨): 사이드바 자체를 닫음 + 사용자가 펼친 카테고리도 접음
-  // - 데스크탑: 사용자가 펼친 카테고리만 접음 (사이드바는 유지)
+  // 사이드바 외부 클릭 시 자동 닫힘 (모바일 비고정 상태에서만)
+  // 데스크탑에서는 카테고리/사이드바 모두 그대로 유지
   useEffect(() => {
-    if (!isAdminPage) return;
+    if (!isAdminPage || isDesktop || pinned || !sidebarOpen) return;
 
     const handleClick = (e) => {
       const sidebar = document.getElementById('admin-sidebar');
       const openBtn = document.getElementById('sidebar-open-btn');
-      // 사이드바 내부 또는 햄버거 버튼 클릭은 무시
       if (sidebar && sidebar.contains(e.target)) return;
       if (openBtn && openBtn.contains(e.target)) return;
 
-      // 1) 사용자가 명시적으로 펼친 카테고리만 자동 접기 (자동 펼침은 유지)
+      // 모바일에서 카테고리 자동 접힘 + 사이드바 닫힘
       setCollapsedCats(prev => {
         let changed = false;
         const next = {};
         Object.keys(prev).forEach(key => {
           if (prev[key] === false) {
-            next[key] = false; // 사용자가 닫은 것은 그대로 유지
+            next[key] = false;
           } else if (prev[key] === true) {
-            changed = true; // explicit true는 제거 → 자동 펼침 동작으로 복귀
+            changed = true;
           }
         });
         if (!changed) return prev;
@@ -248,11 +243,8 @@ export default function SideNav() {
         return next;
       });
 
-      // 2) 모바일(비고정)에서는 사이드바 자체도 닫음
-      if (!isDesktop && !pinned && sidebarOpen) {
-        setSidebarOpen(false);
-        localStorage.setItem(SIDEBAR_KEY, 'false');
-      }
+      setSidebarOpen(false);
+      localStorage.setItem(SIDEBAR_KEY, 'false');
     };
 
     const timer = setTimeout(() => document.addEventListener('click', handleClick), 100);

@@ -164,7 +164,7 @@ export default function AcademySettings() {
               key={tab.label}
               onClick={() => tab.path && navigate(tab.path)}
               disabled={disabled}
-              className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-colors ${
+              className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-colors whitespace-nowrap ${
                 isCurrent
                   ? 'bg-[#102044] text-white shadow-sm'
                   : disabled

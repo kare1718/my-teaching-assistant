@@ -230,22 +230,22 @@ export default function AutomationManage() {
                 return (
                   <div
                     key={rule.id}
-                    className={`bg-white p-6 rounded-2xl flex items-center justify-between hover:bg-slate-50/80 transition-all group ${!isActive ? 'opacity-75' : ''}`}
+                    className={`bg-white p-6 rounded-2xl flex items-center justify-between gap-4 hover:bg-slate-50/80 transition-all group ${!isActive ? 'opacity-75' : ''}`}
                   >
-                    <div className="flex items-center gap-5">
-                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isActive ? meta.bg : 'bg-slate-200'} ${isActive ? meta.text : 'text-slate-400'}`}>
+                    <div className="flex items-center gap-5 min-w-0 flex-1">
+                      <div className={`w-14 h-14 rounded-2xl flex-shrink-0 flex items-center justify-center ${isActive ? meta.bg : 'bg-slate-200'} ${isActive ? meta.text : 'text-slate-400'}`}>
                         <MI icon={meta.icon} className="text-3xl" filled />
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className={`text-lg font-bold ${isActive ? 'text-[#102044]' : 'text-slate-400'}`}>{rule.name}</h4>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-1 min-w-0">
+                          <h4 className={`text-lg font-bold truncate ${isActive ? 'text-[#102044]' : 'text-slate-400'}`} title={rule.name}>{rule.name}</h4>
                           {isActive && (
-                            <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                            <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter whitespace-nowrap flex-shrink-0">
                               {ACTION_LABELS[rule.action_type] || rule.action_type}
                             </span>
                           )}
                         </div>
-                        <p className={`text-sm mb-2 ${isActive ? 'text-slate-600' : 'text-slate-400'}`}>
+                        <p className={`text-sm mb-2 break-keep ${isActive ? 'text-slate-600' : 'text-slate-400'}`}>
                           {describeRule(rule)}
                         </p>
                         <div className="flex items-center gap-3 text-xs text-slate-400">
@@ -261,7 +261,7 @@ export default function AutomationManage() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-6 flex-shrink-0">
                       <Toggle checked={isActive} onChange={() => toggleRule(rule)} />
                       <div className="relative group/menu">
                         <button className="text-slate-300 group-hover:text-slate-600 transition-colors">

@@ -10,7 +10,7 @@ const VARIANTS = {
 
 export function StatusBadge({ variant = 'neutral', children, className = '' }) {
   return (
-    <span className={`inline-flex items-center rounded-full px-3 py-0.5 text-xs font-bold ${VARIANTS[variant]} ${className}`}>
+    <span className={`inline-flex items-center whitespace-nowrap rounded-full px-3 py-0.5 text-xs font-bold ${VARIANTS[variant]} ${className}`}>
       {children}
     </span>
   );
