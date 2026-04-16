@@ -1,13 +1,30 @@
 import { useState, useEffect } from 'react';
 import { api, apiPut } from '../../api';
+import { useAuthStore } from '../../stores/useAuthStore';
+
+const ADMIN_TYPE_OPTIONS = [
+  { value: 'owner', label: '원장' },
+  { value: 'instructor', label: '강사' },
+  { value: 'staff', label: '행정' },
+  { value: 'counselor', label: '상담' },
+];
 
 export default function ProfileManage() {
+  const user = useAuthStore(s => s.user);
+  const saveAuth = useAuthStore(s => s.saveAuth);
+  const token = useAuthStore(s => s.token);
+
   const [profile, setProfile] = useState(null);
   const [name, setName] = useState('');
   const [slogan, setSlogan] = useState('');
   const [bioText, setBioText] = useState('');
   const [msg, setMsg] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // 관리자 직함
+  const [adminType, setAdminType] = useState(user?.admin_type || 'owner');
+  const [adminTypeMsg, setAdminTypeMsg] = useState('');
+  const [adminTypeSaving, setAdminTypeSaving] = useState(false);
 
   useEffect(() => {
     api('/admin/site-settings/instructor_profile').then(data => {
@@ -19,6 +36,25 @@ export default function ProfileManage() {
       }
     }).catch(console.error);
   }, []);
+
+  const handleAdminTypeChange = async (newType) => {
+    setAdminType(newType);
+    setAdminTypeSaving(true);
+    setAdminTypeMsg('');
+    try {
+      await apiPut('/auth/admin-type', { admin_type: newType });
+      // 로컬 user 정보 업데이트
+      const updatedUser = { ...user, admin_type: newType };
+      saveAuth(token, updatedUser);
+      setAdminTypeMsg('직함이 변경되었습니다!');
+      setTimeout(() => setAdminTypeMsg(''), 2000);
+    } catch (e) {
+      setAdminTypeMsg(e.message || '변경 실패');
+      setAdminType(user?.admin_type || 'owner');
+    } finally {
+      setAdminTypeSaving(false);
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -41,7 +77,44 @@ export default function ProfileManage() {
 
   return (
     <div className="content max-w-4xl mx-auto w-full">
-      <h1>👨‍🏫 강사 프로필 관리</h1>
+      {/* 관리자 직함 설정 */}
+      {user?.role === 'admin' && (
+        <div className="card" style={{ padding: 'var(--space-5)', maxWidth: 600, marginBottom: 'var(--space-5)' }}>
+          <h2 style={{ fontSize: 'var(--text-base)', fontWeight: 700, marginBottom: 'var(--space-3)' }}>내 직함</h2>
+          <p style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 'var(--space-3)' }}>
+            대시보드 인사말 등에 표시되는 직함을 설정합니다.
+          </p>
+          {adminTypeMsg && (
+            <div style={{
+              padding: '8px 12px', borderRadius: 'var(--radius)', marginBottom: 'var(--space-3)',
+              background: adminTypeMsg.includes('변경') ? 'var(--success-light)' : 'var(--destructive-light)',
+              color: adminTypeMsg.includes('변경') ? 'oklch(30% 0.12 145)' : 'oklch(35% 0.15 25)',
+              fontSize: 12, fontWeight: 600,
+            }}>{adminTypeMsg}</div>
+          )}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {ADMIN_TYPE_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => handleAdminTypeChange(opt.value)}
+                disabled={adminTypeSaving}
+                style={{
+                  padding: '10px 20px', borderRadius: 10, fontSize: 14, fontWeight: 700,
+                  border: adminType === opt.value ? '2px solid var(--primary)' : '1.5px solid var(--border)',
+                  background: adminType === opt.value ? 'var(--primary-light)' : 'var(--card)',
+                  color: adminType === opt.value ? 'var(--primary)' : 'var(--foreground)',
+                  cursor: adminTypeSaving ? 'wait' : 'pointer',
+                  fontFamily: 'inherit', transition: 'all 0.15s',
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <h1>강사 프로필 관리</h1>
       <p style={{ fontSize: 13, color: 'var(--muted-foreground)', marginBottom: 'var(--space-4)' }}>
         로그인 페이지에 표시되는 강사 약력을 수정합니다.
       </p>

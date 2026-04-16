@@ -13,7 +13,9 @@ router.get('/academies', async (req, res) => {
     const academies = await getAll(
       `SELECT a.*,
         (SELECT COUNT(*) FROM students WHERE academy_id = a.id AND (status IS NULL OR status = 'active')) as student_count,
-        (SELECT COUNT(*) FROM users WHERE academy_id = a.id) as user_count
+        (SELECT COUNT(*) FROM users WHERE academy_id = a.id) as user_count,
+        (SELECT u.name FROM users u WHERE u.id = a.owner_user_id) as owner_name,
+        (SELECT u.admin_type FROM users u WHERE u.id = a.owner_user_id) as owner_admin_type
        FROM academies a ORDER BY a.created_at DESC`
     );
     res.json(academies);

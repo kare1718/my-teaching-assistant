@@ -253,14 +253,14 @@ export default function SuperAdminDashboard() {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, minWidth: 720 }}>
           <thead>
             <tr style={{ background: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>
-              {['학원명', '슬러그', '학생 수', '사용자 수', '티어', '상태', '생성일'].map(h => (
+              {['학원명', '슬러그', '관리자', '학생 수', '사용자 수', '티어', '상태', '생성일'].map(h => (
                 <th key={h} style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 700, color: 'var(--muted-foreground)', fontSize: 12 }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <tr><td colSpan={7} style={{ padding: 32, textAlign: 'center', color: 'var(--muted-foreground)' }}>학원이 없습니다</td></tr>
+              <tr><td colSpan={8} style={{ padding: 32, textAlign: 'center', color: 'var(--muted-foreground)' }}>학원이 없습니다</td></tr>
             ) : filtered.map(a => {
               const tier = TIER_LABELS[a.subscription_tier] || { text: a.subscription_tier, bg: '#f3f4f6', color: '#6b7280' };
               return (
@@ -270,6 +270,20 @@ export default function SuperAdminDashboard() {
                   onMouseLeave={e => e.currentTarget.style.background = ''}>
                   <td style={{ padding: '14px 16px', fontWeight: 600, color: 'var(--foreground)' }}>{a.name}</td>
                   <td style={{ padding: '14px 16px', color: 'var(--muted-foreground)', fontFamily: 'monospace', fontSize: 13 }}>{a.slug}</td>
+                  <td style={{ padding: '14px 16px' }}>
+                    {a.owner_name && (
+                      <div>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>{a.owner_name}</span>
+                        <span style={{
+                          marginLeft: 6, fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 6,
+                          background: a.owner_admin_type === 'instructor' ? '#dbeafe' : a.owner_admin_type === 'staff' ? '#f3f4f6' : a.owner_admin_type === 'counselor' ? '#fef3c7' : '#ede9fe',
+                          color: a.owner_admin_type === 'instructor' ? '#2563eb' : a.owner_admin_type === 'staff' ? '#6b7280' : a.owner_admin_type === 'counselor' ? '#d97706' : '#7c3aed',
+                        }}>
+                          {{ owner: '원장', instructor: '강사', staff: '행정', counselor: '상담' }[a.owner_admin_type] || '원장'}
+                        </span>
+                      </div>
+                    )}
+                  </td>
                   <td style={{ padding: '14px 16px', color: 'var(--foreground)' }}>{a.student_count || 0}</td>
                   <td style={{ padding: '14px 16px', color: 'var(--foreground)' }}>{a.user_count || 0}</td>
                   <td style={{ padding: '14px 16px' }}>

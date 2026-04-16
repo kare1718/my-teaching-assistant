@@ -257,7 +257,15 @@ function OwnerDashboard({ isLg, user }) {
       {/* ═══ A. 환영 헤더 ═══ */}
       <div style={{ marginBottom: 20 }}>
         <h1 style={{ fontSize: isLg ? 26 : 22, fontWeight: 800, color: 'var(--primary)', margin: 0, letterSpacing: '-0.02em' }}>
-          안녕하세요, {user?.name || ''} {user?.role === 'teacher' ? '선생님' : user?.role === 'counselor' ? '상담사님' : '원장님'}!
+          안녕하세요, {user?.name || ''} {
+            (() => {
+              const titleMap = { owner: '원장님', instructor: '선생님', staff: '담당님', counselor: '상담사님' };
+              if (user?.admin_type && titleMap[user.admin_type]) return titleMap[user.admin_type];
+              if (user?.role === 'teacher') return '선생님';
+              if (user?.role === 'counselor') return '상담사님';
+              return '원장님';
+            })()
+          }!
         </h1>
         <p style={{ fontSize: 14, color: '#94a3b8', marginTop: 4, margin: '4px 0 0' }}>
           {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}

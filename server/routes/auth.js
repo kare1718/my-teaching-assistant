@@ -179,8 +179,9 @@ router.post('/login', async (req, res) => {
       if (student) school = student.school;
     }
 
+    const admin_type = user.admin_type || 'owner';
     const token = jwt.sign(
-      { id: user.id, username: user.username, name: user.name, role: user.role, school, academy_id: user.academy_id },
+      { id: user.id, username: user.username, name: user.name, role: user.role, school, academy_id: user.academy_id, admin_type },
       JWT_SECRET,
       { expiresIn: rememberMe ? '30d' : '1d' }
     );
@@ -192,7 +193,7 @@ router.post('/login', async (req, res) => {
 
     res.json({
       token,
-      user: { id: user.id, username: user.username, name: user.name, role: user.role, school, academy_id: user.academy_id }
+      user: { id: user.id, username: user.username, name: user.name, role: user.role, school, academy_id: user.academy_id, admin_type }
     });
   } catch (err) {
     console.error(err);
@@ -202,7 +203,7 @@ router.post('/login', async (req, res) => {
 
 // 내 정보 조회
 router.get('/me', authenticateToken, async (req, res) => {
-  const user = await getOne('SELECT id, username, name, role, phone, academy_id FROM users WHERE id = ? AND academy_id = ?', [req.user.id, req.user.academy_id]);
+  const user = await getOne('SELECT id, username, name, role, phone, academy_id, admin_type FROM users WHERE id = ? AND academy_id = ?', [req.user.id, req.user.academy_id]);
   if (!user) {
     return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
   }
@@ -392,6 +393,22 @@ router.get('/my-invite-code', authenticateToken, async (req, res) => {
     res.json({ inviteCode: academy.slug, academyName: academy.name });
   } catch (err) {
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// 관리자 직함(admin_type) 변경
+router.put('/admin-type', authenticateToken, async (req, res) => {
+  try {
+    const { admin_type } = req.body;
+    const validTypes = ['owner', 'instructor', 'staff', 'counselor'];
+    if (!validTypes.includes(admin_type)) {
+      return res.status(400).json({ error: '유효하지 않은 직함입니다.' });
+    }
+    await runQuery('UPDATE users SET admin_type = ? WHERE id = ?', [admin_type, req.user.id]);
+    res.json({ ok: true, admin_type });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: '직함 변경 실패' });
   }
 });
 
