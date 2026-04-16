@@ -1,8 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { api } from '../../api';
 import useMediaQuery from '../../hooks/useMediaQuery';
 
+const HomeworkManage = lazy(() => import('./HomeworkManage'));
+
 export default function AttendanceManage() {
+  const [mainTab, setMainTab] = useState('attendance');
   const isLg = useMediaQuery('(min-width: 1600px)');
   const [todayData, setTodayData] = useState(null);
   const [absentList, setAbsentList] = useState([]);
@@ -49,6 +52,33 @@ export default function AttendanceManage() {
 
   return (
     <div className="main-content" style={{ padding: 20, maxWidth: 1100, margin: '0 auto' }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        {[
+          { key: 'attendance', label: '출결 관리' },
+          { key: 'homework', label: '과제 관리' },
+        ].map(t => (
+          <button
+            key={t.key}
+            onClick={() => setMainTab(t.key)}
+            style={{
+              padding: '10px 20px', borderRadius: 8, fontSize: 14, fontWeight: 700,
+              background: mainTab === t.key ? '#102044' : '#fff',
+              color: mainTab === t.key ? '#fff' : '#64748b',
+              border: '1px solid #e2e8f0', cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {mainTab === 'homework' ? (
+        <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>로딩 중...</div>}>
+          <HomeworkManage />
+        </Suspense>
+      ) : (
+      <>
       <h2 style={{ fontSize: '1.5em', fontWeight: 800, marginBottom: 20 }}>출결 관리</h2>
 
       {/* 날짜 선택 */}
@@ -142,6 +172,8 @@ export default function AttendanceManage() {
           <p style={{ color: 'var(--neutral-500)', fontSize: 14 }}>통계 데이터가 없습니다.</p>
         )}
       </section>
+      </>
+      )}
     </div>
   );
 }
