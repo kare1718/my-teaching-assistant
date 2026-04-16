@@ -257,7 +257,7 @@ function OwnerDashboard({ isLg, user }) {
       {/* ═══ A. 환영 헤더 ═══ */}
       <div style={{ marginBottom: 20 }}>
         <h1 style={{ fontSize: isLg ? 26 : 22, fontWeight: 800, color: 'var(--primary)', margin: 0, letterSpacing: '-0.02em' }}>
-          안녕하세요, {user?.name || '원장'}님!
+          안녕하세요, {user?.name || ''} {user?.role === 'teacher' ? '선생님' : user?.role === 'counselor' ? '상담사님' : '원장님'}!
         </h1>
         <p style={{ fontSize: 14, color: '#94a3b8', marginTop: 4, margin: '4px 0 0' }}>
           {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
