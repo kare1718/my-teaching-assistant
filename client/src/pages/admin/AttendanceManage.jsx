@@ -21,7 +21,8 @@ export default function AttendanceManage() {
       api(`/attendance/absent?date=${selectedDate}`).catch(() => []),
     ]).then(([today, absent]) => {
       setTodayData(today);
-      setAbsentList(Array.isArray(absent) ? absent : []);
+      const absentRows = Array.isArray(absent) ? absent : [];
+      setAbsentList(absentRows.filter(s => !s.role || s.role === 'student'));
       setLoading(false);
     }).catch(() => {
       setError('데이터를 불러올 수 없습니다.');

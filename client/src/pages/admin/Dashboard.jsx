@@ -169,6 +169,8 @@ function EmptyState({ icon, title, description }) {
 function OwnerDashboard({ isLg, user }) {
   const navigate = useNavigate();
   const isMd = useMediaQuery('(min-width: 768px)');
+  const { config } = useTenantConfig();
+  const dc = config?.dashboard_config || {};
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -331,6 +333,7 @@ function OwnerDashboard({ isLg, user }) {
       </div>
 
       {/* ═══ B. KPI 4카드 (전체 폭) ═══ */}
+      {dc.show_kpi !== false && (
       <div style={{
         display: 'grid',
         gridTemplateColumns: isMd ? 'repeat(4, 1fr)' : 'repeat(2, 1fr)',
@@ -370,14 +373,17 @@ function OwnerDashboard({ isLg, user }) {
           </div>
         ))}
       </div>
+      )}
 
       {/* ═══ C. 오늘의 할일 + 이번 주 수업 (2열) ═══ */}
+      {(dc.show_tasks !== false || dc.show_schedule !== false) && (
       <div style={{
         display: 'grid',
-        gridTemplateColumns: isLg ? '1fr 1fr' : '1fr',
+        gridTemplateColumns: (dc.show_tasks !== false && dc.show_schedule !== false && isLg) ? '1fr 1fr' : '1fr',
         gap: 16, marginBottom: 20,
       }}>
         {/* 오늘의 할일 */}
+        {dc.show_tasks !== false && (
         <div style={{ ...cardStyle, padding: isLg ? 24 : 18 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: '#102044' }}>
@@ -440,8 +446,10 @@ function OwnerDashboard({ isLg, user }) {
             </div>
           )}
         </div>
+        )}
 
         {/* 이번 주 수업 일정 */}
+        {dc.show_schedule !== false && (
         <div style={{ ...cardStyle, padding: isLg ? 24 : 18 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: '#102044' }}>
@@ -507,15 +515,19 @@ function OwnerDashboard({ isLg, user }) {
             </div>
           )}
         </div>
+        )}
       </div>
+      )}
 
       {/* ═══ D. 매출 추이 + 원생 추이 (2열) ═══ */}
+      {(dc.show_revenue !== false || dc.show_attendance !== false) && (
       <div style={{
         display: 'grid',
-        gridTemplateColumns: isLg ? '1fr 1fr' : '1fr',
+        gridTemplateColumns: (dc.show_revenue !== false && dc.show_attendance !== false && isLg) ? '1fr 1fr' : '1fr',
         gap: 16, marginBottom: 20,
       }}>
         {/* 매출 추이 (최근 6개월) */}
+        {dc.show_revenue !== false && (
         <div style={{ ...cardStyle, padding: isLg ? 24 : 18 }}>
           <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: '#102044', marginBottom: 16 }}>
             매출 추이
@@ -545,8 +557,10 @@ function OwnerDashboard({ isLg, user }) {
             </div>
           )}
         </div>
+        )}
 
         {/* 출결 현황 + 수납 진행률 (컴팩트) */}
+        {dc.show_attendance !== false && (
         <div style={{ ...cardStyle, padding: isLg ? 24 : 18 }}>
           <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: '#102044', marginBottom: 16 }}>
             오늘의 출결 현황
@@ -585,15 +599,19 @@ function OwnerDashboard({ isLg, user }) {
             </div>
           </div>
         </div>
+        )}
       </div>
+      )}
 
       {/* ═══ E. 위험 알림 + 최근 활동 (2열) ═══ */}
+      {(dc.show_risks !== false || dc.show_activity !== false) && (
       <div style={{
         display: 'grid',
-        gridTemplateColumns: isLg ? '1fr 1fr' : '1fr',
+        gridTemplateColumns: (dc.show_risks !== false && dc.show_activity !== false && isLg) ? '1fr 1fr' : '1fr',
         gap: 16, marginBottom: 20,
       }}>
         {/* 위험 알림 */}
+        {dc.show_risks !== false && (
         <div style={{ ...cardStyle, padding: isLg ? 24 : 18 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: '#102044' }}>
@@ -637,8 +655,10 @@ function OwnerDashboard({ isLg, user }) {
             </div>
           )}
         </div>
+        )}
 
         {/* 최근 활동 */}
+        {dc.show_activity !== false && (
         <div style={{ ...cardStyle, padding: isLg ? 24 : 18 }}>
           <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: '#102044', marginBottom: 14 }}>
             최근 활동
@@ -668,7 +688,9 @@ function OwnerDashboard({ isLg, user }) {
             </div>
           )}
         </div>
+        )}
       </div>
+      )}
     </div>
   );
 }

@@ -65,10 +65,11 @@ const adminNavGroups = [
     { path: '/admin/data-import', label: '데이터 가져오기' },
   ]},
 
-  { key: 'classes', label: '수업', icon: Icons.book, children: [
+  { key: 'classes', label: '학생 관리', icon: Icons.book, children: [
     { path: '/admin/classes', label: '수업/시간표' },
     { path: '/admin/attendance', label: '출결' },
     { path: '/admin/homework', label: '과제 관리', tier: 'pro' },
+    { path: '/admin/scores', label: '성적 관리' },
   ]},
 
   { key: 'tuition', label: '수납', icon: Icons.dollar, children: [
@@ -94,7 +95,6 @@ const adminNavGroups = [
 
   { key: 'reports', label: '리포트', icon: Icons.barChart, tier: 'pro', children: [
     { path: '/admin/reports', label: '수업 레포트', tier: 'pro' },
-    { path: '/admin/scores', label: '성적' },
     { path: '/admin/hall-of-fame', label: '명예의 전당' },
   ]},
 

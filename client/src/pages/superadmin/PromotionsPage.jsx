@@ -67,15 +67,15 @@ export default function PromotionsPage() {
       api('/superadmin/promotions'),
       api('/superadmin/academies'),
     ]).then(([p, a]) => {
-      setPromos(p);
-      setAcademies(a);
-    }).catch(e => showMsg(e.message, 'error')).finally(() => setLoading(false));
+      setPromos(Array.isArray(p) ? p : []);
+      setAcademies(Array.isArray(a) ? a : []);
+    }).catch(e => { setPromos([]); setAcademies([]); showMsg(e.message, 'error'); }).finally(() => setLoading(false));
   };
 
   useEffect(() => { load(); }, []);
 
   const loadGrants = (promoId) => {
-    api(`/superadmin/promotions/${promoId}/grants`).then(setGrants).catch(console.error);
+    api(`/superadmin/promotions/${promoId}/grants`).then(d => setGrants(Array.isArray(d) ? d : [])).catch(() => setGrants([]));
   };
 
   // 프로모션 생성

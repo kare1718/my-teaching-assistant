@@ -52,19 +52,21 @@ export default function StudentList() {
         <p className="text-sm text-slate-500 mt-1">총 {filtered.length}명 / 전체 {students.length}명</p>
       </div>
 
-      <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Link to="/admin/pending" className="bg-white rounded-xl border border-slate-100 shadow-sm p-5 hover:border-[#004bf0]/30 transition-colors block">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 whitespace-nowrap">가입 승인 대기</p>
-          <p className="text-2xl font-extrabold text-amber-600">{pendingCount || 0}건</p>
-        </Link>
-        <Link to="/admin/pre-registered" className="bg-white rounded-xl border border-slate-100 shadow-sm p-5 hover:border-[#004bf0]/30 transition-colors block">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 whitespace-nowrap">사전 등록</p>
-          <p className="text-2xl font-extrabold text-[#004bf0]">{preRegCount || 0}명</p>
-        </Link>
-        <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 whitespace-nowrap">전체 재원생</p>
-          <p className="text-2xl font-extrabold text-[#102044]">{students.length}명</p>
+      <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr]" style={{ gap: 12, marginBottom: 24 }}>
+        <div className="bg-white rounded-xl border border-slate-100 shadow-sm md:[grid-row:span_2]" style={{ padding: 24 }}>
+          <p style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>전체 재원생</p>
+          <p style={{ fontSize: 48, fontWeight: 800, color: '#102044', marginTop: 8, fontVariantNumeric: 'tabular-nums' }}>
+            {students.length}<span style={{ fontSize: 20, fontWeight: 600 }}>명</span>
+          </p>
         </div>
+        <Link to="/admin/pending" className="bg-white rounded-xl border border-slate-100 shadow-sm hover:border-[#004bf0]/30 transition-colors block" style={{ padding: '16px 20px', textDecoration: 'none' }}>
+          <p style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8' }}>가입 승인 대기</p>
+          <p style={{ fontSize: 24, fontWeight: 800, color: '#f59e0b' }}>{pendingCount}건</p>
+        </Link>
+        <Link to="/admin/pre-registered" className="bg-white rounded-xl border border-slate-100 shadow-sm hover:border-[#004bf0]/30 transition-colors block" style={{ padding: '16px 20px', textDecoration: 'none' }}>
+          <p style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8' }}>사전 등록</p>
+          <p style={{ fontSize: 24, fontWeight: 800, color: '#004bf0' }}>{preRegCount}명</p>
+        </Link>
       </div>
 
       <div className="mb-4">

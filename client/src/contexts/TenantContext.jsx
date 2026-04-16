@@ -114,6 +114,7 @@ function buildConfig(data) {
     academyInfo: settings.academyInfo || {},
     subject: settings.subject || null,
     clinicSettings: settings.clinicSettings || {},
+    dashboard_config: settings.dashboard_config || {},
   };
 }
 
@@ -131,6 +132,7 @@ function getDefaultConfig() {
     academyInfo: {},
     subject: null,
     clinicSettings: {},
+    dashboard_config: {},
   };
 }
 

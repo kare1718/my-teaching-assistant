@@ -181,7 +181,7 @@ router.get('/today', requireAdmin, async (req, res) => {
       FROM students s
       JOIN users u ON u.id = s.user_id
       LEFT JOIN attendance a ON a.student_id = s.id AND a.date = ? AND a.academy_id = ?
-      WHERE (s.status IS NULL OR s.status = 'active') AND s.academy_id = ?
+      WHERE (s.status IS NULL OR s.status = 'active') AND s.academy_id = ? AND u.role = 'student'
       ORDER BY s.school, s.grade, u.name
     `, [date, academyId, academyId]);
 
@@ -206,7 +206,7 @@ router.get('/absent', requireAdmin, async (req, res) => {
       SELECT s.id, u.name, s.school, s.grade, s.parent_phone
       FROM students s
       JOIN users u ON u.id = s.user_id
-      WHERE (s.status IS NULL OR s.status = 'active') AND s.academy_id = ?
+      WHERE (s.status IS NULL OR s.status = 'active') AND s.academy_id = ? AND u.role = 'student'
         AND s.id NOT IN (
           SELECT student_id FROM attendance WHERE academy_id = ? AND date = ?
         )
@@ -234,7 +234,7 @@ router.get('/stats', requireAdmin, async (req, res) => {
     const daily = await getAll(`
       SELECT a.date as day,
              COUNT(DISTINCT a.student_id) as present,
-             (SELECT COUNT(*) FROM students WHERE academy_id = ? AND (status IS NULL OR status = 'active')) as total
+             (SELECT COUNT(*) FROM students s2 JOIN users u2 ON s2.user_id = u2.id WHERE s2.academy_id = ? AND (s2.status IS NULL OR s2.status = 'active') AND u2.role = 'student') as total
       FROM attendance a
       WHERE a.academy_id = ? AND a.date BETWEEN ? AND ?
       GROUP BY a.date
@@ -242,7 +242,7 @@ router.get('/stats', requireAdmin, async (req, res) => {
     `, [academyId, academyId, startDate, endDate]);
 
     const totalStudents = await getOne(
-      "SELECT COUNT(*) as count FROM students WHERE academy_id = ? AND (status IS NULL OR status = 'active')",
+      "SELECT COUNT(*) as count FROM students s JOIN users u ON s.user_id = u.id WHERE s.academy_id = ? AND (s.status IS NULL OR s.status = 'active') AND u.role = 'student'",
       [academyId]
     );
     const totalCount = totalStudents?.count || 0;
@@ -478,7 +478,7 @@ router.get('/absent-streak', requireAdmin, async (req, res) => {
               WHERE student_id = s.id AND academy_id = ? AND date >= ?) as attend_count
       FROM students s
       JOIN users u ON u.id = s.user_id
-      WHERE s.academy_id = ? AND (s.status IS NULL OR s.status = 'active')
+      WHERE s.academy_id = ? AND (s.status IS NULL OR s.status = 'active') AND u.role = 'student'
       HAVING (SELECT COUNT(*) FROM attendance
               WHERE student_id = s.id AND academy_id = ? AND date >= ?) = 0
       ORDER BY u.name

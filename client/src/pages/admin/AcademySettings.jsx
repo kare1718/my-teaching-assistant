@@ -6,11 +6,11 @@ import { useUIStore } from '../../stores/useUIStore';
 
 const SETTINGS_TABS = [
   { label: '학원 정보', path: '/admin/settings' },
+  { label: '역할·권한', path: '/admin/settings/roles' },
   { label: '구독 관리', path: '/admin/subscription' },
-  { label: '역할·권한', path: null },
-  { label: '출결 정책', path: null },
-  { label: '수납 정책', path: null },
-  { label: '알림 설정', path: null },
+  { label: '프로필', path: '/admin/profile' },
+  { label: '백업', path: '/admin/backup' },
+  { label: '감사 로그', path: '/admin/audit-logs' },
 ];
 
 export default function AcademySettings() {
@@ -30,6 +30,7 @@ export default function AcademySettings() {
   const [sidebarPinned, setSidebarPinned] = useState(
     () => localStorage.getItem('adminSidebarPinned') === 'true'
   );
+  const [dashboardConfig, setDashboardConfig] = useState({});
   const [inviteCodes, setInviteCodes] = useState({ student_invite_code: '', parent_invite_code: '' });
   const [inviteLoading, setInviteLoading] = useState(false);
 
@@ -77,6 +78,7 @@ export default function AcademySettings() {
       setClinicTopics(config.clinicSettings?.topics || []);
       setPhone(config.academyInfo?.phone || '');
       setAddress(config.academyInfo?.address || '');
+      setDashboardConfig(config.dashboard_config || {});
     }
   }, [config]);
 
@@ -88,6 +90,7 @@ export default function AcademySettings() {
         schools, examTypes, siteTitle, mainTitle,
         academyInfo: { phone, address },
         clinicSettings: { topics: clinicTopics.length > 0 ? clinicTopics : undefined },
+        dashboard_config: dashboardConfig,
       });
       setMessage('설정이 저장되었습니다.');
       if (setConfig && result.settings) {
@@ -526,6 +529,47 @@ export default function AcademySettings() {
               </button>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Dashboard Config */}
+      <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-8">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="material-symbols-outlined text-[#102044]">dashboard_customize</span>
+          <h4 className="text-lg font-bold text-[#102044]">대시보드 구성</h4>
+        </div>
+        <p className="text-sm text-slate-400 mb-5">
+          대시보드에 표시할 카드를 선택하세요. 원하지 않는 카드는 끌 수 있습니다.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {[
+            { key: 'show_kpi', label: 'KPI 요약 (재원생/출석/수납/미납)', icon: 'monitoring' },
+            { key: 'show_tasks', label: '오늘의 할일', icon: 'checklist' },
+            { key: 'show_schedule', label: '이번 주 수업 일정', icon: 'calendar_month' },
+            { key: 'show_revenue', label: '매출 추이', icon: 'trending_up' },
+            { key: 'show_attendance', label: '출결 현황', icon: 'how_to_reg' },
+            { key: 'show_risks', label: '위험 알림', icon: 'warning' },
+            { key: 'show_activity', label: '최근 활동', icon: 'history' },
+            { key: 'show_occupancy', label: '반 충원율', icon: 'school' },
+          ].map(item => {
+            const checked = dashboardConfig[item.key] !== false;
+            return (
+              <label key={item.key} className={`flex items-center gap-3 px-4 py-3.5 rounded-xl cursor-pointer transition-all border ${
+                checked
+                  ? 'bg-[#004bf0]/5 border-[#004bf0]/20'
+                  : 'bg-[#f3f4f5] border-transparent'
+              }`}>
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => setDashboardConfig(prev => ({ ...prev, [item.key]: !checked }))}
+                  className="w-[18px] h-[18px] accent-[#004bf0] flex-shrink-0"
+                />
+                <span className={`material-symbols-outlined text-xl ${checked ? 'text-[#004bf0]' : 'text-slate-400'}`}>{item.icon}</span>
+                <span className="text-sm font-semibold text-[#102044]">{item.label}</span>
+              </label>
+            );
+          })}
         </div>
       </div>
 
