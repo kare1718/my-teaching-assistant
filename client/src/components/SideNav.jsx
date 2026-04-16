@@ -73,7 +73,6 @@ const adminNavGroups = [
 
   { key: 'tuition', label: '수납', icon: Icons.dollar, children: [
     { path: '/admin/tuition', label: '청구/납부' },
-    { path: '/admin/sms-credits', label: 'SMS 충전' },
   ]},
 
   { key: 'consult', label: '상담', icon: Icons.message, children: [

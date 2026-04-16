@@ -177,7 +177,6 @@ router.get('/clinic-appointments', async (req, res) => {
   const appointments = await getAll(
     `SELECT ca.id, ca.student_id, ca.appointment_date, ca.time_slot, ca.topic, ca.detail,
             ca.status, ca.admin_note, u.name as student_name, s.school, s.grade
-     /* academy_id는 where 변수에 항상 포함됨 (ca.academy_id = ?) */
      FROM clinic_appointments ca
      JOIN students s ON ca.student_id = s.id
      JOIN users u ON s.user_id = u.id
