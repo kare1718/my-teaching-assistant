@@ -28,7 +28,7 @@ const MEMO_PLACEHOLDERS = [
   '예) 수행평가 대비 추가 연습 권장',
 ];
 
-export default function HomeworkManage() {
+export default function HomeworkManage({ embedded = false }) {
   const { config } = useTenantConfig();
   const isLg = useMediaQuery('(min-width: 1600px)');
   const SMS_DEFAULT_TEMPLATE = getSmsDefaultTemplate(config.academyName);
@@ -385,7 +385,7 @@ export default function HomeworkManage() {
   };
 
   return (
-    <div className="content max-w-7xl mx-auto">
+    <div className={embedded ? '' : 'content max-w-7xl mx-auto'} style={embedded ? { fontSize: 13 } : {}}>
       {/* === 가로 배치: 좌측 필터 + 우측 테이블 === */}
       <div className="hw-layout" style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
 
