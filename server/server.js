@@ -69,7 +69,14 @@ app.use('/api/auth/login', (req, res, next) => {
 });
 
 // ── 정적 파일 서빙 ──
-app.use(express.static(path.join(__dirname, '../client/dist'), { maxAge: 0, etag: true }));
+// assets/는 해시 파일명이므로 장기 캐시, index.html은 캐시 금지
+app.use('/assets', express.static(path.join(__dirname, '../client/dist/assets'), { maxAge: '7d', immutable: true }));
+app.use(express.static(path.join(__dirname, '../client/dist'), { maxAge: 0, etag: false, setHeaders: (res, filePath) => {
+  if (filePath.endsWith('.html')) {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.set('Pragma', 'no-cache');
+  }
+}}));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // ── 헬스 체크 (라우트보다 먼저 등록) ──
@@ -192,6 +199,8 @@ app.use((err, req, res, next) => {
 
 // ── SPA fallback (에러 핸들러 뒤에 배치) ──
 app.get('*', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.set('Pragma', 'no-cache');
   res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 
