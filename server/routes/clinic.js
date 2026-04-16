@@ -162,7 +162,7 @@ router.get('/admin/students', requireAdmin, async (req, res) => {
 router.get('/admin/all', requireAdmin, async (req, res) => {
   const { month, year, school, grade } = req.query;
   const conditions = ['ca.academy_id = ?'];
-  const params = [req.academyId];
+  const params = [parseInt(req.academyId)];
 
   if (year && month) {
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;

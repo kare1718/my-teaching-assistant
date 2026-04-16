@@ -68,7 +68,7 @@ const adminNavGroups = [
   { key: 'classes', label: '학생 관리', icon: Icons.book, children: [
     { path: '/admin/classes', label: '수업/시간표' },
     { path: '/admin/attendance', label: '출결/과제', tier: 'pro' },
-    { path: '/admin/scores', label: '성적 관리' },
+    { path: '/admin/scores', label: '시험/성적' },
   ]},
 
   { key: 'tuition', label: '수납', icon: Icons.dollar, children: [

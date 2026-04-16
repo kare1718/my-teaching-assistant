@@ -4,6 +4,113 @@ import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { useTenantConfig, getAllGrades } from '../../contexts/TenantContext';
 import { BarChart, Bar, AreaChart, Area, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine, ZAxis } from 'recharts';
 
+// === 시험 유형 에디터 (인라인 컴포넌트) ===
+function ExamTypeEditor() {
+  const { config, setConfig } = useTenantConfig();
+  const [examTypes, setExamTypes] = useState((config?.examTypes || []).map(c => ({ ...c })));
+  const [saving, setSaving] = useState(false);
+  const [etMsg, setEtMsg] = useState('');
+
+  useEffect(() => {
+    if (config?.examTypes) setExamTypes(config.examTypes.map(c => ({ ...c, types: [...(c.types || [])] })));
+  }, [config?.examTypes]);
+
+  const addCategory = () => setExamTypes([...examTypes, { key: '', label: '', types: [] }]);
+  const removeCategory = (idx) => setExamTypes(examTypes.filter((_, i) => i !== idx));
+  const updateCategory = (idx, field, val) => {
+    const next = [...examTypes];
+    next[idx] = { ...next[idx], [field]: val };
+    if (field === 'label' && !next[idx].key) next[idx].key = val.replace(/\s+/g, '_').toLowerCase();
+    setExamTypes(next);
+  };
+  const addSubType = (catIdx) => {
+    const next = [...examTypes];
+    next[catIdx] = { ...next[catIdx], types: [...(next[catIdx].types || []), ''] };
+    setExamTypes(next);
+  };
+  const removeSubType = (catIdx, typeIdx) => {
+    const next = [...examTypes];
+    next[catIdx] = { ...next[catIdx], types: next[catIdx].types.filter((_, i) => i !== typeIdx) };
+    setExamTypes(next);
+  };
+  const updateSubType = (catIdx, typeIdx, val) => {
+    const next = [...examTypes];
+    const types = [...next[catIdx].types];
+    types[typeIdx] = val;
+    next[catIdx] = { ...next[catIdx], types };
+    setExamTypes(next);
+  };
+
+  const saveExamTypes = async () => {
+    setSaving(true);
+    try {
+      await apiPut('/academies/settings', { examTypes });
+      setConfig(prev => ({ ...prev, examTypes }));
+      setEtMsg('시험 유형이 저장되었습니다.');
+      setTimeout(() => setEtMsg(''), 2500);
+    } catch (err) { setEtMsg('저장 실패: ' + err.message); }
+    setSaving(false);
+  };
+
+  return (
+    <div style={{ maxWidth: 800 }}>
+      {etMsg && <div className="alert alert-success" style={{ marginBottom: 12 }}>{etMsg}</div>}
+      <div className="card" style={{ padding: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>시험 유형 관리</h3>
+          <button onClick={addCategory}
+            style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 14px', borderRadius: 8, fontSize: 13, fontWeight: 700, color: '#004bf0', border: '1px solid rgba(0,75,240,0.2)', background: 'transparent', cursor: 'pointer' }}>
+            + 카테고리 추가
+          </button>
+        </div>
+
+        {examTypes.length === 0 && (
+          <p style={{ textAlign: 'center', color: 'var(--muted-foreground)', padding: 20, fontSize: 13 }}>등록된 시험 유형이 없습니다. 카테고리를 추가하세요.</p>
+        )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {examTypes.map((cat, i) => (
+            <div key={i} style={{ background: '#f3f4f5', borderRadius: 12, padding: 16 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
+                <input value={cat.label || ''} onChange={e => updateCategory(i, 'label', e.target.value)}
+                  placeholder="카테고리명 (예: 모의고사)"
+                  style={{ flex: 1, padding: '8px 12px', background: 'white', borderRadius: 8, border: '1px solid transparent', fontSize: 13, fontWeight: 600, outline: 'none' }} />
+                <input value={cat.key || ''} onChange={e => updateCategory(i, 'key', e.target.value)}
+                  placeholder="key"
+                  style={{ width: 90, padding: '8px 10px', background: 'white', borderRadius: 8, border: '1px solid transparent', fontSize: 11, fontFamily: 'monospace', outline: 'none' }} />
+                <button onClick={() => removeCategory(i)}
+                  style={{ padding: '8px 10px', borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--neutral-400)', cursor: 'pointer', fontSize: 14 }}
+                  title="카테고리 삭제">✕</button>
+              </div>
+              <div style={{ paddingLeft: 14, borderLeft: '2px solid var(--border)', marginLeft: 6 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-400)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>하위 시험 유형</div>
+                {(cat.types || []).map((t, j) => (
+                  <div key={j} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6 }}>
+                    <input value={t} onChange={e => updateSubType(i, j, e.target.value)}
+                      placeholder="시험 유형명"
+                      style={{ flex: 1, padding: '7px 12px', background: 'white', borderRadius: 8, border: '1px solid transparent', fontSize: 13, outline: 'none' }} />
+                    <button onClick={() => removeSubType(i, j)}
+                      style={{ background: 'none', border: 'none', color: 'var(--neutral-400)', cursor: 'pointer', fontSize: 12, padding: 4 }}>✕</button>
+                  </div>
+                ))}
+                <button onClick={() => addSubType(i)}
+                  style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, fontSize: 12, fontWeight: 600, color: 'var(--neutral-400)', border: '1px dashed var(--border)', background: 'transparent', cursor: 'pointer' }}>
+                  + 하위 유형 추가
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <button onClick={saveExamTypes} disabled={saving}
+          style={{ marginTop: 16, width: '100%', padding: '10px 0', borderRadius: 10, border: 'none', background: '#102044', color: 'white', fontSize: 14, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>
+          {saving ? '저장 중...' : '시험 유형 저장'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function ScoreInput() {
   const { config } = useTenantConfig();
   const schools = config?.schools || [];
@@ -23,6 +130,7 @@ export default function ScoreInput() {
   const [customExamType, setCustomExamType] = useState(false);
   const [editExamId, setEditExamId] = useState(null);
   const [msg, setMsg] = useState('');
+  const [pageTab, setPageTab] = useState('scores'); // 'scores' | 'exam-types'
   const [mainTab, setMainTab] = useState('examScore'); // examScore | answerKey | omrInput
   const [filterType, setFilterType] = useState('');
 
@@ -487,22 +595,37 @@ export default function ScoreInput() {
   return (
     <div className="content max-w-7xl mx-auto">
       <div className="breadcrumb">
-        <Link to="/admin">대시보드</Link> &gt; <span>시험 성적</span>
+        <Link to="/admin">대시보드</Link> &gt; <span>시험/성적</span>
       </div>
 
-      {/* 메인 탭: 3개 */}
+      {/* 상위 탭: 시험/성적 관리 | 시험 유형 설정 */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <button onClick={() => setPageTab('scores')}
+          style={{ padding: '9px 20px', borderRadius: 10, border: pageTab === 'scores' ? 'none' : '1px solid #e2e8f0', fontSize: 14, fontWeight: 700, cursor: 'pointer', background: pageTab === 'scores' ? '#102044' : 'white', color: pageTab === 'scores' ? 'white' : '#334155', transition: 'all .15s' }}>
+          시험/성적 관리
+        </button>
+        <button onClick={() => setPageTab('exam-types')}
+          style={{ padding: '9px 20px', borderRadius: 10, border: pageTab === 'exam-types' ? 'none' : '1px solid #e2e8f0', fontSize: 14, fontWeight: 700, cursor: 'pointer', background: pageTab === 'exam-types' ? '#102044' : 'white', color: pageTab === 'exam-types' ? 'white' : '#334155', transition: 'all .15s' }}>
+          시험 유형 설정
+        </button>
+      </div>
+
+      {pageTab === 'exam-types' && <ExamTypeEditor />}
+
+      {pageTab === 'scores' && <>
+      {/* 하위 탭: 3개 */}
       <div className="tabs" style={{ marginBottom: 12 }}>
         <button className={`tab ${mainTab === 'examScore' ? 'active' : ''}`}
           onClick={() => setMainTab('examScore')}>
-          📊 시험 & 성적
+          시험 & 성적
         </button>
         <button className={`tab ${mainTab === 'answerKey' ? 'active' : ''}`}
           onClick={() => setMainTab('answerKey')}>
-          📝 정답키 설정
+          정답키 설정
         </button>
         <button className={`tab ${mainTab === 'omrInput' ? 'active' : ''}`}
           onClick={() => { setMainTab('omrInput'); loadOmrExams(); }}>
-          📋 OMR 입력
+          OMR 입력
         </button>
       </div>
 
@@ -1200,9 +1323,15 @@ export default function ScoreInput() {
                   })()}
                 </div>
 
-                <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   <button className="btn btn-primary" onClick={saveAnswerKey}>정답키 저장</button>
                   {akExistingKey && <button className="btn btn-danger" onClick={deleteAnswerKey}>삭제</button>}
+                  {akExistingKey && (
+                    <button className="btn btn-outline" onClick={() => { setMainTab('omrInput'); loadOmrExams(); setOmrExamId(akExamId); setTimeout(() => loadOmrData(akExamId), 300); }}
+                      style={{ marginLeft: 'auto' }}>
+                      OMR 채점으로 이동 &rarr;
+                    </button>
+                  )}
                 </div>
               </>
             )}
@@ -1378,6 +1507,8 @@ export default function ScoreInput() {
           </div>
         </div>
       )}
+
+      </>}
 
       {/* 반응형 CSS */}
       <style>{`
