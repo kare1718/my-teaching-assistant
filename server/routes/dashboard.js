@@ -271,6 +271,32 @@ router.get('/owner', async (req, res) => {
        WHERE academy_id = ? AND status = 'pending' AND due_date >= CURRENT_DATE`, [aid]
     );
 
+    // ── 12. weekly_classes (이번 주 수업) ──
+    const weeklyClasses = await getAll(
+      `SELECT cs.session_date, cs.start_time, cs.end_time, cs.status,
+              c.name AS class_name, c.class_type
+       FROM class_sessions cs
+       JOIN classes c ON c.id = cs.class_id
+       WHERE c.academy_id = ?
+         AND cs.session_date BETWEEN CURRENT_DATE AND (CURRENT_DATE + INTERVAL '6 days')
+         AND cs.status != 'cancelled'
+       ORDER BY cs.session_date, cs.start_time
+       LIMIT 20`,
+      [aid]
+    ).catch(() => []);
+
+    // ── 13. revenue_trend (최근 6개월 매출) ──
+    const revenueTrend = await getAll(
+      `SELECT TO_CHAR(paid_at, 'MM') || '월' AS month,
+              COALESCE(SUM(paid_amount), 0)::int AS amount
+       FROM tuition_records
+       WHERE academy_id = ? AND paid_at IS NOT NULL
+         AND paid_at >= NOW() - INTERVAL '6 months'
+       GROUP BY TO_CHAR(paid_at, 'YYYY-MM'), TO_CHAR(paid_at, 'MM')
+       ORDER BY TO_CHAR(paid_at, 'YYYY-MM')`,
+      [aid]
+    ).catch(() => []);
+
     const attTotal = present + absent + late + excused;
 
     res.json({
@@ -317,6 +343,8 @@ router.get('/owner', async (req, res) => {
         capacity: c.capacity || 0,
         rate: c.capacity ? Math.round((parseInt(c.current_count || 0) / c.capacity) * 100) : 0,
       })),
+      weekly_classes: weeklyClasses,
+      revenue_trend: revenueTrend,
     });
   } catch (err) {
     console.error('[Dashboard/owner]', err);
