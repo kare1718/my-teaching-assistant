@@ -303,10 +303,10 @@ export default function LandingPage() {
                 transition: 'all 0.2s', boxShadow: '0 4px 12px oklch(55% 0.15 250 / 0.2)',
               }} onMouseOver={e => { e.currentTarget.style.background = C.accentLight; e.currentTarget.style.boxShadow = '0 8px 24px oklch(55% 0.15 250 / 0.25)'; }}
                  onMouseOut={e => { e.currentTarget.style.background = C.accent; e.currentTarget.style.boxShadow = '0 4px 12px oklch(55% 0.15 250 / 0.2)'; }}>
-                14일 무료 체험 시작하기 <ArrowRight />
+                30일 무료 체험 시작하기 <ArrowRight />
               </button>
               <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, color: C.textTertiary }}>
-                <Shield /> 카드 등록 없이 · 14일 전체 기능 체험
+                <Shield /> 카드 등록 없이 · 30일 전체 기능 체험
               </span>
             </div>
           </div>
@@ -776,7 +776,7 @@ export default function LandingPage() {
       <section id="pricing" style={{ padding: '96px 0', background: C.surfaceCard }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
           <div ref={addRef} style={{ textAlign: 'center', marginBottom: 48 }}>
-            <p style={{ fontSize: 14, fontWeight: 600, color: C.accent, marginBottom: 12 }}>14일 무료 체험으로 시작</p>
+            <p style={{ fontSize: 14, fontWeight: 600, color: C.accent, marginBottom: 12 }}>30일 무료 체험으로 시작</p>
             <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.5rem)', fontWeight: 700, letterSpacing: '-0.025em', lineHeight: 1.3, marginBottom: 12 }}>학원 규모와 운영 방식에 맞게 선택하세요</h2>
             <p style={{ color: C.textTertiary, marginBottom: 24 }}>무료 체험부터 운영 자동화, 학생 참여 설계까지 필요한 수준에 맞춰 시작할 수 있습니다.</p>
             {/* 월간/연간 토글 */}
@@ -882,7 +882,7 @@ export default function LandingPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
             {[
               { icon: '🔒', title: '보안', items: ['역할별 권한 관리 (RBAC)', '전 데이터 암호화 (HTTPS)', '감사 로그 자동 기록', '테넌트 데이터 완전 격리'] },
-              { icon: '🔄', title: '운영', items: ['자동 백업 (매일)', '데이터 이전 지원 (엑셀 Import)', '14일 무료 체험 (카드 등록 없음)', '1일 내 첫 세팅 완료'] },
+              { icon: '🔄', title: '운영', items: ['자동 백업 (매일)', '데이터 이전 지원 (엑셀 Import)', '30일 무료 체험 (카드 등록 없음)', '1일 내 첫 세팅 완료'] },
               { icon: '⚖️', title: '법규 준수', items: ['개인정보처리방침 공개', '광고성 메시지 동의 관리', '사업자 정보 투명 공개', '환불 정책 명시'] },
             ].map((t, i) => (
               <div key={i} ref={addRef} style={{
@@ -948,7 +948,7 @@ export default function LandingPage() {
             학원 운영, 이제 바꿀 때입니다
           </h2>
           <p ref={addRef} style={{ fontSize: 18, color: 'rgba(255,255,255,0.8)', lineHeight: 1.7, marginBottom: 36 }}>
-            지금 쓰고 계신 엑셀과 단톡방에서 꺼내보세요.<br/>14일 무료 체험, 카드 등록 없이 시작할 수 있습니다.
+            지금 쓰고 계신 엑셀과 단톡방에서 꺼내보세요.<br/>30일 무료 체험, 카드 등록 없이 시작할 수 있습니다.
           </p>
           <div ref={addRef} style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center', alignItems: 'center' }}>
             <button onClick={() => navigate('/onboarding')} style={{

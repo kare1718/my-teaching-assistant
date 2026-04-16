@@ -411,13 +411,13 @@ export default function OnboardingPage() {
                   )}
                 </div>
 
-                {/* 14일 무료 안내 */}
+                {/* 30일 무료 안내 */}
                 <div className="bg-emerald-50 rounded-xl p-5 flex items-start gap-4">
                   <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83"/></svg>
                   </div>
                   <div>
-                    <p className="font-bold text-emerald-700 text-sm mb-0.5">14일 무료 체험으로 시작!</p>
+                    <p className="font-bold text-emerald-700 text-sm mb-0.5">30일 무료 체험으로 시작!</p>
                     <p className="text-slate-600 text-sm">전체 기능을 무료로 체험해보세요. 카드 등록 없이 바로 시작합니다.</p>
                   </div>
                 </div>
@@ -535,7 +535,7 @@ export default function OnboardingPage() {
 
               {/* Checklist */}
               <div className="w-full flex flex-col gap-3 mb-8">
-                {['학원 등록 완료', '관리자 계정 생성', '14일 무료 체험 시작'].map((text, i) => (
+                {['학원 등록 완료', '관리자 계정 생성', '30일 무료 체험 시작'].map((text, i) => (
                   <div key={i} className="flex items-center gap-3 px-2">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="#102044" stroke="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
                     <span className="text-[#191c1d] font-medium">{text}</span>

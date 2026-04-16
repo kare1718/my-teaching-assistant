@@ -300,6 +300,7 @@ function AppLayout() {
             <Route path="/parent/*" element={<ProtectedRoute role="parent"><ParentLayout /></ProtectedRoute>} />
 
             <Route path="/superadmin" element={<ProtectedRoute role="superadmin"><SuperDashboard /></ProtectedRoute>} />
+            <Route path="/superadmin/academies" element={<ProtectedRoute role="superadmin"><SuperDashboard /></ProtectedRoute>} />
             <Route path="/superadmin/academy/new" element={<ProtectedRoute role="superadmin"><AcademyCreate /></ProtectedRoute>} />
             <Route path="/superadmin/academy/:id" element={<ProtectedRoute role="superadmin"><AcademyDetail /></ProtectedRoute>} />
             <Route path="/superadmin/promotions" element={<ProtectedRoute role="superadmin"><PromotionsPage /></ProtectedRoute>} />

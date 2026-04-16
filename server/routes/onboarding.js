@@ -57,6 +57,14 @@ router.post('/create-academy', async (req, res) => {
 
     await runQuery('UPDATE academies SET owner_user_id = ? WHERE id = ?', [userId, academyId]);
 
+    // 30일 무료 체험 구독 생성 (Pro 기능 체험)
+    const trialEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    await runInsert(
+      `INSERT INTO subscriptions (academy_id, plan_type, billing_cycle, status, trial_ends_at, current_period_start, current_period_end)
+       VALUES (?, 'pro', 'monthly', 'trial', ?, NOW(), ?)`,
+      [academyId, trialEnd, trialEnd]
+    );
+
     // 기본 캐릭터/칭호 시드
     await seedDefaults(academyId);
 

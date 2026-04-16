@@ -124,7 +124,7 @@ const TIER_FEATURES = {
   // 기존 DB에 남아있을 수 있는 tier 값을 현행 4단 구조로 매핑
   // 실제 신규 학원은 Free/Starter/Pro/First Class 중 선택
   // ─────────────────────────────────────────────
-  trial: FREE,           // 구 체험 플랜 → free (14일 체험은 is_trial 플래그로 대체)
+  trial: FREE,           // 구 체험 플랜 → free (30일 체험은 is_trial 플래그로 대체)
   basic: STARTER,        // 구 Basic → Starter
   standard: PRO,         // 구 Standard → Pro
   growth: PRO,           // 구 Growth → Pro

@@ -5,12 +5,17 @@ import { api } from '../../api';
 const FONT = "'Paperlogy', 'Noto Sans KR', system-ui, sans-serif";
 
 const TIER_LABELS = {
-  trial: { text: '체험', bg: '#f3f4f6', color: '#6b7280' },
-  free: { text: '무료', bg: '#f3f4f6', color: '#6b7280' },
-  basic: { text: '베이직', bg: '#dbeafe', color: '#2563eb' },
-  standard: { text: '스탠다드', bg: '#d1fae5', color: '#059669' },
-  pro: { text: '프로', bg: '#ede9fe', color: '#7c3aed' },
-  enterprise: { text: '엔터프라이즈', bg: '#fef3c7', color: '#d97706' },
+  free: { text: 'Free', bg: '#f3f4f6', color: '#6b7280' },
+  starter: { text: 'Starter', bg: '#dbeafe', color: '#2563eb' },
+  pro: { text: 'Pro', bg: '#ede9fe', color: '#7c3aed' },
+  first_class: { text: 'First Class', bg: '#fef3c7', color: '#d97706' },
+  // 레거시 호환
+  trial: { text: 'Free (체험)', bg: '#fef3c7', color: '#92400e' },
+  basic: { text: 'Starter', bg: '#dbeafe', color: '#2563eb' },
+  standard: { text: 'Pro', bg: '#ede9fe', color: '#7c3aed' },
+  growth: { text: 'Pro', bg: '#ede9fe', color: '#7c3aed' },
+  premium: { text: 'First Class', bg: '#fef3c7', color: '#d97706' },
+  enterprise: { text: 'First Class', bg: '#fef3c7', color: '#d97706' },
 };
 
 const ACTION_LABELS = {
@@ -29,6 +34,7 @@ export default function SuperAdminDashboard() {
   const [activity, setActivity] = useState([]);
   const [search, setSearch] = useState('');
   const [tierFilter, setTierFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,7 +52,9 @@ export default function SuperAdminDashboard() {
   const filtered = academies.filter(a => {
     const matchSearch = !search || a.name.toLowerCase().includes(search.toLowerCase()) || a.slug?.toLowerCase().includes(search.toLowerCase());
     const matchTier = tierFilter === 'all' || a.subscription_tier === tierFilter;
-    return matchSearch && matchTier;
+    const isActive = a.is_active !== false && a.is_active !== 0;
+    const matchStatus = statusFilter === 'all' || (statusFilter === 'active' ? isActive : !isActive);
+    return matchSearch && matchTier && matchStatus;
   });
 
   const formatNum = (n) => Number(n || 0).toLocaleString();
@@ -198,6 +206,25 @@ export default function SuperAdminDashboard() {
         </div>
       </div>
 
+      {/* 상태 탭 */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {[
+          { key: 'all', label: '전체', count: academies.length },
+          { key: 'active', label: '활성', count: academies.filter(a => a.is_active !== false && a.is_active !== 0).length },
+          { key: 'inactive', label: '비활성', count: academies.filter(a => a.is_active === false || a.is_active === 0).length },
+        ].map(f => (
+          <button key={f.key} onClick={() => setStatusFilter(f.key)}
+            style={{
+              padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              background: statusFilter === f.key ? '#102044' : 'var(--card)',
+              color: statusFilter === f.key ? '#fff' : 'var(--muted-foreground)',
+              border: '1px solid var(--border)', fontFamily: FONT, transition: 'all 0.15s',
+            }}>
+            {f.label} ({f.count})
+          </button>
+        ))}
+      </div>
+
       {/* 검색/필터 */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
         <input placeholder="학원 검색..." value={search} onChange={e => setSearch(e.target.value)}
@@ -213,9 +240,10 @@ export default function SuperAdminDashboard() {
             color: 'var(--foreground)', cursor: 'pointer',
           }}>
           <option value="all">전체 티어</option>
-          {Object.entries(TIER_LABELS).map(([k, v]) => (
-            <option key={k} value={k}>{v.text}</option>
-          ))}
+          <option value="free">Free</option>
+          <option value="starter">Starter</option>
+          <option value="pro">Pro</option>
+          <option value="first_class">First Class</option>
         </select>
       </div>
 
@@ -250,11 +278,14 @@ export default function SuperAdminDashboard() {
                     </span>
                   </td>
                   <td style={{ padding: '14px 16px' }}>
-                    <span style={{
-                      padding: '4px 10px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-                      background: a.is_active !== false && a.is_active !== 0 ? '#d1fae5' : '#fee2e2',
-                      color: a.is_active !== false && a.is_active !== 0 ? '#059669' : '#dc2626',
-                    }}>{a.is_active !== false && a.is_active !== 0 ? '활성' : '비활성'}</span>
+                    {(a.is_active !== false && a.is_active !== 0) ? (
+                      <span style={{ padding: '4px 10px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: '#d1fae5', color: '#059669' }}>활성</span>
+                    ) : (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <span style={{ padding: '4px 10px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: '#fee2e2', color: '#dc2626' }}>비활성</span>
+                        {a.updated_at && <span style={{ color: '#ef4444', fontSize: 11 }}>({Math.floor((Date.now() - new Date(a.updated_at).getTime()) / 86400000)}일)</span>}
+                      </span>
+                    )}
                   </td>
                   <td style={{ padding: '14px 16px', color: 'var(--muted-foreground)', fontSize: 13 }}>
                     {a.created_at ? new Date(a.created_at).toLocaleDateString('ko-KR') : '-'}

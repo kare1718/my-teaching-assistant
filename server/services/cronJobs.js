@@ -50,7 +50,7 @@ async function checkTrialExpiry() {
         // 3) 플랫폼 알림 발송 (학원 관리자에게)
         await runInsert(
           `INSERT INTO platform_notifications (academy_id, type, title, message, created_at)
-           VALUES (?, 'subscription', 'Trial 기간 만료', '14일 체험 기간이 종료되어 Free 플랜으로 전환되었습니다. 유료 플랜으로 업그레이드하면 더 많은 기능을 사용할 수 있습니다.', NOW())`,
+           VALUES (?, 'subscription', 'Trial 기간 만료', '30일 체험 기간이 종료되어 Free 플랜으로 전환되었습니다. 유료 플랜으로 업그레이드하면 더 많은 기능을 사용할 수 있습니다.', NOW())`,
           [sub.academy_id]
         );
 

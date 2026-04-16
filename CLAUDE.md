@@ -22,7 +22,7 @@
   - `starter` — 49,000원 / 50명 (+수납 기본·SMS·보호자 앱·기본 상담)
   - `pro` — 129,000원 / 100명 (+자동화·상담 CRM·고급 리포트·AI 리포트)
   - `first_class` — 별도 문의 (+게이미피케이션·AI 문제 생성·브랜딩)
-  - ※ Trial 별도 플랜 없음. 체험은 Free로 일원화.
+  - ※ 신규 가입 시 30일 무료 체험 (Pro 기능 체험, trial_ends_at 기반). 만료 후 Free로 자동 전환.
   - 레거시 호환 매핑: trial→free, basic→starter, standard|growth→pro, premium→first_class
   - 상세: `PLAYBOOK.md` 3절 / 구현: `server/middleware/subscription.js`
 
