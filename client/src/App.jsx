@@ -216,7 +216,7 @@ function AppLayout() {
   const user = getUser();
   const isPublicPayment = location.pathname.startsWith('/pay/');
   const isParentRoute = location.pathname.startsWith('/parent');
-  usePageTracking();
+  // usePageTracking(); // 임시 비활성화 — 런타임 안정성 확인 후 재활성화
 
   return (
     <div className="app">
