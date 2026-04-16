@@ -1086,6 +1086,39 @@ router.post('/generate-monthly-with-discounts', async (req, res) => {
   }
 });
 
+// GET /trend — 최근 6개월 수납 추이
+router.get('/trend', async (req, res) => {
+  try {
+    const aid = req.academyId;
+    const trend = await getAll(`
+      SELECT
+        TO_CHAR(due_date, 'YYYY-MM') as month,
+        TO_CHAR(due_date, 'MM') || '월' as label,
+        COUNT(*)::int as total_bills,
+        COUNT(*) FILTER (WHERE status = 'paid')::int as paid_count,
+        COUNT(*) FILTER (WHERE status IN ('pending','overdue'))::int as unpaid_count,
+        COALESCE(SUM(amount), 0)::int as total_amount,
+        COALESCE(SUM(CASE WHEN status = 'paid' THEN COALESCE(paid_amount, amount) ELSE 0 END), 0)::int as collected,
+        COALESCE(SUM(CASE WHEN status IN ('pending','overdue') THEN amount - COALESCE(paid_amount,0) ELSE 0 END), 0)::int as outstanding
+      FROM tuition_records
+      WHERE academy_id = ? AND due_date >= NOW() - INTERVAL '6 months'
+      GROUP BY TO_CHAR(due_date, 'YYYY-MM'), TO_CHAR(due_date, 'MM')
+      ORDER BY TO_CHAR(due_date, 'YYYY-MM')
+    `, [aid]);
+
+    const studentCount = await getOne(`
+      SELECT COUNT(*)::int as n FROM students s
+      JOIN users u ON u.id = s.user_id
+      WHERE s.academy_id = ? AND u.role = 'student' AND (s.status IS NULL OR s.status = 'active')
+    `, [aid]);
+
+    res.json({ trend: trend || [], current_students: studentCount?.n || 0 });
+  } catch (err) {
+    console.error('[tuition trend]', err);
+    res.status(500).json({ error: '추이 데이터 조회 실패' });
+  }
+});
+
 module.exports = router;
 
 // === 공개 API (인증 불필요 — server.js에서 별도 등록) ===

@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { useTenantConfig, getAllGrades } from '../../contexts/TenantContext';
+
+const LazySmsCredits = lazy(() => import('./SmsCredits'));
 
 // EUC-KR 바이트 수 계산 (서버와 동일 로직)
 function getByteLength(text) {
@@ -80,6 +82,7 @@ export default function SmsManage() {
   const [chargeAmount, setChargeAmount] = useState('');
   const [chargeDesc, setChargeDesc] = useState('');
   const [activeTab, setActiveTab] = useState('send');
+  const [smsTab, setSmsTab] = useState('send'); // 'send' | 'credits'
 
   // 이력 탭
   const [sendLogs, setSendLogs] = useState([]);
@@ -459,6 +462,29 @@ export default function SmsManage() {
       <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center' }}>
         <h2 style={{ fontSize: 'var(--text-lg)', margin: 0 }}>📱 메시지 정책 관리</h2>
       </div>
+
+      {/* 상단 탭: 문자 발송 | SMS 충전 */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 'var(--space-2)' }}>
+        <button onClick={() => setSmsTab('send')} style={{
+          padding: '10px 20px', borderRadius: 8, fontSize: 14, fontWeight: 700,
+          background: smsTab === 'send' ? '#102044' : '#fff',
+          color: smsTab === 'send' ? '#fff' : '#64748b',
+          border: '1px solid #e2e8f0', cursor: 'pointer', whiteSpace: 'nowrap',
+        }}>문자 발송</button>
+        <button onClick={() => setSmsTab('credits')} style={{
+          padding: '10px 20px', borderRadius: 8, fontSize: 14, fontWeight: 700,
+          background: smsTab === 'credits' ? '#102044' : '#fff',
+          color: smsTab === 'credits' ? '#fff' : '#64748b',
+          border: '1px solid #e2e8f0', cursor: 'pointer', whiteSpace: 'nowrap',
+        }}>SMS 충전</button>
+      </div>
+
+      {smsTab === 'credits' ? (
+        <Suspense fallback={<div style={{ textAlign: 'center', padding: 40, color: '#94a3b8' }}>로딩 중...</div>}>
+          <LazySmsCredits />
+        </Suspense>
+      ) : (
+      <>
 
       {!configured && (
         <div style={{ padding: 'var(--space-3)', background: 'var(--warning-light)', borderRadius: 'var(--radius)', marginBottom: 'var(--space-2)', border: '1px solid var(--warning)', fontSize: 13, color: 'oklch(35% 0.12 75)' }}>
@@ -1308,6 +1334,9 @@ export default function SmsManage() {
             </div>
           </div>
         </>
+      )}
+
+      </>
       )}
 
       <button className="btn btn-outline" onClick={() => navigate('/admin')}

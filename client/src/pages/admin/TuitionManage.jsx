@@ -1,7 +1,108 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 
+// 수납 추이 컴포넌트
+function TuitionTrend() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api('/tuition/trend')
+      .then(setData)
+      .catch(() => setData({ trend: [], current_students: 0 }))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>로딩 중...</div>;
+  if (!data || data.trend.length === 0) {
+    return (
+      <div style={{ padding: 60, textAlign: 'center', color: '#94a3b8', background: 'white', borderRadius: 12, border: '1px solid #f1f5f9' }}>
+        수납 데이터가 쌓이면 추이를 확인할 수 있습니다.
+      </div>
+    );
+  }
+
+  const maxAmount = Math.max(...data.trend.map(t => t.total_amount), 1);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* 현재 재원생 */}
+      <div style={{ background: 'white', borderRadius: 12, border: '1px solid #f1f5f9', padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <span style={{ fontSize: 13, color: '#64748b' }}>현재 재원생</span>
+        <span style={{ fontSize: 22, fontWeight: 800, color: '#102044' }}>{data.current_students}명</span>
+      </div>
+
+      {/* 월별 수납 바 차트 */}
+      <div style={{ background: 'white', borderRadius: 12, border: '1px solid #f1f5f9', padding: 20 }}>
+        <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, color: '#102044' }}>월별 수납 추이</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {data.trend.map(t => {
+            const rate = t.total_amount > 0 ? Math.round((t.collected / t.total_amount) * 100) : 0;
+            return (
+              <div key={t.month}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 13 }}>
+                  <span style={{ fontWeight: 700, color: '#102044' }}>{t.label}</span>
+                  <span style={{ color: '#64748b' }}>수납률 <strong style={{ color: rate >= 80 ? '#16a34a' : '#dc2626' }}>{rate}%</strong></span>
+                </div>
+                {/* 청구 바 */}
+                <div style={{ height: 14, background: '#e2e8f0', borderRadius: 7, marginBottom: 3, position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${(t.total_amount / maxAmount) * 100}%`, background: '#e2e8f0', borderRadius: 7 }} />
+                </div>
+                {/* 수납 바 */}
+                <div style={{ height: 14, background: '#f1f5f9', borderRadius: 7, position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${(t.collected / maxAmount) * 100}%`, background: '#004bf0', borderRadius: 7 }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 11, color: '#94a3b8' }}>
+                  <span>청구 {t.total_amount.toLocaleString()}원</span>
+                  <span>수납 {t.collected.toLocaleString()}원</span>
+                  <span>미수 {t.outstanding.toLocaleString()}원</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ marginTop: 12, display: 'flex', gap: 16, fontSize: 11, color: '#94a3b8' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: '#e2e8f0', display: 'inline-block' }} /> 청구</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: '#004bf0', display: 'inline-block' }} /> 수납</span>
+        </div>
+      </div>
+
+      {/* 월별 상세 테이블 */}
+      <div style={{ background: 'white', borderRadius: 12, border: '1px solid #f1f5f9', overflow: 'hidden' }}>
+        <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ borderBottom: '2px solid #e2e8f0', background: '#f8fafc' }}>
+              <th style={{ padding: 10, textAlign: 'left' }}>월</th>
+              <th style={{ padding: 10, textAlign: 'right' }}>청구</th>
+              <th style={{ padding: 10, textAlign: 'right' }}>수납</th>
+              <th style={{ padding: 10, textAlign: 'right' }}>미수</th>
+              <th style={{ padding: 10, textAlign: 'center' }}>수납률</th>
+              <th style={{ padding: 10, textAlign: 'center' }}>건수</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.trend.map(t => {
+              const rate = t.total_amount > 0 ? Math.round((t.collected / t.total_amount) * 100) : 0;
+              return (
+                <tr key={t.month} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: 10, fontWeight: 600 }}>{t.label}</td>
+                  <td style={{ padding: 10, textAlign: 'right' }}>{t.total_amount.toLocaleString()}원</td>
+                  <td style={{ padding: 10, textAlign: 'right', color: '#004bf0', fontWeight: 600 }}>{t.collected.toLocaleString()}원</td>
+                  <td style={{ padding: 10, textAlign: 'right', color: t.outstanding > 0 ? '#dc2626' : '#94a3b8' }}>{t.outstanding.toLocaleString()}원</td>
+                  <td style={{ padding: 10, textAlign: 'center', fontWeight: 700, color: rate >= 80 ? '#16a34a' : '#dc2626' }}>{rate}%</td>
+                  <td style={{ padding: 10, textAlign: 'center', color: '#64748b' }}>{t.paid_count}/{t.total_bills}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 export default function TuitionManage() {
+  const [tuitionTab, setTuitionTab] = useState('billing'); // 'billing' | 'trend'
   const [tab, setTab] = useState('plans');
   const [plans, setPlans] = useState([]);
   const [records, setRecords] = useState([]);
@@ -209,6 +310,27 @@ export default function TuitionManage() {
   return (
     <div className="main-content" style={{ padding: 20, maxWidth: 1100, margin: '0 auto' }}>
       <h2 style={{ fontSize: '1.5em', fontWeight: 800, marginBottom: 20 }}>수납 관리</h2>
+
+      {/* 상단 탭: 청구/납부 | 수납 추이 */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        <button onClick={() => setTuitionTab('billing')} style={{
+          padding: '10px 20px', borderRadius: 8, fontSize: 14, fontWeight: 700,
+          background: tuitionTab === 'billing' ? '#102044' : '#fff',
+          color: tuitionTab === 'billing' ? '#fff' : '#64748b',
+          border: '1px solid #e2e8f0', cursor: 'pointer', whiteSpace: 'nowrap',
+        }}>청구/납부</button>
+        <button onClick={() => setTuitionTab('trend')} style={{
+          padding: '10px 20px', borderRadius: 8, fontSize: 14, fontWeight: 700,
+          background: tuitionTab === 'trend' ? '#102044' : '#fff',
+          color: tuitionTab === 'trend' ? '#fff' : '#64748b',
+          border: '1px solid #e2e8f0', cursor: 'pointer', whiteSpace: 'nowrap',
+        }}>수납 추이</button>
+      </div>
+
+      {tuitionTab === 'trend' ? (
+        <TuitionTrend />
+      ) : (
+      <>
 
       {msg && (
         <div style={{ padding: '10px 16px', borderRadius: 8, background: 'var(--success-light)', color: 'oklch(52% 0.14 160)', marginBottom: 16, fontSize: 14, fontWeight: 600 }}>
@@ -630,6 +752,9 @@ export default function TuitionManage() {
             </button>
           </div>
         </div>
+      )}
+
+      </>
       )}
     </div>
   );
