@@ -40,7 +40,7 @@ export default class ErrorBoundary extends React.Component {
                 ⚠️
               </div>
               <div>
-                <h2 className="text-xl font-extrabold text-[#102044]">
+                <h2 className="text-xl font-extrabold text-[var(--primary)]">
                   페이지를 불러올 수 없습니다
                 </h2>
                 <p className="text-sm text-slate-500 mt-1">
@@ -61,13 +61,13 @@ export default class ErrorBoundary extends React.Component {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={this.handleReset}
-                className="flex-1 px-4 py-3 bg-[#102044] text-white rounded-lg font-bold hover:bg-[#1e2a5e] transition-colors"
+                className="flex-1 px-4 py-3 bg-[var(--primary)] text-white rounded-lg font-bold hover:bg-[#1e2a5e] transition-colors"
               >
                 다시 시도
               </button>
               <button
                 onClick={this.handleReload}
-                className="flex-1 px-4 py-3 bg-white border border-slate-200 text-[#102044] rounded-lg font-bold hover:bg-slate-50 transition-colors"
+                className="flex-1 px-4 py-3 bg-white border border-slate-200 text-[var(--primary)] rounded-lg font-bold hover:bg-slate-50 transition-colors"
               >
                 새로고침
               </button>

@@ -153,7 +153,7 @@ export default function AcademySettings() {
     { value: 'system', label: '시스템', icon: 'computer' },
   ];
 
-  const inputCls = 'w-full px-5 py-4 bg-[#edeeef] rounded-lg border border-transparent text-sm outline-none focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 transition-all';
+  const inputCls = 'w-full px-5 py-4 bg-[#edeeef] rounded-lg border border-transparent text-sm outline-none focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 transition-all';
 
   return (
     <div className="p-4 md:p-10 space-y-6 md:space-y-8 max-w-7xl mx-auto w-full">
@@ -169,10 +169,10 @@ export default function AcademySettings() {
               disabled={disabled}
               className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-colors whitespace-nowrap ${
                 isCurrent
-                  ? 'bg-[#102044] text-white shadow-sm'
+                  ? 'bg-[var(--primary)] text-white shadow-sm'
                   : disabled
                     ? 'bg-white border border-slate-200 text-slate-300 cursor-default'
-                    : 'bg-white border border-slate-200 text-slate-500 hover:text-[#102044] hover:border-[#102044]/30'
+                    : 'bg-white border border-slate-200 text-slate-500 hover:text-[var(--primary)] hover:border-[var(--primary)]/30'
               }`}
             >
               {tab.label}
@@ -183,7 +183,7 @@ export default function AcademySettings() {
 
       {/* Page Title */}
       <div>
-        <h3 className="text-2xl font-extrabold text-[#102044] tracking-tight">학원 정보</h3>
+        <h3 className="text-2xl font-extrabold text-[var(--primary)] tracking-tight">학원 정보</h3>
         <p className="text-sm text-slate-500 mt-1">학원 기본 정보 및 시스템 설정을 관리합니다.</p>
       </div>
 
@@ -199,8 +199,8 @@ export default function AcademySettings() {
       {/* Invite Codes */}
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-8">
         <div className="flex items-center gap-2 mb-2">
-          <span className="material-symbols-outlined text-[#102044]">qr_code_2</span>
-          <h4 className="text-lg font-bold text-[#102044]">초대 코드</h4>
+          <span className="material-symbols-outlined text-[var(--primary)]">qr_code_2</span>
+          <h4 className="text-lg font-bold text-[var(--primary)]">초대 코드</h4>
         </div>
         <p className="text-sm text-slate-500 mb-6">
           학생과 학부모가 회원가입할 때 이 코드를 입력해야 본 학원에 속하게 됩니다. 외부에 유출되면 재발급하세요.
@@ -210,7 +210,7 @@ export default function AcademySettings() {
           <div className="flex items-center justify-between gap-4 p-5 bg-slate-50 rounded-xl">
             <div className="min-w-0">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">학생용 코드</p>
-              <p className="text-xl font-extrabold text-[#102044] mt-1 font-mono truncate">
+              <p className="text-xl font-extrabold text-[var(--primary)] mt-1 font-mono truncate">
                 {inviteCodes.student_invite_code || '발급 중...'}
               </p>
             </div>
@@ -219,7 +219,7 @@ export default function AcademySettings() {
                 type="button"
                 onClick={() => copyCode(inviteCodes.student_invite_code)}
                 disabled={!inviteCodes.student_invite_code}
-                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:border-[#102044]/30 disabled:opacity-50"
+                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:border-[var(--primary)]/30 disabled:opacity-50"
               >
                 복사
               </button>
@@ -227,7 +227,7 @@ export default function AcademySettings() {
                 type="button"
                 onClick={() => regenerateInviteCode('student')}
                 disabled={inviteLoading}
-                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:border-[#004bf0]/40 hover:text-[#004bf0] disabled:opacity-50"
+                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:border-[var(--cta)]/40 hover:text-[var(--cta)] disabled:opacity-50"
               >
                 재발급
               </button>
@@ -237,7 +237,7 @@ export default function AcademySettings() {
           <div className="flex items-center justify-between gap-4 p-5 bg-slate-50 rounded-xl">
             <div className="min-w-0">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">학부모용 코드</p>
-              <p className="text-xl font-extrabold text-[#102044] mt-1 font-mono truncate">
+              <p className="text-xl font-extrabold text-[var(--primary)] mt-1 font-mono truncate">
                 {inviteCodes.parent_invite_code || '발급 중...'}
               </p>
             </div>
@@ -246,7 +246,7 @@ export default function AcademySettings() {
                 type="button"
                 onClick={() => copyCode(inviteCodes.parent_invite_code)}
                 disabled={!inviteCodes.parent_invite_code}
-                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:border-[#102044]/30 disabled:opacity-50"
+                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:border-[var(--primary)]/30 disabled:opacity-50"
               >
                 복사
               </button>
@@ -254,7 +254,7 @@ export default function AcademySettings() {
                 type="button"
                 onClick={() => regenerateInviteCode('parent')}
                 disabled={inviteLoading}
-                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:border-[#004bf0]/40 hover:text-[#004bf0] disabled:opacity-50"
+                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:border-[var(--cta)]/40 hover:text-[var(--cta)] disabled:opacity-50"
               >
                 재발급
               </button>
@@ -266,8 +266,8 @@ export default function AcademySettings() {
       {/* Theme Setting */}
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-8">
         <div className="flex items-center gap-2 mb-6">
-          <span className="material-symbols-outlined text-[#102044]">palette</span>
-          <h4 className="text-lg font-bold text-[#102044]">테마 설정</h4>
+          <span className="material-symbols-outlined text-[var(--primary)]">palette</span>
+          <h4 className="text-lg font-bold text-[var(--primary)]">테마 설정</h4>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {themeOptions.map(opt => (
@@ -276,17 +276,17 @@ export default function AcademySettings() {
               onClick={() => setTheme(opt.value)}
               className={`flex flex-col items-center gap-3 p-5 rounded-xl transition-all ${
                 theme === opt.value
-                  ? 'bg-[#004bf0]/5 border-2 border-[#004bf0] ring-2 ring-[#004bf0]/10'
+                  ? 'bg-[var(--cta)]/5 border-2 border-[var(--cta)] ring-2 ring-[var(--cta)]/10'
                   : 'bg-[#f3f4f5] border-2 border-transparent hover:border-slate-200'
               }`}
             >
               <span className={`material-symbols-outlined text-2xl ${
-                theme === opt.value ? 'text-[#004bf0]' : 'text-slate-400'
+                theme === opt.value ? 'text-[var(--cta)]' : 'text-slate-400'
               }`}>
                 {opt.icon}
               </span>
               <span className={`text-sm font-semibold ${
-                theme === opt.value ? 'text-[#102044]' : 'text-slate-500'
+                theme === opt.value ? 'text-[var(--primary)]' : 'text-slate-500'
               }`}>
                 {opt.label}
               </span>
@@ -298,18 +298,18 @@ export default function AcademySettings() {
       {/* Sidebar Setting */}
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-8">
         <div className="flex items-center gap-2 mb-6">
-          <span className="material-symbols-outlined text-[#102044]">side_navigation</span>
-          <h4 className="text-lg font-bold text-[#102044]">사이드바 설정</h4>
+          <span className="material-symbols-outlined text-[var(--primary)]">side_navigation</span>
+          <h4 className="text-lg font-bold text-[var(--primary)]">사이드바 설정</h4>
         </div>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold text-[#102044]">사이드바 고정</p>
+            <p className="text-sm font-semibold text-[var(--primary)]">사이드바 고정</p>
             <p className="text-xs text-slate-500 mt-1">고정하면 사이드바가 항상 펼쳐져 있습니다</p>
           </div>
           <button
             onClick={handleToggleSidebarPin}
             className={`relative w-14 h-8 rounded-full transition-colors duration-200 ${
-              sidebarPinned ? 'bg-[#004bf0]' : 'bg-slate-300'
+              sidebarPinned ? 'bg-[var(--cta)]' : 'bg-slate-300'
             }`}
           >
             <span
@@ -323,8 +323,8 @@ export default function AcademySettings() {
       {/* Basic Info */}
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-8">
         <div className="flex items-center gap-2 mb-6">
-          <span className="material-symbols-outlined text-[#102044]">info</span>
-          <h4 className="text-lg font-bold text-[#102044]">기본 정보</h4>
+          <span className="material-symbols-outlined text-[var(--primary)]">info</span>
+          <h4 className="text-lg font-bold text-[var(--primary)]">기본 정보</h4>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
@@ -370,12 +370,12 @@ export default function AcademySettings() {
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-8">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#102044]">school</span>
-            <h4 className="text-lg font-bold text-[#102044]">학교/학년 관리</h4>
+            <span className="material-symbols-outlined text-[var(--primary)]">school</span>
+            <h4 className="text-lg font-bold text-[var(--primary)]">학교/학년 관리</h4>
           </div>
           <button
             onClick={addSchool}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold text-[#004bf0] border border-[#004bf0]/20 hover:bg-[#004bf0]/5 transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold text-[var(--cta)] border border-[var(--cta)]/20 hover:bg-[var(--cta)]/5 transition-all"
           >
             <span className="material-symbols-outlined text-sm">add</span>
             학교 추가
@@ -392,7 +392,7 @@ export default function AcademySettings() {
                   value={s.name}
                   onChange={e => updateSchool(i, 'name', e.target.value)}
                   placeholder="학교 이름"
-                  className="flex-1 px-4 py-3 bg-white rounded-lg border border-transparent text-sm font-semibold outline-none focus:border-[#004bf0]/40 focus:ring-4 focus:ring-[#004bf0]/5"
+                  className="flex-1 px-4 py-3 bg-white rounded-lg border border-transparent text-sm font-semibold outline-none focus:border-[var(--cta)]/40 focus:ring-4 focus:ring-[var(--cta)]/5"
                 />
                 <button
                   onClick={() => removeSchool(i)}
@@ -407,7 +407,7 @@ export default function AcademySettings() {
                   value={(s.grades || []).join(', ')}
                   onChange={e => updateSchool(i, 'grades', e.target.value.split(',').map(g => g.trim()).filter(Boolean))}
                   placeholder="1학년, 2학년, 3학년"
-                  className="w-full px-4 py-3 bg-white rounded-lg border border-transparent text-sm outline-none focus:border-[#004bf0]/40 focus:ring-4 focus:ring-[#004bf0]/5"
+                  className="w-full px-4 py-3 bg-white rounded-lg border border-transparent text-sm outline-none focus:border-[var(--cta)]/40 focus:ring-4 focus:ring-[var(--cta)]/5"
                 />
               </div>
             </div>
@@ -419,12 +419,12 @@ export default function AcademySettings() {
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-8">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#102044]">quiz</span>
-            <h4 className="text-lg font-bold text-[#102044]">시험 유형 관리</h4>
+            <span className="material-symbols-outlined text-[var(--primary)]">quiz</span>
+            <h4 className="text-lg font-bold text-[var(--primary)]">시험 유형 관리</h4>
           </div>
           <button
             onClick={addExamCategory}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold text-[#004bf0] border border-[#004bf0]/20 hover:bg-[#004bf0]/5 transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold text-[var(--cta)] border border-[var(--cta)]/20 hover:bg-[var(--cta)]/5 transition-all"
           >
             <span className="material-symbols-outlined text-sm">add</span>
             카테고리 추가
@@ -441,13 +441,13 @@ export default function AcademySettings() {
                   value={cat.label || ''}
                   onChange={e => updateExamCategory(i, 'label', e.target.value)}
                   placeholder="카테고리명 (예: 모의고사)"
-                  className="flex-1 px-4 py-3 bg-white rounded-lg border border-transparent text-sm font-semibold outline-none focus:border-[#004bf0]/40 focus:ring-4 focus:ring-[#004bf0]/5"
+                  className="flex-1 px-4 py-3 bg-white rounded-lg border border-transparent text-sm font-semibold outline-none focus:border-[var(--cta)]/40 focus:ring-4 focus:ring-[var(--cta)]/5"
                 />
                 <input
                   value={cat.key || ''}
                   onChange={e => updateExamCategory(i, 'key', e.target.value)}
                   placeholder="key"
-                  className="w-28 px-3 py-3 bg-white rounded-lg border border-transparent text-xs outline-none focus:border-[#004bf0]/40 focus:ring-4 focus:ring-[#004bf0]/5"
+                  className="w-28 px-3 py-3 bg-white rounded-lg border border-transparent text-xs outline-none focus:border-[var(--cta)]/40 focus:ring-4 focus:ring-[var(--cta)]/5"
                   style={{ fontFamily: 'monospace' }}
                 />
                 <button
@@ -466,7 +466,7 @@ export default function AcademySettings() {
                         value={t}
                         onChange={e => updateSubType(i, j, e.target.value)}
                         placeholder="시험 유형명"
-                        className="flex-1 px-4 py-2.5 bg-white rounded-lg border border-transparent text-sm outline-none focus:border-[#004bf0]/40 focus:ring-4 focus:ring-[#004bf0]/5"
+                        className="flex-1 px-4 py-2.5 bg-white rounded-lg border border-transparent text-sm outline-none focus:border-[var(--cta)]/40 focus:ring-4 focus:ring-[var(--cta)]/5"
                       />
                       <button
                         onClick={() => removeSubType(i, j)}
@@ -479,7 +479,7 @@ export default function AcademySettings() {
                 </div>
                 <button
                   onClick={() => addSubType(i)}
-                  className="mt-3 flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 border border-dashed border-slate-300 hover:border-[#004bf0]/30 hover:text-[#004bf0] transition-all"
+                  className="mt-3 flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 border border-dashed border-slate-300 hover:border-[var(--cta)]/30 hover:text-[var(--cta)] transition-all"
                 >
                   <span className="material-symbols-outlined text-sm">add</span>
                   하위 유형 추가
@@ -494,12 +494,12 @@ export default function AcademySettings() {
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-8">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#102044]">psychology</span>
-            <h4 className="text-lg font-bold text-[#102044]">클리닉 질문 주제</h4>
+            <span className="material-symbols-outlined text-[var(--primary)]">psychology</span>
+            <h4 className="text-lg font-bold text-[var(--primary)]">클리닉 질문 주제</h4>
           </div>
           <button
             onClick={() => setClinicTopics([...clinicTopics, ''])}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold text-[#004bf0] border border-[#004bf0]/20 hover:bg-[#004bf0]/5 transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold text-[var(--cta)] border border-[var(--cta)]/20 hover:bg-[var(--cta)]/5 transition-all"
           >
             <span className="material-symbols-outlined text-sm">add</span>
             주제 추가
@@ -519,7 +519,7 @@ export default function AcademySettings() {
                   setClinicTopics(next);
                 }}
                 placeholder="주제명"
-                className="flex-1 px-4 py-3 bg-[#edeeef] rounded-lg border border-transparent text-sm outline-none focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5"
+                className="flex-1 px-4 py-3 bg-[#edeeef] rounded-lg border border-transparent text-sm outline-none focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5"
               />
               <button
                 onClick={() => setClinicTopics(clinicTopics.filter((_, j) => j !== i))}
@@ -535,8 +535,8 @@ export default function AcademySettings() {
       {/* Dashboard Config */}
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-8">
         <div className="flex items-center gap-2 mb-2">
-          <span className="material-symbols-outlined text-[#102044]">dashboard_customize</span>
-          <h4 className="text-lg font-bold text-[#102044]">대시보드 구성</h4>
+          <span className="material-symbols-outlined text-[var(--primary)]">dashboard_customize</span>
+          <h4 className="text-lg font-bold text-[var(--primary)]">대시보드 구성</h4>
         </div>
         <p className="text-sm text-slate-400 mb-5">
           대시보드에 표시할 카드를 선택하세요. 원하지 않는 카드는 끌 수 있습니다.
@@ -556,17 +556,17 @@ export default function AcademySettings() {
             return (
               <label key={item.key} className={`flex items-center gap-3 px-4 py-3.5 rounded-xl cursor-pointer transition-all border ${
                 checked
-                  ? 'bg-[#004bf0]/5 border-[#004bf0]/20'
+                  ? 'bg-[var(--cta)]/5 border-[var(--cta)]/20'
                   : 'bg-[#f3f4f5] border-transparent'
               }`}>
                 <input
                   type="checkbox"
                   checked={checked}
                   onChange={() => setDashboardConfig(prev => ({ ...prev, [item.key]: !checked }))}
-                  className="w-[18px] h-[18px] accent-[#004bf0] flex-shrink-0"
+                  className="w-[18px] h-[18px] accent-[var(--cta)] flex-shrink-0"
                 />
-                <span className={`material-symbols-outlined text-xl ${checked ? 'text-[#004bf0]' : 'text-slate-400'}`}>{item.icon}</span>
-                <span className="text-sm font-semibold text-[#102044]">{item.label}</span>
+                <span className={`material-symbols-outlined text-xl ${checked ? 'text-[var(--cta)]' : 'text-slate-400'}`}>{item.icon}</span>
+                <span className="text-sm font-semibold text-[var(--primary)]">{item.label}</span>
               </label>
             );
           })}
@@ -577,7 +577,7 @@ export default function AcademySettings() {
       <button
         onClick={save}
         disabled={saving}
-        className="w-full py-4 rounded-xl bg-[#102044] text-white text-base font-bold hover:opacity-90 active:scale-[0.99] transition-all disabled:opacity-50"
+        className="w-full py-4 rounded-xl bg-[var(--primary)] text-white text-base font-bold hover:opacity-90 active:scale-[0.99] transition-all disabled:opacity-50"
       >
         {saving ? '저장 중...' : '변경사항 저장'}
       </button>

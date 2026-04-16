@@ -30,7 +30,7 @@ export default class RouteErrorBoundary extends React.Component {
         <div className="p-12 max-w-2xl mx-auto">
           <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-8 text-center">
             <div className="text-5xl mb-4">⚠️</div>
-            <h2 className="text-xl font-extrabold text-[#102044] mb-2">
+            <h2 className="text-xl font-extrabold text-[var(--primary)] mb-2">
               이 페이지를 불러올 수 없습니다
             </h2>
             <p className="text-sm text-slate-500 mb-6">
@@ -44,13 +44,13 @@ export default class RouteErrorBoundary extends React.Component {
             <div className="flex gap-3 justify-center">
               <button
                 onClick={this.handleRetry}
-                className="px-6 py-2.5 bg-[#102044] text-white rounded-lg font-bold text-sm hover:bg-[#1e2a5e]"
+                className="px-6 py-2.5 bg-[var(--primary)] text-white rounded-lg font-bold text-sm hover:bg-[#1e2a5e]"
               >
                 다시 시도
               </button>
               <button
                 onClick={() => window.history.back()}
-                className="px-6 py-2.5 bg-white border border-slate-200 text-[#102044] rounded-lg font-bold text-sm hover:bg-slate-50"
+                className="px-6 py-2.5 bg-white border border-slate-200 text-[var(--primary)] rounded-lg font-bold text-sm hover:bg-slate-50"
               >
                 이전 페이지
               </button>

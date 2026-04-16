@@ -223,10 +223,10 @@ export default function SubscriptionPage() {
               disabled={disabled}
               className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-colors ${
                 isCurrent
-                  ? 'bg-[#102044] text-white shadow-sm'
+                  ? 'bg-[var(--primary)] text-white shadow-sm'
                   : disabled
                     ? 'bg-white border border-slate-200 text-slate-300 cursor-default'
-                    : 'bg-white border border-slate-200 text-slate-500 hover:text-[#102044] hover:border-[#102044]/30'
+                    : 'bg-white border border-slate-200 text-slate-500 hover:text-[var(--primary)] hover:border-[var(--primary)]/30'
               }`}
             >
               {tab.label}
@@ -251,7 +251,7 @@ export default function SubscriptionPage() {
           <div>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <h2 className="text-2xl font-bold text-[#102044]">
+                <h2 className="text-2xl font-bold text-[var(--primary)]">
                   {(currentPlan?.name || currentTier)} 플랜
                 </h2>
                 <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusInfo.cls}`}>
@@ -263,7 +263,7 @@ export default function SubscriptionPage() {
                   <button
                     onClick={handleRetry}
                     disabled={actionLoading}
-                    className="px-4 py-2 rounded-lg bg-[#004bf0] text-white text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+                    className="px-4 py-2 rounded-lg bg-[var(--cta)] text-white text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
                   >
                     결제 재시도
                   </button>
@@ -272,7 +272,7 @@ export default function SubscriptionPage() {
                   <button
                     onClick={handleUpdatePayment}
                     disabled={actionLoading}
-                    className="px-4 py-2 rounded-lg bg-[#e7e8e9] text-[#102044] text-sm font-bold hover:bg-[#dfe0e1] transition-colors disabled:opacity-50"
+                    className="px-4 py-2 rounded-lg bg-[#e7e8e9] text-[var(--primary)] text-sm font-bold hover:bg-[#dfe0e1] transition-colors disabled:opacity-50"
                   >
                     결제 수단 변경
                   </button>
@@ -306,13 +306,13 @@ export default function SubscriptionPage() {
           <div className="space-y-3">
             <div className="flex justify-between items-end">
               <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Current Usage (Students)</p>
-              <p className="font-bold text-[#102044]">
+              <p className="font-bold text-[var(--primary)]">
                 {currentStudents} / <span className="text-slate-400">{maxStudents}</span>
               </p>
             </div>
             <div className="w-full bg-[#edeeef] rounded-full h-3 overflow-hidden">
               <div
-                className="bg-[#004bf0] h-full rounded-full transition-all duration-500"
+                className="bg-[var(--cta)] h-full rounded-full transition-all duration-500"
                 style={{ width: `${usagePercent}%` }}
               />
             </div>
@@ -327,7 +327,7 @@ export default function SubscriptionPage() {
         {/* Quick Actions */}
         <div className="col-span-12 lg:col-span-4 bg-[#f3f4f5] p-8 rounded-xl flex flex-col justify-between">
           <div>
-            <h3 className="text-lg font-bold text-[#102044] mb-4">Quick Actions</h3>
+            <h3 className="text-lg font-bold text-[var(--primary)] mb-4">Quick Actions</h3>
             <div className="space-y-3">
               {/* Coupon */}
               <div className="bg-white rounded-lg p-4">
@@ -341,13 +341,13 @@ export default function SubscriptionPage() {
                     value={couponCode}
                     onChange={e => setCouponCode(e.target.value.toUpperCase())}
                     onKeyDown={e => e.key === 'Enter' && handleRedeemCoupon()}
-                    className="flex-1 px-3 py-2 bg-[#edeeef] rounded-lg text-sm outline-none border border-transparent focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5"
+                    className="flex-1 px-3 py-2 bg-[#edeeef] rounded-lg text-sm outline-none border border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5"
                     style={{ fontFamily: 'monospace' }}
                   />
                   <button
                     onClick={handleRedeemCoupon}
                     disabled={!couponCode.trim() || couponLoading}
-                    className="px-3 py-2 bg-[#102044] text-white text-xs font-bold rounded-lg disabled:opacity-50 hover:opacity-90 transition-opacity whitespace-nowrap"
+                    className="px-3 py-2 bg-[var(--primary)] text-white text-xs font-bold rounded-lg disabled:opacity-50 hover:opacity-90 transition-opacity whitespace-nowrap"
                   >
                     {couponLoading ? '...' : '적용'}
                   </button>
@@ -355,15 +355,15 @@ export default function SubscriptionPage() {
               </div>
               <button className="w-full text-left px-4 py-3 bg-white rounded-lg flex items-center justify-between group hover:shadow-sm transition-all">
                 <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-slate-400 group-hover:text-[#102044] transition-colors">receipt_long</span>
-                  <span className="text-sm font-semibold text-slate-600 group-hover:text-[#102044]">지난 결제 내역 보기</span>
+                  <span className="material-symbols-outlined text-slate-400 group-hover:text-[var(--primary)] transition-colors">receipt_long</span>
+                  <span className="text-sm font-semibold text-slate-600 group-hover:text-[var(--primary)]">지난 결제 내역 보기</span>
                 </div>
                 <span className="material-symbols-outlined text-slate-300 text-sm">chevron_right</span>
               </button>
               <button className="w-full text-left px-4 py-3 bg-white rounded-lg flex items-center justify-between group hover:shadow-sm transition-all">
                 <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-slate-400 group-hover:text-[#102044] transition-colors">help</span>
-                  <span className="text-sm font-semibold text-slate-600 group-hover:text-[#102044]">도움말 및 FAQ</span>
+                  <span className="material-symbols-outlined text-slate-400 group-hover:text-[var(--primary)] transition-colors">help</span>
+                  <span className="text-sm font-semibold text-slate-600 group-hover:text-[var(--primary)]">도움말 및 FAQ</span>
                 </div>
                 <span className="material-symbols-outlined text-slate-300 text-sm">chevron_right</span>
               </button>
@@ -385,7 +385,7 @@ export default function SubscriptionPage() {
       {/* Section 2: Plan Comparison */}
       <div>
         <div className="mb-6">
-          <h3 className="text-xl font-bold text-[#102044]">플랜 요금제 비교</h3>
+          <h3 className="text-xl font-bold text-[var(--primary)]">플랜 요금제 비교</h3>
           <p className="text-sm text-slate-500">학원 규모와 필요한 기능에 맞는 최적의 플랜을 선택하세요.</p>
         </div>
 
@@ -395,7 +395,7 @@ export default function SubscriptionPage() {
             <button
               onClick={() => setBillingCycle('monthly')}
               className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-                !isYearly ? 'bg-white text-[#102044] shadow-sm' : 'text-slate-500'
+                !isYearly ? 'bg-white text-[var(--primary)] shadow-sm' : 'text-slate-500'
               }`}
             >
               월간 결제
@@ -403,7 +403,7 @@ export default function SubscriptionPage() {
             <button
               onClick={() => setBillingCycle('yearly')}
               className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-                isYearly ? 'bg-white text-[#102044] shadow-sm' : 'text-slate-500'
+                isYearly ? 'bg-white text-[var(--primary)] shadow-sm' : 'text-slate-500'
               }`}
             >
               연간 결제
@@ -435,28 +435,28 @@ export default function SubscriptionPage() {
                 key={plan.id}
                 className={`p-6 rounded-xl flex flex-col h-full transition-all ${
                   isCurrent
-                    ? 'bg-white border-t-4 border-[#004bf0] shadow-xl ring-2 ring-[#004bf0]/5 transform scale-105 z-10'
+                    ? 'bg-white border-t-4 border-[var(--cta)] shadow-xl ring-2 ring-[var(--cta)]/5 transform scale-105 z-10'
                     : 'bg-[#f3f4f5] border-t-4 border-transparent hover:border-slate-200'
                 }`}
               >
                 <div className="mb-6">
                   <div className="flex justify-between items-start mb-1">
                     <p className={`text-xs font-bold uppercase tracking-widest ${
-                      isCurrent ? 'text-[#004bf0]' : 'text-slate-400'
+                      isCurrent ? 'text-[var(--cta)]' : 'text-slate-400'
                     }`}>
                       {plan.name.toUpperCase()}
                     </p>
                     {isCurrent && (
-                      <span className="bg-[#004bf0] text-white text-[10px] font-black px-2 py-0.5 rounded">USED</span>
+                      <span className="bg-[var(--cta)] text-white text-[10px] font-black px-2 py-0.5 rounded">USED</span>
                     )}
                     {plan.popular && !isCurrent && (
-                      <span className="bg-[#102044] text-white text-[10px] font-black px-2 py-0.5 rounded">BEST</span>
+                      <span className="bg-[var(--primary)] text-white text-[10px] font-black px-2 py-0.5 rounded">BEST</span>
                     )}
                   </div>
                   {plan.inquiry ? (
-                    <h4 className="text-2xl font-black text-[#102044]">별도 문의</h4>
+                    <h4 className="text-2xl font-black text-[var(--primary)]">별도 문의</h4>
                   ) : price === 0 ? (
-                    <h4 className="text-2xl font-black text-[#102044]">
+                    <h4 className="text-2xl font-black text-[var(--primary)]">
                       ₩0 <span className="text-sm font-normal text-slate-500">/mo</span>
                     </h4>
                   ) : (
@@ -464,7 +464,7 @@ export default function SubscriptionPage() {
                       {showDiscount && (
                         <p className="text-sm text-slate-400 line-through">₩{originalPrice.toLocaleString()}</p>
                       )}
-                      <h4 className="text-2xl font-black text-[#102044]">
+                      <h4 className="text-2xl font-black text-[var(--primary)]">
                         ₩{price.toLocaleString()} <span className="text-sm font-normal text-slate-500">/mo</span>
                       </h4>
                     </div>
@@ -484,7 +484,7 @@ export default function SubscriptionPage() {
                     }`}>
                       <span
                         className={`material-symbols-outlined text-sm mt-0.5 ${
-                          isCurrent ? 'text-[#004bf0]' : plan.id === 'free' && i > 0 ? 'text-slate-300' : 'text-[#004bf0]'
+                          isCurrent ? 'text-[var(--cta)]' : plan.id === 'free' && i > 0 ? 'text-slate-300' : 'text-[var(--cta)]'
                         }`}
                         style={isCurrent ? { fontVariationSettings: "'FILL' 1" } : undefined}
                       >
@@ -500,12 +500,12 @@ export default function SubscriptionPage() {
                   disabled={action.disabled || actionLoading}
                   className={`w-full py-3 rounded-lg text-sm font-bold transition-all ${
                     action.style === 'upgrade'
-                      ? 'bg-[#102044] text-white hover:opacity-90'
+                      ? 'bg-[var(--primary)] text-white hover:opacity-90'
                       : action.style === 'inquiry'
-                        ? 'bg-[#102044] text-white hover:opacity-90'
+                        ? 'bg-[var(--primary)] text-white hover:opacity-90'
                         : action.style === 'current'
                           ? 'bg-[#f3f4f5] text-slate-400 cursor-default'
-                          : 'bg-white border border-slate-200 text-[#102044] hover:bg-slate-50'
+                          : 'bg-white border border-slate-200 text-[var(--primary)] hover:bg-slate-50'
                   } disabled:opacity-50`}
                 >
                   {action.label}
@@ -523,7 +523,7 @@ export default function SubscriptionPage() {
       <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h3 className="text-xl font-bold text-[#102044]">결제 내역</h3>
+            <h3 className="text-xl font-bold text-[var(--primary)]">결제 내역</h3>
             <p className="text-sm text-slate-500">최근 정기 결제 리스트입니다.</p>
           </div>
         </div>
@@ -537,14 +537,14 @@ export default function SubscriptionPage() {
                 <div key={i} className="flex items-center justify-between p-4 rounded-xl hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
                   <div className="flex items-center gap-4">
                     <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                      isSuccess ? 'bg-[#edeeef] text-[#102044]' : 'bg-red-50 text-red-500'
+                      isSuccess ? 'bg-[#edeeef] text-[var(--primary)]' : 'bg-red-50 text-red-500'
                     }`}>
                       <span className="material-symbols-outlined">
                         {isSuccess ? 'receipt_long' : 'error_outline'}
                       </span>
                     </div>
                     <div>
-                      <p className="font-bold text-[#102044]">
+                      <p className="font-bold text-[var(--primary)]">
                         {new Date(p.paid_at || p.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long' })} 정기 구독
                       </p>
                       <p className="text-xs text-slate-400">
@@ -554,7 +554,7 @@ export default function SubscriptionPage() {
                   </div>
                   <div className="flex items-center gap-6">
                     <div className="text-right">
-                      <p className="font-bold text-[#102044]">₩{p.amount?.toLocaleString()}</p>
+                      <p className="font-bold text-[var(--primary)]">₩{p.amount?.toLocaleString()}</p>
                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                         isSuccess ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
                       }`}>
@@ -562,7 +562,7 @@ export default function SubscriptionPage() {
                       </span>
                     </div>
                     {isSuccess ? (
-                      <button className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[#102044] hover:bg-[#edeeef] transition-all">
+                      <button className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[var(--primary)] hover:bg-[#edeeef] transition-all">
                         <span className="material-symbols-outlined text-xl">download</span>
                       </button>
                     ) : (

@@ -35,7 +35,7 @@ export default function TuitionTab({ studentId }) {
         <div className="grid grid-cols-3 gap-2 md:gap-3">
           <Stat label="총 청구" value={formatMoney(totalBilled)} />
           <Stat label="총 납부" value={formatMoney(totalPaid)} accent="#10b981" />
-          <Stat label="미납 건" value={`${overdueCount}건`} accent={overdueCount > 0 ? '#ba1a1a' : '#102044'} />
+          <Stat label="미납 건" value={`${overdueCount}건`} accent={overdueCount > 0 ? '#ba1a1a' : 'var(--primary)'} />
         </div>
       </Card>
 
@@ -47,11 +47,11 @@ export default function TuitionTab({ studentId }) {
               return (
                 <div key={r.id} className="p-3 rounded-lg bg-[#f8f9fa] border border-slate-100 flex items-center justify-between hover:bg-slate-100 transition-colors">
                   <div>
-                    <div className="text-sm font-bold text-[#102044]">{r.plan_name || r.memo || '학원비'}</div>
+                    <div className="text-sm font-bold text-[var(--primary)]">{r.plan_name || r.memo || '학원비'}</div>
                     <div className="text-xs text-slate-400 font-semibold mt-0.5">마감 {formatDate(r.due_date)}</div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-extrabold text-[#102044]">{formatMoney(r.adjusted_amount ?? r.amount)}</span>
+                    <span className="text-sm font-extrabold text-[var(--primary)]">{formatMoney(r.adjusted_amount ?? r.amount)}</span>
                     <span className={`rounded-full px-3 py-0.5 text-xs font-bold ${badge.cls}`}>{badge.label}</span>
                   </div>
                 </div>

@@ -24,7 +24,7 @@ export default function LegalFooter() {
   }, []);
 
   return (
-    <footer className="bg-[#102044] text-slate-400 py-10 px-8 mt-auto">
+    <footer className="bg-[var(--primary)] text-slate-400 py-10 px-8 mt-auto">
       <div className="max-w-6xl mx-auto">
         {/* 회사 정보 */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">

@@ -48,24 +48,24 @@ export default function StudentList() {
   return (
     <div className="p-4 md:p-10 max-w-7xl mx-auto w-full">
       <div className="mb-6">
-        <h2 className="text-2xl font-extrabold text-[#102044] tracking-tight">학생 명단</h2>
+        <h2 className="text-2xl font-extrabold text-[var(--primary)] tracking-tight">학생 명단</h2>
         <p className="text-sm text-slate-500 mt-1">총 {filtered.length}명 / 전체 {students.length}명</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr]" style={{ gap: 12, marginBottom: 24 }}>
         <div className="bg-white rounded-xl border border-slate-100 shadow-sm md:[grid-row:span_2]" style={{ padding: 24 }}>
           <p style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>전체 재원생</p>
-          <p style={{ fontSize: 48, fontWeight: 800, color: '#102044', marginTop: 8, fontVariantNumeric: 'tabular-nums' }}>
+          <p style={{ fontSize: 48, fontWeight: 800, color: 'var(--primary)', marginTop: 8, fontVariantNumeric: 'tabular-nums' }}>
             {students.length}<span style={{ fontSize: 20, fontWeight: 600 }}>명</span>
           </p>
         </div>
-        <Link to="/admin/pending" className="bg-white rounded-xl border border-slate-100 shadow-sm hover:border-[#004bf0]/30 transition-colors block" style={{ padding: '16px 20px', textDecoration: 'none' }}>
+        <Link to="/admin/pending" className="bg-white rounded-xl border border-slate-100 shadow-sm hover:border-[var(--cta)]/30 transition-colors block" style={{ padding: '16px 20px', textDecoration: 'none' }}>
           <p style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8' }}>가입 승인 대기</p>
           <p style={{ fontSize: 24, fontWeight: 800, color: '#f59e0b' }}>{pendingCount}건</p>
         </Link>
-        <Link to="/admin/pre-registered" className="bg-white rounded-xl border border-slate-100 shadow-sm hover:border-[#004bf0]/30 transition-colors block" style={{ padding: '16px 20px', textDecoration: 'none' }}>
+        <Link to="/admin/pre-registered" className="bg-white rounded-xl border border-slate-100 shadow-sm hover:border-[var(--cta)]/30 transition-colors block" style={{ padding: '16px 20px', textDecoration: 'none' }}>
           <p style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8' }}>사전 등록</p>
-          <p style={{ fontSize: 24, fontWeight: 800, color: '#004bf0' }}>{preRegCount}명</p>
+          <p style={{ fontSize: 24, fontWeight: 800, color: 'var(--cta)' }}>{preRegCount}명</p>
         </Link>
       </div>
 
@@ -74,7 +74,7 @@ export default function StudentList() {
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="이름 · 학교 · 학년 검색"
-          className="w-full md:w-80 px-4 py-3 bg-white rounded-lg border border-slate-200 text-sm outline-none focus:border-[#004bf0]/40 focus:ring-4 focus:ring-[#004bf0]/5"
+          className="w-full md:w-80 px-4 py-3 bg-white rounded-lg border border-slate-200 text-sm outline-none focus:border-[var(--cta)]/40 focus:ring-4 focus:ring-[var(--cta)]/5"
         />
       </div>
 
@@ -101,7 +101,7 @@ export default function StudentList() {
                 const isActive = (s.status || 'active') === 'active';
                 return (
                   <tr key={s.id} className="hover:bg-slate-50">
-                    <td className="px-6 py-4 text-sm font-bold text-[#102044] whitespace-nowrap">{s.name}</td>
+                    <td className="px-6 py-4 text-sm font-bold text-[var(--primary)] whitespace-nowrap">{s.name}</td>
                     <td className="px-6 py-4 text-sm text-slate-600 truncate max-w-[220px]" title={s.school || ''}>{s.school || '-'}</td>
                     <td className="px-6 py-4 text-sm text-slate-600 whitespace-nowrap">{s.grade || '-'}</td>
                     <td className="px-6 py-4">
@@ -112,7 +112,7 @@ export default function StudentList() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <Link to={`/admin/student-view/${s.id}`} className="text-[#004bf0] text-sm font-bold hover:underline">
+                      <Link to={`/admin/student-view/${s.id}`} className="text-[var(--cta)] text-sm font-bold hover:underline">
                         상세 →
                       </Link>
                     </td>

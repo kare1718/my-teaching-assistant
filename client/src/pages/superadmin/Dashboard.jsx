@@ -216,7 +216,7 @@ export default function SuperAdminDashboard() {
           <button key={f.key} onClick={() => setStatusFilter(f.key)}
             style={{
               padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-              background: statusFilter === f.key ? '#102044' : 'var(--card)',
+              background: statusFilter === f.key ? 'var(--primary)' : 'var(--card)',
               color: statusFilter === f.key ? '#fff' : 'var(--muted-foreground)',
               border: '1px solid var(--border)', fontFamily: FONT, transition: 'all 0.15s',
             }}>

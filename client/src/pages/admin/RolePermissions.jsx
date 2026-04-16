@@ -172,7 +172,7 @@ export default function RolePermissions() {
     <div className="p-4 md:p-8 max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h3 className="text-2xl font-extrabold text-[#102044] tracking-tight">권한 설정</h3>
+        <h3 className="text-2xl font-extrabold text-[var(--primary)] tracking-tight">권한 설정</h3>
         <p className="text-sm text-slate-500 mt-1">사용자 역할별 시스템 접근 및 작업 권한을 관리합니다.</p>
       </div>
 
@@ -194,8 +194,8 @@ export default function RolePermissions() {
                 onClick={() => setSelectedRole(role.key)}
                 className={`w-full px-4 py-3 rounded-lg text-sm font-bold text-left transition-colors flex items-center justify-between ${
                   selectedRole === role.key
-                    ? 'bg-[#102044] text-white shadow-sm'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:text-[#102044] hover:border-[#102044]/30'
+                    ? 'bg-[var(--primary)] text-white shadow-sm'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:text-[var(--primary)] hover:border-[var(--primary)]/30'
                 }`}
               >
                 <span>{role.label}</span>
@@ -212,13 +212,13 @@ export default function RolePermissions() {
                 onChange={e => setNewRoleName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleAddRole()}
                 placeholder="역할 이름"
-                className="w-full px-4 py-2.5 bg-white rounded-lg border border-slate-200 text-sm focus:border-[#004bf0]/40 focus:ring-4 focus:ring-[#004bf0]/5 focus:outline-none"
+                className="w-full px-4 py-2.5 bg-white rounded-lg border border-slate-200 text-sm focus:border-[var(--cta)]/40 focus:ring-4 focus:ring-[var(--cta)]/5 focus:outline-none"
                 autoFocus
               />
               <div className="flex gap-2">
                 <button
                   onClick={handleAddRole}
-                  className="flex-1 px-3 py-2 rounded-lg text-xs font-bold bg-[#102044] text-white"
+                  className="flex-1 px-3 py-2 rounded-lg text-xs font-bold bg-[var(--primary)] text-white"
                 >
                   추가
                 </button>
@@ -233,7 +233,7 @@ export default function RolePermissions() {
           ) : (
             <button
               onClick={() => setShowAddRole(true)}
-              className="w-full mt-4 px-4 py-3 rounded-lg text-sm font-bold border border-dashed border-[#004bf0]/30 text-[#004bf0] hover:bg-[#004bf0]/5 transition-colors"
+              className="w-full mt-4 px-4 py-3 rounded-lg text-sm font-bold border border-dashed border-[var(--cta)]/30 text-[var(--cta)] hover:bg-[var(--cta)]/5 transition-colors"
             >
               + 역할 추가
             </button>
@@ -246,7 +246,7 @@ export default function RolePermissions() {
             {/* Matrix Header */}
             <div className="px-6 py-4 border-b border-slate-100 bg-[#f3f4f5]/50 flex items-center justify-between">
               <div>
-                <h4 className="font-bold text-[#102044]">{currentRole?.label} 권한 상세</h4>
+                <h4 className="font-bold text-[var(--primary)]">{currentRole?.label} 권한 상세</h4>
                 <p className="text-xs text-slate-500">
                   {selectedRole === 'director'
                     ? '모든 시스템 기능에 대한 전체 접근 권한이 부여됩니다.'
@@ -277,7 +277,7 @@ export default function RolePermissions() {
                   {FEATURES.map(feat => (
                     <tr key={feat.key} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-5">
-                        <div className="font-semibold text-[#102044]">{feat.label}</div>
+                        <div className="font-semibold text-[var(--primary)]">{feat.label}</div>
                         <div className="text-xs text-slate-400">{feat.desc}</div>
                       </td>
                       {ACTIONS.map(action => (
@@ -287,7 +287,7 @@ export default function RolePermissions() {
                             checked={rolePerms[feat.key]?.[action] || false}
                             onChange={() => togglePermission(feat.key, action)}
                             disabled={selectedRole === 'director'}
-                            className="w-5 h-5 rounded border-slate-300 text-[#102044] focus:ring-[#102044]/20 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="w-5 h-5 rounded border-slate-300 text-[var(--primary)] focus:ring-[var(--primary)]/20 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                           />
                         </td>
                       ))}
@@ -310,7 +310,7 @@ export default function RolePermissions() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="px-8 py-2.5 rounded-lg text-sm font-bold bg-[#102044] text-white hover:opacity-90 active:scale-95 transition-all disabled:opacity-60"
+              className="px-8 py-2.5 rounded-lg text-sm font-bold bg-[var(--primary)] text-white hover:opacity-90 active:scale-95 transition-all disabled:opacity-60"
             >
               {saving ? '저장 중...' : '변경사항 저장'}
             </button>

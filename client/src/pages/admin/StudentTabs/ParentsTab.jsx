@@ -31,9 +31,9 @@ export default function ParentsTab({ studentId, student }) {
             {fallbackParents.map(p => (
               <div key={p.id} className="p-4 rounded-lg bg-[#f8f9fa] border border-slate-100">
                 <div className="flex items-center justify-between mb-1">
-                  <div className="font-bold text-[#102044]">{p.name || '-'}</div>
+                  <div className="font-bold text-[var(--primary)]">{p.name || '-'}</div>
                   <div className="flex gap-1.5">
-                    {p.is_primary && <span className="rounded-full px-3 py-0.5 text-xs font-bold bg-[#004bf0]/10 text-[#004bf0]">주 보호자</span>}
+                    {p.is_primary && <span className="rounded-full px-3 py-0.5 text-xs font-bold bg-[var(--cta)]/10 text-[var(--cta)]">주 보호자</span>}
                     {p.is_payer && <span className="rounded-full px-3 py-0.5 text-xs font-bold bg-emerald-100 text-emerald-700">납부자</span>}
                   </div>
                 </div>

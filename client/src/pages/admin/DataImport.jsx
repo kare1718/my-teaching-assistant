@@ -118,7 +118,7 @@ export default function DataImport() {
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4">
-      <h1 className="text-2xl font-extrabold text-[#102044] tracking-tight mb-2">데이터 가져오기</h1>
+      <h1 className="text-2xl font-extrabold text-[var(--primary)] tracking-tight mb-2">데이터 가져오기</h1>
       <p className="text-slate-500 mb-6">엑셀(.xlsx) 또는 CSV 파일로 기존 학원 데이터를 한 번에 불러옵니다.</p>
 
       {/* 유형 선택 */}
@@ -130,10 +130,10 @@ export default function DataImport() {
               key={key}
               onClick={() => { setType(key); reset(); }}
               className={`p-4 rounded-lg border text-left transition-all ${
-                type === key ? 'border-[#004bf0] bg-[#f0f4ff]' : 'border-slate-200 hover:border-slate-300'
+                type === key ? 'border-[var(--cta)] bg-[#f0f4ff]' : 'border-slate-200 hover:border-slate-300'
               }`}
             >
-              <div className="font-bold text-[#102044]">{t.label}</div>
+              <div className="font-bold text-[var(--primary)]">{t.label}</div>
               <div className="text-xs text-slate-500 mt-1">{t.desc}</div>
             </button>
           ))}
@@ -149,7 +149,7 @@ export default function DataImport() {
           <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">1단계 · 파일 업로드</div>
           <label className="inline-block cursor-pointer">
             <input type="file" accept=".xlsx,.xls,.csv" onChange={handleFile} className="hidden" />
-            <span className="inline-block px-6 py-3 bg-[#102044] text-white font-bold rounded-lg hover:bg-[#004bf0]">
+            <span className="inline-block px-6 py-3 bg-[var(--primary)] text-white font-bold rounded-lg hover:bg-[var(--cta)]">
               파일 선택 (.xlsx / .csv)
             </span>
           </label>
@@ -163,7 +163,7 @@ export default function DataImport() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
             {def.fields.map(f => (
               <div key={f.key} className="flex items-center gap-2">
-                <div className="w-32 text-sm font-semibold text-[#102044]">
+                <div className="w-32 text-sm font-semibold text-[var(--primary)]">
                   {f.label} {f.required && <span className="text-[#ba1a1a]">*</span>}
                 </div>
                 <select
@@ -202,12 +202,12 @@ export default function DataImport() {
           </div>
 
           <div className="flex gap-3 mt-5">
-            <button onClick={reset} className="px-5 py-2.5 border border-slate-200 rounded-lg font-bold text-[#102044] hover:bg-slate-50">
+            <button onClick={reset} className="px-5 py-2.5 border border-slate-200 rounded-lg font-bold text-[var(--primary)] hover:bg-slate-50">
               다시 선택
             </button>
             <button
               onClick={runValidate}
-              className="px-5 py-2.5 bg-[#004bf0] text-white rounded-lg font-bold hover:bg-[#0037b8]"
+              className="px-5 py-2.5 bg-[var(--cta)] text-white rounded-lg font-bold hover:bg-[#0037b8]"
             >
               검증하기
             </button>
@@ -229,7 +229,7 @@ export default function DataImport() {
             </div>
             <div className="flex-1 bg-slate-50 rounded-lg p-4 text-center">
               <div className="text-xs font-bold text-slate-500 uppercase">총</div>
-              <div className="text-2xl font-extrabold text-[#102044]">{validation.summary.total}</div>
+              <div className="text-2xl font-extrabold text-[var(--primary)]">{validation.summary.total}</div>
             </div>
           </div>
 
@@ -245,13 +245,13 @@ export default function DataImport() {
           )}
 
           <div className="flex gap-3">
-            <button onClick={() => setStage('preview')} className="px-5 py-2.5 border border-slate-200 rounded-lg font-bold text-[#102044] hover:bg-slate-50">
+            <button onClick={() => setStage('preview')} className="px-5 py-2.5 border border-slate-200 rounded-lg font-bold text-[var(--primary)] hover:bg-slate-50">
               매핑 수정
             </button>
             <button
               onClick={runCommit}
               disabled={committing || validation.summary.valid === 0}
-              className="px-5 py-2.5 bg-[#102044] text-white rounded-lg font-bold hover:bg-[#004bf0] disabled:opacity-50"
+              className="px-5 py-2.5 bg-[var(--primary)] text-white rounded-lg font-bold hover:bg-[var(--cta)] disabled:opacity-50"
             >
               {committing ? '가져오는 중...' : `${validation.summary.valid}건 가져오기`}
             </button>
@@ -264,13 +264,13 @@ export default function DataImport() {
           <div className="w-16 h-16 rounded-full bg-emerald-50 mx-auto flex items-center justify-center mb-4">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
           </div>
-          <h2 className="text-xl font-extrabold text-[#102044] mb-4">가져오기 완료</h2>
+          <h2 className="text-xl font-extrabold text-[var(--primary)] mb-4">가져오기 완료</h2>
           <div className="flex justify-center gap-6 mb-6">
             <div><div className="text-xs text-slate-400 uppercase font-bold">성공</div><div className="text-2xl font-extrabold text-emerald-600">{result.summary.success}</div></div>
             <div><div className="text-xs text-slate-400 uppercase font-bold">실패</div><div className="text-2xl font-extrabold text-[#ba1a1a]">{result.summary.failed}</div></div>
             <div><div className="text-xs text-slate-400 uppercase font-bold">스킵</div><div className="text-2xl font-extrabold text-slate-500">{result.summary.skipped}</div></div>
           </div>
-          <button onClick={reset} className="px-6 py-2.5 bg-[#102044] text-white rounded-lg font-bold hover:bg-[#004bf0]">
+          <button onClick={reset} className="px-6 py-2.5 bg-[var(--primary)] text-white rounded-lg font-bold hover:bg-[var(--cta)]">
             다른 파일 가져오기
           </button>
         </div>

@@ -29,7 +29,7 @@ export default function ClassesTab({ studentId }) {
             {classes.map(c => (
               <div key={c.id} className="p-4 rounded-lg bg-[#f8f9fa] border border-slate-100 hover:bg-slate-100 transition-colors flex items-center justify-between">
                 <div>
-                  <div className="font-bold text-[#102044]">{c.name}</div>
+                  <div className="font-bold text-[var(--primary)]">{c.name}</div>
                   <div className="text-xs text-slate-500 mt-0.5">
                     {c.teacher_name && `${c.teacher_name} · `}{c.schedule_text || '-'}
                   </div>
@@ -58,8 +58,8 @@ export default function ClassesTab({ studentId }) {
               return (
                 <div key={m.month} className="p-3 rounded-lg bg-[#f8f9fa] border border-slate-100">
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm font-bold text-[#102044]">{m.month}</span>
-                    <span className="text-xs font-bold text-[#004bf0]">{rate}%</span>
+                    <span className="text-sm font-bold text-[var(--primary)]">{m.month}</span>
+                    <span className="text-xs font-bold text-[var(--cta)]">{rate}%</span>
                   </div>
                   <div className="w-full h-2 bg-white rounded-full overflow-hidden">
                     <div className="h-full bg-emerald-500" style={{ width: `${rate}%` }} />

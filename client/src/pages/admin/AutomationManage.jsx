@@ -34,7 +34,7 @@ const Toggle = ({ checked, onChange }) => (
   <button
     type="button"
     onClick={onChange}
-    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? 'bg-[#004bf0]' : 'bg-slate-200'}`}
+    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? 'bg-[var(--cta)]' : 'bg-slate-200'}`}
   >
     <span className={`inline-block h-5 w-5 transform rounded-full bg-white border border-gray-300 transition-transform ${checked ? 'translate-x-[22px]' : 'translate-x-[2px]'}`} />
   </button>
@@ -164,7 +164,7 @@ export default function AutomationManage() {
       <div className="max-w-7xl mx-auto p-4 md:p-10">
         {/* Toast */}
         {msg && (
-          <div className="fixed top-20 right-8 z-50 bg-[#102044] text-white px-5 py-3 rounded-xl text-sm font-bold shadow-lg animate-fade-in">
+          <div className="fixed top-20 right-8 z-50 bg-[var(--primary)] text-white px-5 py-3 rounded-xl text-sm font-bold shadow-lg animate-fade-in">
             {msg}
           </div>
         )}
@@ -175,13 +175,13 @@ export default function AutomationManage() {
             <nav className="flex items-center gap-2 text-xs font-bold text-slate-400 tracking-widest uppercase mb-2">
               <span>Automation</span>
               <MI icon="chevron_right" className="text-[10px]" />
-              <span className="text-[#102044]">규칙 관리</span>
+              <span className="text-[var(--primary)]">규칙 관리</span>
             </nav>
-            <h2 className="text-4xl font-extrabold text-[#102044] tracking-tight">자동화 관리</h2>
+            <h2 className="text-4xl font-extrabold text-[var(--primary)] tracking-tight">자동화 관리</h2>
           </div>
           <button
             onClick={() => { setEditingRule(null); setRuleForm({ name: '', trigger_type: 'absence', action_type: 'send_sms', conditions: '{}', action_config: '{}' }); setShowRuleForm(true); }}
-            className="bg-[#004bf0] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all"
+            className="bg-[var(--cta)] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all"
           >
             <MI icon="add" />
             규칙 추가
@@ -202,8 +202,8 @@ export default function AutomationManage() {
                 onClick={() => { setTab(t.key); if (t.key === 'logs') loadLogs(1); }}
                 className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-colors ${
                   active
-                    ? 'bg-[#102044] text-white shadow-sm'
-                    : 'bg-white border border-slate-200 text-slate-500 hover:text-[#102044] hover:border-[#102044]/30'
+                    ? 'bg-[var(--primary)] text-white shadow-sm'
+                    : 'bg-white border border-slate-200 text-slate-500 hover:text-[var(--primary)] hover:border-[var(--primary)]/30'
                 }`}
               >
                 {t.label}
@@ -238,7 +238,7 @@ export default function AutomationManage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1 min-w-0">
-                          <h4 className={`text-lg font-bold truncate ${isActive ? 'text-[#102044]' : 'text-slate-400'}`} title={rule.name}>{rule.name}</h4>
+                          <h4 className={`text-lg font-bold truncate ${isActive ? 'text-[var(--primary)]' : 'text-slate-400'}`} title={rule.name}>{rule.name}</h4>
                           {isActive && (
                             <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter whitespace-nowrap flex-shrink-0">
                               {ACTION_LABELS[rule.action_type] || rule.action_type}
@@ -281,12 +281,12 @@ export default function AutomationManage() {
             {/* Right Sidebar (col-span-4) */}
             <div className="col-span-12 lg:col-span-4 space-y-8">
               {/* Performance Card */}
-              <div className="bg-[#102044] p-8 rounded-3xl text-white relative overflow-hidden h-64 flex flex-col justify-between">
+              <div className="bg-[var(--primary)] p-8 rounded-3xl text-white relative overflow-hidden h-64 flex flex-col justify-between">
                 <div className="relative z-10">
                   <span className="text-[10px] font-bold opacity-60 uppercase tracking-[0.2em] mb-2 block">Monthly Performance</span>
                   <h3 className="text-3xl font-extrabold leading-tight">
                     자동화로 아낀 시간<br />
-                    <span className="text-[#004bf0]">{(totalExecutions * 0.17).toFixed(1)} 시간</span>
+                    <span className="text-[var(--cta)]">{(totalExecutions * 0.17).toFixed(1)} 시간</span>
                   </h3>
                 </div>
                 <div className="flex items-end justify-between relative z-10">
@@ -302,16 +302,16 @@ export default function AutomationManage() {
 
               {/* Insights Card */}
               <div className="bg-[#f3f4f5] p-6 rounded-3xl">
-                <h5 className="text-sm font-bold text-[#102044] mb-4 flex items-center gap-2">
+                <h5 className="text-sm font-bold text-[var(--primary)] mb-4 flex items-center gap-2">
                   <MI icon="insights" className="text-sm" />
                   주요 알림
                 </h5>
                 <div className="space-y-4">
                   {taskSummary.pending > 0 && (
                     <div className="flex gap-3">
-                      <div className="w-2 h-2 rounded-full bg-[#004bf0] mt-1.5 shrink-0" />
+                      <div className="w-2 h-2 rounded-full bg-[var(--cta)] mt-1.5 shrink-0" />
                       <p className="text-sm text-slate-600 leading-relaxed">
-                        <span className="font-bold text-[#102044]">대기 중 업무</span>가 {taskSummary.pending}건 있습니다.
+                        <span className="font-bold text-[var(--primary)]">대기 중 업무</span>가 {taskSummary.pending}건 있습니다.
                       </p>
                     </div>
                   )}
@@ -319,7 +319,7 @@ export default function AutomationManage() {
                     <div className="flex gap-3">
                       <div className="w-2 h-2 rounded-full bg-red-500 mt-1.5 shrink-0" />
                       <p className="text-sm text-slate-600 leading-relaxed">
-                        <span className="font-bold text-[#102044]">긴급/높음 우선순위</span> 업무가 {taskSummary.urgent}건 있습니다.
+                        <span className="font-bold text-[var(--primary)]">긴급/높음 우선순위</span> 업무가 {taskSummary.urgent}건 있습니다.
                       </p>
                     </div>
                   )}
@@ -327,7 +327,7 @@ export default function AutomationManage() {
                     <div className="flex gap-3">
                       <div className="w-2 h-2 rounded-full bg-red-500 mt-1.5 shrink-0" />
                       <p className="text-sm text-slate-600 leading-relaxed">
-                        <span className="font-bold text-[#102044]">기한 초과</span> 업무가 {taskSummary.overdue}건 있습니다.
+                        <span className="font-bold text-[var(--primary)]">기한 초과</span> 업무가 {taskSummary.overdue}건 있습니다.
                       </p>
                     </div>
                   )}
@@ -335,7 +335,7 @@ export default function AutomationManage() {
                     <div className="flex gap-3">
                       <div className="w-2 h-2 rounded-full bg-amber-500 mt-1.5 shrink-0" />
                       <p className="text-sm text-slate-600 leading-relaxed">
-                        <span className="font-bold text-[#102044]">비활성 규칙</span>이 {rules.filter(r => !r.is_active).length}개 있습니다. 활성화를 권장합니다.
+                        <span className="font-bold text-[var(--primary)]">비활성 규칙</span>이 {rules.filter(r => !r.is_active).length}개 있습니다. 활성화를 권장합니다.
                       </p>
                     </div>
                   )}
@@ -343,7 +343,7 @@ export default function AutomationManage() {
                     <div className="flex gap-3">
                       <div className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
                       <p className="text-sm text-slate-600 leading-relaxed">
-                        오늘 <span className="font-bold text-[#102044]">{taskSummary.completed_today}건</span>의 업무가 완료되었습니다.
+                        오늘 <span className="font-bold text-[var(--primary)]">{taskSummary.completed_today}건</span>의 업무가 완료되었습니다.
                       </p>
                     </div>
                   )}
@@ -362,8 +362,8 @@ export default function AutomationManage() {
         {tab === 'queue' && (
           <div>
             <div className="flex items-center justify-between mb-8">
-              <h3 className="text-2xl font-extrabold text-[#102044] tracking-tight">실시간 업무 큐</h3>
-              <button onClick={loadTasks} className="text-sm font-bold text-[#004bf0] flex items-center gap-1 hover:underline">
+              <h3 className="text-2xl font-extrabold text-[var(--primary)] tracking-tight">실시간 업무 큐</h3>
+              <button onClick={loadTasks} className="text-sm font-bold text-[var(--cta)] flex items-center gap-1 hover:underline">
                 <MI icon="refresh" className="text-sm" /> 새로고침
               </button>
             </div>
@@ -407,7 +407,7 @@ export default function AutomationManage() {
         ═══════════════════════════════════════════════════════════ */}
         {tab === 'logs' && (
           <div>
-            <h3 className="text-2xl font-extrabold text-[#102044] tracking-tight mb-6">실행 이력</h3>
+            <h3 className="text-2xl font-extrabold text-[var(--primary)] tracking-tight mb-6">실행 이력</h3>
             <div className="bg-white rounded-2xl overflow-x-auto">
               <table className="w-full min-w-[720px]">
                 <thead>
@@ -425,7 +425,7 @@ export default function AutomationManage() {
                   )}
                   {logs.map(log => (
                     <tr key={log.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-4 text-sm font-bold text-[#102044]">{log.rule_name || '-'}</td>
+                      <td className="px-6 py-4 text-sm font-bold text-[var(--primary)]">{log.rule_name || '-'}</td>
                       <td className="px-6 py-4 text-sm text-slate-600">{TRIGGER_META[log.trigger_type]?.label || log.trigger_type}</td>
                       <td className="px-6 py-4 text-sm text-slate-600">{ACTION_LABELS[log.action_type] || log.action_type}</td>
                       <td className="px-6 py-4">
@@ -448,13 +448,13 @@ export default function AutomationManage() {
                     <button
                       disabled={logPage <= 1}
                       onClick={() => loadLogs(logPage - 1)}
-                      className="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 text-[#102044] hover:bg-slate-50 disabled:opacity-40"
+                      className="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 text-[var(--primary)] hover:bg-slate-50 disabled:opacity-40"
                     >이전</button>
                     <span className="px-3 py-1.5 text-xs text-slate-500">{logPage} / {Math.ceil(logTotal / 20)}</span>
                     <button
                       disabled={logPage >= Math.ceil(logTotal / 20)}
                       onClick={() => loadLogs(logPage + 1)}
-                      className="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 text-[#102044] hover:bg-slate-50 disabled:opacity-40"
+                      className="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 text-[var(--primary)] hover:bg-slate-50 disabled:opacity-40"
                     >다음</button>
                   </div>
                 </div>
@@ -469,14 +469,14 @@ export default function AutomationManage() {
         {showRuleForm && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setShowRuleForm(false)}>
             <div className="bg-white rounded-2xl w-full max-w-lg p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
-              <h3 className="text-xl font-extrabold text-[#102044] mb-6">{editingRule ? '규칙 수정' : '규칙 추가'}</h3>
+              <h3 className="text-xl font-extrabold text-[var(--primary)] mb-6">{editingRule ? '규칙 수정' : '규칙 추가'}</h3>
               <div className="space-y-5">
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">규칙 이름</label>
                   <input
                     value={ruleForm.name}
                     onChange={e => setRuleForm(f => ({ ...f, name: e.target.value }))}
-                    className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 text-sm"
+                    className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 text-sm"
                     placeholder="예: 결석 알림"
                   />
                 </div>
@@ -486,7 +486,7 @@ export default function AutomationManage() {
                     <select
                       value={ruleForm.trigger_type}
                       onChange={e => setRuleForm(f => ({ ...f, trigger_type: e.target.value }))}
-                      className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 text-sm"
+                      className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 text-sm"
                     >
                       {TRIGGER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </select>
@@ -496,7 +496,7 @@ export default function AutomationManage() {
                     <select
                       value={ruleForm.action_type}
                       onChange={e => setRuleForm(f => ({ ...f, action_type: e.target.value }))}
-                      className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 text-sm"
+                      className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 text-sm"
                     >
                       {ACTION_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </select>
@@ -508,7 +508,7 @@ export default function AutomationManage() {
                     value={ruleForm.conditions}
                     onChange={e => setRuleForm(f => ({ ...f, conditions: e.target.value }))}
                     rows={3}
-                    className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 text-sm font-mono"
+                    className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 text-sm font-mono"
                     placeholder='{"threshold": 3}'
                   />
                 </div>
@@ -518,14 +518,14 @@ export default function AutomationManage() {
                     value={ruleForm.action_config}
                     onChange={e => setRuleForm(f => ({ ...f, action_config: e.target.value }))}
                     rows={3}
-                    className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 text-sm font-mono"
+                    className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 text-sm font-mono"
                     placeholder='{"template": "결석 알림"}'
                   />
                 </div>
               </div>
               <div className="flex justify-end gap-3 mt-8">
-                <button onClick={() => setShowRuleForm(false)} className="px-6 py-3 border border-slate-200 text-[#102044] font-bold rounded-lg hover:bg-slate-50 text-sm">취소</button>
-                <button onClick={saveRule} className="px-6 py-3 bg-[#004bf0] text-white font-bold rounded-lg hover:bg-[#003bcc] text-sm">
+                <button onClick={() => setShowRuleForm(false)} className="px-6 py-3 border border-slate-200 text-[var(--primary)] font-bold rounded-lg hover:bg-slate-50 text-sm">취소</button>
+                <button onClick={saveRule} className="px-6 py-3 bg-[var(--cta)] text-white font-bold rounded-lg hover:bg-[#003bcc] text-sm">
                   {editingRule ? '수정' : '추가'}
                 </button>
               </div>
@@ -540,7 +540,7 @@ export default function AutomationManage() {
 /* ─── Sub-components ─────────────────────────────────────────────── */
 function TaskCard({ task, inProgress = false, completed = false, onComplete }) {
   return (
-    <div className={`bg-white p-4 rounded-2xl shadow-sm border border-slate-100/50 ${inProgress ? 'border-l-4 border-l-[#004bf0]' : ''} ${completed ? 'opacity-80' : ''}`}>
+    <div className={`bg-white p-4 rounded-2xl shadow-sm border border-slate-100/50 ${inProgress ? 'border-l-4 border-l-[var(--cta)]' : ''} ${completed ? 'opacity-80' : ''}`}>
       <div className="flex justify-between items-start mb-3">
         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
           completed ? 'bg-slate-200 text-slate-400' : (PRIORITY_STYLE[task.priority] || PRIORITY_STYLE.normal)
@@ -551,7 +551,7 @@ function TaskCard({ task, inProgress = false, completed = false, onComplete }) {
           {completed && task.completed_at ? formatDate(task.completed_at) : task.due_date ? formatDate(task.due_date) : ''}
         </span>
       </div>
-      <h5 className={`font-bold text-sm mb-1 leading-snug ${completed ? 'text-slate-400 line-through' : 'text-[#102044]'}`}>
+      <h5 className={`font-bold text-sm mb-1 leading-snug ${completed ? 'text-slate-400 line-through' : 'text-[var(--primary)]'}`}>
         {task.title}
       </h5>
       {task.description && (
@@ -567,7 +567,7 @@ function TaskCard({ task, inProgress = false, completed = false, onComplete }) {
           {onComplete && (
             <button
               onClick={() => onComplete(task.id)}
-              className="text-[10px] font-bold text-[#004bf0] hover:underline"
+              className="text-[10px] font-bold text-[var(--cta)] hover:underline"
             >완료 처리</button>
           )}
         </div>

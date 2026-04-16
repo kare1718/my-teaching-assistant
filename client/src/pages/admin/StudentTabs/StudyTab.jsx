@@ -36,13 +36,13 @@ export default function StudyTab({ studentId }) {
               return (
                 <div key={i} className="p-3 rounded-lg bg-[#f8f9fa] border border-slate-100">
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm font-bold text-[#102044]">{e.exam_name}</span>
-                    <span className="text-sm font-extrabold text-[#004bf0] bg-[#004bf0]/10 px-2.5 py-0.5 rounded-full">
+                    <span className="text-sm font-bold text-[var(--primary)]">{e.exam_name}</span>
+                    <span className="text-sm font-extrabold text-[var(--cta)] bg-[var(--cta)]/10 px-2.5 py-0.5 rounded-full">
                       {e.score}점
                     </span>
                   </div>
                   <div className="w-full h-2 bg-white rounded-full overflow-hidden">
-                    <div className="h-full bg-[#004bf0]" style={{ width: `${rate}%` }} />
+                    <div className="h-full bg-[var(--cta)]" style={{ width: `${rate}%` }} />
                   </div>
                   <div className="text-xs text-slate-400 mt-1 font-semibold">{formatDate(e.exam_date)}</div>
                 </div>
@@ -58,7 +58,7 @@ export default function StudyTab({ studentId }) {
             {homework.slice(0, 10).map((h, i) => (
               <div key={i} className="p-3 rounded-lg bg-[#f8f9fa] border border-slate-100 flex justify-between items-center">
                 <div>
-                  <div className="text-sm font-bold text-[#102044]">{h.class_name || h.title || '과제'}</div>
+                  <div className="text-sm font-bold text-[var(--primary)]">{h.class_name || h.title || '과제'}</div>
                   <div className="text-xs text-slate-400 font-semibold">{formatDate(h.date)}</div>
                 </div>
                 <span className={`rounded-full px-3 py-0.5 text-xs font-bold ${

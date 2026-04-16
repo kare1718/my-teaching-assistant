@@ -23,7 +23,7 @@ export default function RewardTab({ studentId, hasFeature }) {
     return (
       <Card className="text-center">
         <Icon name="workspace_premium" className="text-5xl text-slate-300 mb-3 block" />
-        <div className="text-lg font-extrabold text-[#102044] mb-1">Premium 전용 기능</div>
+        <div className="text-lg font-extrabold text-[var(--primary)] mb-1">Premium 전용 기능</div>
         <p className="text-sm text-slate-500">게이미피케이션은 First Class 플랜에서 이용 가능합니다.</p>
       </Card>
     );
@@ -37,7 +37,7 @@ export default function RewardTab({ studentId, hasFeature }) {
     <div className="space-y-6">
       <Card label="리워드 상태" title={character.char_name || '캐릭터'}>
         <div className="grid grid-cols-3 gap-2 md:gap-3">
-          <Stat label="레벨" value={`Lv.${character.level || 1}`} accent="#004bf0" />
+          <Stat label="레벨" value={`Lv.${character.level || 1}`} accent="var(--cta)" />
           <Stat label="XP" value={(character.xp || 0).toLocaleString()} />
           <Stat label="포인트" value={(character.points || 0).toLocaleString()} accent="#f59e0b" />
         </div>

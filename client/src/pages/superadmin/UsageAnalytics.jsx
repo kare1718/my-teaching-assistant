@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { api } from '../../api';
 
 const FONT = "'Paperlogy', 'Noto Sans KR', system-ui, sans-serif";
-const PRIMARY = '#102044';
-const ACCENT = '#004bf0';
+const PRIMARY = 'var(--primary)';
+const ACCENT = 'var(--cta)';
 const SURFACE = '#f8f9fa';
 
 const TIER_LABELS = {

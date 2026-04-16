@@ -1,7 +1,7 @@
 const VARIANTS = {
-  primary: 'bg-[#102044] text-white hover:bg-[#1e2a5e]',
-  accent: 'bg-[#004bf0] text-white hover:bg-[#0040d4]',
-  outline: 'border border-slate-200 text-[#102044] hover:bg-slate-50',
+  primary: 'bg-[var(--primary)] text-white hover:bg-[#1e2a5e]',
+  accent: 'bg-[var(--cta)] text-white hover:bg-[#0040d4]',
+  outline: 'border border-slate-200 text-[var(--primary)] hover:bg-slate-50',
   danger: 'bg-red-50 text-red-600 hover:bg-red-100',
   ghost: 'text-slate-600 hover:bg-slate-50',
 };

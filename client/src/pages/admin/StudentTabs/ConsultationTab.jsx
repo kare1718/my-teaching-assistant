@@ -27,7 +27,7 @@ export default function ConsultationTab({ studentId }) {
               <div key={l.id} className="p-4 rounded-lg bg-[#f8f9fa] border border-slate-100 hover:bg-slate-100 transition-colors">
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <div className="font-bold text-[#102044]">{l.title || '상담'}</div>
+                    <div className="font-bold text-[var(--primary)]">{l.title || '상담'}</div>
                     <div className="text-xs text-slate-400 font-semibold mt-0.5">{formatDate(l.created_at)}</div>
                   </div>
                   {l.follow_up_needed && (

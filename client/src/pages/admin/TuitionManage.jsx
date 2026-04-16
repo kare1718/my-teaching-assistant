@@ -335,11 +335,11 @@ export default function TuitionManage() {
                                   결제링크
                                 </button>
                                 <button onClick={() => openSplitModal(r)}
-                                  style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid #004bf0', cursor: 'pointer', background: 'white', color: '#004bf0', fontSize: 12, fontWeight: 600 }}>
+                                  style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--cta)', cursor: 'pointer', background: 'white', color: 'var(--cta)', fontSize: 12, fontWeight: 600 }}>
                                   혼합수납
                                 </button>
                                 <button onClick={() => setInstallmentModal({ record: r, count: 3 })}
-                                  style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid #102044', cursor: 'pointer', background: 'white', color: '#102044', fontSize: 12, fontWeight: 600 }}>
+                                  style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--primary)', cursor: 'pointer', background: 'white', color: 'var(--primary)', fontSize: 12, fontWeight: 600 }}>
                                   분할납부
                                 </button>
                               </div>
@@ -362,7 +362,7 @@ export default function TuitionManage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3 style={{ fontSize: 16, fontWeight: 700 }}>할인 규칙 (형제/장학/프로모션)</h3>
             <button onClick={() => { setEditingRule(null); setShowRuleForm(true); setRuleForm({ name: '', rule_type: 'sibling', discount_type: 'percent', discount_value: 10, min_siblings: 2, is_active: true }); }}
-              style={{ padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', background: '#102044', color: 'white', fontWeight: 600, fontSize: 13 }}>
+              style={{ padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'var(--primary)', color: 'white', fontWeight: 600, fontSize: 13 }}>
               + 규칙 추가
             </button>
           </div>
@@ -378,13 +378,13 @@ export default function TuitionManage() {
                 return (
                   <div key={r.id} style={{ background: 'white', borderRadius: 12, padding: 16, border: '1px solid #e2e8f0', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 8 }}>
-                      <span style={{ padding: '2px 10px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: '#eef2ff', color: '#102044' }}>
+                      <span style={{ padding: '2px 10px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: '#eef2ff', color: 'var(--primary)' }}>
                         {typeLabels[r.rule_type] || r.rule_type}
                       </span>
                       {!r.is_active && <span style={{ fontSize: 11, color: '#94a3b8' }}>비활성</span>}
                     </div>
-                    <h4 style={{ fontSize: 15, fontWeight: 700, color: '#102044', marginBottom: 4 }}>{r.name}</h4>
-                    <p style={{ fontSize: 20, fontWeight: 800, color: '#004bf0' }}>
+                    <h4 style={{ fontSize: 15, fontWeight: 700, color: 'var(--primary)', marginBottom: 4 }}>{r.name}</h4>
+                    <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--cta)' }}>
                       {r.discount_type === 'percent' ? `${r.discount_value}%` : `${Number(r.discount_value).toLocaleString()}원`}
                     </p>
                     {r.rule_type === 'sibling' && (
@@ -416,7 +416,7 @@ export default function TuitionManage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
           onClick={() => setShowRuleForm(false)}>
           <div style={{ background: 'white', borderRadius: 16, padding: 24, width: '100%', maxWidth: 440 }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: '#102044' }}>{editingRule ? '할인 규칙 수정' : '할인 규칙 추가'}</h3>
+            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: 'var(--primary)' }}>{editingRule ? '할인 규칙 수정' : '할인 규칙 추가'}</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <input placeholder="규칙 이름 (예: 형제 10% 할인)" value={ruleForm.name} onChange={e => setRuleForm({ ...ruleForm, name: e.target.value })}
                 style={{ padding: 10, borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, fontFamily: 'inherit' }} />
@@ -452,7 +452,7 @@ export default function TuitionManage() {
               <button onClick={() => setShowRuleForm(false)}
                 style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer', background: 'white', fontSize: 14, fontFamily: 'inherit' }}>취소</button>
               <button onClick={handleSaveRule}
-                style={{ padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', background: '#102044', color: 'white', fontWeight: 600, fontSize: 14 }}>저장</button>
+                style={{ padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'var(--primary)', color: 'white', fontWeight: 600, fontSize: 14 }}>저장</button>
             </div>
           </div>
         </div>
@@ -463,7 +463,7 @@ export default function TuitionManage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
           onClick={() => setSplitModal(null)}>
           <div style={{ background: 'white', borderRadius: 16, padding: 24, width: '100%', maxWidth: 500 }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, color: '#102044' }}>혼합 수납</h3>
+            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, color: 'var(--primary)' }}>혼합 수납</h3>
             <p style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>
               {splitModal.record.student_name || splitModal.record.student_id} · 청구액 {Number(splitModal.record.amount).toLocaleString()}원
             </p>
@@ -488,7 +488,7 @@ export default function TuitionManage() {
               style={{ marginTop: 10, padding: '6px 12px', borderRadius: 6, border: '1px dashed #cbd5e1', background: 'white', cursor: 'pointer', fontSize: 12, color: '#64748b', fontFamily: 'inherit' }}>
               + 결제 수단 추가
             </button>
-            <div style={{ marginTop: 12, padding: 10, background: '#f8f9fa', borderRadius: 8, fontSize: 13, color: '#102044' }}>
+            <div style={{ marginTop: 12, padding: 10, background: '#f8f9fa', borderRadius: 8, fontSize: 13, color: 'var(--primary)' }}>
               합계: <strong>{splitModal.splits.reduce((s, x) => s + Number(x.amount || 0), 0).toLocaleString()}원</strong>
               {' / '}청구: <strong>{Number(splitModal.record.amount).toLocaleString()}원</strong>
             </div>
@@ -496,7 +496,7 @@ export default function TuitionManage() {
               <button onClick={() => setSplitModal(null)}
                 style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer', background: 'white', fontSize: 14, fontFamily: 'inherit' }}>취소</button>
               <button onClick={handleSubmitSplit}
-                style={{ padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', background: '#004bf0', color: 'white', fontWeight: 600, fontSize: 14 }}>수납 기록</button>
+                style={{ padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'var(--cta)', color: 'white', fontWeight: 600, fontSize: 14 }}>수납 기록</button>
             </div>
           </div>
         </div>
@@ -507,7 +507,7 @@ export default function TuitionManage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
           onClick={() => setInstallmentModal(null)}>
           <div style={{ background: 'white', borderRadius: 16, padding: 24, width: '100%', maxWidth: 420 }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, color: '#102044' }}>분할 납부</h3>
+            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, color: 'var(--primary)' }}>분할 납부</h3>
             <p style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>
               청구액 {Number(installmentModal.record.amount).toLocaleString()}원을 몇 회로 나눠 청구할지 선택하세요.
             </p>
@@ -517,7 +517,7 @@ export default function TuitionManage() {
                 onChange={e => setInstallmentModal({ ...installmentModal, count: Math.max(2, Math.min(12, Number(e.target.value) || 2)) })}
                 style={{ marginTop: 4, width: '100%', padding: 10, borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, fontFamily: 'inherit' }} />
             </label>
-            <div style={{ padding: 10, background: '#f8f9fa', borderRadius: 8, fontSize: 13, color: '#102044' }}>
+            <div style={{ padding: 10, background: '#f8f9fa', borderRadius: 8, fontSize: 13, color: 'var(--primary)' }}>
               회차당 약 <strong>{Math.floor(installmentModal.record.amount / installmentModal.count).toLocaleString()}원</strong>
               {' · '}매월 청구 생성
             </div>
@@ -525,7 +525,7 @@ export default function TuitionManage() {
               <button onClick={() => setInstallmentModal(null)}
                 style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer', background: 'white', fontSize: 14, fontFamily: 'inherit' }}>취소</button>
               <button onClick={handleSubmitInstallment}
-                style={{ padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', background: '#102044', color: 'white', fontWeight: 600, fontSize: 14 }}>생성</button>
+                style={{ padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'var(--primary)', color: 'white', fontWeight: 600, fontSize: 14 }}>생성</button>
             </div>
           </div>
         </div>

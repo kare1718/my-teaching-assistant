@@ -43,6 +43,7 @@
   --primary-light: oklch(42% 0.10 250);
   --primary-lighter: oklch(95% 0.015 250);
   --primary-subtle: oklch(90% 0.025 250);
+  --cta: oklch(50% 0.25 264);  /* Bright Blue — CTA buttons, links (#004bf0 대체) */
 
   /* Neutral scale (tinted, never pure gray) */
   --neutral-50: oklch(97.5% 0.005 250);
@@ -199,6 +200,7 @@
   --primary-light: oklch(55% 0.10 250);
   --primary-lighter: oklch(22% 0.02 250);
   --primary-subtle: oklch(25% 0.025 250);
+  --cta: oklch(60% 0.22 264);
 
   --neutral-50: oklch(15% 0.005 250);
   --neutral-100: oklch(18% 0.008 250);

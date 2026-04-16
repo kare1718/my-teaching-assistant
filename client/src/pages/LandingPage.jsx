@@ -434,7 +434,7 @@ export default function LandingPage() {
         <div style={{ maxWidth: 1152, margin: '0 auto', padding: '0 24px' }}>
           <div ref={addRef} style={{ textAlign: 'center', marginBottom: 56 }}>
             <p style={{ fontSize: 12, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 12 }}>VALUE BUNDLES</p>
-            <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.5rem)', fontWeight: 800, color: '#102044', letterSpacing: '-0.025em', lineHeight: 1.3, marginBottom: 12 }}>학원 운영의 모든 업무를 하나로</h2>
+            <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.5rem)', fontWeight: 800, color: 'var(--primary)', letterSpacing: '-0.025em', lineHeight: 1.3, marginBottom: 12 }}>학원 운영의 모든 업무를 하나로</h2>
             <p style={{ color: C.textTertiary, fontSize: 16 }}>기능이 아닌 가치로 묶었습니다</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
@@ -454,8 +454,8 @@ export default function LandingPage() {
               onMouseOut={e => { e.currentTarget.style.borderColor = '#f1f5f9'; e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.04)'; }}>
                 <div style={{ fontSize: 32, marginBottom: 16 }}>{v.icon}</div>
                 <div style={{ marginBottom: 12 }}>
-                  <h3 style={{ fontSize: 18, fontWeight: 800, color: '#102044', marginBottom: 4 }}>{v.title}</h3>
-                  <p style={{ fontSize: 14, color: '#004bf0', fontWeight: 600 }}>"{v.sub}"</p>
+                  <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--primary)', marginBottom: 4 }}>{v.title}</h3>
+                  <p style={{ fontSize: 14, color: 'var(--cta)', fontWeight: 600 }}>"{v.sub}"</p>
                 </div>
                 <p style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.65, flex: 1, marginBottom: 16 }}>{v.desc}</p>
                 <span style={{
@@ -877,7 +877,7 @@ export default function LandingPage() {
         <div style={{ maxWidth: 1152, margin: '0 auto', padding: '0 24px' }}>
           <div ref={addRef} style={{ textAlign: 'center', marginBottom: 56 }}>
             <p style={{ fontSize: 12, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 12 }}>TRUST</p>
-            <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.5rem)', fontWeight: 800, color: '#102044', letterSpacing: '-0.025em', lineHeight: 1.3 }}>안심하고 도입하세요</h2>
+            <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.5rem)', fontWeight: 800, color: 'var(--primary)', letterSpacing: '-0.025em', lineHeight: 1.3 }}>안심하고 도입하세요</h2>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
             {[
@@ -890,7 +890,7 @@ export default function LandingPage() {
                 border: '1px solid #f1f5f9', boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
               }}>
                 <div style={{ fontSize: 36, marginBottom: 16 }}>{t.icon}</div>
-                <h3 style={{ fontSize: 20, fontWeight: 800, color: '#102044', marginBottom: 16 }}>{t.title}</h3>
+                <h3 style={{ fontSize: 20, fontWeight: 800, color: 'var(--primary)', marginBottom: 16 }}>{t.title}</h3>
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                   {t.items.map((it, j) => (
                     <li key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 0', fontSize: 14, color: C.textSecondary }}>
@@ -942,7 +942,7 @@ export default function LandingPage() {
       </section>
 
       {/* === CTA === */}
-      <section id="cta" style={{ padding: '96px 0', background: 'linear-gradient(135deg, #102044 0%, #1e2a5e 100%)' }}>
+      <section id="cta" style={{ padding: '96px 0', background: 'linear-gradient(135deg, var(--primary) 0%, #1e2a5e 100%)' }}>
         <div style={{ maxWidth: 768, margin: '0 auto', padding: '0 24px', textAlign: 'center' }}>
           <h2 ref={addRef} style={{ fontSize: 'clamp(1.5rem, 5vw, 3rem)', fontWeight: 800, letterSpacing: '-0.025em', lineHeight: 1.3, marginBottom: 20, color: '#ffffff' }}>
             학원 운영, 이제 바꿀 때입니다
@@ -952,7 +952,7 @@ export default function LandingPage() {
           </p>
           <div ref={addRef} style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center', alignItems: 'center' }}>
             <button onClick={() => navigate('/onboarding')} style={{
-              background: '#ffffff', color: '#102044',
+              background: '#ffffff', color: 'var(--primary)',
               fontWeight: 800, fontSize: 16, padding: '16px 32px', borderRadius: 12, border: 'none', cursor: 'pointer',
               transition: 'all 0.2s',
             }} onMouseOver={e => { e.currentTarget.style.opacity = '0.9'; }}

@@ -99,7 +99,7 @@ export default function KPIDashboard() {
 
   const cardBase = 'bg-white rounded-xl border border-slate-100 shadow-sm';
   const labelCls = 'text-xs font-bold text-slate-400 uppercase tracking-widest';
-  const titleCls = 'text-2xl font-extrabold text-[#102044] tracking-tight';
+  const titleCls = 'text-2xl font-extrabold text-[var(--primary)] tracking-tight';
 
   const plansTotal = plans.reduce((a, b) => a + (b.count || 0), 0) || 1;
 
@@ -134,14 +134,14 @@ export default function KPIDashboard() {
           {[7, 30, 90].map(d => (
             <button key={d} onClick={() => setRange(d)}
               className={`rounded-full px-3 py-1.5 text-xs font-bold border transition ${
-                range === d ? 'bg-[#102044] text-white border-[#102044]' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                range === d ? 'bg-[var(--primary)] text-white border-[var(--primary)]' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
               }`}>
               {d}일
             </button>
           ))}
           <button onClick={() => setRange('custom')}
             className={`rounded-full px-3 py-1.5 text-xs font-bold border transition ${
-              range === 'custom' ? 'bg-[#102044] text-white border-[#102044]' : 'bg-white text-slate-600 border-slate-200'
+              range === 'custom' ? 'bg-[var(--primary)] text-white border-[var(--primary)]' : 'bg-white text-slate-600 border-slate-200'
             }`}>
             커스텀
           </button>
@@ -153,7 +153,7 @@ export default function KPIDashboard() {
                 className="text-xs px-2 py-1 rounded border border-slate-200" />
             </>
           )}
-          <button onClick={load} className="ml-2 rounded-full px-3 py-1.5 text-xs font-bold bg-[#004bf0] text-white">
+          <button onClick={load} className="ml-2 rounded-full px-3 py-1.5 text-xs font-bold bg-[var(--cta)] text-white">
             새로고침
           </button>
         </div>
@@ -172,19 +172,19 @@ export default function KPIDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div className={cardBase + ' p-6'}>
               <div className={labelCls}>활성 운영 학원</div>
-              <div className="text-4xl font-extrabold text-[#102044] mt-2">{northStar?.active_academies ?? 0}</div>
+              <div className="text-4xl font-extrabold text-[var(--primary)] mt-2">{northStar?.active_academies ?? 0}</div>
               <div className="text-xs text-slate-500 mt-1">최근 7일 코어 기능 2개 이상 사용</div>
             </div>
             <div className={cardBase + ' p-6'}>
               <div className={labelCls}>첫 가치 도달 시간</div>
-              <div className="text-4xl font-extrabold text-[#102044] mt-2">
+              <div className="text-4xl font-extrabold text-[var(--primary)] mt-2">
                 {northStar?.ttfv_hours != null ? `${northStar.ttfv_hours}h` : '—'}
               </div>
               <div className="text-xs text-slate-500 mt-1">가입 → 첫 학생 등록 평균</div>
             </div>
             <div className={cardBase + ' p-6'}>
               <div className={labelCls}>학생 단위 운영 완결률</div>
-              <div className="text-4xl font-extrabold text-[#102044] mt-2">{northStar?.completion_pct ?? 0}%</div>
+              <div className="text-4xl font-extrabold text-[var(--primary)] mt-2">{northStar?.completion_pct ?? 0}%</div>
               <div className="text-xs text-slate-500 mt-1">최근 30일 · 출결+수납 모두 기록된 학생 비율</div>
             </div>
           </div>
@@ -202,7 +202,7 @@ export default function KPIDashboard() {
                   <div key={s.key} className="flex items-center gap-3">
                     <div className="w-36 text-sm font-semibold text-slate-700">{s.label}</div>
                     <div className="flex-1 h-8 bg-slate-100 rounded-lg overflow-hidden relative">
-                      <div className="h-full bg-gradient-to-r from-[#004bf0] to-[#102044] rounded-lg transition-all"
+                      <div className="h-full bg-gradient-to-r from-[var(--cta)] to-[var(--primary)] rounded-lg transition-all"
                         style={{ width: `${width}%` }} />
                       <div className="absolute inset-0 flex items-center px-3 text-xs font-bold text-white drop-shadow">
                         {s.value ?? '—'}

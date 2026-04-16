@@ -9,7 +9,7 @@ export function FilterChips({ options, value, onChange }) {
             onClick={() => onChange(opt.value)}
             className={`rounded-full px-4 py-1.5 text-xs font-bold transition-colors ${
               active
-                ? 'bg-[#102044] text-white'
+                ? 'bg-[var(--primary)] text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >

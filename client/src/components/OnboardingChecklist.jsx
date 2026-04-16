@@ -46,7 +46,7 @@ export default function OnboardingChecklist() {
       {/* 플로팅 버튼 */}
       <button
         onClick={() => setOpen(v => !v)}
-        className="fixed right-6 bottom-6 z-50 w-16 h-16 rounded-full bg-[#102044] text-white shadow-lg shadow-[#102044]/20 flex flex-col items-center justify-center font-extrabold hover:bg-[#004bf0] transition-all"
+        className="fixed right-6 bottom-6 z-50 w-16 h-16 rounded-full bg-[var(--primary)] text-white shadow-lg shadow-[var(--primary)]/20 flex flex-col items-center justify-center font-extrabold hover:bg-[var(--cta)] transition-all"
         style={{ zIndex: 9998 }}
         aria-label="온보딩 체크리스트"
       >
@@ -62,13 +62,13 @@ export default function OnboardingChecklist() {
         >
           <div className="flex items-center justify-between mb-3">
             <div>
-              <div className="text-base font-extrabold text-[#102044] tracking-tight">시작하기 체크리스트</div>
+              <div className="text-base font-extrabold text-[var(--primary)] tracking-tight">시작하기 체크리스트</div>
               <div className="text-xs text-slate-500">{data.doneCount} / {data.total} 완료</div>
             </div>
             <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
           </div>
           <div className="h-2 bg-slate-100 rounded-full overflow-hidden mb-4">
-            <div className="h-full bg-[#004bf0] transition-all" style={{ width: `${progress}%` }} />
+            <div className="h-full bg-[var(--cta)] transition-all" style={{ width: `${progress}%` }} />
           </div>
           <div className="flex flex-col gap-1.5 max-h-80 overflow-y-auto">
             {data.items.map(item => (
@@ -76,7 +76,7 @@ export default function OnboardingChecklist() {
                 key={item.key}
                 onClick={() => { navigate(item.path); setOpen(false); }}
                 className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-sm transition-all ${
-                  item.done ? 'bg-emerald-50 text-emerald-800' : 'hover:bg-slate-50 text-[#102044]'
+                  item.done ? 'bg-emerald-50 text-emerald-800' : 'hover:bg-slate-50 text-[var(--primary)]'
                 }`}
               >
                 <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
@@ -106,14 +106,14 @@ export default function OnboardingChecklist() {
             onClick={e => e.stopPropagation()}
           >
             <div className="text-6xl mb-4">🎉</div>
-            <h2 className="text-2xl font-extrabold text-[#102044] mb-2">첫 가치 체험 완료!</h2>
+            <h2 className="text-2xl font-extrabold text-[var(--primary)] mb-2">첫 가치 체험 완료!</h2>
             <p className="text-slate-600 mb-6">
               학원 운영의 핵심 단계를 모두 완료하셨어요.<br/>
               이제 나만의 조교가 여러분의 학원을 더 편하게 만들어드립니다.
             </p>
             <button
               onClick={() => setShowCelebrate(false)}
-              className="px-8 py-3 bg-[#102044] text-white rounded-lg font-extrabold hover:bg-[#004bf0]"
+              className="px-8 py-3 bg-[var(--primary)] text-white rounded-lg font-extrabold hover:bg-[var(--cta)]"
             >
               좋아요!
             </button>

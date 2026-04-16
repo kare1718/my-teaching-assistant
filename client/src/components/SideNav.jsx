@@ -400,12 +400,12 @@ export default function SideNav() {
               border: 'none', cursor: 'pointer', fontFamily: 'inherit',
               fontSize: isLg ? 14 : 13, fontWeight: active ? 700 : 600,
               background: active ? 'rgba(16,32,68,0.08)' : 'transparent',
-              color: active ? '#102044' : 'var(--foreground)',
+              color: active ? 'var(--primary)' : 'var(--foreground)',
               marginBottom: 2, textAlign: 'left',
             }}>
-              <span style={{ color: active ? '#102044' : 'var(--neutral-500)', display: 'flex' }}>{group.icon}</span>
+              <span style={{ color: active ? 'var(--primary)' : 'var(--neutral-500)', display: 'flex' }}>{group.icon}</span>
               <span style={{ flex: 1 }}>{group.label}</span>
-              {active && <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#102044' }} />}
+              {active && <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--primary)' }} />}
             </button>
           );
         }
@@ -423,10 +423,10 @@ export default function SideNav() {
               fontSize: isLg ? 14 : 13,
               fontWeight: groupContainsActive ? 700 : 600,
               background: groupContainsActive ? 'rgba(16,32,68,0.06)' : 'transparent',
-              color: groupContainsActive ? '#102044' : 'var(--foreground)',
+              color: groupContainsActive ? 'var(--primary)' : 'var(--foreground)',
               textAlign: 'left',
             }}>
-              <span style={{ color: groupContainsActive ? '#102044' : 'var(--neutral-500)', display: 'flex' }}>
+              <span style={{ color: groupContainsActive ? 'var(--primary)' : 'var(--neutral-500)', display: 'flex' }}>
                 {group.icon}
               </span>
               <span style={{ flex: 1 }}>{group.label}</span>
@@ -460,7 +460,7 @@ export default function SideNav() {
                       fontSize: isLg ? 13 : 12,
                       fontWeight: active ? 700 : 500,
                       background: active ? 'rgba(16,32,68,0.1)' : 'transparent',
-                      color: active ? '#102044' : 'var(--muted-foreground)',
+                      color: active ? 'var(--primary)' : 'var(--muted-foreground)',
                       transition: 'background 0.12s', marginBottom: 1, textAlign: 'left',
                     }}
                     onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--neutral-50)'; }}

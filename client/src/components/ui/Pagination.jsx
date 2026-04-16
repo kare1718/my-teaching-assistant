@@ -19,7 +19,7 @@ export function Pagination({ total, limit, offset, onChange }) {
         >
           이전
         </button>
-        <span className="px-3 py-1 text-sm font-bold text-[#102044]">
+        <span className="px-3 py-1 text-sm font-bold text-[var(--primary)]">
           {page} / {totalPages}
         </span>
         <button

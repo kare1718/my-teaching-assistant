@@ -7,7 +7,7 @@ const EVENT_CONFIG = {
   absence:         { icon: 'cancel',        dotColor: 'bg-red-500',     label: '결석' },
   late:            { icon: 'schedule',       dotColor: 'bg-amber-500',   label: '지각' },
   consultation:    { icon: 'edit_note',      dotColor: 'bg-purple-500',  label: '상담' },
-  tuition_billed:  { icon: 'receipt_long',   dotColor: 'bg-[#004bf0]',   label: '청구' },
+  tuition_billed:  { icon: 'receipt_long',   dotColor: 'bg-[var(--cta)]',   label: '청구' },
   tuition_paid:    { icon: 'payments',       dotColor: 'bg-emerald-500', label: '납부' },
   tuition_overdue: { icon: 'warning',        dotColor: 'bg-red-500',     label: '미납' },
   exam_score:      { icon: 'analytics',      dotColor: 'bg-orange-500',  label: '성적' },
@@ -106,7 +106,7 @@ export default function TimelineTab({ studentId, showNoteForm, setShowNoteForm }
               key={fg.key}
               onClick={() => setFilter(fg.key)}
               className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${
-                filter === fg.key ? 'bg-[#102044] text-white' : 'bg-[#f3f4f5] text-slate-500 hover:bg-slate-200'
+                filter === fg.key ? 'bg-[var(--primary)] text-white' : 'bg-[#f3f4f5] text-slate-500 hover:bg-slate-200'
               }`}
             >
               {fg.label}
@@ -123,18 +123,18 @@ export default function TimelineTab({ studentId, showNoteForm, setShowNoteForm }
             placeholder="메모 제목"
             value={noteTitle}
             onChange={(e) => setNoteTitle(e.target.value)}
-            className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 text-sm mb-3 outline-none"
+            className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 text-sm mb-3 outline-none"
           />
           <textarea
             placeholder="상세 내용 (선택)"
             value={noteDesc}
             onChange={(e) => setNoteDesc(e.target.value)}
             rows={3}
-            className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 text-sm mb-4 resize-y outline-none"
+            className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 text-sm mb-4 resize-y outline-none"
           />
           <div className="flex gap-3">
-            <button onClick={handleAddNote} className="px-6 py-2.5 bg-[#102044] text-white font-bold rounded-lg text-sm hover:bg-[#1a2d5a] transition-colors">저장</button>
-            <button onClick={() => { setShowNoteForm(false); setNoteTitle(''); setNoteDesc(''); }} className="px-6 py-2.5 border border-slate-200 text-[#102044] font-bold rounded-lg text-sm hover:bg-slate-50 transition-colors">취소</button>
+            <button onClick={handleAddNote} className="px-6 py-2.5 bg-[var(--primary)] text-white font-bold rounded-lg text-sm hover:bg-[#1a2d5a] transition-colors">저장</button>
+            <button onClick={() => { setShowNoteForm(false); setNoteTitle(''); setNoteDesc(''); }} className="px-6 py-2.5 border border-slate-200 text-[var(--primary)] font-bold rounded-lg text-sm hover:bg-slate-50 transition-colors">취소</button>
           </div>
         </div>
       )}
@@ -170,7 +170,7 @@ export default function TimelineTab({ studentId, showNoteForm, setShowNoteForm }
                               <span className="text-xs font-bold text-slate-400">{formatDate(evt.event_date)}</span>
                             </div>
                             <div className="flex items-center gap-3 mb-1">
-                              <h4 className="font-bold text-[#102044]">{evt.title}</h4>
+                              <h4 className="font-bold text-[var(--primary)]">{evt.title}</h4>
                               {evt.is_pinned && <Icon name="push_pin" className="text-sm text-amber-600" filled />}
                             </div>
                             {evt.description && (

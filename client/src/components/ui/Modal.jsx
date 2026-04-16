@@ -11,7 +11,7 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-lg' 
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-6 border-b border-slate-100">
-          <h2 className="text-lg font-bold text-[#102044]">{title}</h2>
+          <h2 className="text-lg font-bold text-[var(--primary)]">{title}</h2>
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500"

@@ -4,7 +4,7 @@ import { api, apiPost, apiPut, apiDelete } from '../../api';
 /* ─── 상수 ──────────────────────────────────────────────── */
 const KANBAN_COLUMNS = [
   { key: 'new', label: '신규 문의', color: 'bg-slate-400' },
-  { key: 'consulting', label: '상담중', color: 'bg-[#004bf0]' },
+  { key: 'consulting', label: '상담중', color: 'bg-[var(--cta)]' },
   { key: 'trial', label: '체험 예정', color: 'bg-purple-500' },
   { key: 'enrolled', label: '등록 완료', color: 'bg-emerald-500' },
   { key: 'lost', label: '미등록', color: 'bg-red-500' },
@@ -13,7 +13,7 @@ const KANBAN_COLUMNS = [
 const ALL_STATUSES = [
   { key: 'new', label: '신규 문의', color: '#94a3b8' },
   { key: 'contacted', label: '연락완료', color: '#8b5cf6' },
-  { key: 'consulting', label: '상담중', color: '#004bf0' },
+  { key: 'consulting', label: '상담중', color: 'var(--cta)' },
   { key: 'trial', label: '체험 예정', color: '#a855f7' },
   { key: 'enrolled', label: '등록 완료', color: '#10b981' },
   { key: 'lost', label: '미등록', color: '#ef4444' },
@@ -271,7 +271,7 @@ export default function LeadManage() {
 
       {/* ─── 토스트 메시지 ──────────────────────────────── */}
       {msg && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[9999] px-6 py-2.5 rounded-xl bg-[#102044] text-white text-[13px] font-semibold shadow-lg">
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[9999] px-6 py-2.5 rounded-xl bg-[var(--primary)] text-white text-[13px] font-semibold shadow-lg">
           {msg}
         </div>
       )}
@@ -279,7 +279,7 @@ export default function LeadManage() {
       {/* ─── 상단 헤더 ─────────────────────────────────── */}
       <header className="sticky top-0 z-30 bg-[#f3f4f5] flex justify-between items-center w-full px-8 py-4">
         <div className="flex items-center gap-8">
-          <h2 className="text-lg font-black text-[#102044] tracking-tight">상담 관리</h2>
+          <h2 className="text-lg font-black text-[var(--primary)] tracking-tight">상담 관리</h2>
 
           {/* 뷰 토글 */}
           <div className="flex bg-[#e1e3e4] rounded-lg p-1">
@@ -287,8 +287,8 @@ export default function LeadManage() {
               onClick={() => setViewMode('pipeline')}
               className={`px-4 py-1.5 text-sm font-bold rounded-md transition-all ${
                 viewMode === 'pipeline'
-                  ? 'bg-white shadow-sm text-[#102044]'
-                  : 'text-[#45464e] hover:text-[#102044]'
+                  ? 'bg-white shadow-sm text-[var(--primary)]'
+                  : 'text-[#45464e] hover:text-[var(--primary)]'
               }`}
             >
               파이프라인
@@ -297,8 +297,8 @@ export default function LeadManage() {
               onClick={() => setViewMode('list')}
               className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
                 viewMode === 'list'
-                  ? 'bg-white shadow-sm text-[#102044] font-bold'
-                  : 'text-[#45464e] hover:text-[#102044]'
+                  ? 'bg-white shadow-sm text-[var(--primary)] font-bold'
+                  : 'text-[#45464e] hover:text-[var(--primary)]'
               }`}
             >
               리스트
@@ -313,7 +313,7 @@ export default function LeadManage() {
               placeholder="리드 검색..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-[#e1e3e4] border-none rounded-lg text-sm w-64 focus:ring-2 focus:ring-[#004bf0]/20 focus:bg-white transition-all"
+              className="pl-10 pr-4 py-2 bg-[#e1e3e4] border-none rounded-lg text-sm w-64 focus:ring-2 focus:ring-[var(--cta)]/20 focus:bg-white transition-all"
             />
           </div>
         </div>
@@ -321,7 +321,7 @@ export default function LeadManage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => { setShowForm(true); setEditingLead(null); resetForm(); }}
-            className="bg-[#102044] text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 transition-all flex items-center gap-2"
+            className="bg-[var(--primary)] text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 transition-all flex items-center gap-2"
           >
             <span className="material-symbols-outlined text-sm">add</span>
             리드 등록
@@ -405,7 +405,7 @@ export default function LeadManage() {
                           onClick={() => openDetail(lead)}
                           className="cursor-pointer hover:bg-slate-50 transition-colors"
                         >
-                          <td className="px-6 py-4 font-bold text-[#102044]">{lead.student_name}</td>
+                          <td className="px-6 py-4 font-bold text-[var(--primary)]">{lead.student_name}</td>
                           <td className="px-6 py-4 text-slate-500">{lead.parent_name || '-'}</td>
                           <td className="px-6 py-4">
                             {lead.source && (
@@ -476,28 +476,28 @@ export default function LeadManage() {
           <div className="flex gap-12">
             <div>
               <p className="text-[10px] text-[#75777f] font-bold uppercase tracking-wider mb-1">월간 신규 리드</p>
-              <p className="text-lg font-black text-[#102044]">
+              <p className="text-lg font-black text-[var(--primary)]">
                 {stats.statusCounts?.new || 0}
                 <span className="text-xs font-bold text-emerald-500 ml-1">+12%</span>
               </p>
             </div>
             <div>
               <p className="text-[10px] text-[#75777f] font-bold uppercase tracking-wider mb-1">전환율</p>
-              <p className="text-lg font-black text-[#102044]">{stats.conversionRate || 0}%</p>
+              <p className="text-lg font-black text-[var(--primary)]">{stats.conversionRate || 0}%</p>
             </div>
             <div>
               <p className="text-[10px] text-[#75777f] font-bold uppercase tracking-wider mb-1">평균 리드 기간</p>
-              <p className="text-lg font-black text-[#102044]">{stats.avgLeadDuration ? `${Math.round(stats.avgLeadDuration)}일` : '-'}</p>
+              <p className="text-lg font-black text-[var(--primary)]">{stats.avgLeadDuration ? `${Math.round(stats.avgLeadDuration)}일` : '-'}</p>
             </div>
             <div>
               <p className="text-[10px] text-[#75777f] font-bold uppercase tracking-wider mb-1">주요 유입 경로</p>
-              <p className="text-lg font-black text-[#102044]">
+              <p className="text-lg font-black text-[var(--primary)]">
                 {stats.topSource || '-'}
                 <span className="text-xs font-bold text-[#75777f] ml-1">({stats.topSourcePercent || ''}%)</span>
               </p>
             </div>
           </div>
-          <button className="bg-[#f3f4f5] text-[#102044] px-4 py-2 rounded-lg text-sm font-bold hover:bg-[#e7e8e9] transition-colors">
+          <button className="bg-[#f3f4f5] text-[var(--primary)] px-4 py-2 rounded-lg text-sm font-bold hover:bg-[#e7e8e9] transition-colors">
             리포트 상세보기
           </button>
         </footer>
@@ -514,7 +514,7 @@ export default function LeadManage() {
             onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-5">
-              <h3 className="text-lg font-black text-[#102044]">
+              <h3 className="text-lg font-black text-[var(--primary)]">
                 {editingLead ? '리드 수정' : '리드 등록'}
               </h3>
               <button onClick={() => setShowForm(false)} className="p-1 hover:bg-[#e7e8e9] rounded-full transition-colors">
@@ -545,7 +545,7 @@ export default function LeadManage() {
                   value={form.memo}
                   onChange={e => setForm({ ...form, memo: e.target.value })}
                   rows={3}
-                  className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 text-sm resize-y"
+                  className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 text-sm resize-y"
                   placeholder="메모..."
                 />
               </div>
@@ -553,11 +553,11 @@ export default function LeadManage() {
             <div className="flex gap-2 mt-6 justify-end">
               <button
                 onClick={() => setShowForm(false)}
-                className="px-5 py-2 rounded-lg border border-slate-200 text-[#102044] font-bold text-sm hover:bg-slate-50 transition-colors"
+                className="px-5 py-2 rounded-lg border border-slate-200 text-[var(--primary)] font-bold text-sm hover:bg-slate-50 transition-colors"
               >취소</button>
               <button
                 onClick={handleSave}
-                className="px-5 py-2 rounded-lg bg-[#102044] text-white font-bold text-sm hover:opacity-90 transition-all"
+                className="px-5 py-2 rounded-lg bg-[var(--primary)] text-white font-bold text-sm hover:opacity-90 transition-all"
               >저장</button>
             </div>
           </div>
@@ -581,7 +581,7 @@ export default function LeadManage() {
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <h2 className="text-2xl font-black text-[#102044] tracking-tight">리드 상세</h2>
+                    <h2 className="text-2xl font-black text-[var(--primary)] tracking-tight">리드 상세</h2>
                     <span
                       className="text-[10px] font-bold px-2 py-0.5 rounded-full"
                       style={{
@@ -608,7 +608,7 @@ export default function LeadManage() {
               <div className="grid grid-cols-2 gap-4 mb-2">
                 <button
                   onClick={() => document.getElementById('act-section')?.scrollIntoView({ behavior: 'smooth' })}
-                  className="flex items-center justify-center gap-2 py-2.5 bg-[#e7e8e9] text-[#102044] rounded-lg font-bold text-sm hover:opacity-80 transition-all"
+                  className="flex items-center justify-center gap-2 py-2.5 bg-[#e7e8e9] text-[var(--primary)] rounded-lg font-bold text-sm hover:opacity-80 transition-all"
                 >
                   <span className="material-symbols-outlined text-lg">add_circle</span>
                   활동 추가
@@ -682,7 +682,7 @@ export default function LeadManage() {
                   {detailData.trials?.map(t => (
                     <div key={t.id} className="bg-[#f8f9fa] rounded-lg p-3 mb-2 flex justify-between items-center">
                       <div>
-                        <div className="text-sm font-semibold text-[#102044]">
+                        <div className="text-sm font-semibold text-[var(--primary)]">
                           {new Date(t.trial_date).toLocaleDateString('ko-KR')} {t.trial_time || ''}
                         </div>
                         {t.feedback && <div className="text-xs text-slate-500 mt-0.5">{t.feedback}</div>}
@@ -729,7 +729,7 @@ export default function LeadManage() {
                       </div>
                       <div className="flex gap-1.5 mt-2.5 justify-end">
                         <button onClick={() => setShowTrialForm(false)} className="px-3 py-1 rounded-md border border-slate-200 bg-white text-[11px] hover:bg-slate-50">취소</button>
-                        <button onClick={handleTrialSubmit} className="px-3 py-1 rounded-md bg-[#102044] text-white font-bold text-[11px] hover:opacity-90">예약</button>
+                        <button onClick={handleTrialSubmit} className="px-3 py-1 rounded-md bg-[var(--primary)] text-white font-bold text-[11px] hover:opacity-90">예약</button>
                       </div>
                     </div>
                   )}
@@ -754,7 +754,7 @@ export default function LeadManage() {
                       value={actForm.description}
                       onChange={e => setActForm({ ...actForm, description: e.target.value })}
                       placeholder="활동 내용"
-                      className="flex-1 px-3 py-1.5 rounded-md border border-slate-200 text-xs outline-none focus:border-[#004bf0]/40 focus:ring-2 focus:ring-[#004bf0]/5"
+                      className="flex-1 px-3 py-1.5 rounded-md border border-slate-200 text-xs outline-none focus:border-[var(--cta)]/40 focus:ring-2 focus:ring-[var(--cta)]/5"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-2 mb-2">
@@ -762,19 +762,19 @@ export default function LeadManage() {
                       value={actForm.result}
                       onChange={e => setActForm({ ...actForm, result: e.target.value })}
                       placeholder="결과"
-                      className="px-3 py-1.5 rounded-md border border-slate-200 text-xs outline-none focus:border-[#004bf0]/40"
+                      className="px-3 py-1.5 rounded-md border border-slate-200 text-xs outline-none focus:border-[var(--cta)]/40"
                     />
                     <input
                       value={actForm.next_action}
                       onChange={e => setActForm({ ...actForm, next_action: e.target.value })}
                       placeholder="다음 행동"
-                      className="px-3 py-1.5 rounded-md border border-slate-200 text-xs outline-none focus:border-[#004bf0]/40"
+                      className="px-3 py-1.5 rounded-md border border-slate-200 text-xs outline-none focus:border-[var(--cta)]/40"
                     />
                   </div>
                   <div className="text-right">
                     <button
                       onClick={handleAddActivity}
-                      className="px-4 py-1.5 rounded-lg bg-[#004bf0] text-white font-bold text-[11px] hover:opacity-90 transition-all"
+                      className="px-4 py-1.5 rounded-lg bg-[var(--cta)] text-white font-bold text-[11px] hover:opacity-90 transition-all"
                     >기록 추가</button>
                   </div>
                 </div>
@@ -790,21 +790,21 @@ export default function LeadManage() {
                       return (
                         <div key={act.id} className="relative pl-12">
                           <div className={`absolute left-0 w-8 h-8 rounded-full flex items-center justify-center z-10 border-4 border-white ${
-                            isCall ? 'bg-[#004bf0]/10' : isStatusChange ? 'bg-purple-100' : 'bg-[#e7e8e9]'
+                            isCall ? 'bg-[var(--cta)]/10' : isStatusChange ? 'bg-purple-100' : 'bg-[#e7e8e9]'
                           }`}>
                             <span className={`material-symbols-outlined text-sm ${
-                              isCall ? 'text-[#004bf0]' : isStatusChange ? 'text-purple-500' : 'text-[#45464e]'
+                              isCall ? 'text-[var(--cta)]' : isStatusChange ? 'text-purple-500' : 'text-[#45464e]'
                             }`}>{typeInfo.icon}</span>
                           </div>
                           <div>
                             <div className="flex justify-between mb-1">
-                              <p className="text-sm font-bold text-[#102044]">{act.description || typeInfo.label}</p>
+                              <p className="text-sm font-bold text-[var(--primary)]">{act.description || typeInfo.label}</p>
                               <span className="text-[10px] text-[#75777f]">
                                 {act.created_at ? new Date(act.created_at).toLocaleString('ko-KR') : ''}
                               </span>
                             </div>
                             {act.result && <p className="text-xs text-[#45464e] leading-relaxed">결과: {act.result}</p>}
-                            {act.next_action && <p className="text-xs text-[#004bf0] mt-0.5">다음: {act.next_action}</p>}
+                            {act.next_action && <p className="text-xs text-[var(--cta)] mt-0.5">다음: {act.next_action}</p>}
                           </div>
                         </div>
                       );
@@ -819,13 +819,13 @@ export default function LeadManage() {
               <textarea
                 value={memoText}
                 onChange={e => setMemoText(e.target.value)}
-                className="w-full bg-white border-none rounded-lg text-sm p-3 focus:ring-2 focus:ring-[#004bf0]/20 min-h-[80px] transition-all resize-y"
+                className="w-full bg-white border-none rounded-lg text-sm p-3 focus:ring-2 focus:ring-[var(--cta)]/20 min-h-[80px] transition-all resize-y"
                 placeholder="메모를 입력하세요..."
               />
               <div className="mt-2 flex justify-end">
                 <button
                   onClick={handleMemoSave}
-                  className="bg-[#102044] text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:opacity-90 transition-all"
+                  className="bg-[var(--primary)] text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:opacity-90 transition-all"
                 >저장</button>
               </div>
             </div>
@@ -845,7 +845,7 @@ function KanbanCard({ lead, onClick }) {
   return (
     <div
       onClick={onClick}
-      className="bg-white p-4 rounded-lg shadow-sm border border-transparent hover:border-[#004bf0]/20 transition-all cursor-pointer group"
+      className="bg-white p-4 rounded-lg shadow-sm border border-transparent hover:border-[var(--cta)]/20 transition-all cursor-pointer group"
     >
       {/* 상단: 채널 배지 + 우선순위 */}
       <div className="flex justify-between items-start mb-2 gap-2">
@@ -858,7 +858,7 @@ function KanbanCard({ lead, onClick }) {
       </div>
 
       {/* 이름 + 학년 */}
-      <h4 className="font-bold text-base mb-1 text-[#102044] truncate" title={lead.student_name}>
+      <h4 className="font-bold text-base mb-1 text-[var(--primary)] truncate" title={lead.student_name}>
         {lead.student_name}
         {lead.grade && <span className="text-xs font-normal text-[#75777f] ml-1.5 whitespace-nowrap">{lead.grade}</span>}
       </h4>
@@ -870,7 +870,7 @@ function KanbanCard({ lead, onClick }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${
-            lead.assigned_name ? 'bg-[#004bf0] text-white' : 'bg-[#e1e3e4] text-slate-400'
+            lead.assigned_name ? 'bg-[var(--cta)] text-white' : 'bg-[#e1e3e4] text-slate-400'
           }`}>
             {lead.assigned_name ? lead.assigned_name.charAt(0) : '?'}
           </div>
@@ -908,7 +908,7 @@ function FormField({ label, value, onChange, placeholder }) {
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 text-sm"
+        className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 text-sm"
       />
     </div>
   );
@@ -921,7 +921,7 @@ function FormSelect({ label, value, onChange, options }) {
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 text-sm"
+        className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 text-sm"
       >
         {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>

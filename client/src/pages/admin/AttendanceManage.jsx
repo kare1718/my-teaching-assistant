@@ -62,7 +62,7 @@ export default function AttendanceManage() {
             onClick={() => setMainTab(t.key)}
             style={{
               padding: '10px 20px', borderRadius: 8, fontSize: 14, fontWeight: 700,
-              background: mainTab === t.key ? '#102044' : '#fff',
+              background: mainTab === t.key ? 'var(--primary)' : '#fff',
               color: mainTab === t.key ? '#fff' : '#64748b',
               border: '1px solid #e2e8f0', cursor: 'pointer',
               whiteSpace: 'nowrap',

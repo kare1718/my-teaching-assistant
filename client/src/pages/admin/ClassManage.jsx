@@ -174,7 +174,7 @@ export default function ClassManage() {
       <h2 style={{ fontSize: '1.5em', fontWeight: 800, marginBottom: 16 }}>수업 관리</h2>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        <button style={{ padding: '10px 20px', background: '#102044', color: 'white', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'default' }}>
+        <button style={{ padding: '10px 20px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'default' }}>
           반 관리
         </button>
         <Link to="/admin/schedules" style={{ padding: '10px 20px', background: 'white', border: '1px solid #e2e8f0', color: '#64748b', borderRadius: 8, fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>

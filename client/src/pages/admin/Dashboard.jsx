@@ -62,9 +62,9 @@ function QuickActionsBar({ actions, isLg }) {
           onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#fff'; }}
         >
           {a.icon && (
-            <span className="material-symbols-outlined" style={{ fontSize: 24, color: '#004bf0', marginBottom: 6 }}>{a.icon}</span>
+            <span className="material-symbols-outlined" style={{ fontSize: 24, color: 'var(--cta)', marginBottom: 6 }}>{a.icon}</span>
           )}
-          <span style={{ fontSize: isLg ? 14 : 12, fontWeight: 700, color: '#102044' }}>{a.label}</span>
+          <span style={{ fontSize: isLg ? 14 : 12, fontWeight: 700, color: 'var(--primary)' }}>{a.label}</span>
         </button>
       ))}
     </div>
@@ -81,7 +81,7 @@ function TodayTasksCard({ tasks, total, isLg, emptyText = '오늘 처리할 일�
       padding: isLg ? 24 : 18, marginBottom: isLg ? 18 : 14,
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isLg ? 16 : 12 }}>
-        <h2 style={{ margin: 0, fontSize: isLg ? 18 : 15, fontWeight: 800, color: '#102044', letterSpacing: '-0.01em' }}>
+        <h2 style={{ margin: 0, fontSize: isLg ? 18 : 15, fontWeight: 800, color: 'var(--primary)', letterSpacing: '-0.01em' }}>
           오늘 처리할 일
           {count > 0 && (
             <span style={{
@@ -111,7 +111,7 @@ function TodayTasksCard({ tasks, total, isLg, emptyText = '오늘 처리할 일�
                   background: pri.bg, color: pri.text,
                 }}>{pri.label}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ margin: 0, fontSize: isLg ? 14 : 12, fontWeight: 700, color: '#102044', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <p style={{ margin: 0, fontSize: isLg ? 14 : 12, fontWeight: 700, color: 'var(--primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {task.title}
                   </p>
                   {task.description && (
@@ -123,7 +123,7 @@ function TodayTasksCard({ tasks, total, isLg, emptyText = '오늘 처리할 일�
                 <button
                   onClick={() => navigate(task.action_url)}
                   style={{
-                    flexShrink: 0, background: '#102044', color: '#fff',
+                    flexShrink: 0, background: 'var(--primary)', color: '#fff',
                     padding: isLg ? '8px 14px' : '6px 10px', borderRadius: 8,
                     fontSize: isLg ? 12 : 11, fontWeight: 700, border: 'none',
                     cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
@@ -137,7 +137,7 @@ function TodayTasksCard({ tasks, total, isLg, emptyText = '오늘 처리할 일�
               onClick={() => navigate('/admin/automation')}
               style={{
                 marginTop: 4, background: 'none', border: 'none',
-                color: '#004bf0', fontSize: isLg ? 13 : 11, fontWeight: 700,
+                color: 'var(--cta)', fontSize: isLg ? 13 : 11, fontWeight: 700,
                 cursor: 'pointer', fontFamily: 'inherit', padding: 6, textAlign: 'right',
               }}
             >전체 보기 →</button>
@@ -155,7 +155,7 @@ function EmptyState({ icon, title, description }) {
   return (
     <div style={{ textAlign: 'center', padding: '32px 16px' }}>
       <div style={{ fontSize: 40, marginBottom: 12 }}>{icon}</div>
-      <p style={{ fontSize: 14, fontWeight: 600, color: '#102044', margin: 0 }}>{title}</p>
+      <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--primary)', margin: 0 }}>{title}</p>
       {description && (
         <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 4, margin: '4px 0 0' }}>{description}</p>
       )}
@@ -204,7 +204,7 @@ function OwnerDashboard({ isLg, user }) {
   // KPI 카드 데이터
   const kpiItems = [
     {
-      icon: 'school', label: '재원생', value: fmt(ts.total_students), unit: '명', color: '#102044', bg: '#eef2ff', path: '/admin/students',
+      icon: 'school', label: '재원생', value: fmt(ts.total_students), unit: '명', color: 'var(--primary)', bg: '#eef2ff', path: '/admin/students',
       trend: netNew === 0 ? `신규 ${ts.new_this_month || 0} / 퇴원 ${ts.withdrawn_this_month || 0}` : `${netNew > 0 ? '+' : ''}${netNew} 이번달`,
       trendColor: netNew > 0 ? '#059669' : netNew < 0 ? '#dc2626' : '#64748b',
     },
@@ -217,7 +217,7 @@ function OwnerDashboard({ isLg, user }) {
       trendColor: attDelta >= 0 ? '#059669' : '#dc2626',
     },
     {
-      icon: 'payments', label: '이번달 수납', value: fmtWon(tui.this_month_collected), unit: '원', color: '#102044', bg: '#f0fdf4', path: '/admin/tuition',
+      icon: 'payments', label: '이번달 수납', value: fmtWon(tui.this_month_collected), unit: '원', color: 'var(--primary)', bg: '#f0fdf4', path: '/admin/tuition',
       trend: `목표 대비 ${collectionRate}%`,
       trendColor: collectionRate >= 80 ? '#059669' : collectionRate >= 50 ? '#d97706' : '#dc2626',
     },
@@ -256,7 +256,7 @@ function OwnerDashboard({ isLg, user }) {
     <div style={{ width: '100%' }}>
       {/* ═══ A. 환영 헤더 ═══ */}
       <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontSize: isLg ? 26 : 22, fontWeight: 800, color: '#102044', margin: 0, letterSpacing: '-0.02em' }}>
+        <h1 style={{ fontSize: isLg ? 26 : 22, fontWeight: 800, color: 'var(--primary)', margin: 0, letterSpacing: '-0.02em' }}>
           안녕하세요, {user?.name || '원장'}님!
         </h1>
         <p style={{ fontSize: 14, color: '#94a3b8', marginTop: 4, margin: '4px 0 0' }}>
@@ -280,13 +280,13 @@ function OwnerDashboard({ isLg, user }) {
               background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12,
               cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = '#004bf0'; e.currentTarget.style.background = '#f8fafc'; }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--cta)'; e.currentTarget.style.background = '#f8fafc'; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#fff'; }}
           >
             {a.icon && (
-              <span className="material-symbols-outlined" style={{ fontSize: 22, color: '#004bf0' }}>{a.icon}</span>
+              <span className="material-symbols-outlined" style={{ fontSize: 22, color: 'var(--cta)' }}>{a.icon}</span>
             )}
-            <span style={{ fontSize: isLg ? 13 : 11, fontWeight: 700, color: '#102044', whiteSpace: 'nowrap' }}>{a.label}</span>
+            <span style={{ fontSize: isLg ? 13 : 11, fontWeight: 700, color: 'var(--primary)', whiteSpace: 'nowrap' }}>{a.label}</span>
           </button>
         ))}
       </div>
@@ -300,16 +300,16 @@ function OwnerDashboard({ isLg, user }) {
         }}>
           <span style={{ fontSize: 32 }}>🏫</span>
           <div style={{ flex: 1, minWidth: 200 }}>
-            <p style={{ fontWeight: 700, color: '#102044', margin: 0 }}>첫 학생을 등록해 운영을 시작해보세요</p>
+            <p style={{ fontWeight: 700, color: 'var(--primary)', margin: 0 }}>첫 학생을 등록해 운영을 시작해보세요</p>
             <p style={{ fontSize: 13, color: '#64748b', margin: '4px 0 0' }}>학생을 추가하면 출결, 수납, 리포트가 활성화됩니다</p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => navigate('/admin/students')}
-              style={{ padding: '10px 18px', background: '#102044', color: '#fff', borderRadius: 8, fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: 13 }}>
+              style={{ padding: '10px 18px', background: 'var(--primary)', color: '#fff', borderRadius: 8, fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: 13 }}>
               학생 추가
             </button>
             <button onClick={() => navigate('/admin/data-import')}
-              style={{ padding: '10px 18px', background: '#004bf0', color: '#fff', borderRadius: 8, fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: 13 }}>
+              style={{ padding: '10px 18px', background: 'var(--cta)', color: '#fff', borderRadius: 8, fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: 13 }}>
               엑셀 Import
             </button>
           </div>
@@ -329,7 +329,7 @@ function OwnerDashboard({ isLg, user }) {
             display: 'flex', flexDirection: 'column', justifyContent: 'center',
             minHeight: isLg ? 120 : 100, transition: 'all 0.15s', overflow: 'hidden',
           }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = '#004bf0'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,75,240,0.08)'; }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--cta)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,75,240,0.08)'; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.04)'; }}
           >
             <p style={{
@@ -370,7 +370,7 @@ function OwnerDashboard({ isLg, user }) {
         {dc.show_tasks !== false && (
         <div style={{ ...cardStyle, padding: isLg ? 24 : 18 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: '#102044' }}>
+            <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: 'var(--primary)' }}>
               오늘의 할일
               {today_tasks_total > 0 && (
                 <span style={{
@@ -396,7 +396,7 @@ function OwnerDashboard({ isLg, user }) {
                       padding: '3px 10px', borderRadius: 999, background: pri.bg, color: pri.text,
                     }}>{pri.label}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ margin: 0, fontSize: isLg ? 13 : 12, fontWeight: 700, color: '#102044', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <p style={{ margin: 0, fontSize: isLg ? 13 : 12, fontWeight: 700, color: 'var(--primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {task.title}
                       </p>
                       {task.description && (
@@ -408,7 +408,7 @@ function OwnerDashboard({ isLg, user }) {
                     <button
                       onClick={() => navigate(task.action_url)}
                       style={{
-                        flexShrink: 0, background: '#102044', color: '#fff',
+                        flexShrink: 0, background: 'var(--primary)', color: '#fff',
                         padding: '6px 12px', borderRadius: 8,
                         fontSize: 11, fontWeight: 700, border: 'none',
                         cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
@@ -422,7 +422,7 @@ function OwnerDashboard({ isLg, user }) {
                   onClick={() => navigate('/admin/automation')}
                   style={{
                     marginTop: 4, background: 'none', border: 'none',
-                    color: '#004bf0', fontSize: 12, fontWeight: 700,
+                    color: 'var(--cta)', fontSize: 12, fontWeight: 700,
                     cursor: 'pointer', fontFamily: 'inherit', padding: 4, textAlign: 'right',
                   }}
                 >전체 {today_tasks_total}건 보기 →</button>
@@ -436,10 +436,10 @@ function OwnerDashboard({ isLg, user }) {
         {dc.show_schedule !== false && (
         <div style={{ ...cardStyle, padding: isLg ? 24 : 18 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: '#102044' }}>
+            <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: 'var(--primary)' }}>
               이번 주 수업
             </h2>
-            <span onClick={() => navigate('/admin/classes')} style={{ fontSize: 12, color: '#004bf0', cursor: 'pointer', fontWeight: 700 }}>수업 관리 →</span>
+            <span onClick={() => navigate('/admin/classes')} style={{ fontSize: 12, color: 'var(--cta)', cursor: 'pointer', fontWeight: 700 }}>수업 관리 →</span>
           </div>
           {weeklyDays.length === 0 ? (
             <EmptyState icon="📅" title="등록된 수업이 없습니다" description="수업을 등록하면 일정이 표시됩니다" />
@@ -450,7 +450,7 @@ function OwnerDashboard({ isLg, user }) {
                 return (
                   <div key={day.date.toISOString()}>
                     <div style={{
-                      fontSize: 12, fontWeight: 800, color: isToday ? '#004bf0' : '#64748b',
+                      fontSize: 12, fontWeight: 800, color: isToday ? 'var(--cta)' : '#64748b',
                       marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6,
                     }}>
                       <span>{day.dayName}요일</span>
@@ -460,7 +460,7 @@ function OwnerDashboard({ isLg, user }) {
                       {isToday && (
                         <span style={{
                           fontSize: 10, fontWeight: 700, padding: '1px 8px', borderRadius: 999,
-                          background: '#dbeafe', color: '#004bf0',
+                          background: '#dbeafe', color: 'var(--cta)',
                         }}>오늘</span>
                       )}
                     </div>
@@ -471,13 +471,13 @@ function OwnerDashboard({ isLg, user }) {
                           padding: '8px 12px', borderRadius: 8, background: '#f8fafc', border: '1px solid #f1f5f9',
                         }}>
                           <span style={{
-                            fontSize: 12, fontWeight: 700, color: '#004bf0', fontVariantNumeric: 'tabular-nums',
+                            fontSize: 12, fontWeight: 700, color: 'var(--cta)', fontVariantNumeric: 'tabular-nums',
                             whiteSpace: 'nowrap', minWidth: 44,
                           }}>
                             {(cls.start_time || '').slice(0, 5)}
                           </span>
                           <span style={{
-                            fontSize: 13, fontWeight: 600, color: '#102044', flex: 1, minWidth: 0,
+                            fontSize: 13, fontWeight: 600, color: 'var(--primary)', flex: 1, minWidth: 0,
                             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                           }}>
                             {cls.class_name}
@@ -513,7 +513,7 @@ function OwnerDashboard({ isLg, user }) {
         {/* 매출 추이 (최근 6개월) */}
         {dc.show_revenue !== false && (
         <div style={{ ...cardStyle, padding: isLg ? 24 : 18 }}>
-          <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: '#102044', marginBottom: 16 }}>
+          <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: 'var(--primary)', marginBottom: 16 }}>
             매출 추이
             <span style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', marginLeft: 8 }}>최근 6개월</span>
           </h2>
@@ -529,11 +529,11 @@ function OwnerDashboard({ isLg, user }) {
                   <div style={{ flex: 1, height: 24, background: '#f1f5f9', borderRadius: 6, overflow: 'hidden' }}>
                     <div style={{
                       width: `${Math.max((m.amount / maxRevenue) * 100, 0)}%`,
-                      height: '100%', background: '#004bf0', borderRadius: 6,
+                      height: '100%', background: 'var(--cta)', borderRadius: 6,
                       minWidth: m.amount > 0 ? 2 : 0, transition: 'width 0.3s',
                     }} />
                   </div>
-                  <span style={{ width: 64, fontSize: 12, fontWeight: 700, color: '#102044', textAlign: 'right', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  <span style={{ width: 64, fontSize: 12, fontWeight: 700, color: 'var(--primary)', textAlign: 'right', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', flexShrink: 0 }}>
                     {fmtWon(m.amount || 0)}
                   </span>
                 </div>
@@ -546,7 +546,7 @@ function OwnerDashboard({ isLg, user }) {
         {/* 출결 현황 + 수납 진행률 (컴팩트) */}
         {dc.show_attendance !== false && (
         <div style={{ ...cardStyle, padding: isLg ? 24 : 18 }}>
-          <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: '#102044', marginBottom: 16 }}>
+          <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: 'var(--primary)', marginBottom: 16 }}>
             오늘의 출결 현황
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, marginBottom: 14 }}>
@@ -566,8 +566,8 @@ function OwnerDashboard({ isLg, user }) {
           {/* 수납 진행률 미니 */}
           <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#102044' }}>이번달 수납 진행률</span>
-              <span style={{ fontSize: 14, fontWeight: 800, color: '#102044', fontVariantNumeric: 'tabular-nums' }}>{collectionRate}%</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)' }}>이번달 수납 진행률</span>
+              <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--primary)', fontVariantNumeric: 'tabular-nums' }}>{collectionRate}%</span>
             </div>
             <div style={{ height: 8, borderRadius: 4, background: '#f1f5f9', overflow: 'hidden', marginBottom: 8 }}>
               <div style={{
@@ -577,7 +577,7 @@ function OwnerDashboard({ isLg, user }) {
               }} />
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
-              <span style={{ color: '#64748b' }}>청구 <b style={{ color: '#102044' }}>{fmtWon(tui.this_month_billed || 0)}</b></span>
+              <span style={{ color: '#64748b' }}>청구 <b style={{ color: 'var(--primary)' }}>{fmtWon(tui.this_month_billed || 0)}</b></span>
               <span style={{ color: '#64748b' }}>수납 <b style={{ color: '#059669' }}>{fmtWon(tui.this_month_collected || 0)}</b></span>
               <span style={{ color: '#64748b' }}>미수 <b style={{ color: '#dc2626' }}>{fmtWon(tui.outstanding_total || 0)}</b></span>
             </div>
@@ -598,7 +598,7 @@ function OwnerDashboard({ isLg, user }) {
         {dc.show_risks !== false && (
         <div style={{ ...cardStyle, padding: isLg ? 24 : 18 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: '#102044' }}>
+            <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: 'var(--primary)' }}>
               위험 알림
             </h2>
             <span style={{ fontSize: 12, fontWeight: 700, color: risk_alerts.length > 0 ? '#dc2626' : '#059669' }}>
@@ -619,7 +619,7 @@ function OwnerDashboard({ isLg, user }) {
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
                       <span style={{
-                        fontSize: 13, fontWeight: 700, color: '#102044', cursor: 'pointer',
+                        fontSize: 13, fontWeight: 700, color: 'var(--primary)', cursor: 'pointer',
                         whiteSpace: 'nowrap', flexShrink: 0,
                       }}
                         onClick={() => navigate(`/admin/student/${alert.student_id}`)}
@@ -644,7 +644,7 @@ function OwnerDashboard({ isLg, user }) {
         {/* 최근 활동 */}
         {dc.show_activity !== false && (
         <div style={{ ...cardStyle, padding: isLg ? 24 : 18 }}>
-          <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: '#102044', marginBottom: 14 }}>
+          <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: 'var(--primary)', marginBottom: 14 }}>
             최근 활동
           </h2>
           {recent_events.length === 0 ? (
@@ -661,7 +661,7 @@ function OwnerDashboard({ isLg, user }) {
                   }}>
                     <span style={{ fontSize: 11, color: '#94a3b8', whiteSpace: 'nowrap', minWidth: 36, fontVariantNumeric: 'tabular-nums' }}>{dateStr}</span>
                     <div style={{ minWidth: 0, flex: 1 }}>
-                      <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: '#102044', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={ev.title}>{ev.title}</p>
+                      <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: 'var(--primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={ev.title}>{ev.title}</p>
                       {ev.student_name && (
                         <p style={{ fontSize: 11, color: '#94a3b8', margin: '2px 0 0' }}>{ev.student_name}</p>
                       )}

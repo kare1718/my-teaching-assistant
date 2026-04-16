@@ -15,7 +15,7 @@ export function Card({ label, title, children, className = '' }) {
   return (
     <div className={`bg-white rounded-xl border border-slate-100 shadow-sm p-6 ${className}`}>
       {label && <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">{label}</div>}
-      {title && <h3 className="text-lg font-extrabold text-[#102044] tracking-tight mt-1 mb-4">{title}</h3>}
+      {title && <h3 className="text-lg font-extrabold text-[var(--primary)] tracking-tight mt-1 mb-4">{title}</h3>}
       {children}
     </div>
   );
@@ -34,7 +34,7 @@ export function Loading() {
   return <div className="text-center py-10 text-slate-400 text-sm">로딩 중...</div>;
 }
 
-export function Stat({ label, value, accent = '#102044' }) {
+export function Stat({ label, value, accent = 'var(--primary)' }) {
   return (
     <div className="p-4 rounded-lg bg-[#f8f9fa]">
       <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{label}</div>

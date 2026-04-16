@@ -65,7 +65,7 @@ function SidebarNextSchedule({ studentId }) {
   return (
     <section className="bg-white rounded-xl p-6 border border-slate-100 shadow-sm">
       <div className="flex items-center justify-between mb-4">
-        <h4 className="font-bold text-[#102044]">다음 일정</h4>
+        <h4 className="font-bold text-[var(--primary)]">다음 일정</h4>
         <Icon name="event" className="text-slate-400 text-sm" />
       </div>
       {sessions === null ? (
@@ -80,10 +80,10 @@ function SidebarNextSchedule({ studentId }) {
               <div key={i} className="flex gap-4">
                 <div className="flex flex-col items-center justify-center w-12 h-12 bg-[#f3f4f5] rounded-lg flex-shrink-0">
                   <span className="text-[10px] font-bold text-slate-400 uppercase">{d?.month}</span>
-                  <span className="text-lg font-extrabold text-[#102044] leading-none">{d?.day}</span>
+                  <span className="text-lg font-extrabold text-[var(--primary)] leading-none">{d?.day}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-[#102044] truncate">{s.class_name || '수업'}</p>
+                  <p className="text-sm font-bold text-[var(--primary)] truncate">{s.class_name || '수업'}</p>
                   <p className="text-xs text-slate-500">{s.start_time?.slice(0, 5)} - {s.end_time?.slice(0, 5)}</p>
                 </div>
               </div>
@@ -114,7 +114,7 @@ function SidebarOpenTasks({ studentId }) {
 
   return (
     <section className="bg-white rounded-xl p-6 border border-slate-100 shadow-sm">
-      <h4 className="font-bold text-[#102044] mb-4">미해결 업무</h4>
+      <h4 className="font-bold text-[var(--primary)] mb-4">미해결 업무</h4>
       {tasks === null ? (
         <div className="text-xs text-slate-400 py-3">로딩 중...</div>
       ) : tasks.length === 0 ? (
@@ -129,7 +129,7 @@ function SidebarOpenTasks({ studentId }) {
           {tasks.slice(0, 5).map(t => (
             <div key={t.id} className="p-3 rounded-lg bg-[#f8f9fa] border border-slate-100">
               <div className="flex justify-between items-start gap-2">
-                <div className="text-xs font-bold text-[#102044] flex-1 min-w-0 truncate">{t.title}</div>
+                <div className="text-xs font-bold text-[var(--primary)] flex-1 min-w-0 truncate">{t.title}</div>
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${priorityCls(t.priority)}`}>
                   {t.priority === 'urgent' ? '긴급' : t.priority === 'high' ? '높음' : '보통'}
                 </span>
@@ -198,7 +198,7 @@ export default function AdminStudentView() {
     return (
       <div className="min-h-[60vh] flex items-center justify-center text-slate-400 text-sm">
         <div className="text-center">
-          <div className="w-10 h-10 border-[3px] border-[#e7e8e9] border-t-[#102044] rounded-full animate-spin mx-auto mb-3" />
+          <div className="w-10 h-10 border-[3px] border-[#e7e8e9] border-t-[var(--primary)] rounded-full animate-spin mx-auto mb-3" />
           로딩 중...
         </div>
       </div>
@@ -230,11 +230,11 @@ export default function AdminStudentView() {
     <div className="bg-[#f8f9fa] min-h-screen p-4 md:p-8 pb-20 max-w-7xl mx-auto w-full">
       {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-sm text-slate-400 mb-6 font-medium">
-        <Link to="/admin" className="text-slate-400 hover:text-[#102044] transition-colors no-underline">대시보드</Link>
+        <Link to="/admin" className="text-slate-400 hover:text-[var(--primary)] transition-colors no-underline">대시보드</Link>
         <span className="opacity-50">/</span>
-        <Link to={`/admin/student/${id}`} className="text-slate-400 hover:text-[#102044] transition-colors no-underline">{student.name} 관리</Link>
+        <Link to={`/admin/student/${id}`} className="text-slate-400 hover:text-[var(--primary)] transition-colors no-underline">{student.name} 관리</Link>
         <span className="opacity-50">/</span>
-        <span className="text-[#102044] font-semibold">학생 상세</span>
+        <span className="text-[var(--primary)] font-semibold">학생 상세</span>
       </div>
 
       {/* 12-Column Grid Layout */}
@@ -246,19 +246,19 @@ export default function AdminStudentView() {
           <section className="bg-white rounded-xl p-8 border border-slate-100 shadow-sm">
             <div className="flex items-start justify-between">
               <div className="flex gap-6">
-                <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-br from-[#102044] to-[#004bf0] flex items-center justify-center text-white text-3xl font-extrabold flex-shrink-0">
+                <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-br from-[var(--primary)] to-[var(--cta)] flex items-center justify-center text-white text-3xl font-extrabold flex-shrink-0">
                   {student.name?.charAt(0) || '?'}
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-3">
-                    <h3 className="text-2xl font-extrabold text-[#102044] tracking-tight">{student.name}</h3>
+                    <h3 className="text-2xl font-extrabold text-[var(--primary)] tracking-tight">{student.name}</h3>
                     <StatusBadge status={student.status} />
                   </div>
                   <p className="text-sm text-slate-500 font-medium">{student.school || '-'} {student.grade || ''}</p>
                   <div className="flex gap-4 mt-2">
                     <div className="text-sm">
                       <span className="text-slate-400">출석:</span>{' '}
-                      <span className="font-semibold text-[#004bf0]">{attRate}</span>
+                      <span className="font-semibold text-[var(--cta)]">{attRate}</span>
                     </div>
                     <div className="text-sm">
                       <span className="text-slate-400">미납:</span>{' '}
@@ -271,25 +271,25 @@ export default function AdminStudentView() {
               </div>
               <div className="text-right">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">마지막 상담</span>
-                <p className="text-lg font-bold text-[#102044]">{lastConsultText}</p>
+                <p className="text-lg font-bold text-[var(--primary)]">{lastConsultText}</p>
               </div>
             </div>
 
             {/* Quick Actions */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-8">
-              <button className="flex items-center justify-center gap-2 py-3 rounded-lg border border-slate-200 text-[#102044] font-bold hover:bg-[#f3f4f5] transition-colors">
+              <button className="flex items-center justify-center gap-2 py-3 rounded-lg border border-slate-200 text-[var(--primary)] font-bold hover:bg-[#f3f4f5] transition-colors">
                 <Icon name="how_to_reg" className="text-[20px]" />
                 <span className="text-sm">출결 입력</span>
               </button>
-              <button className="flex items-center justify-center gap-2 py-3 rounded-lg border border-slate-200 text-[#102044] font-bold hover:bg-[#f3f4f5] transition-colors">
+              <button className="flex items-center justify-center gap-2 py-3 rounded-lg border border-slate-200 text-[var(--primary)] font-bold hover:bg-[#f3f4f5] transition-colors">
                 <Icon name="send_to_mobile" className="text-[20px]" />
                 <span className="text-sm">메시지 발송</span>
               </button>
-              <button className="flex items-center justify-center gap-2 py-3 rounded-lg border border-slate-200 text-[#102044] font-bold hover:bg-[#f3f4f5] transition-colors">
+              <button className="flex items-center justify-center gap-2 py-3 rounded-lg border border-slate-200 text-[var(--primary)] font-bold hover:bg-[#f3f4f5] transition-colors">
                 <Icon name="edit_note" className="text-[20px]" />
                 <span className="text-sm">상담 기록</span>
               </button>
-              <button className="flex items-center justify-center gap-2 py-3 rounded-lg border border-slate-200 text-[#102044] font-bold hover:bg-[#f3f4f5] transition-colors">
+              <button className="flex items-center justify-center gap-2 py-3 rounded-lg border border-slate-200 text-[var(--primary)] font-bold hover:bg-[#f3f4f5] transition-colors">
                 <Icon name="credit_score" className="text-[20px]" />
                 <span className="text-sm">수납 처리</span>
               </button>
@@ -305,8 +305,8 @@ export default function AdminStudentView() {
                   onClick={() => setActiveTab(tab.key)}
                   className={`pb-4 text-sm whitespace-nowrap transition-colors ${
                     activeTab === tab.key
-                      ? 'text-[#102044] font-bold border-b-2 border-[#102044]'
-                      : 'text-slate-500 font-medium hover:text-[#102044]'
+                      ? 'text-[var(--primary)] font-bold border-b-2 border-[var(--primary)]'
+                      : 'text-slate-500 font-medium hover:text-[var(--primary)]'
                   }`}
                   style={{ marginBottom: -1 }}
                 >
@@ -348,7 +348,7 @@ export default function AdminStudentView() {
           setShowNoteForm(true);
           window.scrollTo({ top: 400, behavior: 'smooth' });
         }}
-        className="fixed bottom-10 right-10 flex items-center gap-3 bg-[#102044] text-white px-6 py-4 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all z-50 font-bold"
+        className="fixed bottom-10 right-10 flex items-center gap-3 bg-[var(--primary)] text-white px-6 py-4 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all z-50 font-bold"
       >
         <Icon name="add" />
         <span>메모 추가</span>

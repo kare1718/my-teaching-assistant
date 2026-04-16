@@ -25,10 +25,10 @@ export default function OverviewTab({ studentId }) {
     <div className="space-y-6">
       <Card label="상태 요약" title="최근 30일 핵심 지표">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Stat label="출석률" value={attendance.rate != null ? `${attendance.rate}%` : '-'} accent="#004bf0" />
+          <Stat label="출석률" value={attendance.rate != null ? `${attendance.rate}%` : '-'} accent="var(--cta)" />
           <Stat label="출석/결석/지각" value={`${attendance.present}/${attendance.absent}/${attendance.late}`} />
-          <Stat label="미납 건" value={`${tuition.overdueCount}건`} accent={tuition.overdueCount > 0 ? '#ba1a1a' : '#102044'} />
-          <Stat label="미납 금액" value={formatMoney(tuition.overdueAmount)} accent={tuition.overdueAmount > 0 ? '#ba1a1a' : '#102044'} />
+          <Stat label="미납 건" value={`${tuition.overdueCount}건`} accent={tuition.overdueCount > 0 ? '#ba1a1a' : 'var(--primary)'} />
+          <Stat label="미납 금액" value={formatMoney(tuition.overdueAmount)} accent={tuition.overdueAmount > 0 ? '#ba1a1a' : 'var(--primary)'} />
         </div>
       </Card>
 
@@ -51,11 +51,11 @@ export default function OverviewTab({ studentId }) {
         <div className="grid grid-cols-2 gap-3">
           <div className="p-4 rounded-lg bg-[#f8f9fa]">
             <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">학부모명</div>
-            <div className="text-sm font-semibold text-[#102044]">{student.parent_name || '-'}</div>
+            <div className="text-sm font-semibold text-[var(--primary)]">{student.parent_name || '-'}</div>
           </div>
           <div className="p-4 rounded-lg bg-[#f8f9fa]">
             <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">학부모 연락처</div>
-            <div className="text-sm font-semibold text-[#102044]">{student.parent_phone || '-'}</div>
+            <div className="text-sm font-semibold text-[var(--primary)]">{student.parent_phone || '-'}</div>
           </div>
         </div>
       </Card>
@@ -64,7 +64,7 @@ export default function OverviewTab({ studentId }) {
         {lastConsultation ? (
           <div className="p-4 rounded-lg bg-[#f8f9fa] border border-slate-100">
             <div className="text-xs font-bold text-slate-400 mb-1">{formatDate(lastConsultation.created_at)}</div>
-            <div className="text-sm font-semibold text-[#102044]">{lastConsultation.title || '제목 없음'}</div>
+            <div className="text-sm font-semibold text-[var(--primary)]">{lastConsultation.title || '제목 없음'}</div>
           </div>
         ) : (
           <div className="text-sm text-slate-400">상담 기록이 없습니다.</div>

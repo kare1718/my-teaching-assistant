@@ -124,7 +124,7 @@ export default function AuditLogs() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto" style={{ fontFamily: 'Paperlogy, sans-serif' }}>
       <div className="mb-6">
-        <h1 className="text-2xl font-extrabold text-[#102044] tracking-tight">감사 로그</h1>
+        <h1 className="text-2xl font-extrabold text-[var(--primary)] tracking-tight">감사 로그</h1>
         <p className="text-sm text-slate-500 mt-1">누가 언제 무엇을 바꿨는지 전체 이력을 확인합니다.</p>
       </div>
 
@@ -134,7 +134,7 @@ export default function AuditLogs() {
           <div className="flex-1 min-w-[160px]">
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">액션</label>
             <select
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#004bf0]/20"
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--cta)]/20"
               value={filters.action}
               onChange={(e) => setFilters(f => ({ ...f, action: e.target.value }))}
             >
@@ -147,7 +147,7 @@ export default function AuditLogs() {
           <div className="flex-1 min-w-[160px]">
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">리소스 타입</label>
             <select
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#004bf0]/20"
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--cta)]/20"
               value={filters.resource_type}
               onChange={(e) => setFilters(f => ({ ...f, resource_type: e.target.value }))}
             >
@@ -175,7 +175,7 @@ export default function AuditLogs() {
           </div>
           <button
             onClick={handleApplyFilters}
-            className="bg-[#004bf0] hover:bg-[#0039c0] text-white text-sm font-bold rounded-lg px-5 py-2 transition-colors"
+            className="bg-[var(--cta)] hover:bg-[#0039c0] text-white text-sm font-bold rounded-lg px-5 py-2 transition-colors"
           >
             조회
           </button>
@@ -213,7 +213,7 @@ export default function AuditLogs() {
               <tr key={r.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => setSelected(r)}>
                 <td className="px-5 py-3 text-sm text-slate-700 whitespace-nowrap">{formatDateTime(r.created_at)}</td>
                 <td className="px-5 py-3 text-sm text-slate-700">
-                  <div className="font-semibold text-[#102044]">{r.user_name || '—'}</div>
+                  <div className="font-semibold text-[var(--primary)]">{r.user_name || '—'}</div>
                   <div className="text-xs text-slate-400">{r.user_role || ''}</div>
                 </td>
                 <td className="px-5 py-3 text-sm">
@@ -235,7 +235,7 @@ export default function AuditLogs() {
         {/* 페이지네이션 */}
         <div className="flex items-center justify-between px-5 py-4 border-t border-slate-100">
           <div className="text-xs text-slate-500">
-            전체 <span className="font-bold text-[#102044]">{total.toLocaleString()}</span>건 · {page * limit + 1}–{Math.min((page + 1) * limit, total)}
+            전체 <span className="font-bold text-[var(--primary)]">{total.toLocaleString()}</span>건 · {page * limit + 1}–{Math.min((page + 1) * limit, total)}
           </div>
           <div className="flex gap-2">
             <button
@@ -266,7 +266,7 @@ export default function AuditLogs() {
             <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white">
               <div>
                 <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">감사 로그 상세</div>
-                <div className="text-lg font-extrabold text-[#102044] mt-0.5">
+                <div className="text-lg font-extrabold text-[var(--primary)] mt-0.5">
                   {ACTION_LABELS[selected.action] || selected.action}
                 </div>
               </div>
@@ -279,19 +279,19 @@ export default function AuditLogs() {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">작성자</div>
-                  <div className="text-[#102044] font-semibold">{selected.user_name || '—'} <span className="text-xs text-slate-400 font-normal">({selected.user_role || '—'})</span></div>
+                  <div className="text-[var(--primary)] font-semibold">{selected.user_name || '—'} <span className="text-xs text-slate-400 font-normal">({selected.user_role || '—'})</span></div>
                 </div>
                 <div>
                   <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">시간</div>
-                  <div className="text-[#102044]">{formatDateTime(selected.created_at)}</div>
+                  <div className="text-[var(--primary)]">{formatDateTime(selected.created_at)}</div>
                 </div>
                 <div>
                   <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">IP</div>
-                  <div className="text-[#102044] font-mono text-xs">{selected.ip_address || '—'}</div>
+                  <div className="text-[var(--primary)] font-mono text-xs">{selected.ip_address || '—'}</div>
                 </div>
                 <div>
                   <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">리소스</div>
-                  <div className="text-[#102044]">{selected.resource_type}{selected.resource_id ? ` #${selected.resource_id}` : ''}</div>
+                  <div className="text-[var(--primary)]">{selected.resource_type}{selected.resource_id ? ` #${selected.resource_id}` : ''}</div>
                 </div>
                 <div className="col-span-2">
                   <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">User Agent</div>

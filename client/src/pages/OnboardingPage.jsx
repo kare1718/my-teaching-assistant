@@ -114,9 +114,9 @@ export default function OnboardingPage() {
               <div className="flex flex-col items-center gap-2">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
                   isDone
-                    ? 'bg-[#102044] text-white'
+                    ? 'bg-[var(--primary)] text-white'
                     : isActive
-                    ? 'bg-[#004bf0] text-white ring-4 ring-[#dde1ff]'
+                    ? 'bg-[var(--cta)] text-white ring-4 ring-[#dde1ff]'
                     : 'bg-[#e1e3e4] text-[#45464e]'
                 }`}>
                   {isDone && !isActive ? (
@@ -124,18 +124,18 @@ export default function OnboardingPage() {
                   ) : s}
                 </div>
                 <span className={`text-xs font-bold tracking-widest uppercase ${
-                  isActive ? 'text-[#102044]' : isDone ? 'text-[#102044]' : 'text-[#75777f]'
+                  isActive ? 'text-[var(--primary)]' : isDone ? 'text-[var(--primary)]' : 'text-[#75777f]'
                 }`}>Step {s}</span>
               </div>
               {s < 3 && (
-                <div className={`flex-grow h-px mx-4 ${isDone ? 'bg-[#102044]' : 'bg-slate-200'}`} />
+                <div className={`flex-grow h-px mx-4 ${isDone ? 'bg-[var(--primary)]' : 'bg-slate-200'}`} />
               )}
             </div>
           );
         })}
       </div>
       <div className="w-full h-1.5 bg-[#e7e8e9] rounded-full overflow-hidden">
-        <div className={`h-full bg-[#004bf0] transition-all duration-700 ease-out ${progressWidth}`} />
+        <div className={`h-full bg-[var(--cta)] transition-all duration-700 ease-out ${progressWidth}`} />
       </div>
     </div>
   );
@@ -144,7 +144,7 @@ export default function OnboardingPage() {
     <div className="bg-[#f8f9fa] text-[#191c1d] min-h-screen flex flex-col">
       {/* Fixed Header */}
       <header className="fixed top-0 left-0 w-full px-8 py-6 flex items-center justify-between pointer-events-none z-10">
-        <span className="text-[#102044] font-extrabold text-2xl tracking-tight">나만의 조교</span>
+        <span className="text-[var(--primary)] font-extrabold text-2xl tracking-tight">나만의 조교</span>
         <span className="text-[#45464e] text-sm font-medium">Help Center</span>
       </header>
 
@@ -157,7 +157,7 @@ export default function OnboardingPage() {
           {/* Step Title */}
           {step <= 3 && (
             <div className="w-full mb-8 flex justify-between items-end">
-              <h1 className="text-3xl font-bold tracking-tight text-[#102044]">
+              <h1 className="text-3xl font-bold tracking-tight text-[var(--primary)]">
                 {step === 1 && '학원 정보를 입력해주세요'}
                 {step === 2 && '관리자 계정'}
                 {step === 3 && '설정 확인'}
@@ -185,7 +185,7 @@ export default function OnboardingPage() {
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-[#45464e] uppercase tracking-widest ml-1">학원명</label>
                   <input
-                    className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 transition-all text-[#191c1d] placeholder:text-[#75777f]/50 font-medium"
+                    className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 transition-all text-[#191c1d] placeholder:text-[#75777f]/50 font-medium"
                     value={form.academyName}
                     onChange={update('academyName')}
                     placeholder="학원 이름을 입력하세요"
@@ -196,7 +196,7 @@ export default function OnboardingPage() {
                   <label className="text-xs font-bold text-[#45464e] uppercase tracking-widest ml-1">학원 접속 주소 (URL)</label>
                   <div className="relative flex items-center">
                     <input
-                      className="w-full pl-5 pr-36 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 transition-all text-[#191c1d] font-medium"
+                      className="w-full pl-5 pr-36 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 transition-all text-[#191c1d] font-medium"
                       value={form.slug}
                       onChange={update('slug')}
                       onBlur={checkSlug}
@@ -222,7 +222,7 @@ export default function OnboardingPage() {
                     <button
                       type="button"
                       onClick={autoSlug}
-                      className="text-xs text-[#004bf0] font-bold hover:underline ml-auto"
+                      className="text-xs text-[var(--cta)] font-bold hover:underline ml-auto"
                     >
                       자동 생성
                     </button>
@@ -234,7 +234,7 @@ export default function OnboardingPage() {
                     주요 과목 <span className="font-normal text-[#75777f]">(선택)</span>
                   </label>
                   <input
-                    className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 transition-all text-[#191c1d] placeholder:text-[#75777f]/50 font-medium"
+                    className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 transition-all text-[#191c1d] placeholder:text-[#75777f]/50 font-medium"
                     value={form.subject}
                     onChange={update('subject')}
                     placeholder="예: 국어, 수학, 영어"
@@ -244,7 +244,7 @@ export default function OnboardingPage() {
                 <div className="pt-4">
                   <button
                     type="button"
-                    className="w-full py-5 bg-[#102044] hover:bg-[#004bf0] text-white font-extrabold rounded-lg shadow-lg shadow-[#102044]/10 transition-all active:scale-[0.98] text-lg flex items-center justify-center gap-2"
+                    className="w-full py-5 bg-[var(--primary)] hover:bg-[var(--cta)] text-white font-extrabold rounded-lg shadow-lg shadow-[var(--primary)]/10 transition-all active:scale-[0.98] text-lg flex items-center justify-center gap-2"
                     onClick={() => {
                       if (!form.academyName || !form.slug) { setError('학원 이름과 주소를 입력해주세요.'); return; }
                       setError(''); setStep(2);
@@ -265,7 +265,7 @@ export default function OnboardingPage() {
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-[#45464e] uppercase tracking-widest ml-1">이름</label>
                   <input
-                    className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 transition-all text-[#191c1d] placeholder:text-[#75777f]/50 font-medium"
+                    className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 transition-all text-[#191c1d] placeholder:text-[#75777f]/50 font-medium"
                     value={form.adminName}
                     onChange={update('adminName')}
                     placeholder="성함을 입력하세요"
@@ -275,7 +275,7 @@ export default function OnboardingPage() {
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-[#45464e] uppercase tracking-widest ml-1">아이디</label>
                   <input
-                    className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 transition-all text-[#191c1d] placeholder:text-[#75777f]/50 font-medium"
+                    className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 transition-all text-[#191c1d] placeholder:text-[#75777f]/50 font-medium"
                     value={form.adminUsername}
                     onChange={update('adminUsername')}
                     placeholder="관리자 아이디"
@@ -286,7 +286,7 @@ export default function OnboardingPage() {
                   <label className="text-xs font-bold text-[#45464e] uppercase tracking-widest ml-1">휴대폰 번호</label>
                   <div className="flex gap-3">
                     <input
-                      className="flex-grow px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 transition-all text-[#191c1d] placeholder:text-[#75777f]/50 font-medium"
+                      className="flex-grow px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 transition-all text-[#191c1d] placeholder:text-[#75777f]/50 font-medium"
                       value={form.adminPhone}
                       onChange={update('adminPhone')}
                       placeholder="010-0000-0000"
@@ -294,7 +294,7 @@ export default function OnboardingPage() {
                     />
                     <button
                       type="button"
-                      className="px-6 py-4 bg-[#e7e8e9] hover:bg-[#e1e3e4] text-[#102044] font-bold text-sm rounded-lg transition-colors shrink-0"
+                      className="px-6 py-4 bg-[#e7e8e9] hover:bg-[#e1e3e4] text-[var(--primary)] font-bold text-sm rounded-lg transition-colors shrink-0"
                     >
                       인증번호 발송
                     </button>
@@ -305,7 +305,7 @@ export default function OnboardingPage() {
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-[#45464e] uppercase tracking-widest ml-1">비밀번호</label>
                     <input
-                      className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 transition-all text-[#191c1d] font-medium"
+                      className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 transition-all text-[#191c1d] font-medium"
                       type="password"
                       value={form.adminPassword}
                       onChange={update('adminPassword')}
@@ -325,7 +325,7 @@ export default function OnboardingPage() {
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-[#45464e] uppercase tracking-widest ml-1">비밀번호 확인</label>
                     <input
-                      className={`w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[#004bf0]/40 focus:bg-white focus:ring-4 focus:ring-[#004bf0]/5 transition-all text-[#191c1d] font-medium ${
+                      className={`w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 transition-all text-[#191c1d] font-medium ${
                         form.adminPasswordConfirm && form.adminPassword !== form.adminPasswordConfirm ? 'ring-2 ring-[#ba1a1a]/30' : ''
                       }`}
                       type="password"
@@ -343,21 +343,21 @@ export default function OnboardingPage() {
                   <label className="text-xs font-bold text-[#45464e] uppercase tracking-widest ml-1">계정 권한</label>
                   <div className="w-full px-5 py-4 bg-[#f3f4f5] rounded-lg border border-[#c5c6cf]/20 flex items-center justify-between">
                     <span className="text-[#191c1d] font-semibold">원장</span>
-                    <span className="text-[10px] bg-[#102044] text-white px-2 py-0.5 rounded-full uppercase font-black tracking-tighter">Default Admin</span>
+                    <span className="text-[10px] bg-[var(--primary)] text-white px-2 py-0.5 rounded-full uppercase font-black tracking-tighter">Default Admin</span>
                   </div>
                 </div>
 
                 <div className="pt-6 flex gap-3">
                   <button
                     type="button"
-                    className="flex-1 py-5 border border-slate-200 text-[#102044] font-bold rounded-lg hover:bg-slate-50 transition-all active:scale-[0.98] text-lg"
+                    className="flex-1 py-5 border border-slate-200 text-[var(--primary)] font-bold rounded-lg hover:bg-slate-50 transition-all active:scale-[0.98] text-lg"
                     onClick={() => setStep(1)}
                   >
                     이전
                   </button>
                   <button
                     type="button"
-                    className="flex-[2] py-5 bg-[#102044] hover:bg-[#004bf0] text-white font-extrabold rounded-lg shadow-lg shadow-[#102044]/10 transition-all active:scale-[0.98] text-lg flex items-center justify-center gap-2"
+                    className="flex-[2] py-5 bg-[var(--primary)] hover:bg-[var(--cta)] text-white font-extrabold rounded-lg shadow-lg shadow-[var(--primary)]/10 transition-all active:scale-[0.98] text-lg flex items-center justify-center gap-2"
                     onClick={() => {
                       if (!form.adminName || !form.adminUsername || !form.adminPassword) { setError('필수 항목을 입력해주세요.'); return; }
                       if (form.adminPassword.length < 4) { setError('비밀번호는 최소 4자 이상이어야 합니다.'); return; }
@@ -382,11 +382,11 @@ export default function OnboardingPage() {
                   <div className="text-xs font-bold text-[#75777f] uppercase tracking-widest mb-1">학원 정보</div>
                   <div className="flex justify-between items-center border-b border-[#c5c6cf]/20 pb-3">
                     <span className="text-sm font-medium text-[#45464e]">학원명</span>
-                    <span className="text-base font-bold text-[#102044]">{form.academyName}</span>
+                    <span className="text-base font-bold text-[var(--primary)]">{form.academyName}</span>
                   </div>
                   <div className="flex justify-between items-center border-b border-[#c5c6cf]/20 pb-3">
                     <span className="text-sm font-medium text-[#45464e]">URL</span>
-                    <span className="text-base font-medium text-[#004bf0] underline underline-offset-4">{form.slug}.namanui.com</span>
+                    <span className="text-base font-medium text-[var(--cta)] underline underline-offset-4">{form.slug}.namanui.com</span>
                   </div>
                   {form.subject && (
                     <div className="flex justify-between items-center border-b border-[#c5c6cf]/20 pb-3">
@@ -397,7 +397,7 @@ export default function OnboardingPage() {
                   <div className="text-xs font-bold text-[#75777f] uppercase tracking-widest mt-2 mb-1">관리자</div>
                   <div className="flex justify-between items-center border-b border-[#c5c6cf]/20 pb-3">
                     <span className="text-sm font-medium text-[#45464e]">이름 (아이디)</span>
-                    <span className="text-base font-bold text-[#102044]">{form.adminName} ({form.adminUsername})</span>
+                    <span className="text-base font-bold text-[var(--primary)]">{form.adminName} ({form.adminUsername})</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-[#45464e]">대표 연락처</span>
@@ -430,7 +430,7 @@ export default function OnboardingPage() {
                       checked={agreePrivacy && agreeMarketing}
                       onChange={(e) => { setAgreePrivacy(e.target.checked); setAgreeMarketing(e.target.checked); }}
                       id="obAgreeAll"
-                      className="w-5 h-5 cursor-pointer accent-[#004bf0] rounded"
+                      className="w-5 h-5 cursor-pointer accent-[var(--cta)] rounded"
                     />
                     <label htmlFor="obAgreeAll" className="cursor-pointer text-sm font-bold text-[#191c1d]">
                       전체 동의하기
@@ -441,14 +441,14 @@ export default function OnboardingPage() {
                     <input
                       type="checkbox" checked={agreePrivacy} onChange={(e) => setAgreePrivacy(e.target.checked)}
                       id="obAgreePrivacy"
-                      className="mt-0.5 w-[18px] h-[18px] cursor-pointer accent-[#004bf0] rounded"
+                      className="mt-0.5 w-[18px] h-[18px] cursor-pointer accent-[var(--cta)] rounded"
                     />
                     <label htmlFor="obAgreePrivacy" className="cursor-pointer text-sm text-[#191c1d] leading-relaxed">
                       <b>[필수]</b> 개인정보 수집 및 이용에 동의합니다.
                     </label>
                   </div>
                   <button type="button" onClick={() => setShowPrivacy(!showPrivacy)}
-                    className="text-xs text-[#004bf0] font-semibold mt-1.5 ml-8 hover:underline">
+                    className="text-xs text-[var(--cta)] font-semibold mt-1.5 ml-8 hover:underline">
                     {showPrivacy ? '접기' : '내용 보기'}
                   </button>
                   {showPrivacy && (
@@ -468,7 +468,7 @@ export default function OnboardingPage() {
                     <input
                       type="checkbox" checked={agreeMarketing} onChange={(e) => setAgreeMarketing(e.target.checked)}
                       id="obAgreeMarketing"
-                      className="mt-0.5 w-[18px] h-[18px] cursor-pointer accent-[#004bf0] rounded"
+                      className="mt-0.5 w-[18px] h-[18px] cursor-pointer accent-[var(--cta)] rounded"
                     />
                     <div>
                       <label htmlFor="obAgreeMarketing" className="cursor-pointer text-sm text-[#191c1d] leading-relaxed">
@@ -486,15 +486,15 @@ export default function OnboardingPage() {
                 <div className="pt-2 flex gap-3">
                   <button
                     type="button"
-                    className="flex-1 py-5 border border-slate-200 text-[#102044] font-bold rounded-lg hover:bg-slate-50 transition-all active:scale-[0.98] text-lg"
+                    className="flex-1 py-5 border border-slate-200 text-[var(--primary)] font-bold rounded-lg hover:bg-slate-50 transition-all active:scale-[0.98] text-lg"
                     onClick={() => setStep(2)}
                   >
                     이전
                   </button>
                   <button
                     type="button"
-                    className={`flex-[2] py-5 bg-[#102044] text-white font-extrabold rounded-lg shadow-lg shadow-[#102044]/10 transition-all active:scale-[0.98] text-lg ${
-                      !agreePrivacy || loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#004bf0]'
+                    className={`flex-[2] py-5 bg-[var(--primary)] text-white font-extrabold rounded-lg shadow-lg shadow-[var(--primary)]/10 transition-all active:scale-[0.98] text-lg ${
+                      !agreePrivacy || loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[var(--cta)]'
                     }`}
                     onClick={handleSubmit}
                     disabled={loading || !agreePrivacy}
@@ -514,22 +514,22 @@ export default function OnboardingPage() {
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0037b8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4"/><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/></svg>
               </div>
 
-              <h1 className="text-[32px] font-bold tracking-tight text-[#102044] mb-2">모든 설정이 완료되었습니다!</h1>
+              <h1 className="text-[32px] font-bold tracking-tight text-[var(--primary)] mb-2">모든 설정이 완료되었습니다!</h1>
               <p className="text-[#45464e] mb-10">나만의 조교의 스마트한 관리 시스템이 준비되었습니다.</p>
 
               {/* Summary Card */}
               <div className="w-full bg-[#f3f4f5] rounded-xl p-6 text-left flex flex-col gap-4 mb-8">
                 <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-[#c5c6cf]/20 pb-3">
                   <span className="text-sm font-medium text-[#45464e]">학원명</span>
-                  <span className="text-base font-bold text-[#102044]">{form.academyName}</span>
+                  <span className="text-base font-bold text-[var(--primary)]">{form.academyName}</span>
                 </div>
                 <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-[#c5c6cf]/20 pb-3">
                   <span className="text-sm font-medium text-[#45464e]">URL</span>
-                  <span className="text-base font-medium text-[#004bf0] underline underline-offset-4">{form.slug}.namanui.com</span>
+                  <span className="text-base font-medium text-[var(--cta)] underline underline-offset-4">{form.slug}.namanui.com</span>
                 </div>
                 <div className="flex flex-col md:flex-row md:items-center justify-between">
                   <span className="text-sm font-medium text-[#45464e]">관리자</span>
-                  <span className="text-base font-semibold text-[#102044]">{form.adminName} (원장)</span>
+                  <span className="text-base font-semibold text-[var(--primary)]">{form.adminName} (원장)</span>
                 </div>
               </div>
 
@@ -537,7 +537,7 @@ export default function OnboardingPage() {
               <div className="w-full flex flex-col gap-3 mb-8">
                 {['학원 등록 완료', '관리자 계정 생성', '30일 무료 체험 시작'].map((text, i) => (
                   <div key={i} className="flex items-center gap-3 px-2">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#102044" stroke="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--primary)" stroke="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
                     <span className="text-[#191c1d] font-medium">{text}</span>
                   </div>
                 ))}
@@ -554,7 +554,7 @@ export default function OnboardingPage() {
                     type="button"
                     onClick={copyInviteLink}
                     className={`px-5 py-3 rounded-lg text-sm font-bold transition-all shrink-0 ${
-                      copied ? 'bg-emerald-500 text-white' : 'bg-[#004bf0] text-white hover:bg-[#0037b8]'
+                      copied ? 'bg-emerald-500 text-white' : 'bg-[var(--cta)] text-white hover:bg-[#0037b8]'
                     }`}
                   >
                     {copied ? '복사됨!' : '복사'}
@@ -569,26 +569,26 @@ export default function OnboardingPage() {
                   <button
                     type="button"
                     onClick={() => navigate(`/login?academy=${form.slug}`)}
-                    className="p-5 rounded-xl border border-slate-200 text-left hover:border-[#004bf0] hover:bg-[#f0f4ff] transition-all"
+                    className="p-5 rounded-xl border border-slate-200 text-left hover:border-[var(--cta)] hover:bg-[#f0f4ff] transition-all"
                   >
                     <div className="text-2xl mb-1">🚀</div>
-                    <div className="font-extrabold text-[#102044]">빈 학원에서 시작하기</div>
+                    <div className="font-extrabold text-[var(--primary)]">빈 학원에서 시작하기</div>
                     <div className="text-xs text-slate-500 mt-1">실제 학원 데이터를 단계별로 입력합니다. 체크리스트가 안내해드립니다.</div>
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate(`/login?academy=${form.slug}&sample=1`)}
-                    className="p-5 rounded-xl border border-slate-200 text-left hover:border-[#004bf0] hover:bg-[#f0f4ff] transition-all"
+                    className="p-5 rounded-xl border border-slate-200 text-left hover:border-[var(--cta)] hover:bg-[#f0f4ff] transition-all"
                   >
                     <div className="text-2xl mb-1">🎨</div>
-                    <div className="font-extrabold text-[#102044]">샘플 데이터로 체험하기</div>
+                    <div className="font-extrabold text-[var(--primary)]">샘플 데이터로 체험하기</div>
                     <div className="text-xs text-slate-500 mt-1">미리 준비된 샘플 학원으로 기능을 먼저 체험하세요. 나중에 언제든 삭제할 수 있습니다.</div>
                   </button>
                 </div>
                 <button
                   type="button"
                   onClick={() => navigate(`/login?academy=${form.slug}&import=1`)}
-                  className="w-full mt-3 py-3 rounded-lg border-2 border-dashed border-slate-300 text-sm font-bold text-[#102044] hover:border-[#004bf0] hover:text-[#004bf0] transition-all"
+                  className="w-full mt-3 py-3 rounded-lg border-2 border-dashed border-slate-300 text-sm font-bold text-[var(--primary)] hover:border-[var(--cta)] hover:text-[var(--cta)] transition-all"
                 >
                   📂 엑셀 파일이 있나요? · 엑셀 Import 시작
                 </button>
@@ -596,7 +596,7 @@ export default function OnboardingPage() {
 
               {/* 기본 CTA */}
               <button
-                className="w-full py-4 px-6 bg-[#102044] text-white rounded-xl font-bold text-lg hover:bg-[#004bf0] transition-all active:scale-[0.98] focus:ring-4 focus:ring-[#102044]/20"
+                className="w-full py-4 px-6 bg-[var(--primary)] text-white rounded-xl font-bold text-lg hover:bg-[var(--cta)] transition-all active:scale-[0.98] focus:ring-4 focus:ring-[var(--primary)]/20"
                 onClick={() => navigate(`/login?academy=${form.slug}`)}
               >
                 지금 로그인하기
@@ -607,7 +607,7 @@ export default function OnboardingPage() {
           {/* Footer */}
           <p className="mt-8 text-[#45464e] text-sm text-center">
             문제가 발생하셨나요?{' '}
-            <button className="text-[#004bf0] font-bold hover:underline">고객 센터</button>에 문의하세요.
+            <button className="text-[var(--cta)] font-bold hover:underline">고객 센터</button>에 문의하세요.
           </p>
         </div>
       </main>
