@@ -1333,9 +1333,11 @@ export default function AdminDashboard() {
       {/* Responsive styles */}
       <style>{`
         .dash-kpi-row {
-          display: flex;
-          gap: 8px;
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 10px;
           align-items: stretch;
+          width: 100%;
         }
         .dash-mid-grid {
           display: flex;
@@ -1347,8 +1349,7 @@ export default function AdminDashboard() {
           .dash-mid-grid > .card { flex: 1 !important; }
         }
         @media (max-width: 600px) {
-          .dash-kpi-row { flex-wrap: wrap; gap: 6px; }
-          .dash-kpi-row > div { flex: 0 0 calc(50% - 4px) !important; }
+          .dash-kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
         }
       `}</style>
     </div>
