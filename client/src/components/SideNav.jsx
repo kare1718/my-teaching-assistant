@@ -130,6 +130,7 @@ const superadminPages = [
   { path: '/superadmin/revenue', label: '매출 관리', desc: '결제/환불/MRR', icon: Icons.dollar },
   { path: '/superadmin/promotions', label: '프로모션', desc: '기프트/쿠폰/이용권', icon: Icons.star },
   { divider: true, label: '운영' },
+  { path: '/superadmin/usage', label: '사용 현황', desc: '학원별 접속/체류/기능 분석', icon: Icons.barChart },
   { path: '/superadmin/academies', label: '학원 목록', desc: '활성/비활성 학원 관리', icon: Icons.clipboard },
   { path: '/superadmin/academy/new', label: '학원 생성', desc: '새 학원 등록', icon: Icons.userPlus },
   { divider: true, label: '시스템' },

@@ -779,4 +779,109 @@ router.post('/tenants/:id/unsuspend', async (req, res) => {
   }
 });
 
+// ======================== 사용 현황 분석 ========================
+
+// 전체 학원 사용 현황 요약
+router.get('/analytics/overview', async (req, res) => {
+  try {
+    const academyStats = await getAll(`
+      SELECT
+        a.id, a.name, a.slug, a.subscription_tier, a.is_active,
+        (SELECT COUNT(DISTINCT pv.user_id) FROM page_views pv
+         WHERE pv.academy_id = a.id AND pv.created_at >= NOW() - INTERVAL '7 days') as active_users_7d,
+        (SELECT COUNT(*) FROM page_views pv
+         WHERE pv.academy_id = a.id AND pv.created_at >= NOW() - INTERVAL '30 days') as page_views_30d,
+        (SELECT COUNT(*) FROM users WHERE academy_id = a.id AND role = 'student') as total_students,
+        (SELECT COUNT(*) FROM users WHERE academy_id = a.id) as total_users,
+        (SELECT COALESCE(AVG(pv.duration_seconds), 0)::int FROM page_views pv
+         WHERE pv.academy_id = a.id AND pv.created_at >= NOW() - INTERVAL '30 days' AND pv.duration_seconds > 0) as avg_duration_30d
+      FROM academies a
+      ORDER BY page_views_30d DESC
+    `, []);
+
+    res.json(academyStats || []);
+  } catch (err) {
+    console.error('[analytics overview]', err);
+    res.status(500).json({ error: '분석 데이터 조회 실패' });
+  }
+});
+
+// 특정 학원 상세 분석
+router.get('/analytics/academy/:id', async (req, res) => {
+  try {
+    const aid = parseInt(req.params.id);
+
+    // 1. 일별 접속 추이 (최근 30일)
+    const dailyTrend = await getAll(`
+      SELECT DATE(created_at) as date,
+        COUNT(DISTINCT user_id) as unique_users,
+        COUNT(*) as page_views
+      FROM page_views
+      WHERE academy_id = ? AND created_at >= NOW() - INTERVAL '30 days'
+      GROUP BY DATE(created_at)
+      ORDER BY date
+    `, [aid]);
+
+    // 2. 기능별 사용 현황 (Top 10)
+    const featureUsage = await getAll(`
+      SELECT feature_name,
+        COUNT(*) as view_count,
+        COUNT(DISTINCT user_id) as unique_users,
+        COALESCE(AVG(duration_seconds), 0)::int as avg_duration
+      FROM page_views
+      WHERE academy_id = ? AND feature_name IS NOT NULL
+        AND created_at >= NOW() - INTERVAL '30 days'
+      GROUP BY feature_name
+      ORDER BY view_count DESC
+      LIMIT 10
+    `, [aid]);
+
+    // 3. 사용자별 활동 (Top 10)
+    const userActivity = await getAll(`
+      SELECT u.name, u.role,
+        COUNT(*) as page_views,
+        MAX(pv.created_at) as last_active,
+        COALESCE(AVG(pv.duration_seconds), 0)::int as avg_duration
+      FROM page_views pv
+      JOIN users u ON u.id = pv.user_id
+      WHERE pv.academy_id = ? AND pv.created_at >= NOW() - INTERVAL '30 days'
+      GROUP BY u.id, u.name, u.role
+      ORDER BY page_views DESC
+      LIMIT 10
+    `, [aid]);
+
+    // 4. 접속률 (최근 7일 내 로그인 사용자 / 전체 사용자)
+    const totalUsers = await getOne(
+      'SELECT COUNT(*)::int as n FROM users WHERE academy_id = ?', [aid]
+    );
+    const activeUsers = await getOne(`
+      SELECT COUNT(DISTINCT user_id)::int as n FROM page_views
+      WHERE academy_id = ? AND created_at >= NOW() - INTERVAL '7 days'
+    `, [aid]);
+
+    const accessRate = totalUsers?.n > 0
+      ? Math.round((activeUsers?.n || 0) / totalUsers.n * 100)
+      : 0;
+
+    // 5. 총 접속 누계
+    const totalLogins = await getOne(`
+      SELECT COUNT(DISTINCT (user_id || '-' || DATE(created_at)))::int as n
+      FROM page_views WHERE academy_id = ?
+    `, [aid]);
+
+    res.json({
+      daily_trend: dailyTrend || [],
+      feature_usage: featureUsage || [],
+      user_activity: userActivity || [],
+      access_rate: accessRate,
+      total_logins: totalLogins?.n || 0,
+      total_users: totalUsers?.n || 0,
+      active_users_7d: activeUsers?.n || 0,
+    });
+  } catch (err) {
+    console.error('[analytics academy]', err);
+    res.status(500).json({ error: '분석 데이터 조회 실패' });
+  }
+});
+
 module.exports = router;

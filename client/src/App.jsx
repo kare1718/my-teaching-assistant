@@ -10,6 +10,7 @@ import PlatformNotificationBell from './components/PlatformNotificationBell';
 import ParentBottomNav from './components/ParentBottomNav';
 import ErrorBoundary from './components/ErrorBoundary';
 import RouteErrorBoundary from './components/RouteErrorBoundary';
+import usePageTracking from './hooks/usePageTracking';
 
 // 빠른 로드 필요 (정적 유지)
 import LandingPage from './pages/LandingPage';
@@ -107,6 +108,7 @@ const SuperBackupSecurity = lazy(() => import('./pages/superadmin/BackupSecurity
 const PromotionsPage = lazy(() => import('./pages/superadmin/PromotionsPage'));
 const RevenuePage = lazy(() => import('./pages/superadmin/RevenuePage'));
 const KPIDashboard = lazy(() => import('./pages/superadmin/KPIDashboard'));
+const UsageAnalytics = lazy(() => import('./pages/superadmin/UsageAnalytics'));
 
 function Navbar() {
   const navigate = useNavigate();
@@ -214,6 +216,7 @@ function AppLayout() {
   const user = getUser();
   const isPublicPayment = location.pathname.startsWith('/pay/');
   const isParentRoute = location.pathname.startsWith('/parent');
+  usePageTracking();
 
   return (
     <div className="app">
@@ -306,6 +309,7 @@ function AppLayout() {
             <Route path="/superadmin/promotions" element={<ProtectedRoute role="superadmin"><PromotionsPage /></ProtectedRoute>} />
             <Route path="/superadmin/revenue" element={<ProtectedRoute role="superadmin"><RevenuePage /></ProtectedRoute>} />
             <Route path="/superadmin/kpi" element={<ProtectedRoute role="superadmin"><KPIDashboard /></ProtectedRoute>} />
+            <Route path="/superadmin/usage" element={<ProtectedRoute role="superadmin"><UsageAnalytics /></ProtectedRoute>} />
             <Route path="/superadmin/backup-security" element={<ProtectedRoute role="superadmin"><SuperBackupSecurity /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFoundPage />} />
