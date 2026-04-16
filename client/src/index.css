@@ -2,12 +2,12 @@
 /* Based on impeccable.style principles: OKLCH colors, 4pt grid, */
 /* expo-out easing, semantic tokens, tinted neutrals, no AI slop */
 
-/* Paperlogy 폰트 (Korean-optimized, woff2 우선) */
-@font-face { font-family: 'Paperlogy'; src: url('/fonts/Paperlogy-3Light.woff2') format('woff2'), url('/fonts/Paperlogy-3Light.ttf') format('truetype'); font-weight: 300; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Paperlogy'; src: url('/fonts/Paperlogy-4Regular.woff2') format('woff2'), url('/fonts/Paperlogy-4Regular.ttf') format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Paperlogy'; src: url('/fonts/Paperlogy-5Medium.woff2') format('woff2'), url('/fonts/Paperlogy-5Medium.ttf') format('truetype'); font-weight: 500; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Paperlogy'; src: url('/fonts/Paperlogy-6SemiBold.woff2') format('woff2'), url('/fonts/Paperlogy-6SemiBold.ttf') format('truetype'); font-weight: 600; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Paperlogy'; src: url('/fonts/Paperlogy-7Bold.woff2') format('woff2'), url('/fonts/Paperlogy-7Bold.ttf') format('truetype'); font-weight: 700; font-style: normal; font-display: swap; }
+/* Paperlogy 폰트 (Korean-optimized) */
+@font-face { font-family: 'Paperlogy'; src: url('/fonts/Paperlogy-3Light.ttf') format('truetype'); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Paperlogy'; src: url('/fonts/Paperlogy-4Regular.ttf') format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Paperlogy'; src: url('/fonts/Paperlogy-5Medium.ttf') format('truetype'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Paperlogy'; src: url('/fonts/Paperlogy-6SemiBold.ttf') format('truetype'); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Paperlogy'; src: url('/fonts/Paperlogy-7Bold.ttf') format('truetype'); font-weight: 700; font-style: normal; font-display: swap; }
 
 /* ─── Design Tokens ─── */
 :root {

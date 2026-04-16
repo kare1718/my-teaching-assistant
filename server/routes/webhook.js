@@ -26,9 +26,8 @@ const router = express.Router();
 function verifyWebhookSignature(req) {
   const secret = process.env.PORTONE_WEBHOOK_SECRET;
   if (!secret) {
-    // 시크릿 미설정 시 테스트 모드로 통과
-    console.warn('[웹훅] PORTONE_WEBHOOK_SECRET 미설정 — 시그니처 검증 스킵');
-    return true;
+    console.error('[웹훅] PORTONE_WEBHOOK_SECRET 미설정 — 시그니처 검증 불가, 웹훅 거부');
+    return false;
   }
 
   const signature = req.headers['x-portone-signature'];

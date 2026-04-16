@@ -683,7 +683,6 @@ setInterval(async () => {
     for (const session of expired) {
       try {
         await endSessionAndSave(session);
-        console.log(`[자동 만료] 세션 #${session.id} (user: ${session.user_id}) 종료됨`);
       } catch (e) {
         console.error(`세션 #${session.id} 자동 만료 실패:`, e.message);
       }
