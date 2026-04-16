@@ -176,13 +176,12 @@ function OwnerDashboard({ isLg, user }) {
 
   useEffect(() => {
     api('/dashboard/owner')
-      .then(setData)
-      .catch(console.error)
+      .then(d => setData(d || {}))
+      .catch(() => setData({}))
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <LoadingState />;
-  if (!data) return <ErrorState />;
 
   const {
     today_summary: ts = {}, attendance_today: att = {}, tuition_summary: tui = {},
@@ -192,48 +191,8 @@ function OwnerDashboard({ isLg, user }) {
     weekly_classes = [], revenue_trend = [],
   } = data || {};
 
-  // 빈 학원 상태 -- 학생이 0명일 때 첫 시작 가이드 표시
-  if (!ts.total_students) {
-    return (
-      <div style={{ maxWidth: 760, margin: '40px auto', padding: '0 16px' }}>
-        <div className="card" style={{ padding: 40, textAlign: 'center' }}>
-          <div style={{ fontSize: 56, marginBottom: 8 }}>🏫</div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--primary)', marginBottom: 8 }}>
-            첫 학생을 등록해 운영을 시작해보세요
-          </h1>
-          <p style={{ color: 'var(--muted-foreground)', marginBottom: 24 }}>
-            학생을 한 명이라도 추가하면 대시보드가 활성화되고, 모든 기능을 사용할 수 있습니다.
-          </p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button
-              onClick={() => navigate('/admin/students')}
-              style={{ padding: '14px 22px', background: 'var(--primary)', color: '#fff', borderRadius: 10, fontWeight: 800, border: 'none', cursor: 'pointer' }}
-            >
-              학생 추가
-            </button>
-            <button
-              onClick={() => navigate('/admin/data-import')}
-              style={{ padding: '14px 22px', background: '#004bf0', color: '#fff', borderRadius: 10, fontWeight: 800, border: 'none', cursor: 'pointer' }}
-            >
-              엑셀 Import
-            </button>
-            <button
-              onClick={async () => {
-                if (!window.confirm('샘플 학원 데이터를 생성하시겠습니까? (학생 10명, 반 2개, 출결·수납·공지·상담 포함)')) return;
-                try {
-                  await api('/sample-data/generate', { method: 'POST' });
-                  window.location.reload();
-                } catch (e) { alert('샘플 생성 실패: ' + e.message); }
-              }}
-              style={{ padding: '14px 22px', background: '#fff', color: 'var(--primary)', borderRadius: 10, fontWeight: 800, border: '2px solid var(--border)', cursor: 'pointer' }}
-            >
-              샘플 데이터
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // 빈 학원 상태 배너 (학생 0명이어도 대시보드는 표시)
+  const showEmptyBanner = !ts.total_students;
 
   const attTotal = (att.present || 0) + (att.absent || 0) + (att.late || 0) + (att.excused || 0);
   const attRate = (quick_stats?.attendance_rate_today ?? (attTotal > 0 ? Math.round((((att.present || 0) + (att.late || 0)) / attTotal) * 100) : 0));
@@ -331,6 +290,31 @@ function OwnerDashboard({ isLg, user }) {
           </button>
         ))}
       </div>
+
+      {/* 빈 학원 배너 */}
+      {showEmptyBanner && (
+        <div style={{
+          marginBottom: 16, padding: '20px 24px', borderRadius: 12,
+          background: '#f0f4ff', border: '1px solid rgba(0,75,240,0.15)',
+          display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
+        }}>
+          <span style={{ fontSize: 32 }}>🏫</span>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <p style={{ fontWeight: 700, color: '#102044', margin: 0 }}>첫 학생을 등록해 운영을 시작해보세요</p>
+            <p style={{ fontSize: 13, color: '#64748b', margin: '4px 0 0' }}>학생을 추가하면 출결, 수납, 리포트가 활성화됩니다</p>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => navigate('/admin/students')}
+              style={{ padding: '10px 18px', background: '#102044', color: '#fff', borderRadius: 8, fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: 13 }}>
+              학생 추가
+            </button>
+            <button onClick={() => navigate('/admin/data-import')}
+              style={{ padding: '10px 18px', background: '#004bf0', color: '#fff', borderRadius: 8, fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: 13 }}>
+              엑셀 Import
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ═══ B. KPI 4카드 (전체 폭) ═══ */}
       {dc.show_kpi !== false && (
@@ -1319,15 +1303,15 @@ export default function AdminDashboard() {
       )}
 
       {/* Role 분기 렌더링 */}
-      {role === 'admin'
+      {(role === 'admin' || role === 'assistant' || !role)
         ? <OwnerDashboard isLg={isLg} user={user} />
-        : (role === 'teacher' || role === 'assistant')
+        : role === 'teacher'
           ? <TeacherDashboard isLg={isLg} />
           : role === 'counselor'
             ? <CounselorDashboard isLg={isLg} />
             : role === 'staff'
               ? <StaffDashboard isLg={isLg} />
-              : <LegacyDashboard isLg={isLg} />
+              : <OwnerDashboard isLg={isLg} user={user} />
       }
 
       {/* Responsive styles */}
