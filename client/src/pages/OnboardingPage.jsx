@@ -4,6 +4,13 @@ import { apiPost } from '../api';
 
 const stepLabels = ['학원 정보', '관리자 계정', '설정 완료'];
 
+// 화이트&네이비 디자인 시스템 — 스타일 전용 상수 (로직 없음)
+const INPUT_CLS = 'w-full px-4 py-3.5 bg-white rounded-xl border border-slate-200 focus:border-[var(--cta)] focus:ring-4 focus:ring-[var(--cta)]/10 outline-none transition-all text-[15px] text-[#191c1d] placeholder:text-slate-300 font-body';
+const LABEL_CLS = 'block text-[13px] font-bold text-[#334155] font-body';
+const CARD_CLS = 'w-full bg-white rounded-2xl p-6 md:p-10 border border-slate-200/70 shadow-[0_4px_24px_-8px_rgba(16,32,68,0.08)]';
+const BTN_PRIMARY = 'bg-[var(--primary)] hover:bg-[var(--cta)] text-white font-display font-bold rounded-xl shadow-[0_8px_20px_-8px_rgba(16,32,68,0.45)] transition-all active:scale-[0.99] flex items-center justify-center gap-2';
+const BTN_GHOST = 'border border-slate-200 bg-white text-[var(--primary)] font-display font-bold rounded-xl hover:bg-slate-50 transition-all active:scale-[0.99]';
+
 const getPasswordStrength = (pw) => {
   if (!pw || pw.length < 4) return null;
   const hasLetter = /[a-zA-Z]/.test(pw);
@@ -100,42 +107,40 @@ export default function OnboardingPage() {
 
   const pwStrength = getPasswordStrength(form.adminPassword);
 
-  const progressWidth = step === 1 ? 'w-1/3' : step === 2 ? 'w-2/3' : 'w-full';
-
+  // 단일 트랙 스텝 인디케이터 — 번호원 + 한글 라벨, 사이 connector 가 진행도를 표현
   const renderStepIndicator = () => (
-    <div className="w-full mb-12">
-      <div className="flex justify-between items-center mb-6">
+    <div className="w-full mb-10">
+      <div className="flex items-start">
         {stepLabels.map((label, i) => {
           const s = i + 1;
           const isActive = s === step || (step === 4 && s === 3);
           const isDone = s < step || step === 4;
           return (
             <div key={s} className="contents">
-              <div className="flex flex-col items-center gap-2">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
+              <div className="flex flex-col items-center gap-2 shrink-0">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-display font-bold text-[15px] transition-all duration-300 ${
                   isDone
                     ? 'bg-[var(--primary)] text-white'
                     : isActive
-                    ? 'bg-[var(--cta)] text-white ring-4 ring-[#dde1ff]'
-                    : 'bg-[#e1e3e4] text-[#45464e]'
+                    ? 'bg-[var(--cta)] text-white shadow-[0_0_0_5px_rgba(0,75,240,0.12)]'
+                    : 'bg-white border-2 border-slate-200 text-slate-400'
                 }`}>
                   {isDone && !isActive ? (
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
                   ) : s}
                 </div>
-                <span className={`text-xs font-bold tracking-widest uppercase ${
-                  isActive ? 'text-[var(--primary)]' : isDone ? 'text-[var(--primary)]' : 'text-[#75777f]'
-                }`}>Step {s}</span>
+                <span className={`text-[13px] font-body font-bold whitespace-nowrap ${
+                  isActive || isDone ? 'text-[var(--primary)]' : 'text-slate-400'
+                }`}>{label}</span>
               </div>
               {s < 3 && (
-                <div className={`flex-grow h-px mx-4 ${isDone ? 'bg-[var(--primary)]' : 'bg-slate-200'}`} />
+                <div className="flex-grow h-10 flex items-center px-3">
+                  <div className={`w-full h-[3px] rounded-full transition-all duration-500 ${isDone ? 'bg-[var(--primary)]' : 'bg-slate-200'}`} />
+                </div>
               )}
             </div>
           );
         })}
-      </div>
-      <div className="w-full h-1.5 bg-[#e7e8e9] rounded-full overflow-hidden">
-        <div className={`h-full bg-[var(--cta)] transition-all duration-700 ease-out ${progressWidth}`} />
       </div>
     </div>
   );
@@ -143,12 +148,12 @@ export default function OnboardingPage() {
   return (
     <div className="bg-[#f8f9fa] text-[#191c1d] min-h-screen flex flex-col">
       {/* Fixed Header */}
-      <header className="fixed top-0 left-0 w-full px-8 py-6 flex items-center justify-between pointer-events-none z-10">
-        <span className="text-[var(--primary)] font-extrabold text-2xl tracking-tight">나만의 조교</span>
-        <span className="text-[#45464e] text-sm font-medium">Help Center</span>
+      <header className="fixed top-0 left-0 w-full px-8 py-5 flex items-center justify-between pointer-events-none z-10 bg-gradient-to-b from-[#f8f9fa] via-[#f8f9fa]/80 to-transparent">
+        <span className="text-[var(--primary)] font-display font-bold text-[22px] tracking-tight">나만의 조교</span>
+        <span className="text-slate-400 text-[13px] font-body font-medium">고객 센터</span>
       </header>
 
-      <main className="flex-grow flex items-center justify-center p-6 md:p-12">
+      <main className="flex-grow flex items-center justify-center p-6 pt-20 md:p-12 md:pt-24">
         <div className="w-full max-w-[640px] flex flex-col items-center">
 
           {/* Step Indicator (steps 1-3, also shown on step 4 as all-done) */}
@@ -156,23 +161,23 @@ export default function OnboardingPage() {
 
           {/* Step Title */}
           {step <= 3 && (
-            <div className="w-full mb-8 flex justify-between items-end">
-              <h1 className="text-3xl font-bold tracking-tight text-[var(--primary)]">
+            <div className="w-full mb-7">
+              <h1 className="font-display font-bold text-[26px] md:text-3xl tracking-tight text-[var(--primary)]">
                 {step === 1 && '학원 정보를 입력해주세요'}
-                {step === 2 && '관리자 계정'}
-                {step === 3 && '설정 확인'}
+                {step === 2 && '관리자 계정을 만들어주세요'}
+                {step === 3 && '입력한 내용을 확인해주세요'}
               </h1>
-              <p className="text-sm text-[#45464e] mb-1">
+              <p className="mt-1.5 text-[14px] font-body text-slate-500">
                 {step === 1 && '학원 운영을 위한 기본적인 정보를 설정합니다.'}
-                {step === 2 && '시스템을 총괄할 계정 정보를 입력하세요.'}
-                {step === 3 && '입력한 정보를 확인하고 학원을 등록합니다.'}
+                {step === 2 && '시스템을 총괄할 원장 계정 정보를 입력하세요.'}
+                {step === 3 && '확인 후 학원을 등록하면 30일 무료 체험이 시작됩니다.'}
               </p>
             </div>
           )}
 
           {/* Error */}
           {error && (
-            <div className="w-full mb-6 px-5 py-4 bg-[#ffdad6] text-[#ba1a1a] rounded-lg text-sm font-medium flex items-center gap-3">
+            <div className="w-full mb-6 px-5 py-4 bg-red-50 border border-red-100 text-[#ba1a1a] rounded-xl text-sm font-body font-medium flex items-center gap-3">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
               {error}
             </div>
@@ -180,12 +185,12 @@ export default function OnboardingPage() {
 
           {/* Step 1: 학원 정보 */}
           {step === 1 && (
-            <div className="w-full bg-white rounded-xl p-5 md:p-10 shadow-sm border border-slate-100">
+            <div className={CARD_CLS}>
               <form className="flex flex-col gap-6" onSubmit={e => e.preventDefault()}>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-[#45464e] uppercase tracking-widest ml-1">학원명</label>
+                  <label className={LABEL_CLS}>학원명</label>
                   <input
-                    className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 transition-all text-[#191c1d] placeholder:text-[#75777f]/50 font-medium"
+                    className={INPUT_CLS}
                     value={form.academyName}
                     onChange={update('academyName')}
                     placeholder="학원 이름을 입력하세요"
@@ -193,17 +198,17 @@ export default function OnboardingPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-[#45464e] uppercase tracking-widest ml-1">학원 접속 주소 (URL)</label>
+                  <label className={LABEL_CLS}>학원 접속 주소 (URL)</label>
                   <div className="relative flex items-center">
                     <input
-                      className="w-full pl-5 pr-36 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 transition-all text-[#191c1d] font-medium"
+                      className="w-full pl-4 pr-32 py-3.5 bg-white rounded-xl border border-slate-200 focus:border-[var(--cta)] focus:ring-4 focus:ring-[var(--cta)]/10 outline-none transition-all text-[15px] text-[#191c1d] placeholder:text-slate-300 font-body"
                       value={form.slug}
                       onChange={update('slug')}
                       onBlur={checkSlug}
                       placeholder="my-academy"
                     />
                     <div className="absolute right-4 flex items-center gap-2">
-                      <span className="text-[#45464e] font-medium text-sm">.namanui.com</span>
+                      <span className="text-slate-400 font-body font-semibold text-[13px]">.namanui.com</span>
                       {slugAvailable === true && (
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
                       )}
@@ -230,11 +235,11 @@ export default function OnboardingPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-[#45464e] uppercase tracking-widest ml-1">
+                  <label className={LABEL_CLS}>
                     주요 과목 <span className="font-normal text-[#75777f]">(선택)</span>
                   </label>
                   <input
-                    className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 transition-all text-[#191c1d] placeholder:text-[#75777f]/50 font-medium"
+                    className={INPUT_CLS}
                     value={form.subject}
                     onChange={update('subject')}
                     placeholder="예: 국어, 수학, 영어"
@@ -244,7 +249,7 @@ export default function OnboardingPage() {
                 <div className="pt-4">
                   <button
                     type="button"
-                    className="w-full py-5 bg-[var(--primary)] hover:bg-[var(--cta)] text-white font-extrabold rounded-lg shadow-lg shadow-[var(--primary)]/10 transition-all active:scale-[0.98] text-lg flex items-center justify-center gap-2"
+                    className={`w-full py-4 text-[17px] ${BTN_PRIMARY}`}
                     onClick={() => {
                       if (!form.academyName || !form.slug) { setError('학원 이름과 주소를 입력해주세요.'); return; }
                       setError(''); setStep(2);
@@ -260,12 +265,12 @@ export default function OnboardingPage() {
 
           {/* Step 2: 관리자 계정 */}
           {step === 2 && (
-            <div className="w-full bg-white rounded-xl p-5 md:p-10 shadow-sm border border-slate-100">
+            <div className={CARD_CLS}>
               <form className="flex flex-col gap-6" onSubmit={e => e.preventDefault()}>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-[#45464e] uppercase tracking-widest ml-1">이름</label>
+                  <label className={LABEL_CLS}>이름</label>
                   <input
-                    className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 transition-all text-[#191c1d] placeholder:text-[#75777f]/50 font-medium"
+                    className={INPUT_CLS}
                     value={form.adminName}
                     onChange={update('adminName')}
                     placeholder="성함을 입력하세요"
@@ -273,9 +278,9 @@ export default function OnboardingPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-[#45464e] uppercase tracking-widest ml-1">아이디</label>
+                  <label className={LABEL_CLS}>아이디</label>
                   <input
-                    className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 transition-all text-[#191c1d] placeholder:text-[#75777f]/50 font-medium"
+                    className={INPUT_CLS}
                     value={form.adminUsername}
                     onChange={update('adminUsername')}
                     placeholder="관리자 아이디"
@@ -283,10 +288,10 @@ export default function OnboardingPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-[#45464e] uppercase tracking-widest ml-1">휴대폰 번호</label>
+                  <label className={LABEL_CLS}>휴대폰 번호</label>
                   <div className="flex gap-3">
                     <input
-                      className="flex-grow px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 transition-all text-[#191c1d] placeholder:text-[#75777f]/50 font-medium"
+                      className="flex-grow px-4 py-3.5 bg-white rounded-xl border border-slate-200 focus:border-[var(--cta)] focus:ring-4 focus:ring-[var(--cta)]/10 outline-none transition-all text-[15px] text-[#191c1d] placeholder:text-slate-300 font-body"
                       value={form.adminPhone}
                       onChange={update('adminPhone')}
                       placeholder="010-0000-0000"
@@ -294,7 +299,7 @@ export default function OnboardingPage() {
                     />
                     <button
                       type="button"
-                      className="px-6 py-4 bg-[#e7e8e9] hover:bg-[#e1e3e4] text-[var(--primary)] font-bold text-sm rounded-lg transition-colors shrink-0"
+                      className="px-5 py-3.5 bg-white hover:bg-slate-50 border border-slate-200 text-[var(--primary)] font-body font-bold text-[13px] rounded-xl transition-colors shrink-0"
                     >
                       인증번호 발송
                     </button>
@@ -303,9 +308,9 @@ export default function OnboardingPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-[#45464e] uppercase tracking-widest ml-1">비밀번호</label>
+                    <label className={LABEL_CLS}>비밀번호</label>
                     <input
-                      className="w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 transition-all text-[#191c1d] font-medium"
+                      className={INPUT_CLS}
                       type="password"
                       value={form.adminPassword}
                       onChange={update('adminPassword')}
@@ -323,10 +328,10 @@ export default function OnboardingPage() {
                     )}
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-[#45464e] uppercase tracking-widest ml-1">비밀번호 확인</label>
+                    <label className={LABEL_CLS}>비밀번호 확인</label>
                     <input
-                      className={`w-full px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 transition-all text-[#191c1d] font-medium ${
-                        form.adminPasswordConfirm && form.adminPassword !== form.adminPasswordConfirm ? 'ring-2 ring-[#ba1a1a]/30' : ''
+                      className={`${INPUT_CLS} ${
+                        form.adminPasswordConfirm && form.adminPassword !== form.adminPasswordConfirm ? 'border-[#ba1a1a]/50 ring-4 ring-[#ba1a1a]/10' : ''
                       }`}
                       type="password"
                       value={form.adminPasswordConfirm}
@@ -340,7 +345,7 @@ export default function OnboardingPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-[#45464e] uppercase tracking-widest ml-1">계정 권한</label>
+                  <label className={LABEL_CLS}>계정 권한</label>
                   <div className="w-full px-5 py-4 bg-[#f3f4f5] rounded-lg border border-[#c5c6cf]/20 flex items-center justify-between">
                     <span className="text-[#191c1d] font-semibold">원장</span>
                     <span className="text-[10px] bg-[var(--primary)] text-white px-2 py-0.5 rounded-full uppercase font-black tracking-tighter">Default Admin</span>
@@ -350,14 +355,14 @@ export default function OnboardingPage() {
                 <div className="pt-6 flex gap-3">
                   <button
                     type="button"
-                    className="flex-1 py-5 border border-slate-200 text-[var(--primary)] font-bold rounded-lg hover:bg-slate-50 transition-all active:scale-[0.98] text-lg"
+                    className={`flex-1 py-4 text-[16px] ${BTN_GHOST}`}
                     onClick={() => setStep(1)}
                   >
                     이전
                   </button>
                   <button
                     type="button"
-                    className="flex-[2] py-5 bg-[var(--primary)] hover:bg-[var(--cta)] text-white font-extrabold rounded-lg shadow-lg shadow-[var(--primary)]/10 transition-all active:scale-[0.98] text-lg flex items-center justify-center gap-2"
+                    className={`flex-[2] py-4 text-[17px] ${BTN_PRIMARY}`}
                     onClick={() => {
                       if (!form.adminName || !form.adminUsername || !form.adminPassword) { setError('필수 항목을 입력해주세요.'); return; }
                       if (form.adminPassword.length < 4) { setError('비밀번호는 최소 4자 이상이어야 합니다.'); return; }
@@ -375,7 +380,7 @@ export default function OnboardingPage() {
 
           {/* Step 3: 확인 */}
           {step === 3 && (
-            <div className="w-full bg-white rounded-xl p-5 md:p-10 shadow-sm border border-slate-100">
+            <div className={CARD_CLS}>
               <div className="flex flex-col gap-6">
                 {/* Summary */}
                 <div className="bg-[#f3f4f5] rounded-xl p-6 flex flex-col gap-4">
@@ -486,14 +491,14 @@ export default function OnboardingPage() {
                 <div className="pt-2 flex gap-3">
                   <button
                     type="button"
-                    className="flex-1 py-5 border border-slate-200 text-[var(--primary)] font-bold rounded-lg hover:bg-slate-50 transition-all active:scale-[0.98] text-lg"
+                    className={`flex-1 py-4 text-[16px] ${BTN_GHOST}`}
                     onClick={() => setStep(2)}
                   >
                     이전
                   </button>
                   <button
                     type="button"
-                    className={`flex-[2] py-5 bg-[var(--primary)] text-white font-extrabold rounded-lg shadow-lg shadow-[var(--primary)]/10 transition-all active:scale-[0.98] text-lg ${
+                    className={`flex-[2] py-4 text-[17px] bg-[var(--primary)] text-white font-display font-bold rounded-xl shadow-[0_8px_20px_-8px_rgba(16,32,68,0.45)] transition-all active:scale-[0.99] ${
                       !agreePrivacy || loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[var(--cta)]'
                     }`}
                     onClick={handleSubmit}
@@ -508,7 +513,7 @@ export default function OnboardingPage() {
 
           {/* Step 4: 성공 화면 */}
           {step === 4 && (
-            <div className="w-full bg-white rounded-xl p-8 md:p-12 shadow-sm border border-slate-100 flex flex-col items-center text-center">
+            <div className="w-full bg-white rounded-2xl p-8 md:p-12 border border-slate-200/70 shadow-[0_4px_24px_-8px_rgba(16,32,68,0.08)] flex flex-col items-center text-center">
               {/* Success Icon */}
               <div className="mb-6 w-20 h-20 rounded-full bg-[#dde1ff] flex items-center justify-center">
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0037b8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4"/><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/></svg>
@@ -596,7 +601,7 @@ export default function OnboardingPage() {
 
               {/* 기본 CTA */}
               <button
-                className="w-full py-4 px-6 bg-[var(--primary)] text-white rounded-xl font-bold text-lg hover:bg-[var(--cta)] transition-all active:scale-[0.98] focus:ring-4 focus:ring-[var(--primary)]/20"
+                className={`w-full py-4 px-6 text-[17px] ${BTN_PRIMARY}`}
                 onClick={() => navigate(`/login?academy=${form.slug}`)}
               >
                 지금 로그인하기
