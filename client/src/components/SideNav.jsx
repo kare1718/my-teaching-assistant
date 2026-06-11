@@ -680,10 +680,11 @@ export default function SideNav() {
           </button>
         )}
 
-        {/* Push content right — 데스크톱은 항상, 모바일은 고정 시만 */}
+        {/* Push content right — 데스크톱은 항상, 모바일은 고정 시만
+            (#route-content 단일 래퍼를 밀어냄 — 페이지별 클래스 의존 제거) */}
         <style>{`
-          .content, .main-content { margin-left: ${sidebarOpen ? SIDEBAR_W + 'px' : '0'} !important; transition: margin-left 0.22s cubic-bezier(0.16,1,0.3,1); }
-          @media (max-width: 768px) { .content, .main-content { margin-left: ${pinned && sidebarOpen ? SIDEBAR_W + 'px' : '0'} !important; } }
+          #route-content { margin-left: ${sidebarOpen ? SIDEBAR_W + 'px' : '0'} !important; transition: margin-left 0.22s cubic-bezier(0.16,1,0.3,1); }
+          @media (max-width: 768px) { #route-content { margin-left: ${pinned && sidebarOpen ? SIDEBAR_W + 'px' : '0'} !important; } }
           @keyframes badgePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
         `}</style>
       </>

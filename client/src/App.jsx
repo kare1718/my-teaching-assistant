@@ -224,6 +224,9 @@ function AppLayout() {
       {!isPublicPayment && !isParentRoute && <SideNav />}
       {!isPublicPayment && !isParentRoute && <OnboardingChecklist />}
       {isParentRoute && <Navbar />}
+      {/* 라우트 콘텐츠 단일 래퍼 — SideNav가 #route-content에 margin-left를 주입해 밀어냄
+          (페이지별 .content/.main-content 클래스 의존 제거) */}
+      <div id="route-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
       <Suspense fallback={<LoadingScreen />}>
       <RouteErrorBoundary key={location.pathname} pathname={location.pathname}>
       <Routes>
@@ -316,6 +319,7 @@ function AppLayout() {
           </Routes>
       </RouteErrorBoundary>
       </Suspense>
+      </div>
     </div>
   );
 }
