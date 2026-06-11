@@ -8,7 +8,7 @@ const stepLabels = ['학원 정보', '관리자 계정', '설정 완료'];
 const INPUT_CLS = 'w-full px-4 py-3.5 bg-white rounded-xl border border-slate-200 focus:border-[var(--cta)] focus:ring-4 focus:ring-[var(--cta)]/10 outline-none transition-all text-[15px] text-[#191c1d] placeholder:text-slate-300 font-body';
 const LABEL_CLS = 'block text-[13px] font-bold text-[#334155] font-body';
 const CARD_CLS = 'w-full bg-white rounded-2xl p-6 md:p-10 border border-slate-200/70 shadow-[0_4px_24px_-8px_rgba(16,32,68,0.08)]';
-const BTN_PRIMARY = 'bg-[var(--primary)] hover:bg-[var(--cta)] text-white font-display font-bold rounded-xl shadow-[0_8px_20px_-8px_rgba(16,32,68,0.45)] transition-all active:scale-[0.99] flex items-center justify-center gap-2';
+const BTN_PRIMARY = 'appearance-none border-0 bg-[var(--primary)] hover:bg-[var(--cta)] text-white font-display font-bold rounded-xl shadow-[0_8px_20px_-8px_rgba(16,32,68,0.45)] transition-all active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer';
 const BTN_GHOST = 'border border-slate-200 bg-white text-[var(--primary)] font-display font-bold rounded-xl hover:bg-slate-50 transition-all active:scale-[0.99]';
 
 const getPasswordStrength = (pw) => {
@@ -227,7 +227,7 @@ export default function OnboardingPage() {
                     <button
                       type="button"
                       onClick={autoSlug}
-                      className="text-xs text-[var(--cta)] font-bold hover:underline ml-auto"
+                      className="appearance-none bg-transparent border-0 p-0 cursor-pointer text-xs text-[var(--cta)] font-body font-bold hover:underline ml-auto"
                     >
                       자동 생성
                     </button>
@@ -453,7 +453,7 @@ export default function OnboardingPage() {
                     </label>
                   </div>
                   <button type="button" onClick={() => setShowPrivacy(!showPrivacy)}
-                    className="text-xs text-[var(--cta)] font-semibold mt-1.5 ml-8 hover:underline">
+                    className="appearance-none bg-transparent border-0 p-0 cursor-pointer text-xs text-[var(--cta)] font-body font-semibold mt-1.5 ml-8 hover:underline">
                     {showPrivacy ? '접기' : '내용 보기'}
                   </button>
                   {showPrivacy && (
@@ -498,7 +498,7 @@ export default function OnboardingPage() {
                   </button>
                   <button
                     type="button"
-                    className={`flex-[2] py-4 text-[17px] bg-[var(--primary)] text-white font-display font-bold rounded-xl shadow-[0_8px_20px_-8px_rgba(16,32,68,0.45)] transition-all active:scale-[0.99] ${
+                    className={`appearance-none border-0 flex-[2] py-4 text-[17px] bg-[var(--primary)] text-white font-display font-bold rounded-xl shadow-[0_8px_20px_-8px_rgba(16,32,68,0.45)] transition-all active:scale-[0.99] cursor-pointer ${
                       !agreePrivacy || loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[var(--cta)]'
                     }`}
                     onClick={handleSubmit}
@@ -612,7 +612,7 @@ export default function OnboardingPage() {
           {/* Footer */}
           <p className="mt-8 text-[#45464e] text-sm text-center">
             문제가 발생하셨나요?{' '}
-            <button className="text-[var(--cta)] font-bold hover:underline">고객 센터</button>에 문의하세요.
+            <button className="appearance-none bg-transparent border-0 p-0 cursor-pointer text-[var(--cta)] font-body font-bold hover:underline">고객 센터</button>에 문의하세요.
           </p>
         </div>
       </main>
