@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, apiUpload, apiDelete } from '../../api';
+import { askConfirm } from '../../lib/feedback';
 
 export default function PortfolioManage() {
   const [items, setItems] = useState([]);
@@ -46,7 +47,7 @@ export default function PortfolioManage() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('이 작품을 삭제하시겠습니까?')) return;
+    if (!await askConfirm('이 작품을 삭제하시겠습니까?')) return;
     try {
       await apiDelete(`/portfolio/${id}`);
       showMessage('삭제되었습니다.');

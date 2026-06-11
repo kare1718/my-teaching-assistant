@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
+import { askConfirm } from '../../lib/feedback';
 
 const TAGS = ['학습상담', '진로상담', '학부모상담', '생활지도', '성적관리', '기타'];
 
@@ -51,7 +52,7 @@ export default function ConsultationLog() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('이 상담 일지를 삭제하시겠습니까?')) return;
+    if (!await askConfirm('이 상담 일지를 삭제하시겠습니까?')) return;
     try {
       await apiDelete(`/consultation/${id}`);
       showMessage('삭제되었습니다.');

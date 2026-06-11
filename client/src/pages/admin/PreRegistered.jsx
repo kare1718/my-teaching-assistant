@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { useTenantConfig, getAllGrades } from '../../contexts/TenantContext';
+import { askConfirm } from '../../lib/feedback';
 
 export default function PreRegistered() {
   const { config } = useTenantConfig();
@@ -54,7 +55,7 @@ export default function PreRegistered() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('이 사전등록 정보를 삭제하시겠습니까?')) return;
+    if (!await askConfirm('이 사전등록 정보를 삭제하시겠습니까?')) return;
     await apiDelete(`/admin/pre-registered/${id}`);
     load();
   };
@@ -71,7 +72,7 @@ export default function PreRegistered() {
   };
 
   const handleUnlink = async (id) => {
-    if (!confirm('연동을 해제하시겠습니까?')) return;
+    if (!await askConfirm('연동을 해제하시겠습니까?')) return;
     await apiPut(`/admin/pre-registered/${id}/unlink`, {});
     load();
   };

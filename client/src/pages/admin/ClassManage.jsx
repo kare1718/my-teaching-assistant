@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
+import { askConfirm } from '../../lib/feedback';
 
 const CLASS_TYPES = [
   { value: 'regular', label: '정규반' },
@@ -87,7 +88,7 @@ export default function ClassManage() {
   };
 
   const handleClose = async (id) => {
-    if (!window.confirm('이 반을 종료하시겠습니까?')) return;
+    if (!await askConfirm('이 반을 종료하시겠습니까?')) return;
     try {
       await apiDelete(`/classes/${id}`);
       showMessage('반이 종료되었습니다.');
@@ -128,7 +129,7 @@ export default function ClassManage() {
   };
 
   const handleDrop = async (studentId) => {
-    if (!detail || !window.confirm('수강을 취소하시겠습니까?')) return;
+    if (!detail || !await askConfirm('수강을 취소하시겠습니까?')) return;
     try {
       await apiDelete(`/classes/${detail.id}/students/${studentId}`);
       showMessage('수강이 취소되었습니다.');

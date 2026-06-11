@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost } from '../../../api';
+import { askConfirm } from '../../../lib/feedback';
 
 function GrantRewardButton({ type, label }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
 
   const handleGrant = async () => {
-    if (!confirm(`${type === 'weekly' ? '주간' : '월간'} 랭킹 보상을 지급하시겠습니까?`)) return;
+    if (!await askConfirm(`${type === 'weekly' ? '주간' : '월간'} 랭킹 보상을 지급하시겠습니까?`)) return;
     setLoading(true);
     try {
       const res = await apiPost('/gamification/admin/ranking-rewards', { type });

@@ -6,6 +6,7 @@ import LevelUpNotification from '../../components/LevelUpNotification';
 import { ErrorState } from '../../components/StudentStates';
 import { withRetry } from '../../lib/retry';
 import { reportError } from '../../lib/errorReporter';
+import { toast } from '../../lib/feedback';
 
 const DAILY_LIMIT = 5;
 // 문제별 제한 시간: 첫 문제 50초 (지문 읽기 포함), 이후 30초
@@ -108,7 +109,7 @@ export default function ReadingQuiz() {
       setShowAnswer(false);
       setTodayCount(prev => prev + 1);
       setPhase('reading');
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
     setLoading(false);
   };
 
@@ -141,7 +142,7 @@ export default function ReadingQuiz() {
       const r = await apiPost('/gamification/reading/submit', { passageId: passage.id, answers, logId });
       setResult(r);
       setPhase('result');
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
     setLoading(false);
   };
 

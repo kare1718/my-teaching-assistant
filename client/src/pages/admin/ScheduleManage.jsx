@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { useTenantConfig, getAllGrades } from '../../contexts/TenantContext';
 import useMediaQuery from '../../hooks/useMediaQuery';
+import { askConfirm } from '../../lib/feedback';
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -211,7 +212,7 @@ export default function ScheduleManage() {
   };
 
   const handleDeleteClass = async (id) => {
-    if (!confirm('이 수업 일정을 삭제하시겠습니까?')) return;
+    if (!await askConfirm('이 수업 일정을 삭제하시겠습니까?')) return;
     await apiDelete(`/schedules/${id}`);
     loadSchedules();
     flash('삭제되었습니다.');
@@ -228,7 +229,7 @@ export default function ScheduleManage() {
 
   const handleDeleteGroup = async (groupId, futureOnly) => {
     const label = futureOnly ? '이후 반복 일정을 모두 삭제' : '이 반복 일정을 전부 삭제';
-    if (!confirm(`${label}하시겠습니까?`)) return;
+    if (!await askConfirm(`${label}하시겠습니까?`)) return;
     await apiDelete(`/schedules/group/${groupId}${futureOnly ? '?future_only=true' : ''}`);
     loadSchedules();
     flash(futureOnly ? '이후 반복 일정이 삭제되었습니다.' : '반복 일정이 모두 삭제되었습니다.');
@@ -300,7 +301,7 @@ export default function ScheduleManage() {
   };
 
   const handleDeleteExam = async (id) => {
-    if (!confirm('이 시험을 삭제하시겠습니까? 관련 성적도 함께 삭제됩니다.')) return;
+    if (!await askConfirm('이 시험을 삭제하시겠습니까? 관련 성적도 함께 삭제됩니다.')) return;
     await apiDelete(`/scores/exams/${id}`);
     loadExams();
     flash('시험이 삭제되었습니다.');

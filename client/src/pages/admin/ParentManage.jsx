@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
+import { askConfirm } from '../../lib/feedback';
 
 export default function ParentManage() {
   const [parents, setParents] = useState([]);
@@ -89,7 +90,7 @@ export default function ParentManage() {
   };
 
   const handleDelete = async (id, name) => {
-    if (!window.confirm(`"${name}" 보호자를 삭제하시겠습니까? 자녀 연결도 모두 해제됩니다.`)) return;
+    if (!await askConfirm(`"${name}" 보호자를 삭제하시겠습니까? 자녀 연결도 모두 해제됩니다.`)) return;
     try {
       await apiDelete(`/parents/${id}`);
       showMessage('보호자가 삭제되었습니다.');
@@ -139,7 +140,7 @@ export default function ParentManage() {
   };
 
   const handleUnlink = async (parentId, studentId, studentName) => {
-    if (!window.confirm(`"${studentName}" 학생과의 연결을 해제하시겠습니까?`)) return;
+    if (!await askConfirm(`"${studentName}" 학생과의 연결을 해제하시겠습니까?`)) return;
     try {
       await apiDelete(`/parents/${parentId}/unlink-student/${studentId}`);
       showMessage('연결이 해제되었습니다.');
@@ -153,7 +154,7 @@ export default function ParentManage() {
 
   // 데이터 이전
   const handleMigrate = async () => {
-    if (!window.confirm('기존 학생 데이터의 보호자 정보(parent_name, parent_phone)를 보호자 테이블로 이전합니다.\n\n같은 연락처의 보호자는 하나로 합쳐지며, 형제자매가 자동으로 연결됩니다.\n\n진행하시겠습니까?')) return;
+    if (!await askConfirm('기존 학생 데이터의 보호자 정보(parent_name, parent_phone)를 보호자 테이블로 이전합니다.\n\n같은 연락처의 보호자는 하나로 합쳐지며, 형제자매가 자동으로 연결됩니다.\n\n진행하시겠습니까?')) return;
     try {
       const result = await apiPost('/parents/migrate-from-students');
       showMessage(result.message);

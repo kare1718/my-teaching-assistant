@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
+import { askConfirm } from '../../lib/feedback';
 
 const FONT = "'Paperlogy', 'Noto Sans KR', system-ui, sans-serif";
 
@@ -427,7 +428,7 @@ export default function AcademyDetail() {
             ) : (
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {promos.filter(p => p.is_active).map(p => (
-                  <button key={p.id} onClick={() => { if (confirm(`${academy.name}에 "${p.name}"을(를) 지급하시겠습니까?`)) quickGrant(p.id); }}
+                  <button key={p.id} onClick={async () => { if (await askConfirm(`${academy.name}에 "${p.name}"을(를) 지급하시겠습니까?`)) quickGrant(p.id); }}
                     style={{
                       padding: '10px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600,
                       fontFamily: FONT, cursor: 'pointer',

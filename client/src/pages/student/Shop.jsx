@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api, apiPost } from '../../api';
 import BottomTabBar from '../../components/BottomTabBar';
 import { SkeletonPage, StudentAccessError, EmptyState } from '../../components/StudentStates';
+import { toast, askConfirm } from '../../lib/feedback';
 
 export default function Shop() {
   const navigate = useNavigate();
@@ -38,17 +39,17 @@ export default function Shop() {
   const handlePurchase = async (item) => {
     if (buying) return;
     if (!charData || charData.points < item.price) {
-      alert('포인트가 부족합니다!');
+      toast('포인트가 부족합니다!');
       return;
     }
-    if (!confirm(`${item.name}을(를) ${item.price} 포인트로 구매하시겠습니까?`)) return;
+    if (!await askConfirm(`${item.name}을(를) ${item.price} 포인트로 구매하시겠습니까?`)) return;
     setBuying(item.id);
     try {
       await apiPost('/gamification/shop/purchase', { itemId: item.id });
-      alert('구매 완료! 선생님께 확인 후 수령하세요.');
+      toast('구매 완료! 선생님께 확인 후 수령하세요.');
       load();
     } catch (e) {
-      alert(e.message);
+      toast.error(e.message);
     }
     setBuying(null);
   };

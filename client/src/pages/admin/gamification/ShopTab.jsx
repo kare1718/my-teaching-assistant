@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost, apiPut, apiDelete } from '../../../api';
+import { toast, askConfirm } from '../../../lib/feedback';
 
 export default function ShopTab() {
   const [items, setItems] = useState([]);
@@ -26,11 +27,11 @@ export default function ShopTab() {
       setShowForm(false);
       setForm({ name: '', description: '', icon: '🎁', price: '', stock: '', imageUrl: '' });
       load();
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('이 상품을 삭제하시겠습니까?')) return;
+    if (!await askConfirm('이 상품을 삭제하시겠습니까?')) return;
     await apiDelete(`/gamification/admin/shop/${id}`);
     load();
   };
@@ -64,7 +65,7 @@ export default function ShopTab() {
       });
       setEditingId(null);
       load();
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
   };
 
   const handlePurchaseStatus = async (purchaseId, status) => {
@@ -267,7 +268,7 @@ export default function ShopTab() {
                       className="btn btn-primary btn-sm" style={{ fontSize: 11 }}>
                       지급 완료
                     </button>
-                    <button onClick={() => { if (confirm(`${p.student_name}의 ${p.item_name} 구매를 거절하고 ${p.price_paid}P를 환불하시겠습니까?`)) handlePurchaseStatus(p.id, 'rejected'); }}
+                    <button onClick={async () => { if (await askConfirm(`${p.student_name}의 ${p.item_name} 구매를 거절하고 ${p.price_paid}P를 환불하시겠습니까?`)) handlePurchaseStatus(p.id, 'rejected'); }}
                       className="btn btn-danger btn-sm" style={{ fontSize: 11 }}>
                       거절
                     </button>

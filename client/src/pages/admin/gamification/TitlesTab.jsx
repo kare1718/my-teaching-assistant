@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost, apiPut, apiDelete } from '../../../api';
+import { toast, askConfirm } from '../../../lib/feedback';
 
 export default function TitlesTab() {
   const [titles, setTitles] = useState([]);
@@ -19,11 +20,11 @@ export default function TitlesTab() {
       setShowForm(false);
       setForm({ name: '', description: '', conditionType: 'manual', conditionValue: 0, icon: '' });
       load();
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('이 칭호를 삭제하시겠습니까?')) return;
+    if (!await askConfirm('이 칭호를 삭제하시겠습니까?')) return;
     await apiDelete(`/gamification/admin/titles/${id}`);
     load();
   };
@@ -51,7 +52,7 @@ export default function TitlesTab() {
       });
       setEditingId(null);
       load();
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
   };
 
   const inputStyle = { padding: 10, border: '1px solid var(--border)', borderRadius: 'var(--radius)', width: '100%', boxSizing: 'border-box' };

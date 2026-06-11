@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost, apiRaw } from '../../../api';
+import { askConfirm } from '../../../lib/feedback';
 
 export default function BackupTab() {
   const [backups, setBackups] = useState([]);
@@ -12,7 +13,7 @@ export default function BackupTab() {
   useEffect(() => { loadBackups(); loadSlots(); }, []);
 
   const handleSlotBackup = async (slot) => {
-    if (!confirm(`서버 ${slot}에 현재 데이터를 백업합니다.\n기존 백업은 덮어씌워집니다.\n\n계속하시겠습니까?`)) return;
+    if (!await askConfirm(`서버 ${slot}에 현재 데이터를 백업합니다.\n기존 백업은 덮어씌워집니다.\n\n계속하시겠습니까?`)) return;
     setLoading(true);
     try {
       const result = await apiPost(`/gamification/admin/backup/slot/${slot}`, {});
@@ -24,7 +25,7 @@ export default function BackupTab() {
   };
 
   const handleSlotRestore = async (slot) => {
-    if (!confirm(`⚠️ 서버 ${slot}의 백업으로 복원합니다.\n현재 데이터가 백업 시점으로 돌아갑니다.\n\n이 작업은 되돌릴 수 없습니다. 계속하시겠습니까?`)) return;
+    if (!await askConfirm(`⚠️ 서버 ${slot}의 백업으로 복원합니다.\n현재 데이터가 백업 시점으로 돌아갑니다.\n\n이 작업은 되돌릴 수 없습니다. 계속하시겠습니까?`)) return;
     setLoading(true);
     try {
       const result = await apiPost(`/gamification/admin/backup/slot/${slot}/restore`, {});
@@ -63,7 +64,7 @@ export default function BackupTab() {
   };
 
   const handleSeedStudents = async () => {
-    if (!confirm('테스트 학생 100명(학교별 20명)을 생성합니다.\n이미 존재하는 아이디는 건너뜁니다.\n\n계속하시겠습니까?')) return;
+    if (!await askConfirm('테스트 학생 100명(학교별 20명)을 생성합니다.\n이미 존재하는 아이디는 건너뜁니다.\n\n계속하시겠습니까?')) return;
     setLoading(true);
     try {
       const result = await apiPost('/gamification/admin/seed-students', {});
@@ -76,7 +77,7 @@ export default function BackupTab() {
   const handleRestore = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (!confirm('⚠️ 기존 학생 데이터를 모두 삭제하고 백업 파일로 복원합니다.\n\n이 작업은 되돌릴 수 없습니다. 계속하시겠습니까?')) {
+    if (!await askConfirm('⚠️ 기존 학생 데이터를 모두 삭제하고 백업 파일로 복원합니다.\n\n이 작업은 되돌릴 수 없습니다. 계속하시겠습니까?')) {
       e.target.value = '';
       return;
     }
@@ -208,7 +209,7 @@ export default function BackupTab() {
           학생 데이터(XP, 구매기록 등)는 유지됩니다.
         </p>
         <button onClick={async () => {
-          if (!confirm('상점/칭호/캐릭터 설정을 리셋합니다.\n학생 데이터는 유지됩니다.\n\n계속하시겠습니까?')) return;
+          if (!await askConfirm('상점/칭호/캐릭터 설정을 리셋합니다.\n학생 데이터는 유지됩니다.\n\n계속하시겠습니까?')) return;
           setLoading(true);
           try {
             const result = await apiPost('/gamification/admin/reseed-game-config', {});

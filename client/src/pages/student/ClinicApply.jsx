@@ -4,6 +4,7 @@ import { api, apiPost, apiDelete } from '../../api';
 import { useTenantConfig } from '../../contexts/TenantContext';
 import BottomTabBar from '../../components/BottomTabBar';
 import { SkeletonPage, StudentAccessError } from '../../components/StudentStates';
+import { askConfirm } from '../../lib/feedback';
 
 const DEFAULT_TIME_SLOTS = [
   '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
@@ -97,7 +98,7 @@ export default function ClinicApply() {
   };
 
   const handleCancel = async (id) => {
-    if (!confirm('클리닉 신청을 취소하시겠습니까?')) return;
+    if (!await askConfirm('클리닉 신청을 취소하시겠습니까?')) return;
     try {
       await apiDelete(`/clinic/${id}`);
       setMsg('클리닉 신청이 취소되었습니다.');

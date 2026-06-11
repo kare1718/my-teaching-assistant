@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { api, apiPost, apiPut, getUser } from '../../api';
 import { requestBillingKey } from '../../utils/payment';
+import { askConfirm } from '../../lib/feedback';
 
 // 요금제 4단 — server/middleware/subscription.js 와 동기화 (모든 가격 VAT 별도)
 const PLANS = [
@@ -119,7 +120,7 @@ export default function SubscriptionPage() {
   };
 
   const handleChangePlan = async (planId) => {
-    if (!window.confirm(`플랜을 ${planId.toUpperCase()}로 변경하시겠습니까?`)) return;
+    if (!await askConfirm(`플랜을 ${planId.toUpperCase()}로 변경하시겠습니까?`)) return;
     setActionLoading(true);
     try {
       const res = await apiPut('/subscription/change-plan', { planType: planId });
@@ -133,7 +134,7 @@ export default function SubscriptionPage() {
   };
 
   const handleCancel = async () => {
-    if (!window.confirm('구독을 해지하시겠습니까?\n현재 결제 주기가 끝날 때까지 계속 사용하실 수 있습니다.')) return;
+    if (!await askConfirm('구독을 해지하시겠습니까?\n현재 결제 주기가 끝날 때까지 계속 사용하실 수 있습니다.')) return;
     setActionLoading(true);
     try {
       const res = await apiPost('/subscription/cancel');

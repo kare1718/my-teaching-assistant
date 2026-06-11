@@ -5,6 +5,7 @@ import BottomTabBar from '../../components/BottomTabBar';
 import LevelUpNotification from '../../components/LevelUpNotification';
 import { withRetry } from '../../lib/retry';
 import { reportError } from '../../lib/errorReporter';
+import { toast } from '../../lib/feedback';
 
 const DEFAULT_TIMER = 20;
 const DAILY_LIMIT = 50;
@@ -72,14 +73,14 @@ export default function KnowledgeQuiz() {
     try {
       const data = await api(`/gamification/knowledge/start?count=${questionCount}`);
       const qs = data.questions || data;
-      if (!qs || qs.length === 0) { alert('출제할 문제가 없습니다.'); setLoading(false); return; }
+      if (!qs || qs.length === 0) { toast('출제할 문제가 없습니다.'); setLoading(false); return; }
       setQuizLogId(data.logId || null);
       setQuestions(qs);
       setCurrentIdx(0);
       setAnswers([]);
       setTimeLeft(timerSeconds);
       setPhase('quiz');
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
     setLoading(false);
   };
 
@@ -107,7 +108,7 @@ export default function KnowledgeQuiz() {
       const r = await apiPost('/gamification/knowledge/submit', { answers, logId: quizLogId });
       setResult(r);
       setPhase('result');
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
     setLoading(false);
   };
 

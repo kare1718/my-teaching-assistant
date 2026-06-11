@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, apiPost, apiPut } from '../../api';
+import { askConfirm } from '../../lib/feedback';
 
 function formatBytes(bytes) {
   if (!bytes) return '0 B';
@@ -50,7 +51,7 @@ export default function BackupSecurity() {
   useEffect(() => { loadData(); }, []);
 
   const handleFullBackup = async () => {
-    if (!confirm('플랫폼 전체 백업을 실행하시겠습니까?\n모든 학원의 데이터가 백업됩니다.')) return;
+    if (!await askConfirm('플랫폼 전체 백업을 실행하시겠습니까?\n모든 학원의 데이터가 백업됩니다.')) return;
     setBackupLoading(true);
     setMessage('');
     try {
@@ -65,7 +66,7 @@ export default function BackupSecurity() {
   };
 
   const handleDeleteBackup = async (id, name) => {
-    if (!confirm(`"${name}" 백업을 삭제하시겠습니까?`)) return;
+    if (!await askConfirm(`"${name}" 백업을 삭제하시겠습니까?`)) return;
     try {
       await api(`/superadmin/backups/${id}`, { method: 'DELETE' });
       setMessage('백업이 삭제되었습니다.');
@@ -101,7 +102,7 @@ export default function BackupSecurity() {
 
   const handleSuspendTenant = async (tenantId, suspend) => {
     const action = suspend ? '정지' : '정지 해제';
-    if (!confirm(`이 학원을 ${action}하시겠습니까?${suspend ? '\n소속 모든 유저가 차단됩니다.' : ''}`)) return;
+    if (!await askConfirm(`이 학원을 ${action}하시겠습니까?${suspend ? '\n소속 모든 유저가 차단됩니다.' : ''}`)) return;
     try {
       await apiPost(`/superadmin/tenants/${tenantId}/${suspend ? 'suspend' : 'unsuspend'}`, {});
       setMessage(`학원이 ${action}되었습니다.`);

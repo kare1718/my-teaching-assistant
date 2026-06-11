@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete, authFileUrl } from '../../api';
+import { askConfirm } from '../../lib/feedback';
 
 export default function QnAManage() {
   const [questions, setQuestions] = useState([]);
@@ -48,7 +49,7 @@ export default function QnAManage() {
   };
 
   const deleteQuestion = async (id) => {
-    if (!window.confirm('이 질문을 삭제하시겠습니까?')) return;
+    if (!await askConfirm('이 질문을 삭제하시겠습니까?')) return;
     try {
       await apiDelete(`/questions/${id}`);
       setMsg('질문이 삭제되었습니다.');
@@ -315,7 +316,7 @@ export default function QnAManage() {
                             setGuideForm({ title: g.title, content: g.content });
                           }} style={{ fontSize: 10, padding: '1px 6px' }}>수정</button>
                           <button className="btn btn-danger btn-sm" onClick={async () => {
-                            if (!window.confirm('이 기준을 삭제하시겠습니까?')) return;
+                            if (!await askConfirm('이 기준을 삭제하시겠습니까?')) return;
                             await apiDelete(`/questions/guidelines/${g.id}`);
                             setMsg('삭제되었습니다.');
                             loadGuidelines();

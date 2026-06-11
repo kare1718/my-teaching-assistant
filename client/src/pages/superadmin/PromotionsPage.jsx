@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
+import { askConfirm } from '../../lib/feedback';
 
 const FONT = "'Paperlogy', 'Noto Sans KR', system-ui, sans-serif";
 
@@ -104,7 +105,7 @@ export default function PromotionsPage() {
 
   // 삭제
   const handleDelete = async (id) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
+    if (!await askConfirm('정말 삭제하시겠습니까?')) return;
     try {
       await apiDelete(`/superadmin/promotions/${id}`);
       showMsg('삭제되었습니다.');

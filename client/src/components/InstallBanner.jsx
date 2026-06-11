@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from '../lib/feedback';
 
 // 인앱 브라우저 감지 (카카오톡, 네이버, 인스타, 페이스북 등)
 function isInAppBrowser() {
@@ -58,7 +59,7 @@ export default function InstallBanner() {
       }
     } else if (isIOS) {
       navigator.clipboard?.writeText(url);
-      alert('링크가 복사되었어요!\nSafari에서 붙여넣기 하세요.');
+      toast('링크가 복사되었어요!\nSafari에서 붙여넣기 하세요.');
     } else {
       window.location.href = 'intent://' + url.replace(/https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
     }

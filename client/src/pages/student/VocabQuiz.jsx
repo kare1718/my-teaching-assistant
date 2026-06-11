@@ -4,6 +4,7 @@ import { api, apiPost } from '../../api';
 import BottomTabBar from '../../components/BottomTabBar';
 import LevelUpNotification from '../../components/LevelUpNotification';
 import { SkeletonPage, StudentAccessError } from '../../components/StudentStates';
+import { toast } from '../../lib/feedback';
 
 const DEFAULT_TIMER = 10;
 
@@ -113,7 +114,7 @@ export default function VocabQuiz() {
       const data = await api(`/gamification/vocab/start?${params}`);
       const qs = data.questions || data;
       if (!qs || qs.length === 0) {
-        alert('문제가 없습니다. 관리자에게 문의하세요.');
+        toast('문제가 없습니다. 관리자에게 문의하세요.');
         setLoading(false);
         return;
       }
@@ -125,7 +126,7 @@ export default function VocabQuiz() {
       setTimeLeft(timerSeconds);
       setPhase('quiz');
     } catch (e) {
-      alert(e.message);
+      toast.error(e.message);
     }
     setLoading(false);
   };
@@ -164,7 +165,7 @@ export default function VocabQuiz() {
       setResult(r);
       setPhase('result');
     } catch (e) {
-      alert(e.message);
+      toast.error(e.message);
     }
     setLoading(false);
   };

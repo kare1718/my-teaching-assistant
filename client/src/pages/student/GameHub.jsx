@@ -7,6 +7,7 @@ import BottomTabBar from '../../components/BottomTabBar';
 import { SkeletonPage, StudentAccessError } from '../../components/StudentStates';
 import { getUser } from '../../api';
 import { useTenantConfig } from '../../contexts/TenantContext';
+import { toast, askConfirm } from '../../lib/feedback';
 
 export default function GameHub() {
   const { config } = useTenantConfig();
@@ -53,15 +54,15 @@ export default function GameHub() {
     try {
       await apiPost('/gamification/admin/titles/grant', { studentId, titleId: grantTitleId });
       loadGrantedStudents(grantTitleId);
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
   };
 
   const handleRevokeTitle = async (studentId) => {
-    if (!confirm('이 학생의 칭호를 회수하시겠습니까?')) return;
+    if (!await askConfirm('이 학생의 칭호를 회수하시겠습니까?')) return;
     try {
       await apiPost('/gamification/admin/titles/revoke', { studentId, titleId: grantTitleId });
       loadGrantedStudents(grantTitleId);
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
   };
 
   const load = () => {
@@ -131,7 +132,7 @@ export default function GameHub() {
       setShowTitleSelect(false);
       load();
     } catch (e) {
-      alert(e.message);
+      toast.error(e.message);
     }
   };
 
@@ -459,13 +460,13 @@ export default function GameHub() {
           try {
             await apiPut('/gamification/my-stage', { stage: stageName });
             setCharData(prev => ({ ...prev, selectedStage: stageName }));
-          } catch (e) { alert(e.message); }
+          } catch (e) { toast.error(e.message); }
         };
         const handleAutoStage = async () => {
           try {
             await apiPut('/gamification/my-stage', { stage: '' });
             setCharData(prev => ({ ...prev, selectedStage: '' }));
-          } catch (e) { alert(e.message); }
+          } catch (e) { toast.error(e.message); }
         };
         return (
           <div style={{

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
+import { askConfirm } from '../../lib/feedback';
 
 /* ─── Constants ─────────────────────────────────────────────────── */
 const TRIGGER_META = {
@@ -96,7 +97,7 @@ export default function AutomationManage() {
   };
 
   const deleteRule = async (id) => {
-    if (!window.confirm('이 규칙을 삭제하시겠습니까?')) return;
+    if (!await askConfirm('이 규칙을 삭제하시겠습니까?')) return;
     try {
       await apiDelete(`/automation/rules/${id}`);
       flash('규칙이 삭제되었습니다.');

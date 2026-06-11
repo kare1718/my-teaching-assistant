@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { useTenantConfig } from '../../contexts/TenantContext';
+import { toast } from '../../lib/feedback';
 
 export default function ReportManage() {
   const { config } = useTenantConfig();
@@ -177,7 +178,7 @@ export default function ReportManage() {
       }
       await loadTemplates();
       setEditTmpl(null);
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
   };
 
   const grades = school ? ((config.schools || []).find(s => s.name === school)?.grades || []) : [];

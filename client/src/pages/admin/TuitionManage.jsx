@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
+import { askConfirm } from '../../lib/feedback';
 
 // 수납 추이 컴포넌트
 function TuitionTrend() {
@@ -183,7 +184,7 @@ export default function TuitionManage() {
   };
 
   const handleNotifyOverdue = async () => {
-    if (!window.confirm('미납 학생/학부모에게 알림을 발송하시겠습니까?')) return;
+    if (!await askConfirm('미납 학생/학부모에게 알림을 발송하시겠습니까?')) return;
     try {
       const res = await apiPost('/tuition/overdue/notify');
       showMessage(res.message || '알림이 발송되었습니다.');
@@ -243,7 +244,7 @@ export default function TuitionManage() {
   };
 
   const handleDeleteRule = async (id) => {
-    if (!window.confirm('할인 규칙을 삭제하시겠습니까?')) return;
+    if (!await askConfirm('할인 규칙을 삭제하시겠습니까?')) return;
     try { await apiDelete(`/tuition/discount-rules/${id}`); showMessage('삭제되었습니다.'); loadRules(); }
     catch (e) { showMessage(e.message); }
   };

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, apiPut, apiDelete } from '../../../api';
+import { toast, askConfirm } from '../../../lib/feedback';
 
 export default function RankingsTab() {
   const [rankings, setRankings] = useState([]);
@@ -44,23 +45,23 @@ export default function RankingsTab() {
       });
       setEditId(null);
       load();
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
   };
 
   const handleReset = async (studentId, name) => {
-    if (!confirm(`${name} 학생의 게임 데이터(XP, 포인트, 레벨)를 초기화하시겠습니까?`)) return;
+    if (!await askConfirm(`${name} 학생의 게임 데이터(XP, 포인트, 레벨)를 초기화하시겠습니까?`)) return;
     try {
       await apiDelete(`/gamification/admin/rankings/${studentId}/reset`);
       load();
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
   };
 
   const handleDeleteAll = async (studentId, name) => {
-    if (!confirm(`⚠️ ${name} 학생의 모든 게임 데이터(캐릭터, 칭호, 퀴즈기록, 구매내역 등)를 완전히 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) return;
+    if (!await askConfirm(`⚠️ ${name} 학생의 모든 게임 데이터(캐릭터, 칭호, 퀴즈기록, 구매내역 등)를 완전히 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) return;
     try {
       await apiDelete(`/gamification/admin/rankings/${studentId}`);
       load();
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
   };
 
   const xpLabel = rankType === 'weekly' ? '주간 XP' : rankType === 'monthly' ? '월간 XP' : 'XP';

@@ -3,6 +3,7 @@ import { api, apiPost, apiPut, apiDelete, getUser } from '../../api';
 import BottomTabBar from '../../components/BottomTabBar';
 import AvatarSVG from '../../components/AvatarSVG';
 import { ErrorState } from '../../components/StudentStates';
+import { askConfirm } from '../../lib/feedback';
 
 const PRESETS = [
   { label: '5분', seconds: 300, emoji: '⚡' },
@@ -409,7 +410,7 @@ export default function StudyTimer() {
   }, [statsPeriod, statsDate]);
 
   const handleDeleteLog = async (id) => {
-    if (!confirm('이 기록을 삭제하시겠습니까?')) return;
+    if (!await askConfirm('이 기록을 삭제하시겠습니까?')) return;
     try {
       await apiDelete(`/study-timer/logs/${id}`);
       loadStats();

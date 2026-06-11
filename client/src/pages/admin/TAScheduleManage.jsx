@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
+import { toast, askConfirm } from '../../lib/feedback';
 
 const DAY_NAMES = ['월', '화', '수', '목', '금', '토', '일'];
 const TIME_SLOTS = [];
@@ -163,7 +164,7 @@ export default function TAScheduleManage() {
   };
 
   const handleSaveLog = async () => {
-    if (!logForm.ta_member_id || !logForm.work_date) return alert('조교와 날짜를 선택해주세요.');
+    if (!logForm.ta_member_id || !logForm.work_date) return toast('조교와 날짜를 선택해주세요.');
     // 시간이 입력된 경우 hours 자동 재계산
     let hours = logForm.hours !== '' ? parseFloat(logForm.hours) : 0;
     if (logForm.check_in && logForm.check_out) {
@@ -191,12 +192,12 @@ export default function TAScheduleManage() {
       resetLogForm();
       loadWorkLogs();
     } catch (e) {
-      alert('저장 실패: ' + (e.message || '알 수 없는 오류'));
+      toast('저장 실패: ' + (e.message || '알 수 없는 오류'));
     }
   };
 
   const handleDeleteLog = async (id) => {
-    if (!confirm('삭제하시겠습니까?')) return;
+    if (!await askConfirm('삭제하시겠습니까?')) return;
     await apiDelete(`/ta/work-logs/${id}`);
     loadWorkLogs();
   };
@@ -234,13 +235,13 @@ export default function TAScheduleManage() {
   };
 
   const handleBulkGenerate = async () => {
-    if (!confirm(`${selYear}년 ${selMonth}월 근무표 기반으로 근무 기록을 일괄 생성합니다.\n이미 기록이 있는 날짜는 건너뜁니다.\n\n계속하시겠습니까?`)) return;
+    if (!await askConfirm(`${selYear}년 ${selMonth}월 근무표 기반으로 근무 기록을 일괄 생성합니다.\n이미 기록이 있는 날짜는 건너뜁니다.\n\n계속하시겠습니까?`)) return;
     try {
       const result = await apiPost('/ta/work-logs/bulk-generate', { year: selYear, month: selMonth });
-      alert(result.message);
+      toast(result.message);
       loadWorkLogs();
     } catch (e) {
-      alert(e.message || '일괄 생성 실패');
+      toast.error(e.message || '일괄 생성 실패');
     }
   };
 
@@ -256,7 +257,7 @@ export default function TAScheduleManage() {
         a.click();
         URL.revokeObjectURL(a.href);
       })
-      .catch(() => alert('내보내기 실패'));
+      .catch(() => toast('내보내기 실패'));
   };
 
   const renderWorkLogsTab = () => {
@@ -562,22 +563,22 @@ export default function TAScheduleManage() {
     await apiPut('/ta/regular-schedule', { schedule, year: schedYear, month: schedMonth });
     setEditingSchedule(false);
     loadRegularSchedule();
-    alert('저장되었습니다.');
+    toast('저장되었습니다.');
   };
 
   const handleCopyFromPrev = async () => {
     let fromMonth = schedMonth - 1;
     let fromYear = schedYear;
     if (fromMonth < 1) { fromMonth = 12; fromYear--; }
-    if (!confirm(`${fromYear}년 ${fromMonth}월 근무표를 ${schedYear}년 ${schedMonth}월로 복사합니다.\n기존 ${schedMonth}월 근무표는 덮어씁니다.\n\n계속하시겠습니까?`)) return;
+    if (!await askConfirm(`${fromYear}년 ${fromMonth}월 근무표를 ${schedYear}년 ${schedMonth}월로 복사합니다.\n기존 ${schedMonth}월 근무표는 덮어씁니다.\n\n계속하시겠습니까?`)) return;
     try {
       const result = await apiPost('/ta/regular-schedule/copy', {
         fromYear, fromMonth, toYear: schedYear, toMonth: schedMonth
       });
-      alert(result.message);
+      toast(result.message);
       loadRegularSchedule();
     } catch (e) {
-      alert(e.message || '복사 실패');
+      toast.error(e.message || '복사 실패');
     }
   };
 
@@ -778,7 +779,7 @@ export default function TAScheduleManage() {
   };
 
   const handleSaveMember = async () => {
-    if (!memberForm.name.trim()) return alert('이름을 입력해주세요.');
+    if (!memberForm.name.trim()) return toast('이름을 입력해주세요.');
     if (editingMember) {
       await apiPut(`/ta/members/${editingMember.id}`, { ...memberForm, is_active: editingMember.is_active });
     } else {
@@ -789,7 +790,7 @@ export default function TAScheduleManage() {
   };
 
   const handleDeleteMember = async (id) => {
-    if (!confirm('해당 조교의 모든 근무 기록도 삭제됩니다. 삭제하시겠습니까?')) return;
+    if (!await askConfirm('해당 조교의 모든 근무 기록도 삭제됩니다. 삭제하시겠습니까?')) return;
     await apiDelete(`/ta/members/${id}`);
     loadMembers();
   };

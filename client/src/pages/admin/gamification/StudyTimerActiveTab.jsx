@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost } from '../../../api';
+import { toast, askConfirm } from '../../../lib/feedback';
 
 export default function StudyTimerActiveTab() {
   const [sessions, setSessions] = useState([]);
@@ -14,11 +15,11 @@ export default function StudyTimerActiveTab() {
   useEffect(() => { load(); const iv = setInterval(load, 15000); return () => clearInterval(iv); }, []);
 
   const handleForceEnd = async (id) => {
-    if (!confirm('이 세션을 강제 종료하시겠습니까?')) return;
+    if (!await askConfirm('이 세션을 강제 종료하시겠습니까?')) return;
     try {
       await apiPost(`/study-timer/admin/sessions/${id}/end`);
       load();
-    } catch (e) { alert('실패: ' + (e.message || '오류')); }
+    } catch (e) { toast('실패: ' + (e.message || '오류')); }
   };
 
   const formatDuration = (sec) => {

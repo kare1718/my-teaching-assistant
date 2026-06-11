@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, apiPut } from '../../../api';
+import { toast } from '../../../lib/feedback';
 
 export default function XpTab() {
   const [overview, setOverview] = useState([]);
@@ -20,7 +21,7 @@ export default function XpTab() {
       setAmount('');
       setDesc('');
       load();
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
   };
 
   return (

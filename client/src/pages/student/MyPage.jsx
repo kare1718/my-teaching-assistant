@@ -7,6 +7,7 @@ import InstallBanner from '../../components/InstallBanner';
 import AvatarSVG from '../../components/AvatarSVG';
 import { getLevelInfo, getStageInfo, getXpPercent, getAllStages } from '../../utils/gamification';
 import { reportError } from '../../lib/errorReporter';
+import { askConfirm } from '../../lib/feedback';
 
 const BG_IMAGES = ['/uploads/bg1.jpg', '/uploads/bg2.jpg', '/uploads/bg3.jpg', '/uploads/bg4.jpg', '/uploads/bg5.jpg', '/uploads/bg6.jpg', '/uploads/bg7.jpg', '/uploads/bg8.jpg'];
 
@@ -533,7 +534,7 @@ export default function MyPage() {
                 const confirmMsg = newVal
                   ? '마케팅 정보 수신에 동의하시겠습니까?'
                   : '마케팅 정보 수신 동의를 철회하시겠습니까?\n철회 후에도 서비스 이용에는 제한이 없습니다.';
-                if (!window.confirm(confirmMsg)) return;
+                if (!await askConfirm(confirmMsg)) return;
                 try {
                   const res = await apiPut('/students/marketing-consent', { agree: newVal });
                   setMsg(res.message);
