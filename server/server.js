@@ -315,7 +315,6 @@ const optionalRoutes = [
   { path: '/api/consultation', file: './routes/consultation' },
   { path: '/api/leads', file: './routes/leads' },
   { path: '/api/portfolio', file: './routes/portfolio' },
-  { path: '/api/sms-credits', file: './routes/sms-credits' },
   { path: '/api/classes', file: './routes/classes' },
   { path: '/api/automation', file: './routes/automation' },
   { path: '/api/timeline', file: './routes/timeline' },

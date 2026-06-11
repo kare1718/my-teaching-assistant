@@ -13,15 +13,24 @@ export default function SmsCredits() {
   const [selectedAmount, setSelectedAmount] = useState(null);
   const [msg, setMsg] = useState({ text: '', type: '' });
 
+  const PRICE_DESCRIPTIONS = {
+    SMS: '단문 (90자 이내)', LMS: '장문 (2000자 이내)', MMS: '사진 첨부', ALIMTALK: '카카오 알림톡',
+  };
+
   const loadData = () => {
     Promise.all([
-      api('/sms-credits/balance').catch(() => ({ balance: 0 })),
-      api('/sms-credits/transactions').catch(() => ({ transactions: [] })),
-      api('/sms-credits/pricing').catch(() => ({ pricing: [] })),
+      api('/sms/credits').catch(() => ({ balance: 0 })),
+      api('/sms/credits/transactions').catch(() => ({ transactions: [] })),
+      api('/sms/pricing').catch(() => ({})),
     ]).then(([bal, txns, price]) => {
       setBalance(bal?.balance || 0);
       setTransactions(txns?.transactions || (Array.isArray(txns) ? txns : []));
-      setPricing(price?.pricing || (Array.isArray(price) ? price : []));
+      const priceList = price && typeof price === 'object'
+        ? Object.entries(price)
+            .filter(([type]) => PRICE_DESCRIPTIONS[type])
+            .map(([type, unitPrice]) => ({ type: type === 'ALIMTALK' ? '알림톡' : type, description: PRICE_DESCRIPTIONS[type], unitPrice }))
+        : [];
+      setPricing(priceList);
       setLoading(false);
     });
   };
@@ -39,7 +48,7 @@ export default function SmsCredits() {
     try {
       const user = getUser();
       const { paymentId } = await requestPayment(selectedAmount, 'SMS 크레딧 충전', user?.name || '관리자');
-      const res = await apiPost('/sms-credits/charge', { amount: selectedAmount, payment_id: paymentId });
+      const res = await apiPost('/sms/credits/purchase', { amount: selectedAmount, payment_id: paymentId });
       showMsg(res.message || '충전이 완료되었습니다.');
       setSelectedAmount(null);
       loadData();
@@ -55,6 +64,7 @@ export default function SmsCredits() {
   const typeMap = {
     charge: { label: '충전', bg: 'var(--success-light)', color: 'oklch(52% 0.14 160)', sign: '+' },
     use: { label: '사용', bg: 'var(--destructive-light)', color: 'oklch(48% 0.20 25)', sign: '-' },
+    deduct: { label: '사용', bg: 'var(--destructive-light)', color: 'oklch(48% 0.20 25)', sign: '-' },
     refund: { label: '환불', bg: 'oklch(97% 0.02 60)', color: 'oklch(52% 0.18 45)', sign: '+' },
   };
 

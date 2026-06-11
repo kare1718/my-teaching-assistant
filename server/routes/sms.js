@@ -45,6 +45,33 @@ router.post('/credits/charge', requireAdminOnly, async (req, res) => {
   res.json({ message: `${numAmount.toLocaleString()}원 충전 완료`, balance: result.balance });
 });
 
+// 결제 충전 (PortOne 결제 완료 후 호출) — 구 /api/sms-credits/charge
+router.post('/credits/purchase', async (req, res) => {
+  const { amount, payment_id } = req.body;
+  if (!amount || amount <= 0) return res.status(400).json({ error: '충전 금액은 0보다 커야 합니다.' });
+
+  const allowedAmounts = [5000, 10000, 30000, 50000, 100000];
+  if (!allowedAmounts.includes(amount)) {
+    return res.status(400).json({ error: '유효한 충전 금액이 아닙니다.', allowedAmounts });
+  }
+
+  if (payment_id) {
+    const { verifyPayment } = require('../services/billing');
+    const verification = await verifyPayment(payment_id);
+    if (!verification.verified) {
+      return res.status(400).json({ error: '결제 검증에 실패했습니다.' });
+    }
+    if (!verification.testMode && verification.amount !== amount) {
+      return res.status(400).json({ error: '결제 금액이 일치하지 않습니다.' });
+    }
+  }
+
+  const result = await chargeCredits(
+    req.academyId, amount, `크레딧 충전 ${amount.toLocaleString()}원`, req.user.id, payment_id || null
+  );
+  res.json({ message: '충전이 완료되었습니다.', balance: result.balance });
+});
+
 // 거래 내역 (페이지네이션)
 router.get('/credits/transactions', async (req, res) => {
   const page = Math.max(1, parseInt(req.query.page) || 1);
