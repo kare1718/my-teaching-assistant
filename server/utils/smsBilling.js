@@ -70,8 +70,9 @@ async function calculateTotalCost(messages, academyId = 1) {
   return { totalCost, breakdown };
 }
 
-// 크레딧 차감 (트랜잭션)
-async function checkAndDeductCredits(academyId, totalCost, description, adminId) {
+// 크레딧 차감 (트랜잭션) — 모든 차감의 단일 진입점
+// meta: { smsType, unitPrice, messageCount } — 발송 차감 시 상세 기록용
+async function checkAndDeductCredits(academyId, totalCost, description, adminId, meta = {}) {
   let result = null;
 
   try {
@@ -101,8 +102,9 @@ async function checkAndDeductCredits(academyId, totalCost, description, adminId)
       );
 
       await tx.run(
-        'INSERT INTO sms_credit_transactions (academy_id, type, amount, balance_after, description, admin_id) VALUES (?, ?, ?, ?, ?, ?)',
-        [academyId, 'deduct', -totalCost, newBalance, description, adminId]
+        'INSERT INTO sms_credit_transactions (academy_id, type, amount, balance_after, description, admin_id, sms_type, unit_price, message_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [academyId, 'deduct', -totalCost, newBalance, description, adminId,
+         meta.smsType || null, meta.unitPrice || null, meta.messageCount || null]
       );
 
       result = { success: true, balance: newBalance };

@@ -1,34 +1,12 @@
-const { getOne, getAll, runQuery, runInsert } = require('../db/database');
-const { sendSMS } = require('../utils/smsHelper');
+const { getOne, runInsert } = require('../db/database');
 const { enqueueSMS } = require('./smsQueue');
+const { getCostPerMessage } = require('../utils/smsBilling');
 
-const SMS_PRICING = {
-  SMS: 9.9,
-  LMS: 30,
-  ALIMTALK: 7.5,
-};
+// 크레딧 차감은 smsBilling.checkAndDeductCredits 단일소스 사용 (큐 워커에서 처리)
 
 async function checkBalance(academyId) {
   const row = await getOne('SELECT balance FROM sms_credits WHERE academy_id = ?', [academyId]);
   return row ? row.balance : 0;
-}
-
-async function deductSmsCredit(academyId, count, type = 'SMS') {
-  const unitCost = SMS_PRICING[type] || SMS_PRICING.SMS;
-  const totalCost = Math.ceil(unitCost * count);
-
-  const balance = await checkBalance(academyId);
-  if (balance < totalCost) {
-    return { success: false, error: '크레딧 잔액이 부족합니다.', balance, required: totalCost };
-  }
-
-  await runQuery('UPDATE sms_credits SET balance = balance - ?, updated_at = NOW() WHERE academy_id = ?', [totalCost, academyId]);
-  await runInsert(
-    'INSERT INTO sms_credit_transactions (academy_id, type, amount, balance_after, description, sms_type, unit_price, message_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    [academyId, 'use', totalCost, balance - totalCost, `${type} ${count}건 발송`, type, unitCost, count]
-  );
-
-  return { success: true, deducted: totalCost, remaining: balance - totalCost };
 }
 
 // 보호자에게 SMS — 큐를 통한 비동기 발송 (HTTP 응답 지연 방지)
@@ -46,7 +24,7 @@ async function sendToParent(academyId, studentId, message, type = 'general') {
 
   // 사전 잔액 확인 (큐 적재 전 차단 — 사용자에게 즉시 피드백)
   const balance = await checkBalance(academyId);
-  const unitCost = Math.ceil(SMS_PRICING.SMS);
+  const unitCost = Math.ceil(await getCostPerMessage('SMS', academyId));
   if (balance < unitCost) {
     await logNotification(academyId, studentId, message, 'SMS', 'failed', '크레딧 잔액 부족');
     return { success: false, error: 'SMS 크레딧 잔액이 부족합니다. 충전 후 다시 시도해주세요.' };
@@ -90,4 +68,4 @@ async function logNotification(academyId, studentId, message, channel, status, e
   }
 }
 
-module.exports = { sendToParent, sendBulk, deductSmsCredit, checkBalance, logNotification, SMS_PRICING };
+module.exports = { sendToParent, sendBulk, checkBalance, logNotification };

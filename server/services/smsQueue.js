@@ -10,9 +10,8 @@
 // Rate limit: Solapi는 초당 50건까지 안전. 본 큐는 초당 20건으로 보수적 설정.
 const { enqueue, registerWorker, QUEUES } = require('./queue');
 const { sendSMS, sendBulkSMS, isConfigured } = require('../utils/smsHelper');
-const { getOne, runQuery, runInsert } = require('../db/database');
-
-const SMS_PRICING = { SMS: 9.9, LMS: 30, ALIMTALK: 7.5 };
+const { runInsert } = require('../db/database');
+const { getCostPerMessage, checkAndDeductCredits } = require('../utils/smsBilling');
 
 // ── DB 로깅 (성공/실패) ──
 async function logSmsSend({ academyId, studentId, to, text, type, status, errorMsg }) {
@@ -27,23 +26,16 @@ async function logSmsSend({ academyId, studentId, to, text, type, status, errorM
   }
 }
 
-// ── 크레딧 차감 ──
+// ── 크레딧 차감 — smsBilling 단일소스 위임 (FOR UPDATE 트랜잭션 + 테이블 기반 단가) ──
 async function deductCredit(academyId, count, type) {
   if (!academyId) return { success: true, skipped: true }; // 시스템 메시지 (가입 인증 등) 은 크레딧 무관
-  const unitCost = SMS_PRICING[type] || SMS_PRICING.SMS;
+  const unitCost = await getCostPerMessage(type, academyId);
   const totalCost = Math.ceil(unitCost * count);
-  const row = await getOne('SELECT balance FROM sms_credits WHERE academy_id = ?', [academyId]);
-  const balance = row?.balance || 0;
-  if (balance < totalCost) return { success: false, error: '크레딧 부족', balance, required: totalCost };
-  await runQuery(
-    'UPDATE sms_credits SET balance = balance - ?, updated_at = NOW() WHERE academy_id = ?',
-    [totalCost, academyId]
+  const result = await checkAndDeductCredits(
+    academyId, totalCost, `${type} ${count}건 발송`, null,
+    { smsType: type, unitPrice: unitCost, messageCount: count }
   );
-  await runInsert(
-    `INSERT INTO sms_credit_transactions (academy_id, type, amount, balance_after, description, sms_type, unit_price, message_count)
-     VALUES (?, 'use', ?, ?, ?, ?, ?, ?)`,
-    [academyId, totalCost, balance - totalCost, `${type} ${count}건 발송`, type, unitCost, count]
-  );
+  if (!result.success) return result;
   return { success: true, deducted: totalCost };
 }
 
