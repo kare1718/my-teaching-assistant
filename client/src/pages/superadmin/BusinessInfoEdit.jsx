@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, apiPut } from '../../api';
+import { PageLoading } from '../../components/ui';
 
 const FONT = "'Paperlogy', 'Noto Sans KR', system-ui, sans-serif";
 
@@ -71,7 +72,7 @@ export default function BusinessInfoEdit() {
     }
   };
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center', fontFamily: FONT }}>로딩 중...</div>;
+  if (loading) return <PageLoading />;
 
   return (
     <div style={{ padding: '32px 24px', maxWidth: 780, margin: '0 auto', fontFamily: FONT }}>

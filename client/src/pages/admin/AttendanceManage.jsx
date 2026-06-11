@@ -1,6 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { api } from '../../api';
 import useMediaQuery from '../../hooks/useMediaQuery';
+import { PageLoading } from '../../components/ui';
 
 const HomeworkManage = lazy(() => import('./HomeworkManage'));
 
@@ -40,7 +41,7 @@ export default function AttendanceManage() {
   useEffect(() => { loadToday(); }, [selectedDate]);
   useEffect(() => { loadStats(); }, [statsMonth]);
 
-  if (loading) return <div className="main-content" style={{ padding: 20 }}>로딩 중...</div>;
+  if (loading) return <PageLoading wrap="main-content" />;
   if (error) return <div className="main-content" style={{ padding: 20, color: 'oklch(48% 0.20 25)' }}>{error}</div>;
 
   const summary = todayData || {};

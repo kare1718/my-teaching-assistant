@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { askConfirm } from '../../lib/feedback';
+import { PageLoading } from '../../components/ui';
 
 const TAGS = ['학습상담', '진로상담', '학부모상담', '생활지도', '성적관리', '기타'];
 
@@ -78,7 +79,7 @@ export default function ConsultationLog() {
     }));
   };
 
-  if (loading) return <div className="main-content" style={{ padding: 20 }}>로딩 중...</div>;
+  if (loading) return <PageLoading wrap="main-content" />;
 
   return (
     <div className="main-content" style={{ padding: 20, maxWidth: 1100, margin: '0 auto' }}>

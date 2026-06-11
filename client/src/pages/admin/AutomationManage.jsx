@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { askConfirm } from '../../lib/feedback';
+import { PageLoading } from '../../components/ui';
 
 /* ─── Constants ─────────────────────────────────────────────────── */
 const TRIGGER_META = {
@@ -158,7 +159,7 @@ export default function AutomationManage() {
   const totalExecutions = rules.reduce((s, r) => s + (r.trigger_count || 0), 0);
 
   /* ─── Render ───────────────────────────────────────────────────── */
-  if (loading) return <div className="main-content p-10 text-sm text-slate-500">로딩 중...</div>;
+  if (loading) return <PageLoading wrap="main-content" />;
 
   return (
     <div className="main-content min-h-screen bg-[#f8f9fa]">

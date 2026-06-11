@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../../api';
+import { PageLoading } from '../../../components/ui';
 
 export default function StudyTimerStatsTab() {
   const [stats, setStats] = useState(null);
@@ -21,7 +22,7 @@ export default function StudyTimerStatsTab() {
     return `${m}분`;
   };
 
-  if (loading) return <p style={{ textAlign: 'center', color: 'var(--muted-foreground)' }}>로딩 중...</p>;
+  if (loading) return <PageLoading />;
   if (!stats) return <p style={{ textAlign: 'center', color: 'var(--muted-foreground)' }}>데이터를 불러올 수 없습니다.</p>;
 
   return (

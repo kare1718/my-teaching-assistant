@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost } from '../../../api';
 import { askConfirm } from '../../../lib/feedback';
+import { PageLoading } from '../../../components/ui';
 
 function GrantRewardButton({ type, label }) {
   const [loading, setLoading] = useState(false);
@@ -89,7 +90,7 @@ export default function RewardsTab() {
     }
   };
 
-  if (loading) return <div style={{ textAlign: 'center', padding: 20 }}>로딩중...</div>;
+  if (loading) return <PageLoading />;
 
   const rankLabels = { 1: '🥇 1위', 2: '🥈 2위', 3: '🥉 3위' };
 

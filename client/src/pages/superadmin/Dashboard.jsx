@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../api';
+import { PageLoading } from '../../components/ui';
 
 const FONT = "'Paperlogy', 'Noto Sans KR', system-ui, sans-serif";
 
@@ -59,7 +60,7 @@ export default function SuperAdminDashboard() {
 
   const formatNum = (n) => Number(n || 0).toLocaleString();
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center', fontFamily: FONT, color: 'var(--muted-foreground)' }}>로딩 중...</div>;
+  if (loading) return <PageLoading />;
 
   const cardStyle = {
     background: 'var(--card)', borderRadius: 16, padding: '24px 28px',

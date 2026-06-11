@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api, apiUpload, apiDelete } from '../../api';
 import { askConfirm } from '../../lib/feedback';
+import { PageLoading } from '../../components/ui';
 
 export default function PortfolioManage() {
   const [items, setItems] = useState([]);
@@ -55,7 +56,7 @@ export default function PortfolioManage() {
     } catch (e) { showMessage(e.message); }
   };
 
-  if (loading) return <div className="main-content" style={{ padding: 20 }}>로딩 중...</div>;
+  if (loading) return <PageLoading wrap="main-content" />;
 
   return (
     <div className="main-content" style={{ padding: 20, maxWidth: 1100, margin: '0 auto' }}>

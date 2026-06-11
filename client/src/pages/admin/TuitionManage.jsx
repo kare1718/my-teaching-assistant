@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { askConfirm } from '../../lib/feedback';
+import { PageLoading } from '../../components/ui';
 
 // 수납 추이 컴포넌트
 function TuitionTrend() {
@@ -14,7 +15,7 @@ function TuitionTrend() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>로딩 중...</div>;
+  if (loading) return <PageLoading />;
   if (!data || data.trend.length === 0) {
     return (
       <div style={{ padding: 60, textAlign: 'center', color: '#94a3b8', background: 'white', borderRadius: 12, border: '1px solid #f1f5f9' }}>
@@ -287,7 +288,7 @@ export default function TuitionManage() {
     showMessage('카카오 알림톡 발송 기능은 SMS 크레딧이 필요합니다. (추후 연동 예정)');
   };
 
-  if (loading) return <div className="main-content" style={{ padding: 20 }}>로딩 중...</div>;
+  if (loading) return <PageLoading wrap="main-content" />;
 
   const filteredRecords = records.filter(r => {
     if (filter === 'unpaid') return r.status === 'pending';

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { useTenantConfig, getAllGrades } from '../../contexts/TenantContext';
 import { toast, askConfirm } from '../../lib/feedback';
+import { PageLoading } from '../../components/ui';
 
 const LazySmsCredits = lazy(() => import('./SmsCredits'));
 
@@ -447,7 +448,7 @@ export default function SmsManage() {
   // 발송 탭에서 사용할 필터된 템플릿
   const filteredTemplates = templates.filter(t => !t.message_type || t.message_type === messageCategory);
 
-  if (loading) return <div className="content"><div className="card" style={{ padding: 'var(--space-6)', textAlign: 'center' }}>로딩 중...</div></div>;
+  if (loading) return <PageLoading wrap="content" />;
 
   // 공통 스타일
   const S = {

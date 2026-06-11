@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost, getUser } from '../../api';
 import { requestPayment } from '../../utils/payment';
+import { PageLoading } from '../../components/ui';
 
 const CHARGE_AMOUNTS = [5000, 10000, 30000, 50000, 100000];
 
@@ -59,7 +60,7 @@ export default function SmsCredits() {
     }
   };
 
-  if (loading) return <div className="main-content" style={{ padding: 20 }}>로딩 중...</div>;
+  if (loading) return <PageLoading wrap="main-content" />;
 
   const typeMap = {
     charge: { label: '충전', bg: 'var(--success-light)', color: 'oklch(52% 0.14 160)', sign: '+' },

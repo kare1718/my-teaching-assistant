@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { askConfirm } from '../../lib/feedback';
+import { PageLoading } from '../../components/ui';
 
 const FONT = "'Paperlogy', 'Noto Sans KR', system-ui, sans-serif";
 
@@ -147,7 +148,7 @@ export default function AcademyDetail() {
     } catch (err) { showMsg(err.message); }
   };
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center', fontFamily: FONT, color: 'var(--muted-foreground)' }}>로딩 중...</div>;
+  if (loading) return <PageLoading />;
   if (!data) return <div style={{ padding: 40, textAlign: 'center', fontFamily: FONT }}>학원을 찾을 수 없습니다.</div>;
 
   const { academy, stats, subscription } = data;

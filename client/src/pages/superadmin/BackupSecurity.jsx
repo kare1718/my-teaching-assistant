@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, apiPost, apiPut } from '../../api';
 import { askConfirm } from '../../lib/feedback';
+import { PageLoading } from '../../components/ui';
 
 function formatBytes(bytes) {
   if (!bytes) return '0 B';
@@ -119,7 +120,7 @@ export default function BackupSecurity() {
     background: 'transparent', border: 'none', fontFamily: 'inherit',
   });
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center' }}>로딩 중...</div>;
+  if (loading) return <PageLoading />;
 
   const platformBackups = backups.filter(b => b.backup_type === 'platform_full');
   const autoBackups = backups.filter(b => b.backup_type.startsWith('auto_'));

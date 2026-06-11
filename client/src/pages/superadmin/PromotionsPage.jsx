@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { askConfirm } from '../../lib/feedback';
+import { PageLoading } from '../../components/ui';
 
 const FONT = "'Paperlogy', 'Noto Sans KR', system-ui, sans-serif";
 
@@ -212,7 +213,7 @@ export default function PromotionsPage() {
     !grantSearch || a.name.toLowerCase().includes(grantSearch.toLowerCase()) || a.slug?.toLowerCase().includes(grantSearch.toLowerCase())
   );
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center', fontFamily: FONT, color: 'var(--muted-foreground)' }}>로딩 중...</div>;
+  if (loading) return <PageLoading />;
 
   return (
     <div style={{ padding: '32px 24px', maxWidth: 1280, margin: '0 auto', fontFamily: FONT }}>

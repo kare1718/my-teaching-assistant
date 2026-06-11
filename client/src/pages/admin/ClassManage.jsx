@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { askConfirm } from '../../lib/feedback';
+import { PageLoading } from '../../components/ui';
 
 const CLASS_TYPES = [
   { value: 'regular', label: '정규반' },
@@ -168,7 +169,7 @@ export default function ClassManage() {
     } catch (e) { showMessage(e.message); }
   };
 
-  if (loading) return <div className="main-content" style={{ padding: 20 }}>로딩 중...</div>;
+  if (loading) return <PageLoading wrap="main-content" />;
 
   return (
     <div className="main-content" style={{ padding: 20, maxWidth: 1200, margin: '0 auto' }}>
