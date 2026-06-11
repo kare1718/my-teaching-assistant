@@ -54,6 +54,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     if (!student) return res.status(403).json({ error: '학생 계정만 업로드할 수 있습니다.' });
     studentId = student.id;
   }
+  if (isAdmin && !studentId) return res.status(400).json({ error: '업로드할 학생을 선택해주세요.' });
   if (!studentId || !title) return res.status(400).json({ error: '학생과 제목은 필수입니다.' });
 
   const filePath = `/uploads/portfolio/${req.file.filename}`;
