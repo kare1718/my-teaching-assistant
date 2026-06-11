@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost } from '../../../api';
+import { askConfirm } from '../../../lib/feedback';
 
 const KNOWLEDGE_CATEGORIES = ['사회', '과학', '역사', '지리', '법', '경제', '윤리', '문화', '정치', '기술'];
 
@@ -17,7 +18,7 @@ export default function KnowledgeTab() {
   useEffect(() => { load(); }, []);
 
   const handleReseed = async () => {
-    if (!confirm('⚠️ 기존 지식 퀴즈 문제를 모두 삭제하고 최신 시드 데이터로 교체합니다.\n계속하시겠습니까?')) return;
+    if (!await askConfirm('⚠️ 기존 지식 퀴즈 문제를 모두 삭제하고 최신 시드 데이터로 교체합니다.\n계속하시겠습니까?')) return;
     setLoading(true);
     try {
       const result = await apiPost('/gamification/admin/knowledge/reseed', {});

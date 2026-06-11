@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost, apiPut, apiDelete, apiRaw } from '../../../api';
+import { toast, askConfirm } from '../../../lib/feedback';
 
 export default function VocabTab() {
   const [words, setWords] = useState([]);
@@ -26,7 +27,7 @@ export default function VocabTab() {
   useEffect(() => { load(); }, [filter]);
 
   const handleReseed = async () => {
-    if (!confirm('⚠️ 기존 어휘를 모두 삭제하고 vocabSeed.js 파일에서 다시 불러옵니다.\n\n직접 추가한 문제도 삭제됩니다. 계속하시겠습니까?')) return;
+    if (!await askConfirm('⚠️ 기존 어휘를 모두 삭제하고 vocabSeed.js 파일에서 다시 불러옵니다.\n\n직접 추가한 문제도 삭제됩니다. 계속하시겠습니까?')) return;
     try {
       const result = await apiPost('/gamification/admin/vocab/reseed', {});
       setReseedMsg({ type: 'success', text: result.message });
@@ -48,11 +49,11 @@ export default function VocabTab() {
       setShowForm(false);
       setForm({ category: '사자성어', questionText: '', correctAnswer: '', wrongAnswer1: '', wrongAnswer2: '', wrongAnswer3: '', difficulty: 1, explanation: '' });
       load();
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('이 문제를 삭제하시겠습니까?')) return;
+    if (!await askConfirm('이 문제를 삭제하시겠습니까?')) return;
     await apiDelete(`/gamification/admin/vocab/${id}`);
     load();
   };
@@ -86,7 +87,7 @@ export default function VocabTab() {
       });
       setEditingId(null);
       load();
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
   };
 
   return (
@@ -116,7 +117,7 @@ export default function VocabTab() {
             a.download = 'vocab-export.csv';
             a.click();
             URL.revokeObjectURL(a.href);
-          } catch (e) { alert('내보내기 실패: ' + e.message); }
+          } catch (e) { toast('내보내기 실패: ' + e.message); }
         }} style={{
           padding: 'var(--space-2) var(--space-3)', borderRadius: 'var(--radius)', border: '1px solid var(--success)', background: 'var(--success-light)',
           color: 'var(--success)', fontWeight: 600, fontSize: 'var(--text-xs)', cursor: 'pointer', whiteSpace: 'nowrap'

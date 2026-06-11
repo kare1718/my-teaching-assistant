@@ -6,6 +6,7 @@ import { getLevelInfo, getStageInfo } from '../../utils/gamification';
 import AvatarSVG from '../../components/AvatarSVG';
 import BottomTabBar from '../../components/BottomTabBar';
 import { useTenantConfig } from '../../contexts/TenantContext';
+import { SkeletonList, ErrorState, EmptyState } from '../../components/StudentStates';
 
 const TABS = [
   { key: 'all', label: '🏆 전체', desc: '역대 누적 XP' },
@@ -24,6 +25,7 @@ export default function Rankings() {
   const [myInfo, setMyInfo] = useState(null);
   const [extra, setExtra] = useState({});
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [schools, setSchools] = useState([]);
   const [selectedSchool, setSelectedSchool] = useState('');
   const user = getUser();
@@ -31,6 +33,7 @@ export default function Rankings() {
 
   const fetchRankings = useCallback((type, school) => {
     setLoading(true);
+    setLoadError('');
     const schoolParam = type === 'school' && school ? `&school=${encodeURIComponent(school)}` : '';
     api(`/gamification/rankings?type=${type}${schoolParam}`).then(data => {
       setRankings((data.rankings || []).slice(0, 100));
@@ -39,7 +42,11 @@ export default function Rankings() {
       setExtra({ since: data.since, school: data.school, type: data.type });
       if (data.schools) setSchools(data.schools);
       setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch(err => {
+      console.error('[student/rankings] 랭킹 로드 실패', err);
+      setLoadError(err?.message || '랭킹을 불러올 수 없습니다.');
+      setLoading(false);
+    });
   }, []);
 
   useEffect(() => { fetchRankings(tab, selectedSchool); }, [tab, selectedSchool, fetchRankings]);
@@ -241,7 +248,11 @@ export default function Rankings() {
         {/* 랭킹 영역 */}
         <div className="ranking-main" style={{ flex: 1, minWidth: 0 }}>
           {loading ? (
-            <div style={{ textAlign: 'center', padding: 40, color: 'var(--muted-foreground)' }}>로딩 중...</div>
+            <div className="card" style={{ padding: 12 }}>
+              <SkeletonList count={5} />
+            </div>
+          ) : loadError ? (
+            <ErrorState message={loadError} onRetry={() => fetchRankings(tab, selectedSchool)} />
           ) : (
             <>
               {/* Top 3 - 올림픽 시상대 */}
@@ -366,10 +377,12 @@ export default function Rankings() {
               )}
 
               {rankings.length === 0 && (
-                <div className="card" style={{ textAlign: 'center', padding: 30, color: 'var(--muted-foreground)' }}>
-                  {tab === 'weekly' ? '이번 주 아직 XP를 획득한 사람이 없습니다.' :
-                   tab === 'monthly' ? '이번 달 아직 XP를 획득한 사람이 없습니다.' :
-                   '아직 랭킹 데이터가 없습니다.'}
+                <div className="card" style={{ padding: 12 }}>
+                  <EmptyState message={
+                    tab === 'weekly' ? '이번 주 아직 XP를 획득한 친구가 없어요. 퀴즈부터 시작해 볼까요?' :
+                    tab === 'monthly' ? '이번 달 아직 XP를 획득한 친구가 없어요.' :
+                    '아직 랭킹 데이터가 없어요. 어휘/지식 퀴즈를 풀어 XP를 쌓아 보세요!'
+                  } />
                 </div>
               )}
 

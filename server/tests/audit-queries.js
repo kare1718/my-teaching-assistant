@@ -42,6 +42,9 @@ const GLOBAL_TABLES = new Set([
   'promotions',
   'platform_activity_logs',
   'webhook_events',
+  'phone_verifications',
+  'subscription_tiers',
+  'ai_feature_costs',
   // 개발 초기에 academy_id 도입 전 생성된 레거시 테이블 (게이미피케이션 - 학원 단일)
   'xp_logs',
   'homework_records',

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, getUser } from '../../api';
+import { PageLoading } from '../../components/ui';
 
 export default function ParentHome() {
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ export default function ParentHome() {
       .catch(console.error);
   }, [selectedChild]);
 
-  if (loading) return <div style={styles.container}><p style={styles.loading}>불러오는 중...</p></div>;
+  if (loading) return <div style={styles.container}><PageLoading /></div>;
   if (children.length === 0) {
     return (
       <div style={styles.container}>

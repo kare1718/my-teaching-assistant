@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { api, apiPost } from '../../api';
 import BottomTabBar from '../../components/BottomTabBar';
 import LevelUpNotification from '../../components/LevelUpNotification';
+import { withRetry } from '../../lib/retry';
+import { reportError } from '../../lib/errorReporter';
+import { toast } from '../../lib/feedback';
 
 const DEFAULT_TIMER = 20;
 const DAILY_LIMIT = 50;
@@ -19,6 +22,7 @@ export default function KnowledgeQuiz() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [todayCount, setTodayCount] = useState(0);
+  const [todayCountError, setTodayCountError] = useState(false);
   const [quizLogId, setQuizLogId] = useState(null);
   const [timerSeconds] = useState(DEFAULT_TIMER);
   const [timeLeft, setTimeLeft] = useState(DEFAULT_TIMER);
@@ -26,9 +30,16 @@ export default function KnowledgeQuiz() {
   const startTimeRef = useRef(null);
   const animFrameRef = useRef(null);
 
-  useEffect(() => {
-    api('/gamification/knowledge/today-count').then(d => setTodayCount(d.count || 0)).catch(() => {});
+  const loadTodayCount = useCallback(() => {
+    withRetry(() => api('/gamification/knowledge/today-count'))
+      .then(d => { setTodayCount(d.count || 0); setTodayCountError(false); })
+      .catch((err) => {
+        setTodayCountError(true);
+        reportError(err, { src: 'KnowledgeQuiz', api: '/gamification/knowledge/today-count' });
+      });
   }, []);
+
+  useEffect(() => { loadTodayCount(); }, [loadTodayCount]);
 
   const handleTimeout = useCallback(() => {
     if (showAnswer) return;
@@ -62,14 +73,14 @@ export default function KnowledgeQuiz() {
     try {
       const data = await api(`/gamification/knowledge/start?count=${questionCount}`);
       const qs = data.questions || data;
-      if (!qs || qs.length === 0) { alert('출제할 문제가 없습니다.'); setLoading(false); return; }
+      if (!qs || qs.length === 0) { toast('출제할 문제가 없습니다.'); setLoading(false); return; }
       setQuizLogId(data.logId || null);
       setQuestions(qs);
       setCurrentIdx(0);
       setAnswers([]);
       setTimeLeft(timerSeconds);
       setPhase('quiz');
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
     setLoading(false);
   };
 
@@ -97,7 +108,7 @@ export default function KnowledgeQuiz() {
       const r = await apiPost('/gamification/knowledge/submit', { answers, logId: quizLogId });
       setResult(r);
       setPhase('result');
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
     setLoading(false);
   };
 
@@ -125,14 +136,28 @@ export default function KnowledgeQuiz() {
           <p style={{ fontSize: 13, color: 'var(--muted-foreground)', margin: '0 0 12px', lineHeight: 1.6 }}>
             사회·과학·경제·역사 등 다양한 분야의<br />고등학교 수준 지식을 테스트해보세요!
           </p>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 16px',
-            background: todayCount >= DAILY_LIMIT ? 'var(--destructive-light)' : 'var(--info-light)',
-            color: todayCount >= DAILY_LIMIT ? 'oklch(35% 0.15 25)' : 'oklch(32% 0.12 260)',
-            borderRadius: 20, fontSize: 13, fontWeight: 700
-          }}>
-            📅 오늘 {todayCount}/{DAILY_LIMIT}문제
-          </div>
+          {todayCountError ? (
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px',
+              background: 'var(--warning-light, #fef3c7)', color: 'oklch(40% 0.12 60)',
+              borderRadius: 20, fontSize: 13, fontWeight: 700
+            }}>
+              ⚠ 오늘 푼 문제 수 확인 불가
+              <button onClick={loadTodayCount}
+                style={{ background: 'transparent', border: 'none', color: 'inherit', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', padding: 0, fontSize: 13 }}>
+                재시도
+              </button>
+            </div>
+          ) : (
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 16px',
+              background: todayCount >= DAILY_LIMIT ? 'var(--destructive-light)' : 'var(--info-light)',
+              color: todayCount >= DAILY_LIMIT ? 'oklch(35% 0.15 25)' : 'oklch(32% 0.12 260)',
+              borderRadius: 20, fontSize: 13, fontWeight: 700
+            }}>
+              📅 오늘 {todayCount}/{DAILY_LIMIT}문제
+            </div>
+          )}
         </div>
 
         <div className="card" style={{ padding: 16 }}>
@@ -166,9 +191,10 @@ export default function KnowledgeQuiz() {
           </div>
         </div>
 
-        <button className="btn btn-primary" onClick={startQuiz} disabled={loading || todayCount >= DAILY_LIMIT}
+        <button className="btn btn-primary" onClick={startQuiz}
+          disabled={loading || (!todayCountError && todayCount >= DAILY_LIMIT)}
           style={{ width: '100%', padding: 16, fontSize: 17, fontWeight: 800, marginTop: 4 }}>
-          {loading ? '로딩 중...' : todayCount >= DAILY_LIMIT ? '오늘 제한 도달 (내일 다시!)' : '🚀 퀴즈 시작!'}
+          {loading ? '로딩 중...' : (!todayCountError && todayCount >= DAILY_LIMIT) ? '오늘 제한 도달 (내일 다시!)' : '🚀 퀴즈 시작!'}
         </button>
 
         <button className="btn btn-outline" onClick={() => navigate('/student/game')}

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { useTenantConfig } from '../../contexts/TenantContext';
 import useMediaQuery from '../../hooks/useMediaQuery';
+import { askConfirm } from '../../lib/feedback';
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -181,7 +182,7 @@ export default function ClinicManage() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('이 클리닉 신청을 삭제하시겠습니까?')) return;
+    if (!await askConfirm('이 클리닉 신청을 삭제하시겠습니까?')) return;
     await apiDelete(`/clinic/admin/${id}`);
     setMsg('삭제되었습니다.');
     setDetailAppt(null);
@@ -231,7 +232,7 @@ export default function ClinicManage() {
   };
 
   const deleteNote = async (noteId) => {
-    if (!confirm('이 기록을 삭제하시겠습니까?')) return;
+    if (!await askConfirm('이 기록을 삭제하시겠습니까?')) return;
     try {
       await apiDelete(`/clinic/admin/notes/${noteId}`);
       setApptNotes(prev => prev.filter(n => n.id !== noteId));

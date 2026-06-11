@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { api, apiPost, apiDelete, apiUpload } from '../../api';
+import { api, apiPost, apiDelete, apiUpload, authFileUrl } from '../../api';
 import { useTenantConfig } from '../../contexts/TenantContext';
+import { askConfirm } from '../../lib/feedback';
 
 export default function SchoolPage() {
   const { config } = useTenantConfig();
@@ -60,7 +61,7 @@ export default function SchoolPage() {
   };
 
   const deleteExam = async (examId) => {
-    if (!confirm('이 시험과 관련 성적을 모두 삭제하시겠습니까?')) return;
+    if (!await askConfirm('이 시험과 관련 성적을 모두 삭제하시겠습니까?')) return;
     await apiDelete(`/scores/exams/${examId}`);
     loadData();
   };
@@ -90,7 +91,7 @@ export default function SchoolPage() {
   };
 
   const deleteMaterial = async (materialId) => {
-    if (!confirm('이 자료를 삭제하시겠습니까?')) return;
+    if (!await askConfirm('이 자료를 삭제하시겠습니까?')) return;
     await apiDelete(`/admin/materials/${materialId}`);
     loadData();
   };
@@ -302,7 +303,7 @@ export default function SchoolPage() {
                   {m.file_name && (
                     <div style={{ marginTop: 8 }}>
                       <a
-                        href={`/uploads/${m.file_path}`}
+                        href={authFileUrl(`/uploads/${m.file_path}`)}
                         download={m.file_name}
                         className="btn btn-primary btn-sm"
                         style={{ textDecoration: 'none' }}

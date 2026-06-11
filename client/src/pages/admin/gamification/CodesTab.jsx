@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost, apiPut, apiDelete } from '../../../api';
+import { toast, askConfirm } from '../../../lib/feedback';
 
 export default function CodesTab() {
   const [codes, setCodes] = useState([]);
@@ -36,11 +37,11 @@ export default function CodesTab() {
       setShowForm(false);
       setForm({ code: '', codeType: 'general', xpAmount: 10, description: '', maxUses: '' });
       load();
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('이 코드를 삭제하시겠습니까?')) return;
+    if (!await askConfirm('이 코드를 삭제하시겠습니까?')) return;
     await apiDelete(`/gamification/admin/codes/${id}`);
     load();
   };
@@ -70,7 +71,7 @@ export default function CodesTab() {
       });
       setEditingId(null);
       load();
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
   };
 
   const copyToClipboard = (text) => {

@@ -6,3 +6,5 @@ export { EmptyState } from './EmptyState';
 export { Modal } from './Modal';
 export { FilterChips } from './FilterChips';
 export { Pagination } from './Pagination';
+export { PageLoading } from './PageLoading';
+export { ErrorState } from './ErrorState';

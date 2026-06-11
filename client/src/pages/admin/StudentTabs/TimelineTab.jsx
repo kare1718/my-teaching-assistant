@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api, apiPost, apiPut, apiDelete } from '../../../api';
 import { Icon } from './_shared';
+import { toast, askConfirm } from '../../../lib/feedback';
 
 const EVENT_CONFIG = {
   attendance:      { icon: 'how_to_reg',    dotColor: 'bg-emerald-500', label: '출석' },
@@ -56,18 +57,18 @@ export default function TimelineTab({ studentId, showNoteForm, setShowNoteForm }
       setNoteDesc('');
       setShowNoteForm(false);
       fetchEvents();
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
   };
 
   const handleTogglePin = async (eventId) => {
     try { await apiPut(`/timeline/events/${eventId}/pin`); fetchEvents(); }
-    catch (e) { alert(e.message); }
+    catch (e) { toast.error(e.message); }
   };
 
   const handleDeleteNote = async (eventId) => {
-    if (!confirm('이 메모를 삭제하시겠습니까?')) return;
+    if (!await askConfirm('이 메모를 삭제하시겠습니까?')) return;
     try { await apiDelete(`/timeline/events/${eventId}`); fetchEvents(); }
-    catch (e) { alert(e.message); }
+    catch (e) { toast.error(e.message); }
   };
 
   const formatDate = (dateStr) => {

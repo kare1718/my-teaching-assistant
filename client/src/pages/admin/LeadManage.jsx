@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
+import { askConfirm } from '../../lib/feedback';
 
 /* ─── 상수 ──────────────────────────────────────────────── */
 const KANBAN_COLUMNS = [
@@ -142,7 +143,7 @@ export default function LeadManage() {
   });
 
   const handleDelete = async (id) => {
-    if (!window.confirm('이 리드를 삭제하시겠습니까?')) return;
+    if (!await askConfirm('이 리드를 삭제하시겠습니까?')) return;
     try {
       await apiDelete(`/leads/${id}`);
       showMessage('삭제되었습니다.');
@@ -205,7 +206,7 @@ export default function LeadManage() {
   };
 
   const handleConvert = async (leadId) => {
-    if (!window.confirm('이 리드를 학생으로 등록하시겠습니까?\n\n학생 계정이 생성되고 보호자 정보가 등록됩니다.')) return;
+    if (!await askConfirm('이 리드를 학생으로 등록하시겠습니까?\n\n학생 계정이 생성되고 보호자 정보가 등록됩니다.')) return;
     try {
       const result = await apiPost(`/leads/${leadId}/convert`, {});
       showMessage(`학생 등록 완료! (ID: ${result.studentId})`);

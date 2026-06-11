@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api, apiPut, apiDelete } from '../../api';
+import { askConfirm } from '../../lib/feedback';
 
 export default function EditRequests() {
   const [requests, setRequests] = useState([]);
@@ -44,7 +45,7 @@ export default function EditRequests() {
   };
 
   const reject = async (requestId) => {
-    if (!confirm('수정 요청을 거절하시겠습니까?')) return;
+    if (!await askConfirm('수정 요청을 거절하시겠습니까?')) return;
     try {
       await apiDelete(`/admin/edit-requests/${requestId}/reject`);
       setMsg('수정 요청이 거절되었습니다.');

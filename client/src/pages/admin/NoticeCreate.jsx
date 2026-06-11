@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { useTenantConfig } from '../../contexts/TenantContext';
+import { askConfirm } from '../../lib/feedback';
 
 export default function NoticeCreate() {
   const { config } = useTenantConfig();
@@ -61,7 +62,7 @@ export default function NoticeCreate() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('이 안내사항을 삭제하시겠습니까?')) return;
+    if (!await askConfirm('이 안내사항을 삭제하시겠습니까?')) return;
     await apiDelete(`/admin/notices/${id}`);
     if (editId === id) resetForm();
     loadNotices();

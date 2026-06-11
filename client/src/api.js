@@ -33,6 +33,14 @@ export async function apiDelete(path) {
   return api(path, { method: 'DELETE' });
 }
 
+export function authFileUrl(path) {
+  const token = getToken();
+  if (!path || !token) return path;
+  if (!path.startsWith('/uploads/') && !path.startsWith('uploads/')) return path;
+  const separator = path.includes('?') ? '&' : '?';
+  return `${path}${separator}token=${encodeURIComponent(token)}`;
+}
+
 // FormData 전송 (파일 업로드용)
 export async function apiUpload(path, formData) {
   const token = getToken();

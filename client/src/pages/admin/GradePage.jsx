@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { api, apiPut, apiDelete } from '../../api';
+import { askConfirm } from '../../lib/feedback';
 
 export default function GradePage() {
   const { school, grade } = useParams();
@@ -41,7 +42,7 @@ export default function GradePage() {
 
   const bulkChangeGrade = async () => {
     if (!bulkGrade) return;
-    if (!window.confirm(`${schoolName} ${gradeName} 재원 중인 학생 전체를 ${bulkGrade}(으)로 변경하시겠습니까?`)) return;
+    if (!await askConfirm(`${schoolName} ${gradeName} 재원 중인 학생 전체를 ${bulkGrade}(으)로 변경하시겠습니까?`)) return;
     try {
       await apiPut('/admin/bulk-grade', { school: schoolName, fromGrade: gradeName, toGrade: bulkGrade });
       setMsg(`${gradeName} → ${bulkGrade} 일괄 변경 완료`);
@@ -51,7 +52,7 @@ export default function GradePage() {
   };
 
   const deleteStudent = async (studentId, studentName) => {
-    if (!window.confirm(`정말 ${studentName} 학생을 삭제하시겠습니까?\n성적, 후기 등 모든 데이터가 삭제됩니다.`)) return;
+    if (!await askConfirm(`정말 ${studentName} 학생을 삭제하시겠습니까?\n성적, 후기 등 모든 데이터가 삭제됩니다.`)) return;
     try {
       await apiDelete(`/admin/students/${studentId}`);
       setMsg(`${studentName} 학생이 삭제되었습니다.`);

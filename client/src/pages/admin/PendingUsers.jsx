@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api, apiPut, apiDelete } from '../../api';
+import { askConfirm } from '../../lib/feedback';
 
 export default function PendingUsers() {
   const [users, setUsers] = useState([]);
@@ -18,7 +19,7 @@ export default function PendingUsers() {
   };
 
   const reject = async (userId, name) => {
-    if (!confirm(`${name} 학생의 가입을 거절하시겠습니까? 계정이 삭제됩니다.`)) return;
+    if (!await askConfirm(`${name} 학생의 가입을 거절하시겠습니까? 계정이 삭제됩니다.`)) return;
     await apiDelete(`/admin/reject/${userId}`);
     setMsg('거절 처리되었습니다.');
     load();

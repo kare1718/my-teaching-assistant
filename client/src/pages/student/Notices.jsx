@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api, apiPost } from '../../api';
 import BottomTabBar from '../../components/BottomTabBar';
-import { SkeletonPage, ErrorState, EmptyState } from '../../components/StudentStates';
+import { SkeletonPage, StudentAccessError, EmptyState } from '../../components/StudentStates';
 
 export default function Notices() {
   const [notices, setNotices] = useState([]);
@@ -43,7 +43,12 @@ export default function Notices() {
 
   if (loadError) return (
     <div className="content s-page">
-      <ErrorState message={loadError} onRetry={load} />
+      <StudentAccessError
+        pageLabel="안내사항"
+        emoji="📢"
+        message="안내사항을 불러올 수 없습니다. 학생 등록 여부를 확인해 주세요."
+        onRetry={load}
+      />
       <BottomTabBar />
     </div>
   );
@@ -68,7 +73,7 @@ export default function Notices() {
         </div>
 
         {notices.length === 0 ? (
-          <EmptyState message="안내사항이 없습니다." />
+          <EmptyState message="아직 새로운 안내사항이 없어요." />
         ) : (
           notices.map((n) => {
             const isExpanded = expandedId === n.id;

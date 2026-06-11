@@ -147,11 +147,13 @@ const testimonials2 = [
   { text: '성적 분석 대시보드 보여주면서 상담하면 학부모가 재등록 고민을 안 합니다. 데이터의 힘이에요.', who: '조○현 · 수학학원 원장 · 학생 42명 · 광주 남구' },
 ];
 
-const plans = [
-  { id: 'free', name: 'Free', price: 0, yearlyPrice: 0, students: '15명', features: ['성적 관리', '출결 (기본)', '공지', '수업 자료', 'Q&A'], desc: '1인 과외, 소규모 체험' },
-  { id: 'starter', name: 'Starter', price: 49000, yearlyPrice: 41650, students: '50명', features: ['Free 기능 전체', '학생 관리 고급', '수납 기본 (청구/납부/미납)', 'SMS 발송', '보호자 앱', '기본 상담 메모'], desc: '소형 학원', popular: true },
-  { id: 'pro', name: 'Pro', price: 129000, yearlyPrice: 109650, students: '100명', features: ['Starter 기능 전체', '자동화 엔진 (결석/미납 알림)', '상담 CRM + 리드 파이프라인', '수납 예외 처리 (할인/분납/환불)', '고급 리포트', 'AI 리포트'], desc: '성장 학원' },
-  { id: 'first_class', name: 'First Class', price: 0, yearlyPrice: 0, students: '무제한', features: ['Pro 기능 전체', '게이미피케이션 (XP/레벨/퀴즈)', '학생 아바타 + 상점', 'AI 문제 생성', '브랜딩 (로고/컬러)', '전담 지원'], desc: '관리형/입시형 학원', inquiry: true },
+// 요금제는 슈퍼관리자가 /superadmin/pricing 에서 실시간 수정 가능
+// 랜딩은 /api/tiers/public 에서 동적 로드. 네트워크 실패 시 아래 fallback 사용
+const FALLBACK_PLANS = [
+  { id: 'free', name: 'Free', price: 0, yearlyPrice: 0, students: '15명', aiCredits: 30, features: ['성적 관리', '출결 (기본)', '공지', '수업 자료', 'Q&A', '월 AI 크레딧 30'], desc: '1인 과외, 소규모 체험' },
+  { id: 'basic', name: 'Basic', price: 99000, yearlyPrice: 84150, students: '50명', aiCredits: 700, features: ['Free 기능 전체', 'SMS·보호자 앱·수납 관리', '상담 CRM 기본', '월 AI 크레딧 700', '엑셀 Import/Export'], desc: '체계적인 학원 운영', popular: false },
+  { id: 'pro', name: 'Pro', price: 199000, yearlyPrice: 169150, students: '100명', aiCredits: 1500, features: ['Basic 기능 전체', '자동화 엔진 무제한', '월 AI 크레딧 1,500', 'AI 학습 리포트', '고급 분석 대시보드', '우선 기술지원'], desc: '자동화와 AI로 시간 확보', popular: true },
+  { id: 'first_class', name: 'First Class', price: 0, yearlyPrice: 0, students: '무제한', aiCredits: 10000, features: ['Pro 기능 전체', '월 AI 크레딧 10,000+', 'AI 문항 자동 생성', '게이미피케이션 고도화', '화이트라벨/브랜딩', '전담 매니저'], desc: '대형 학원·프랜차이즈', inquiry: true },
 ];
 
 const comparisonRows = [
@@ -182,6 +184,30 @@ export default function LandingPage() {
   const [landingYearly, setLandingYearly] = useState(true);
   const scrolled = useScrolled();
   const { addRef, isVisible } = useReveal();
+
+  // 요금제 동적 로딩 (슈퍼관리자가 수정하면 랜딩에 즉시 반영)
+  const [plans, setPlans] = useState(FALLBACK_PLANS);
+  useEffect(() => {
+    fetch('/api/tiers/public')
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => {
+        if (!Array.isArray(data) || data.length === 0) return;
+        setPlans(data.map(t => ({
+          id: t.tier_key,
+          name: t.display_name,
+          price: t.monthly_price || 0,
+          yearlyPrice: t.yearly_price || Math.round((t.monthly_price || 0) * 0.85),
+          students: t.max_students ? `${t.max_students}명` : '무제한',
+          aiCredits: t.ai_credits_monthly,
+          features: Array.isArray(t.features) ? t.features : [],
+          desc: t.description,
+          popular: t.highlighted,
+          inquiry: t.cta_type === 'contact',
+          ctaLabel: t.cta_label,
+        })));
+      })
+      .catch(() => { /* fallback 유지 */ });
+  }, []);
 
   const m1 = useCountUp(120, 0, '');
   const m2 = useCountUp(98.7, 1, '%');

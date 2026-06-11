@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost } from '../../../api';
+import { askConfirm } from '../../../lib/feedback';
 
 const READING_CATEGORIES = ['인문', '사회', '과학', '기술', '경제', '법', '예술', '환경', '의학', '역사'];
 
@@ -17,7 +18,7 @@ export default function ReadingTab() {
   useEffect(() => { load(); }, []);
 
   const handleReseed = async () => {
-    if (!confirm('⚠️ 기존 비문학 지문과 문제를 모두 삭제하고 최신 시드 데이터로 교체합니다.\n(학생들의 독해 기록은 초기화됩니다)\n\n계속하시겠습니까?')) return;
+    if (!await askConfirm('⚠️ 기존 비문학 지문과 문제를 모두 삭제하고 최신 시드 데이터로 교체합니다.\n(학생들의 독해 기록은 초기화됩니다)\n\n계속하시겠습니까?')) return;
     setLoading(true);
     try {
       const result = await apiPost('/gamification/admin/reading/reseed', {});

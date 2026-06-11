@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost } from '../../../api';
+import { askConfirm } from '../../../lib/feedback';
+import { PageLoading } from '../../../components/ui';
 
 function GrantRewardButton({ type, label }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
 
   const handleGrant = async () => {
-    if (!confirm(`${type === 'weekly' ? '주간' : '월간'} 랭킹 보상을 지급하시겠습니까?`)) return;
+    if (!await askConfirm(`${type === 'weekly' ? '주간' : '월간'} 랭킹 보상을 지급하시겠습니까?`)) return;
     setLoading(true);
     try {
       const res = await apiPost('/gamification/admin/ranking-rewards', { type });
@@ -88,7 +90,7 @@ export default function RewardsTab() {
     }
   };
 
-  if (loading) return <div style={{ textAlign: 'center', padding: 20 }}>로딩중...</div>;
+  if (loading) return <PageLoading />;
 
   const rankLabels = { 1: '🥇 1위', 2: '🥈 2위', 3: '🥉 3위' };
 

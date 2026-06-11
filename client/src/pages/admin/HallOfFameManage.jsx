@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
+import { askConfirm } from '../../lib/feedback';
 
 const DEFAULT_CATEGORIES = ['1등급 달성', '성적 향상', '모의고사 우수', '수능 우수'];
 const STATUS_TYPES = ['재학생', '졸업생'];
@@ -90,7 +91,7 @@ export default function HallOfFameManage() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
+    if (!await askConfirm('정말 삭제하시겠습니까?')) return;
     try { await apiDelete(`/hall-of-fame/${id}`); setMsg('삭제되었습니다.'); load(); }
     catch (e) { setMsg(e.message); }
     setTimeout(() => setMsg(''), 3000);
@@ -112,7 +113,7 @@ export default function HallOfFameManage() {
 
   const handleBulkRename = async (oldName, newName) => {
     if (!oldName || !newName || oldName === newName) return;
-    if (!confirm(`"${oldName}" → "${newName}"로 일괄 수정하시겠습니까?`)) return;
+    if (!await askConfirm(`"${oldName}" → "${newName}"로 일괄 수정하시겠습니까?`)) return;
     try {
       await apiPut('/hall-of-fame/bulk-rename-category', { oldName, newName });
       const newCats = categories.map(c => c === oldName ? newName : c);
@@ -124,7 +125,7 @@ export default function HallOfFameManage() {
   };
 
   const handleReward = async (item) => {
-    if (!confirm(`${item.student_name}에게 명예의 전당 300P를 지급하시겠습니까?`)) return;
+    if (!await askConfirm(`${item.student_name}에게 명예의 전당 300P를 지급하시겠습니까?`)) return;
     try {
       await apiPost(`/hall-of-fame/${item.id}/reward`);
       setMsg(`${item.student_name}에게 300P 지급 완료!`);

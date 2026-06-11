@@ -4,11 +4,14 @@ import { api, apiPut } from '../../api';
 import AvatarSVG, { AVATAR_OPTIONS } from '../../components/AvatarSVG';
 import { getLevelInfo } from '../../utils/gamification';
 import BottomTabBar from '../../components/BottomTabBar';
+import { SkeletonPage, StudentAccessError } from '../../components/StudentStates';
 
 export default function AvatarCustomize() {
   const navigate = useNavigate();
   const [charData, setCharData] = useState(null);
   const [gender, setGender] = useState('male');
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [config, setConfig] = useState({
     topType: 'ShortHairShortFlat',
     accessoriesType: 'Blank',
@@ -27,7 +30,9 @@ export default function AvatarCustomize() {
   const [msg, setMsg] = useState(null);
   const [activeSection, setActiveSection] = useState('topType');
 
-  useEffect(() => {
+  const loadCharacter = () => {
+    setLoading(true);
+    setLoadError(null);
     api('/gamification/my-character').then(data => {
       setCharData(data);
       if (data.avatarConfig && Object.keys(data.avatarConfig).length > 0) {
@@ -41,8 +46,15 @@ export default function AvatarCustomize() {
         }
       }
       setNickname(data.nickname || '');
+      setLoading(false);
+    }).catch(err => {
+      console.error('[student/avatar-customize] 캐릭터 로드 실패', err);
+      setLoadError(err?.message || '캐릭터 정보를 불러올 수 없습니다.');
+      setLoading(false);
     });
-  }, []);
+  };
+
+  useEffect(() => { loadCharacter(); }, []);
 
   const level = charData ? getLevelInfo(charData.xp).level : 1;
 
@@ -115,6 +127,25 @@ export default function AvatarCustomize() {
 
   const currentSection = sections.find(s => s.id === activeSection);
   const sectionLabel = currentSection ? currentSection.label : '';
+
+  if (loading) return (
+    <div className="content s-page">
+      <SkeletonPage />
+      <BottomTabBar />
+    </div>
+  );
+
+  if (loadError) return (
+    <div className="content s-page">
+      <StudentAccessError
+        pageLabel="아바타 꾸미기"
+        emoji="🎨"
+        message="아바타 정보를 불러올 수 없습니다. 게임 허브에서 먼저 캐릭터를 확인해 주세요."
+        onRetry={loadCharacter}
+      />
+      <BottomTabBar />
+    </div>
+  );
 
   return (
     <div className="content s-page s-page-wide" style={{ paddingBottom: 96 }}>

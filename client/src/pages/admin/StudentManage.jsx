@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { api, apiPut } from '../../api';
 import { useTenantConfig } from '../../contexts/TenantContext';
+import { toast, askConfirm } from '../../lib/feedback';
 import {
   LineChart, Line, BarChart, Bar, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -191,7 +192,7 @@ export default function StudentManage() {
               style={!student.blocked ? { color: 'oklch(48% 0.20 25)', borderColor: 'oklch(48% 0.20 25)' } : {}}
               onClick={async () => {
                 const action = student.blocked ? '해제' : '차단';
-                if (!confirm(`${student.name} 학생의 접속을 ${action}하시겠습니까?`)) return;
+                if (!await askConfirm(`${student.name} 학생의 접속을 ${action}하시겠습니까?`)) return;
                 try {
                   await apiPut(`/admin/students/${id}/block`, { blocked: !student.blocked });
                   setMsg(`접속이 ${action}되었습니다.`);
@@ -205,7 +206,7 @@ export default function StudentManage() {
               className="btn btn-outline btn-sm"
               onClick={async () => {
                 const pw = prompt('새 비밀번호를 입력하세요 (4자 이상):');
-                if (!pw || pw.length < 4) { if (pw !== null) alert('비밀번호는 4자 이상이어야 합니다.'); return; }
+                if (!pw || pw.length < 4) { if (pw !== null) toast('비밀번호는 4자 이상이어야 합니다.'); return; }
                 try {
                   await apiPut(`/admin/students/${id}/reset-password`, { newPassword: pw });
                   setMsg('비밀번호가 초기화되었습니다.');

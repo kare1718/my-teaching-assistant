@@ -267,8 +267,10 @@ router.put('/students/:id/block', async (req, res) => {
 router.put('/students/:id/reset-password', async (req, res) => {
   try {
     const { newPassword } = req.body;
-    if (!newPassword || newPassword.length < 4) {
-      return res.status(400).json({ error: '새 비밀번호는 최소 4자 이상이어야 합니다.' });
+    const { validatePassword } = require('../utils/passwordPolicy');
+    const pwCheck = validatePassword(newPassword || '', { isAdmin: false });
+    if (!pwCheck.valid) {
+      return res.status(400).json({ error: pwCheck.error });
     }
     const student = await getOne('SELECT user_id FROM students WHERE id = ? AND academy_id = ?', [parseInt(req.params.id), req.academyId]);
     if (!student) return res.status(404).json({ error: '학생을 찾을 수 없습니다.' });

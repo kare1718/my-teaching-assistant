@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api, apiUpload, apiDelete } from '../../api';
+import { askConfirm } from '../../lib/feedback';
+import { PageLoading } from '../../components/ui';
 
 export default function PortfolioManage() {
   const [items, setItems] = useState([]);
@@ -46,7 +48,7 @@ export default function PortfolioManage() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('이 작품을 삭제하시겠습니까?')) return;
+    if (!await askConfirm('이 작품을 삭제하시겠습니까?')) return;
     try {
       await apiDelete(`/portfolio/${id}`);
       showMessage('삭제되었습니다.');
@@ -54,7 +56,7 @@ export default function PortfolioManage() {
     } catch (e) { showMessage(e.message); }
   };
 
-  if (loading) return <div className="main-content" style={{ padding: 20 }}>로딩 중...</div>;
+  if (loading) return <PageLoading wrap="main-content" />;
 
   return (
     <div className="main-content" style={{ padding: 20, maxWidth: 1100, margin: '0 auto' }}>

@@ -1,12 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, apiPost, apiPut, getUser } from '../../api';
 import { useTenantConfig } from '../../contexts/TenantContext';
 import BottomTabBar from '../../components/BottomTabBar';
 import InstallBanner from '../../components/InstallBanner';
-import { quotes } from '../../data/quotes';
 import AvatarSVG from '../../components/AvatarSVG';
 import { getLevelInfo, getStageInfo, getXpPercent, getAllStages } from '../../utils/gamification';
+import { reportError } from '../../lib/errorReporter';
+import { askConfirm } from '../../lib/feedback';
+
+const BG_IMAGES = ['/uploads/bg1.jpg', '/uploads/bg2.jpg', '/uploads/bg3.jpg', '/uploads/bg4.jpg', '/uploads/bg5.jpg', '/uploads/bg6.jpg', '/uploads/bg7.jpg', '/uploads/bg8.jpg'];
 
 export default function MyPage() {
   const { config } = useTenantConfig();
@@ -29,6 +32,7 @@ export default function MyPage() {
   const [reviewTransition, setReviewTransition] = useState(true);
   const [currentBg, setCurrentBg] = useState(0);
   const [currentQuote, setCurrentQuote] = useState(0);
+  const [quotesList, setQuotesList] = useState([]);
   const [charData, setCharData] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [upcomingClinics, setUpcomingClinics] = useState([]);
@@ -36,38 +40,53 @@ export default function MyPage() {
   const [currentHof, setCurrentHof] = useState(0);
   const [hofTransition, setHofTransition] = useState(true);
   const [homeworkRecords, setHomeworkRecords] = useState([]);
-  const bgImages = ['/uploads/bg1.jpg', '/uploads/bg2.jpg', '/uploads/bg3.jpg', '/uploads/bg4.jpg', '/uploads/bg5.jpg', '/uploads/bg6.jpg', '/uploads/bg7.jpg', '/uploads/bg8.jpg'];
+  const [loadError, setLoadError] = useState(null);
 
   // 배경 이미지 슬라이드
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentBg(prev => (prev + 1) % bgImages.length);
+      setCurrentBg(prev => (prev + 1) % BG_IMAGES.length);
     }, 5000);
     return () => clearInterval(interval);
   }, []);
 
-  // 명언 롤링 (시작 시 랜덤, 이후 10초마다 변경)
+  // Keep the large quote collection out of the first student page chunk.
   useEffect(() => {
-    setCurrentQuote(Math.floor(Math.random() * quotes.length));
-    const interval = setInterval(() => {
-      setCurrentQuote(prev => (prev + 1) % quotes.length);
-    }, 10000);
-    return () => clearInterval(interval);
+    let active = true;
+    let intervalId;
+
+    import('../../data/quotes').then(({ quotes }) => {
+      if (!active || !quotes?.length) return;
+      setQuotesList(quotes);
+      setCurrentQuote(Math.floor(Math.random() * quotes.length));
+      intervalId = setInterval(() => {
+        setCurrentQuote(prev => (prev + 1) % quotes.length);
+      }, 10000);
+    });
+
+    return () => {
+      active = false;
+      if (intervalId) clearInterval(intervalId);
+    };
   }, []);
 
   const load = () => {
     api('/students/my-info').then((data) => {
       setInfo(data);
+      setLoadError(null);
       setEditForm({
         name: data.name || '', phone: data.phone || '',
         school: data.school || '', grade: data.grade || '',
         parent_name: data.parent_name || '', parent_phone: data.parent_phone || ''
       });
-    }).catch(console.error);
-    api('/students/my-notices').then((n) => setNotices(n.slice(0, 3))).catch(console.error);
-    api('/scores/my-scores').then((s) => setScores(s.slice(-3))).catch(console.error);
-    api('/students/my-edit-requests').then(setEditRequests).catch(console.error);
-    api('/students/reviews').then((r) => setBestReviews(r.filter(rv => rv.is_best))).catch(console.error);
+    }).catch((err) => {
+      console.error('[student/my-info]', err);
+      setLoadError(err?.message || '학생 정보를 불러올 수 없습니다.');
+    });
+    api('/students/my-notices').then((n) => setNotices(n.slice(0, 3))).catch((err) => reportError(err, { src: 'MyPage', api: '/students/my-notices' }));
+    api('/scores/my-scores').then((s) => setScores(s.slice(-3))).catch((err) => reportError(err, { src: 'MyPage', api: '/scores/my-scores' }));
+    api('/students/my-edit-requests').then(setEditRequests).catch((err) => reportError(err, { src: 'MyPage', api: '/students/my-edit-requests' }));
+    api('/students/reviews').then((r) => setBestReviews(r.filter(rv => rv.is_best))).catch((err) => reportError(err, { src: 'MyPage', api: '/students/reviews' }));
     api('/gamification/my-character').then(setCharData).catch(() => {});
     api('/auth/notifications').then(data => {
       const unread = (data || []).filter(n => !n.is_read);
@@ -130,9 +149,6 @@ export default function MyPage() {
   for (let i = 0; i < hallOfFame.length; i += hofPerSlide) {
     hofSlides.push(hallOfFame.slice(i, i + hofPerSlide));
   }
-  const displayHofSlides = hofSlides.length > 1
-    ? [...hofSlides, hofSlides[0]]
-    : hofSlides;
 
   useEffect(() => {
     if (hofSlides.length <= 1) return;
@@ -194,7 +210,33 @@ export default function MyPage() {
 
   const hasPendingRequest = editRequests.some(r => r.status === 'pending');
   const grades = editForm.school ? getAllGrades(editForm.school) : [];
+  const activeQuote = quotesList[currentQuote] || null;
 
+  if (loadError) {
+    const isSuperadmin = user?.role === 'superadmin';
+    const isAdmin = user?.role === 'admin';
+    return (
+      <div className="content" style={{ padding: '60px 20px', textAlign: 'center', maxWidth: 520, margin: '0 auto' }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>🧑‍🎓</div>
+        <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 10, color: 'var(--foreground)' }}>
+          {isSuperadmin || isAdmin ? '학생 전용 페이지입니다' : '학생 정보를 불러올 수 없습니다'}
+        </h2>
+        <p style={{ fontSize: 14, color: 'var(--muted-foreground)', lineHeight: 1.6, marginBottom: 24 }}>
+          {isSuperadmin ? '슈퍼 관리자 계정은 학생 화면에 접근할 수 없어요.'
+          : isAdmin ? '관리자 계정으로는 마이페이지를 볼 수 없어요. 학생 계정으로 로그인해 주세요.'
+          : '학생 등록이 완료되지 않았습니다. 담당 선생님께 문의해 주세요.'}
+        </p>
+        <button onClick={() => navigate(
+          isSuperadmin ? '/superadmin' : isAdmin ? '/admin' : '/login'
+        )} style={{
+          padding: '10px 20px', background: 'var(--primary)', color: '#fff',
+          border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer'
+        }}>
+          {isSuperadmin ? '슈퍼 관리자 홈으로' : isAdmin ? '관리자 홈으로' : '로그인 화면으로'}
+        </button>
+      </div>
+    );
+  }
   if (!info) return <div className="content"><p style={{ color: 'var(--muted-foreground)' }}>로딩 중...</p></div>;
 
   return (
@@ -206,7 +248,7 @@ export default function MyPage() {
           display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', padding: '8px',
           gridTemplateRows: 'repeat(2, 1fr)',
         }}>
-          {bgImages.map((img, idx) => (
+          {BG_IMAGES.map((img, idx) => (
             <div key={idx} style={{
               backgroundImage: `url(${img})`,
               backgroundSize: 'cover',
@@ -247,7 +289,7 @@ export default function MyPage() {
       <InstallBanner />
       <div className="greeting-card" style={{ position: 'relative', overflow: 'hidden', minHeight: 160 }}>
         {/* greeting card 배경 - 슬라이드 */}
-        {bgImages.map((img, idx) => (
+        {BG_IMAGES.map((img, idx) => (
           <div
             key={`gc-${idx}`}
             style={{
@@ -278,34 +320,32 @@ export default function MyPage() {
         position: 'relative', overflow: 'hidden',
       }}>
         <div style={{ position: 'relative' }}>
-          {quotes.map((q, idx) => (
-            <div key={idx} style={{
+          {activeQuote && (
+            <div key={currentQuote} style={{
               position: 'absolute', top: 0, left: 0, right: 0,
-              opacity: idx === currentQuote ? 1 : 0,
-              transition: 'opacity 1.5s ease-in-out',
-              pointerEvents: idx === currentQuote ? 'auto' : 'none',
+              animation: 'quoteFadeIn 0.8s ease-in-out',
             }}>
               <p style={{
                 fontSize: 14, fontWeight: 500, lineHeight: 1.7,
                 color: 'var(--foreground)', margin: 0, fontStyle: 'italic'
               }}>
-                "{q.text}"
+                "{activeQuote.text}"
               </p>
               <p style={{
                 fontSize: 12, color: 'var(--muted-foreground)',
                 marginTop: 6, marginBottom: 0
               }}>
-                — {q.author}
+                — {activeQuote.author}
               </p>
             </div>
-          ))}
+          )}
           {/* 높이 유지용 (현재 명언) */}
           <div style={{ visibility: 'hidden' }}>
             <p style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.7, margin: 0 }}>
-              "{quotes[currentQuote]?.text}"
+              "{activeQuote?.text || ''}"
             </p>
             <p style={{ fontSize: 12, marginTop: 6, marginBottom: 0 }}>
-              — {quotes[currentQuote]?.author}
+              — {activeQuote?.author || ''}
             </p>
           </div>
         </div>
@@ -494,7 +534,7 @@ export default function MyPage() {
                 const confirmMsg = newVal
                   ? '마케팅 정보 수신에 동의하시겠습니까?'
                   : '마케팅 정보 수신 동의를 철회하시겠습니까?\n철회 후에도 서비스 이용에는 제한이 없습니다.';
-                if (!window.confirm(confirmMsg)) return;
+                if (!await askConfirm(confirmMsg)) return;
                 try {
                   const res = await apiPut('/students/marketing-consent', { agree: newVal });
                   setMsg(res.message);

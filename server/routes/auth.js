@@ -1,9 +1,13 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { runQuery, runInsert, getOne, getAll } = require('../db/database');
+const { pool, runQuery, runInsert, getOne, getAll } = require('../db/database');
 const { JWT_SECRET, authenticateToken } = require('../middleware/auth');
 const { track } = require('../services/analytics');
+const { consumePhoneVerificationToken, normalizePhone } = require('./phoneVerification');
+const { sendSMS, isConfigured: smsIsConfigured } = require('../utils/smsHelper');
+const { validatePassword } = require('../utils/passwordPolicy');
+const { loginProtection } = require('../middleware/loginProtection');
 
 const router = express.Router();
 
@@ -20,9 +24,10 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: '학부모 정보를 입력해주세요.' });
     }
 
-    // 비밀번호 최소 길이 검증
-    if (password.length < 4) {
-      return res.status(400).json({ error: '비밀번호는 최소 4자 이상이어야 합니다.' });
+    // 비밀번호 정책 검증 (학생은 표준, admin은 엄격)
+    const pwValidation = validatePassword(password, { isAdmin: isStaff });
+    if (!pwValidation.valid) {
+      return res.status(400).json({ error: pwValidation.error });
     }
 
     // 아이디 형식 검증 (영문, 숫자, _ 만 허용)
@@ -115,8 +120,8 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// 로그인
-router.post('/login', async (req, res) => {
+// 로그인 (브루트포스 방지 미들웨어 적용)
+router.post('/login', loginProtection, async (req, res) => {
   try {
     const { username, password, academySlug, rememberMe } = req.body;
 
@@ -146,11 +151,13 @@ router.post('/login', async (req, res) => {
     }
 
     if (!user) {
+      req.loginProtection?.markFailure();
       return res.status(401).json({ error: '아이디 또는 비밀번호가 올바르지 않습니다.' });
     }
 
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
+      req.loginProtection?.markFailure();
       return res.status(401).json({ error: '아이디 또는 비밀번호가 올바르지 않습니다.' });
     }
 
@@ -185,6 +192,9 @@ router.post('/login', async (req, res) => {
       JWT_SECRET,
       { expiresIn: rememberMe ? '30d' : '1d' }
     );
+
+    // 로그인 성공 → 실패 카운터 리셋
+    req.loginProtection?.markSuccess();
 
     // [KPI] login 이벤트 기록
     req.user = user;
@@ -223,11 +233,15 @@ router.put('/change-password', authenticateToken, async (req, res) => {
     if (!currentPassword || !newPassword) {
       return res.status(400).json({ error: '현재 비밀번호와 새 비밀번호를 입력해주세요.' });
     }
-    if (newPassword.length < 4) {
-      return res.status(400).json({ error: '새 비밀번호는 최소 4자 이상이어야 합니다.' });
-    }
     const user = await getOne('SELECT * FROM users WHERE id = ? AND academy_id = ?', [req.user.id, req.user.academy_id]);
     if (!user) return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
+
+    // 역할별 정책 (admin/superadmin 은 엄격)
+    const isAdminRole = user.role === 'admin' || user.role === 'superadmin';
+    const pwValidation = validatePassword(newPassword, { isAdmin: isAdminRole });
+    if (!pwValidation.valid) {
+      return res.status(400).json({ error: pwValidation.error });
+    }
 
     const valid = await bcrypt.compare(currentPassword, user.password);
     if (!valid) return res.status(400).json({ error: '현재 비밀번호가 일치하지 않습니다.' });
@@ -260,19 +274,30 @@ router.post('/find-password', async (req, res) => {
     recent.push(now);
     findPwAttempts.set(ip, recent);
 
-    const { username, name, phone, academySlug } = req.body;
+    const { username, name, phone, academySlug, phoneVerificationToken } = req.body;
     if (!username || !name || !phone) {
       return res.status(400).json({ error: '아이디, 이름, 전화번호를 모두 입력해주세요.' });
     }
 
+    // 핸드폰 인증 필수
+    const verified = await consumePhoneVerificationToken({
+      token: phoneVerificationToken,
+      phone,
+      purpose: 'password_reset',
+    });
+    if (!verified) {
+      return res.status(400).json({ error: '핸드폰 인증이 필요합니다.' });
+    }
+
+    const normalizedPhone = normalizePhone(phone);
     let user;
     if (academySlug) {
       const academy = await getOne('SELECT id FROM academies WHERE slug = ? AND is_active = 1', [academySlug]);
       if (academy) {
-        user = await getOne('SELECT * FROM users WHERE username = ? AND name = ? AND phone = ? AND academy_id = ?', [username, name, phone, academy.id]);
+        user = await getOne('SELECT * FROM users WHERE username = ? AND name = ? AND phone = ? AND academy_id = ?', [username, name, normalizedPhone, academy.id]);
       }
     } else {
-      user = await getOne('SELECT * FROM users WHERE username = ? AND name = ? AND phone = ?', [username, name, phone]);
+      user = await getOne('SELECT * FROM users WHERE username = ? AND name = ? AND phone = ?', [username, name, normalizedPhone]);
     }
 
     if (!user) {
@@ -284,8 +309,37 @@ router.post('/find-password', async (req, res) => {
     const tempPw = crypto.randomBytes(6).toString('base64url').slice(0, 8);
 
     const hashed = await bcrypt.hash(tempPw, 10);
-    await runQuery('UPDATE users SET password = ? WHERE id = ? AND academy_id = ?', [hashed, user.id, user.academy_id]);
-    res.json({ message: '임시 비밀번호가 발급되었습니다.', tempPassword: tempPw });
+    const smsText = `[나만의 조교] 임시 비밀번호는 [${tempPw}] 입니다. 로그인 후 즉시 변경해주세요.`;
+
+    if (smsIsConfigured()) {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query('UPDATE users SET password = $1 WHERE id = $2', [hashed, user.id]);
+        await sendSMS(normalizedPhone, smsText);
+        await client.query('COMMIT');
+      } catch (e) {
+        try {
+          await client.query('ROLLBACK');
+        } catch (rollbackErr) {
+          console.error('[find-password rollback]', rollbackErr.message);
+        }
+        console.error('[find-password SMS]', e.message);
+        return res.status(502).json({ error: 'SMS 전송에 실패했습니다. 잠시 후 다시 시도해주세요.' });
+      } finally {
+        client.release();
+      }
+      res.json({ message: '임시 비밀번호가 SMS로 발송되었습니다.' });
+    } else {
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(503).json({ error: 'SMS 설정이 필요합니다. 관리자에게 문의해주세요.' });
+      }
+
+      await runQuery('UPDATE users SET password = ? WHERE id = ?', [hashed, user.id]);
+      // 개발 환경: SMS 미구성 시에만 바디로 회신
+      console.warn('[find-password] SMS 미설정 — 개발 편의상 응답 포함');
+      res.json({ message: '임시 비밀번호가 발급되었습니다.', tempPassword: tempPw });
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
+import { askConfirm } from '../../lib/feedback';
+import { PageLoading } from '../../components/ui';
 
 // 수납 추이 컴포넌트
 function TuitionTrend() {
@@ -13,7 +15,7 @@ function TuitionTrend() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>로딩 중...</div>;
+  if (loading) return <PageLoading />;
   if (!data || data.trend.length === 0) {
     return (
       <div style={{ padding: 60, textAlign: 'center', color: '#94a3b8', background: 'white', borderRadius: 12, border: '1px solid #f1f5f9' }}>
@@ -183,7 +185,7 @@ export default function TuitionManage() {
   };
 
   const handleNotifyOverdue = async () => {
-    if (!window.confirm('미납 학생/학부모에게 알림을 발송하시겠습니까?')) return;
+    if (!await askConfirm('미납 학생/학부모에게 알림을 발송하시겠습니까?')) return;
     try {
       const res = await apiPost('/tuition/overdue/notify');
       showMessage(res.message || '알림이 발송되었습니다.');
@@ -243,7 +245,7 @@ export default function TuitionManage() {
   };
 
   const handleDeleteRule = async (id) => {
-    if (!window.confirm('할인 규칙을 삭제하시겠습니까?')) return;
+    if (!await askConfirm('할인 규칙을 삭제하시겠습니까?')) return;
     try { await apiDelete(`/tuition/discount-rules/${id}`); showMessage('삭제되었습니다.'); loadRules(); }
     catch (e) { showMessage(e.message); }
   };
@@ -286,7 +288,7 @@ export default function TuitionManage() {
     showMessage('카카오 알림톡 발송 기능은 SMS 크레딧이 필요합니다. (추후 연동 예정)');
   };
 
-  if (loading) return <div className="main-content" style={{ padding: 20 }}>로딩 중...</div>;
+  if (loading) return <PageLoading wrap="main-content" />;
 
   const filteredRecords = records.filter(r => {
     if (filter === 'unpaid') return r.status === 'pending';

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api, apiPost } from '../../api';
 import BottomTabBar from '../../components/BottomTabBar';
-import { SkeletonPage, ErrorState } from '../../components/StudentStates';
+import { SkeletonPage, StudentAccessError } from '../../components/StudentStates';
 
 const PIN_LENGTH = 4;
 
@@ -12,12 +12,20 @@ export default function AttendanceCheck() {
   const [msgType, setMsgType] = useState('');
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [checking, setChecking] = useState(false);
 
   const loadHistory = () => {
+    setLoading(true);
+    setLoadError(null);
     api('/attendance/student/me')
       .then(data => { setHistory(Array.isArray(data) ? data : []); setLoading(false); })
-      .catch(() => { setHistory([]); setLoading(false); });
+      .catch(err => {
+        console.error('[student/attendance] 출결 기록 로드 실패', err);
+        setHistory([]);
+        setLoadError(err?.message || '출결 기록을 불러올 수 없습니다.');
+        setLoading(false);
+      });
   };
 
   useEffect(() => { loadHistory(); }, []);
@@ -65,6 +73,18 @@ export default function AttendanceCheck() {
   if (loading) return (
     <div className="content s-page">
       <SkeletonPage />
+      <BottomTabBar />
+    </div>
+  );
+
+  if (loadError) return (
+    <div className="content s-page">
+      <StudentAccessError
+        pageLabel="출석 체크"
+        emoji="✅"
+        message="출결 기록을 불러올 수 없습니다. 학생 등록 여부를 확인해 주세요."
+        onRetry={loadHistory}
+      />
       <BottomTabBar />
     </div>
   );
@@ -168,8 +188,8 @@ export default function AttendanceCheck() {
       <div className="s-card">
         <div className="s-section-title">내 출결 기록</div>
         {history.length === 0 ? (
-          <div style={{ padding: 24, textAlign: 'center', color: 'var(--warm-500)', fontSize: 14 }}>
-            출결 기록이 없습니다.
+          <div style={{ padding: 24, textAlign: 'center', color: 'var(--warm-500)', fontSize: 14, wordBreak: 'keep-all' }}>
+            아직 출결 기록이 없어요. 오늘 첫 체크인을 해 보세요!
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

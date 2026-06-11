@@ -70,8 +70,9 @@ async function calculateTotalCost(messages, academyId = 1) {
   return { totalCost, breakdown };
 }
 
-// 크레딧 차감 (트랜잭션)
-async function checkAndDeductCredits(academyId, totalCost, description, adminId) {
+// 크레딧 차감 (트랜잭션) — 모든 차감의 단일 진입점
+// meta: { smsType, unitPrice, messageCount } — 발송 차감 시 상세 기록용
+async function checkAndDeductCredits(academyId, totalCost, description, adminId, meta = {}) {
   let result = null;
 
   try {
@@ -101,8 +102,9 @@ async function checkAndDeductCredits(academyId, totalCost, description, adminId)
       );
 
       await tx.run(
-        'INSERT INTO sms_credit_transactions (academy_id, type, amount, balance_after, description, admin_id) VALUES (?, ?, ?, ?, ?, ?)',
-        [academyId, 'deduct', -totalCost, newBalance, description, adminId]
+        'INSERT INTO sms_credit_transactions (academy_id, type, amount, balance_after, description, admin_id, sms_type, unit_price, message_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [academyId, 'deduct', -totalCost, newBalance, description, adminId,
+         meta.smsType || null, meta.unitPrice || null, meta.messageCount || null]
       );
 
       result = { success: true, balance: newBalance };
@@ -117,8 +119,8 @@ async function checkAndDeductCredits(academyId, totalCost, description, adminId)
   return result;
 }
 
-// 크레딧 충전 (트랜잭션)
-async function chargeCredits(academyId, amount, description, adminId) {
+// 크레딧 충전 (트랜잭션) — portonePaymentId가 있으면 결제 충전, 없으면 수동 충전
+async function chargeCredits(academyId, amount, description, adminId, portonePaymentId = null) {
   let result = null;
 
   await runBatch(async (tx) => {
@@ -128,15 +130,15 @@ async function chargeCredits(academyId, amount, description, adminId) {
     );
 
     await tx.run(
-      'UPDATE sms_credits SET balance = balance + ?, total_charged = total_charged + ?, updated_at = NOW() WHERE academy_id = ?',
+      'UPDATE sms_credits SET balance = balance + ?, total_charged = total_charged + ?, last_charged_at = NOW(), updated_at = NOW() WHERE academy_id = ?',
       [amount, amount, academyId]
     );
 
     const credit = await tx.getOne('SELECT balance FROM sms_credits WHERE academy_id = ?', [academyId]);
 
     await tx.run(
-      'INSERT INTO sms_credit_transactions (academy_id, type, amount, balance_after, description, admin_id) VALUES (?, ?, ?, ?, ?, ?)',
-      [academyId, 'charge', amount, credit.balance, description, adminId]
+      'INSERT INTO sms_credit_transactions (academy_id, type, amount, balance_after, description, admin_id, portone_payment_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [academyId, 'charge', amount, credit.balance, description, adminId, portonePaymentId]
     );
 
     result = { success: true, balance: credit.balance };

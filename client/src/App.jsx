@@ -3,20 +3,21 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from
 import { getUser, logout, isLoggedIn, checkTokenExpiry } from './api';
 import { TenantProvider, useTenantConfig } from './contexts/TenantContext';
 import LoadingScreen from './components/LoadingScreen';
-import SideNav from './components/SideNav';
 import ThemeToggle from './components/ThemeToggle';
-import OnboardingChecklist from './components/OnboardingChecklist';
-import PlatformNotificationBell from './components/PlatformNotificationBell';
-import ParentBottomNav from './components/ParentBottomNav';
 import ErrorBoundary from './components/ErrorBoundary';
 import RouteErrorBoundary from './components/RouteErrorBoundary';
-import usePageTracking from './hooks/usePageTracking';
+import FeedbackHost from './components/FeedbackHost';
 
-// 빠른 로드 필요 (정적 유지)
-import LandingPage from './pages/LandingPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import NotFoundPage from './pages/NotFoundPage';
+// Route and shell chunks
+const SideNav = lazy(() => import('./components/SideNav'));
+const OnboardingChecklist = lazy(() => import('./components/OnboardingChecklist'));
+const PlatformNotificationBell = lazy(() => import('./components/PlatformNotificationBell'));
+const ParentBottomNav = lazy(() => import('./components/ParentBottomNav'));
+
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 // 일반 페이지 (lazy)
 const OnboardingPage = lazy(() => import('./pages/OnboardingPage'));
@@ -109,6 +110,8 @@ const PromotionsPage = lazy(() => import('./pages/superadmin/PromotionsPage'));
 const RevenuePage = lazy(() => import('./pages/superadmin/RevenuePage'));
 const KPIDashboard = lazy(() => import('./pages/superadmin/KPIDashboard'));
 const UsageAnalytics = lazy(() => import('./pages/superadmin/UsageAnalytics'));
+const BusinessInfoEdit = lazy(() => import('./pages/superadmin/BusinessInfoEdit'));
+const PricingEdit = lazy(() => import('./pages/superadmin/PricingEdit'));
 
 function Navbar() {
   const navigate = useNavigate();
@@ -131,7 +134,11 @@ function Navbar() {
         {config?.siteTitle || '나만의 조교'}
       </h1>
       <div className="nav-right" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        {(user.role === 'admin' || user.school === '조교') && <PlatformNotificationBell />}
+        {(user.role === 'admin' || user.school === '조교') && (
+          <Suspense fallback={null}>
+            <PlatformNotificationBell />
+          </Suspense>
+        )}
         <span>{user.name}님 ({user.role === 'superadmin' ? '플랫폼 관리자' : user.role === 'admin' ? '관리자' : user.role === 'parent' ? '보호자' : user.school === '조교' ? '조교' : user.school === '선생님' ? '선생님' : '학생'})</span>
         <ThemeToggle />
         <button onClick={handleLogout}>로그아웃</button>
@@ -185,6 +192,7 @@ function App() {
           <AppLayout />
         </TenantProvider>
       </BrowserRouter>
+      <FeedbackHost />
     </ErrorBoundary>
   );
 }
@@ -206,7 +214,9 @@ function ParentLayout() {
           </RouteErrorBoundary>
         </Suspense>
       </div>
-      <ParentBottomNav />
+      <Suspense fallback={null}>
+        <ParentBottomNav />
+      </Suspense>
     </>
   );
 }
@@ -216,13 +226,18 @@ function AppLayout() {
   const user = getUser();
   const isPublicPayment = location.pathname.startsWith('/pay/');
   const isParentRoute = location.pathname.startsWith('/parent');
+  const showMainShell = !isPublicPayment && !isParentRoute && Boolean(user);
   // usePageTracking(); // 임시 비활성화 — 런타임 안정성 확인 후 재활성화
 
   return (
     <div className="app">
       {!isPublicPayment && !isParentRoute && <Navbar />}
-      {!isPublicPayment && !isParentRoute && <SideNav />}
-      {!isPublicPayment && !isParentRoute && <OnboardingChecklist />}
+      {showMainShell && (
+        <Suspense fallback={null}>
+          <SideNav />
+          <OnboardingChecklist />
+        </Suspense>
+      )}
       {isParentRoute && <Navbar />}
       {/* 라우트 콘텐츠 단일 래퍼 — SideNav가 #route-content에 margin-left를 주입해 밀어냄
           (페이지별 .content/.main-content 클래스 의존 제거) */}
@@ -314,6 +329,8 @@ function AppLayout() {
             <Route path="/superadmin/kpi" element={<ProtectedRoute role="superadmin"><KPIDashboard /></ProtectedRoute>} />
             <Route path="/superadmin/usage" element={<ProtectedRoute role="superadmin"><UsageAnalytics /></ProtectedRoute>} />
             <Route path="/superadmin/backup-security" element={<ProtectedRoute role="superadmin"><SuperBackupSecurity /></ProtectedRoute>} />
+            <Route path="/superadmin/business-info" element={<ProtectedRoute role="superadmin"><BusinessInfoEdit /></ProtectedRoute>} />
+            <Route path="/superadmin/pricing" element={<ProtectedRoute role="superadmin"><PricingEdit /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

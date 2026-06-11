@@ -1,201 +1,210 @@
-const { getOne } = require('../db/database');
+// 요금제 미들웨어 — DB 기반 동적 설정
+//
+// 2026-04 변경:
+//   기존: 가격/학생수/기능이 모두 코드에 하드코딩
+//   현재: subscription_tiers 테이블 기반 동적 조회 + 메모리 캐시
+//
+// 기능 매핑 (FEATURE_MATRIX)은 여전히 코드에 — 기능 키는 라우트에 하드코딩되어 있어
+// DB 화한다고 의미 없음. 대신 티어별 기능 포함 여부만 DB로 관리 가능 (features_included 컬럼).
+// 현재는 tier 레벨(Free→Basic→Pro→First Class) 오름차순 포함 관계를 유지.
 
-// ============================================================================
-// 요금제 4단 구조 (마누스 권고 기준) — 모든 가격 VAT 별도
-// Free        : 체험용 (15명) — 성적/출결/공지/자료/Q&A만
-// Starter     : 49,000원/월 (50명) — 운영 기본팩 (학생/수납/SMS/보호자앱/기본상담)
-// Pro         : 129,000원/월 (100명) — 자동화 + 상담 CRM + 고급 리포트 + AI 리포트
-// First Class : 별도 문의 — 게이미피케이션/랭킹/상점/AI 문제 생성/브랜딩
-// ※ 표기된 가격은 모두 VAT 별도 금액 (UI에서 "VAT 별도" 문구 노출 필수)
-// ============================================================================
+const { getOne, getAll } = require('../db/database');
 
-// 공통 Free 기능 (체험용 최소 기능 세트)
-// - scores      : 성적 관리 (routes/scores.js)
-// - attendance  : 출결 (routes/attendance.js)
-// - notices     : 공지사항 (routes/notices.js)
-// - materials   : 수업자료 (routes/materials.js)
-// - qna         : Q&A (routes/qna.js)
+// ─────────────────────────────────────────────
+// 기능 매트릭스 (코드 기반 — 라우트 키와 일치해야 함)
+// 상위 티어는 하위 티어 기능을 모두 포함
+// ─────────────────────────────────────────────
 const FREE_FEATURES = ['scores', 'attendance', 'notices', 'materials', 'qna'];
 
-// Starter 추가 기능 (운영 기본팩)
-// - students           : 학생 관리 고급 (routes/students.js)
-// - tuition_basic      : 수납 기본 (routes/tuition.js 기본 기능)
-// - sms                : SMS 발송 (routes/sms.js, Solapi)
-// - parent_app         : 보호자 앱/확인 기능 (routes/parent.js)
-// - reviews            : 리뷰/피드백 (routes/reviews.js)
-// - consultation_basic : 기본 상담 메모 (routes/consultations.js 기본)
-// - consultation       : (호환) 기존 키 유지
-const STARTER_EXTRA = [
-  'students',
-  'tuition_basic',
-  'sms',
-  'parent_app',
-  'reviews',
-  'consultation_basic',
-  'consultation', // 기존 호환성
+const BASIC_EXTRA = [
+  'students', 'tuition_basic', 'sms', 'parent_app', 'reviews',
+  'consultation_basic', 'consultation',
 ];
 
-// Pro 추가 기능 (자동화 + CRM + 리포트)
-// - automation         : 자동화 규칙 (routes/automations.js, 크론잡)
-// - consultation_crm   : 상담 CRM — 단계/파이프라인/히스토리
-// - advanced_reports   : 고급 리포트 (routes/reports.js)
-// - messaging_policy   : 메시징 정책 (발송 룰/수신거부)
-// - leads_pipeline     : 리드/상담 신청 파이프라인
-// - tuition_exceptions : 수납 예외/할인/분납 (routes/tuition.js 고급)
-// - ai_reports         : AI 리포트 (routes/ai.js 리포트 생성)
-// - attendance_alert   : 출결 알림 (기존 호환)
-// - clinic             : 클리닉 (기존 호환)
-// - homework           : 과제 (기존 호환)
-// - study_timer        : 공부 타이머 (기존 호환)
-// - omr                : OMR (기존 호환)
-// - detailed_reports   : 상세 리포트 (기존 호환)
-// - notice_reads       : 공지 읽음 확인 (기존 호환)
 const PRO_EXTRA = [
-  'automation',
-  'consultation_crm',
-  'advanced_reports',
-  'messaging_policy',
-  'leads_pipeline',
-  'tuition_exceptions',
-  'ai_reports',
-  // 기존 호환
-  'attendance_alert',
-  'clinic',
-  'homework',
-  'study_timer',
-  'omr',
-  'detailed_reports',
-  'notice_reads',
+  'automation', 'consultation_crm', 'advanced_reports', 'messaging_policy',
+  'leads_pipeline', 'tuition_exceptions', 'ai_reports',
+  // 호환
+  'attendance_alert', 'clinic', 'homework', 'study_timer', 'omr',
+  'detailed_reports', 'notice_reads',
 ];
 
-// First Class 추가 기능 (리텐션/게이미피케이션/AI)
-// - gamification        : 게이미피케이션 시스템 (routes/gamification.js)
-// - rankings            : 랭킹 (routes/rankings.js)
-// - shop                : 상점/포인트 교환 (routes/shop.js)
-// - titles              : 칭호 (routes/titles.js)
-// - quiz_vocab          : 어휘 퀴즈 (routes/quiz.js)
-// - quiz_knowledge      : 지식 퀴즈
-// - quiz_reading        : 독해 퀴즈
-// - ox_quiz             : OX 퀴즈
-// - avatar              : 아바타 커스터마이징 (routes/avatar.js)
-// - ai_quiz_generation  : AI 문제 생성 (routes/ai.js 문제 생성)
-// - portfolio           : 학습 포트폴리오 (기존 호환)
-// - branding            : 브랜딩 (로고/컬러/도메인)
-// - branding_logo       : (호환) 기존 로고 브랜딩 키
-// - hall_of_fame        : 명예의 전당
-// - quiz                : (호환) 기존 퀴즈 통합 키
-// - knowledge_quiz      : (호환) 기존 키
-// - reading_quiz        : (호환) 기존 키
 const FIRST_CLASS_EXTRA = [
-  'gamification',
-  'rankings',
-  'shop',
-  'titles',
-  'quiz_vocab',
-  'quiz_knowledge',
-  'quiz_reading',
-  'ox_quiz',
-  'avatar',
-  'ai_quiz_generation',
-  'portfolio',
-  'branding',
-  'branding_logo',
-  'hall_of_fame',
-  // 기존 호환
-  'quiz',
-  'knowledge_quiz',
-  'reading_quiz',
+  'gamification', 'rankings', 'shop', 'titles', 'quiz_vocab',
+  'quiz_knowledge', 'quiz_reading', 'ox_quiz', 'avatar',
+  'ai_quiz_generation', 'portfolio', 'branding', 'branding_logo', 'hall_of_fame',
+  // 호환
+  'quiz', 'knowledge_quiz', 'reading_quiz',
 ];
 
-// 계층형으로 합산 (상위 티어는 하위 티어 기능을 모두 포함)
+// 계층형 합산 (tier_key → 해당 티어에서 쓸 수 있는 모든 기능)
 const FREE = [...FREE_FEATURES];
-const STARTER = [...FREE, ...STARTER_EXTRA];
-const PRO = [...STARTER, ...PRO_EXTRA];
+const BASIC = [...FREE, ...BASIC_EXTRA];
+const PRO = [...BASIC, ...PRO_EXTRA];
 const FIRST_CLASS = [...PRO, ...FIRST_CLASS_EXTRA];
 
 const TIER_FEATURES = {
   free: FREE,
-  starter: STARTER,
+  basic: BASIC,
   pro: PRO,
   first_class: FIRST_CLASS,
-
-  // ─────────────────────────────────────────────
-  // 레거시 호환 매핑 (삭제 금지)
-  // 기존 DB에 남아있을 수 있는 tier 값을 현행 4단 구조로 매핑
-  // 실제 신규 학원은 Free/Starter/Pro/First Class 중 선택
-  // ─────────────────────────────────────────────
-  trial: FREE,           // 구 체험 플랜 → free (30일 체험은 is_trial 플래그로 대체)
-  basic: STARTER,        // 구 Basic → Starter
-  standard: PRO,         // 구 Standard → Pro
-  growth: PRO,           // 구 Growth → Pro
-  premium: FIRST_CLASS,  // 구 Premium → First Class
+  // 레거시 호환
+  trial: FREE,
+  starter: BASIC,          // 2026-04: Starter → Basic 리네임
+  standard: PRO,
+  growth: PRO,
+  premium: FIRST_CLASS,
 };
 
-// price는 모두 월 요금 (VAT 별도). first_class는 별도 문의 → price=null
-// vatIncluded: false = 표시 금액이 VAT 별도임을 나타내는 플래그
-const TIER_LIMITS = {
-  free:        { maxStudents: 15,   price: 0,      smsIncluded: 0, vatIncluded: false },
-  starter:     { maxStudents: 50,   price: 49000,  smsIncluded: 0, vatIncluded: false },
-  pro:         { maxStudents: 100,  price: 129000, smsIncluded: 0, vatIncluded: false },
-  first_class: { maxStudents: null, price: null,   smsIncluded: 0, vatIncluded: false, inquiry: true },
-
-  // ─────────────────────────────────────────────
-  // 레거시 호환 매핑 (삭제 금지)
-  // 기존 DB에 남아있을 수 있는 tier 값을 현행 4단 구조로 매핑
-  // ─────────────────────────────────────────────
-  trial:    { maxStudents: 15,   price: 0,      smsIncluded: 0, vatIncluded: false },
-  basic:    { maxStudents: 50,   price: 49000,  smsIncluded: 0, vatIncluded: false },
-  standard: { maxStudents: 100,  price: 129000, smsIncluded: 0, vatIncluded: false },
-  growth:   { maxStudents: 100,  price: 129000, smsIncluded: 0, vatIncluded: false },
-  premium:  { maxStudents: null, price: null,   smsIncluded: 0, vatIncluded: false, inquiry: true },
-};
-
-// 티어 한글/표시명
-// ─────────────────────────────────────────────
-// 레거시 호환 주의 (삭제 금지)
-// 레거시 tier(trial/basic/standard/growth/premium)는 UI 표시 시
-// 반드시 TIER_FEATURES 매핑을 거쳐 현행 4단 중 하나의 label로 변환되어야 함
-// (TIER_LABELS는 현행 키만 유지 — 신규 DB는 항상 이 4개 중 하나)
-// ─────────────────────────────────────────────
 const TIER_LABELS = {
-  free:        'Free',
-  starter:     'Starter',
-  pro:         'Pro',
+  free: 'Free',
+  basic: 'Basic',
+  pro: 'Pro',
   first_class: 'First Class',
 };
 
-// 연간 결제 시 할인 (15%) — 월환산 금액, VAT 별도
-// first_class는 별도 문의이므로 연간 가격 없음
-const YEARLY_PRICES = {
-  starter: 41650,   // 월환산 41,650원 (연 499,800원, 15% 할인)
-  pro:     109650,  // 월환산 109,650원 (연 1,315,800원, 15% 할인)
-  // 레거시 호환
-  basic:    41650,
-  standard: 109650,
-  growth:   109650,
+// ─────────────────────────────────────────────
+// DB 기반 요금제 캐시 (60초)
+// 슈퍼관리자가 수정하면 cache invalidation
+// ─────────────────────────────────────────────
+let tierCache = null;
+let tierCacheAt = 0;
+const CACHE_TTL_MS = 60 * 1000;
+
+function invalidateTierCache() {
+  tierCache = null;
+  tierCacheAt = 0;
+}
+
+async function loadTiers() {
+  const now = Date.now();
+  if (tierCache && (now - tierCacheAt) < CACHE_TTL_MS) return tierCache;
+
+  try {
+    const rows = await getAll(
+      `SELECT tier_key, display_name, sort_order, monthly_price, yearly_price,
+              max_students, ai_credits_monthly, description, features,
+              highlighted, cta_label, cta_type, is_public, is_active,
+              legacy_aliases
+       FROM subscription_tiers
+       WHERE is_active = TRUE
+       ORDER BY sort_order ASC`,
+      []
+    );
+    const byKey = {};
+    const aliasMap = {};
+    for (const r of rows) {
+      const features = Array.isArray(r.features) ? r.features : (typeof r.features === 'string' ? JSON.parse(r.features) : []);
+      const aliases = Array.isArray(r.legacy_aliases) ? r.legacy_aliases : (typeof r.legacy_aliases === 'string' ? JSON.parse(r.legacy_aliases) : []);
+      const info = {
+        key: r.tier_key,
+        name: r.display_name,
+        sortOrder: r.sort_order,
+        monthlyPrice: r.monthly_price,
+        yearlyPrice: r.yearly_price,
+        maxStudents: r.max_students,
+        aiCreditsMonthly: r.ai_credits_monthly,
+        description: r.description,
+        featuresLabel: features,
+        highlighted: r.highlighted,
+        ctaLabel: r.cta_label,
+        ctaType: r.cta_type,
+        isPublic: r.is_public,
+        legacyAliases: aliases,
+      };
+      byKey[r.tier_key] = info;
+      for (const a of aliases) aliasMap[a] = r.tier_key;
+    }
+    tierCache = { byKey, aliasMap, list: rows.map((r) => byKey[r.tier_key]) };
+    tierCacheAt = now;
+    return tierCache;
+  } catch (err) {
+    console.error('[subscription] loadTiers 실패 (하드코딩 fallback):', err.message);
+    // DB 접근 실패 시 하드코딩 fallback
+    return {
+      byKey: {
+        free: { key: 'free', maxStudents: 15, monthlyPrice: 0, aiCreditsMonthly: 30 },
+        basic: { key: 'basic', maxStudents: 50, monthlyPrice: 99000, aiCreditsMonthly: 700 },
+        pro: { key: 'pro', maxStudents: 100, monthlyPrice: 199000, aiCreditsMonthly: 1500 },
+        first_class: { key: 'first_class', maxStudents: null, monthlyPrice: null, aiCreditsMonthly: 10000 },
+      },
+      aliasMap: { trial: 'free', starter: 'basic', standard: 'pro', growth: 'pro', premium: 'first_class' },
+      list: [],
+    };
+  }
+}
+
+// tier_key 또는 레거시 alias를 현행 tier_key로 정규화
+async function resolveTierKey(rawTier) {
+  const tiers = await loadTiers();
+  if (!rawTier) return 'free';
+  if (tiers.byKey[rawTier]) return rawTier;
+  if (tiers.aliasMap[rawTier]) return tiers.aliasMap[rawTier];
+  return 'free'; // 알 수 없으면 free로 폴백
+}
+
+// 특정 학원의 현재 티어 정보 조회
+async function getTierForAcademy(academyId) {
+  const academy = await getOne('SELECT subscription_tier FROM academies WHERE id = ?', [academyId]);
+  if (!academy) return null;
+  const key = await resolveTierKey(academy.subscription_tier);
+  const tiers = await loadTiers();
+  return tiers.byKey[key];
+}
+
+// ─────────────────────────────────────────────
+// 하위 호환 export (기존 코드 유지)
+// ─────────────────────────────────────────────
+
+// 동기식 하드코딩 fallback (코드에서 이미 많이 쓰임 — 런타임 blocking 방지용)
+// 이 값은 "초기 기본값" 이며, 실제 실행 경로에서는 DB 값을 사용해야 함.
+const TIER_LIMITS = {
+  free:        { maxStudents: 15,   price: 0,      smsIncluded: 0, vatIncluded: false, aiCredits: 30 },
+  basic:       { maxStudents: 50,   price: 99000,  smsIncluded: 0, vatIncluded: false, aiCredits: 700 },
+  pro:         { maxStudents: 100,  price: 199000, smsIncluded: 0, vatIncluded: false, aiCredits: 1500 },
+  first_class: { maxStudents: null, price: null,   smsIncluded: 0, vatIncluded: false, inquiry: true, aiCredits: 10000 },
+  // 레거시
+  trial:    { maxStudents: 15,   price: 0,      smsIncluded: 0, vatIncluded: false, aiCredits: 30 },
+  starter:  { maxStudents: 50,   price: 99000,  smsIncluded: 0, vatIncluded: false, aiCredits: 700 },
+  standard: { maxStudents: 100,  price: 199000, smsIncluded: 0, vatIncluded: false, aiCredits: 1500 },
+  growth:   { maxStudents: 100,  price: 199000, smsIncluded: 0, vatIncluded: false, aiCredits: 1500 },
+  premium:  { maxStudents: null, price: null,   smsIncluded: 0, vatIncluded: false, inquiry: true, aiCredits: 10000 },
 };
 
+// 연간 할인 (15%) — 월환산
+const YEARLY_PRICES = {
+  basic:    84150,   // 99000 × 85%
+  pro:      169150,  // 199000 × 85%
+  // 레거시
+  starter:  84150,
+  standard: 169150,
+  growth:   169150,
+};
+
+// ─────────────────────────────────────────────
+// 기능 제한 미들웨어
+// ─────────────────────────────────────────────
 function requireFeature(feature) {
   return async (req, res, next) => {
     if (!req.academyId) return next();
-    // superadmin은 모든 기능 접근 가능
     if (req.user && req.user.role === 'superadmin') return next();
 
     try {
       const academy = await getOne('SELECT subscription_tier FROM academies WHERE id = ?', [req.academyId]);
       if (!academy) return res.status(404).json({ error: '학원 정보를 찾을 수 없습니다.' });
 
-      const tier = academy.subscription_tier || 'starter';
-      const features = TIER_FEATURES[tier] || TIER_FEATURES.starter;
+      const tierKey = await resolveTierKey(academy.subscription_tier);
+      const features = TIER_FEATURES[tierKey] || TIER_FEATURES.free;
 
       if (features.includes('all') || features.includes(feature)) {
         return next();
       }
 
+      const requiredTier = Object.entries(TIER_FEATURES).find(([, feats]) => feats.includes(feature))?.[0] || 'first_class';
       return res.status(403).json({
         error: '현재 구독 플랜에서 사용할 수 없는 기능입니다.',
-        requiredTier: Object.entries(TIER_FEATURES).find(([, feats]) => feats.includes(feature))?.[0] || 'first_class',
-        currentTier: tier,
+        requiredTier,
+        currentTier: tierKey,
       });
     } catch (err) {
       console.error('Subscription check error:', err);
@@ -204,4 +213,15 @@ function requireFeature(feature) {
   };
 }
 
-module.exports = { requireFeature, TIER_FEATURES, TIER_LIMITS, TIER_LABELS, YEARLY_PRICES };
+module.exports = {
+  requireFeature,
+  TIER_FEATURES,
+  TIER_LIMITS,
+  TIER_LABELS,
+  YEARLY_PRICES,
+  // 동적 API
+  loadTiers,
+  resolveTierKey,
+  getTierForAcademy,
+  invalidateTierCache,
+};

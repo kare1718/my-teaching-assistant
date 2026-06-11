@@ -5,21 +5,39 @@ const { runQuery, runInsert, getOne, getAll } = require('../db/database');
 const { JWT_SECRET } = require('../middleware/auth');
 const { TIER_LIMITS } = require('../middleware/subscription');
 const { track } = require('../services/analytics');
+const { consumePhoneVerificationToken, normalizePhone } = require('./phoneVerification');
 
 const router = express.Router();
 
-// 학원 셀프 등록 (온보딩)
+// 학원 셀프 등록 (온보딩) — 핸드폰 인증 필수
 router.post('/create-academy', async (req, res) => {
   try {
-    const { academyName, slug, adminUsername, adminPassword, adminName, adminPhone, subject } = req.body;
+    const { academyName, slug, adminUsername, adminPassword, adminName, adminPhone, subject, phoneVerificationToken } = req.body;
 
-    if (!academyName || !slug || !adminUsername || !adminPassword || !adminName) {
+    if (!academyName || !slug || !adminUsername || !adminPassword || !adminName || !adminPhone) {
       return res.status(400).json({ error: '모든 필수 항목을 입력해주세요.' });
+    }
+
+    // 핸드폰 인증 토큰 필수
+    const verified = await consumePhoneVerificationToken({
+      token: phoneVerificationToken,
+      phone: adminPhone,
+      purpose: 'signup',
+    });
+    if (!verified) {
+      return res.status(400).json({ error: '핸드폰 인증이 필요합니다. 인증번호를 확인해주세요.' });
     }
 
     // slug 형식 검증
     if (!/^[a-z0-9-]{3,30}$/.test(slug)) {
       return res.status(400).json({ error: 'slug는 3~30자의 영문 소문자, 숫자, 하이픈(-)만 사용 가능합니다.' });
+    }
+
+    // 비밀번호 정책 (학원 대표 관리자는 엄격)
+    const { validatePassword } = require('../utils/passwordPolicy');
+    const pwCheck = validatePassword(adminPassword, { isAdmin: true });
+    if (!pwCheck.valid) {
+      return res.status(400).json({ error: pwCheck.error });
     }
 
     // 중복 체크
@@ -52,7 +70,7 @@ router.post('/create-academy', async (req, res) => {
     const hashed = await bcrypt.hash(adminPassword, 10);
     const userId = await runInsert(
       'INSERT INTO users (username, password, name, role, approved, phone, academy_id) VALUES (?, ?, ?, ?, 1, ?, ?)',
-      [adminUsername, hashed, adminName, 'admin', adminPhone || '', academyId]
+      [adminUsername, hashed, adminName, 'admin', normalizePhone(adminPhone), academyId]
     );
 
     await runQuery('UPDATE academies SET owner_user_id = ? WHERE id = ?', [userId, academyId]);

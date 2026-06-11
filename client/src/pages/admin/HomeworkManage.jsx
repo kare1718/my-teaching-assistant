@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { useTenantConfig } from '../../contexts/TenantContext';
 import useMediaQuery from '../../hooks/useMediaQuery';
+import { askConfirm } from '../../lib/feedback';
 
 function getSmsDefaultTemplate(academyName) {
   return `[${academyName || '나만의 조교'}] {name} 학생 과제 현황
@@ -218,7 +219,7 @@ export default function HomeworkManage({ embedded = false }) {
   const handleDeleteRecord = async (studentId) => {
     const student = allStudents.find(s => s.studentId === studentId);
     if (!student?.record?.id) { setMsg('저장된 기록이 없습니다.'); setTimeout(() => setMsg(''), 2000); return; }
-    if (!confirm(`${student.name}의 과제 기록을 삭제하시겠습니까?`)) return;
+    if (!await askConfirm(`${student.name}의 과제 기록을 삭제하시겠습니까?`)) return;
     try {
       await apiDelete(`/homework/${student.record.id}`);
       setMsg('기록 삭제 완료');
@@ -334,7 +335,7 @@ export default function HomeworkManage({ embedded = false }) {
   const handleSendSms = async () => {
     const targets = getSmsTargets();
     if (targets.length === 0) { setMsg('발송 대상이 없습니다.'); setTimeout(() => setMsg(''), 3000); return; }
-    if (!confirm(`${targets.length}건 과제 현황 문자를 발송하시겠습니까?`)) return;
+    if (!await askConfirm(`${targets.length}건 과제 현황 문자를 발송하시겠습니까?`)) return;
     setSmsSending(true);
     try {
       const result = await apiPost('/sms/send-individual', {

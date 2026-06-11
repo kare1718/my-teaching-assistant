@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { api, apiPut, apiGet, apiPost } from '../../api';
 import { useTenantConfig } from '../../contexts/TenantContext';
 import { useUIStore } from '../../stores/useUIStore';
+import { askConfirm } from '../../lib/feedback';
 
 const SETTINGS_TABS = [
   { label: '학원 정보', path: '/admin/settings' },
@@ -48,7 +49,7 @@ export default function AcademySettings() {
 
   const regenerateInviteCode = async (type) => {
     const label = type === 'student' ? '학생' : '학부모';
-    if (!window.confirm(`${label}용 초대 코드를 재발급하시겠습니까?\n기존 코드는 즉시 무효화되며, 재발급 후에는 새 코드로만 가입할 수 있습니다.`)) return;
+    if (!await askConfirm(`${label}용 초대 코드를 재발급하시겠습니까?\n기존 코드는 즉시 무효화되며, 재발급 후에는 새 코드로만 가입할 수 있습니다.`)) return;
     setInviteLoading(true);
     try {
       const result = await apiPost('/academies/invite-codes/regenerate', { type });

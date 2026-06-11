@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { api, apiUpload } from '../../api';
+import { api, apiUpload, authFileUrl } from '../../api';
 import BottomTabBar from '../../components/BottomTabBar';
 import { useTenantConfig } from '../../contexts/TenantContext';
+import { toast } from '../../lib/feedback';
 
 // 간단한 마크다운 볼드(**text**) 처리
 function renderAnswer(text) {
@@ -63,7 +64,7 @@ export default function QnA() {
     const file = e.target.files[0];
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) {
-      alert('이미지 크기는 10MB 이하만 가능해요.');
+      toast('이미지 크기는 10MB 이하만 가능해요.');
       return;
     }
     setSelectedImage(file);
@@ -164,7 +165,7 @@ export default function QnA() {
         const file = item.getAsFile();
         if (!file) return;
         if (file.size > 10 * 1024 * 1024) {
-          alert('이미지 크기는 10MB 이하만 가능해요.');
+          toast('이미지 크기는 10MB 이하만 가능해요.');
           return;
         }
         setSelectedImage(file);
@@ -245,7 +246,7 @@ export default function QnA() {
               }}>
                 {q.image && (
                   <img
-                    src={q.image}
+                    src={authFileUrl(q.image)}
                     alt="첨부"
                     style={{
                       maxWidth: '100%', maxHeight: 200, borderRadius: 6,

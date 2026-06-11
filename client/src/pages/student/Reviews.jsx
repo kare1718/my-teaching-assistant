@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api, apiPost, apiPut } from '../../api';
 import BottomTabBar from '../../components/BottomTabBar';
-import { SkeletonPage, ErrorState, EmptyState } from '../../components/StudentStates';
-import { useTenantConfig } from '../../contexts/TenantContext';
+import { SkeletonPage, StudentAccessError, EmptyState } from '../../components/StudentStates';
 
 const formatKST = (dateStr) => {
   if (!dateStr) return '';
@@ -12,7 +11,6 @@ const formatKST = (dateStr) => {
 };
 
 export default function Reviews() {
-  const { config } = useTenantConfig();
   const [reviews, setReviews] = useState([]);
   const [myReviews, setMyReviews] = useState([]);
   const [content, setContent] = useState('');
@@ -77,7 +75,12 @@ export default function Reviews() {
 
   if (loadError) return (
     <div className="content s-page">
-      <ErrorState message={loadError} onRetry={load} />
+      <StudentAccessError
+        pageLabel="수업 후기"
+        emoji="🏆"
+        message="수업 후기를 불러올 수 없습니다. 학생 등록 여부를 확인해 주세요."
+        onRetry={load}
+      />
       <BottomTabBar />
     </div>
   );
@@ -116,7 +119,7 @@ export default function Reviews() {
           <div className="s-card">
             <div className="s-section-title">수업 후기 ({reviews.length}건)</div>
             {normalReviews.length === 0 && bestReviews.length === 0 ? (
-              <EmptyState message="등록된 후기가 없습니다." />
+              <EmptyState message="아직 등록된 후기가 없어요. 첫 후기를 작성해 볼까요?" />
             ) : (
               normalReviews.map((r) => (
                 <div key={r.id} className="review-card">
@@ -163,7 +166,7 @@ export default function Reviews() {
         <div className="s-card">
           <div className="s-section-title">내가 작성한 후기 ({myReviews.length}건)</div>
           {myReviews.length === 0 ? (
-            <EmptyState message="작성한 후기가 없습니다." />
+            <EmptyState message="아직 작성한 후기가 없어요. '후기 작성' 탭에서 남겨 보세요!" />
           ) : (
             myReviews.map((r) => (
               <div key={r.id} className="review-card" style={r.is_best ? { borderColor: 'var(--warning)', background: 'var(--warning-light)' } : {}}>

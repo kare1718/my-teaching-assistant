@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api, apiPut, apiPost, apiDelete } from '../../api';
+import { askConfirm } from '../../lib/feedback';
 
 const formatKST = (dateStr) => {
   if (!dateStr) return '';
@@ -34,7 +35,7 @@ export default function ReviewManage() {
   };
 
   const grantReward = async (r) => {
-    if (!confirm(`${r.student_name}에게 후기 보상 200P를 지급하시겠습니까?`)) return;
+    if (!await askConfirm(`${r.student_name}에게 후기 보상 200P를 지급하시겠습니까?`)) return;
     try {
       await apiPost(`/admin/reviews/${r.id}/reward`);
       setMsg(`${r.student_name}에게 200P 지급 완료!`);
@@ -44,7 +45,7 @@ export default function ReviewManage() {
   };
 
   const grantBestReward = async (r) => {
-    if (!confirm(`${r.student_name}에게 베스트 후기 보상 500P를 지급하시겠습니까?`)) return;
+    if (!await askConfirm(`${r.student_name}에게 베스트 후기 보상 500P를 지급하시겠습니까?`)) return;
     try {
       await apiPost(`/admin/reviews/${r.id}/reward-best`);
       setMsg(`${r.student_name}에게 베스트 500P 지급 완료!`);
@@ -63,7 +64,7 @@ export default function ReviewManage() {
   };
 
   const remove = async (id) => {
-    if (!confirm('이 후기를 삭제하시겠습니까?')) return;
+    if (!await askConfirm('이 후기를 삭제하시겠습니까?')) return;
     try {
       await apiDelete(`/admin/reviews/${id}`);
       setMsg('후기가 삭제되었습니다.');

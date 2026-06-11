@@ -2,6 +2,8 @@ import { useState, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { useTenantConfig, getAllGrades } from '../../contexts/TenantContext';
+import { toast, askConfirm } from '../../lib/feedback';
+import { PageLoading } from '../../components/ui';
 
 const LazySmsCredits = lazy(() => import('./SmsCredits'));
 
@@ -374,7 +376,7 @@ export default function SmsManage() {
 
   const handleCharge = async () => {
     const amount = parseInt(chargeAmount);
-    if (!amount || amount <= 0) { alert('유효한 금액을 입력해주세요.'); return; }
+    if (!amount || amount <= 0) { toast('유효한 금액을 입력해주세요.'); return; }
     try {
       const result = await apiPost('/sms/credits/charge', { amount, description: chargeDesc || '수동 충전' });
       setMsg(result.message);
@@ -382,7 +384,7 @@ export default function SmsManage() {
       setChargeModal(false);
       setChargeAmount('');
       setChargeDesc('');
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
   };
 
   // 템플릿 CRUD
@@ -396,11 +398,11 @@ export default function SmsManage() {
       }
       setTemplates(await api('/sms/templates'));
       setEditTmpl(null);
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
   };
 
   const deleteTmpl = async (id) => {
-    if (!confirm('이 템플릿을 삭제하시겠습니까?')) return;
+    if (!await askConfirm('이 템플릿을 삭제하시겠습니까?')) return;
     await apiDelete(`/sms/templates/${id}`);
     setTemplates(prev => prev.filter(t => t.id !== id));
   };
@@ -413,27 +415,27 @@ export default function SmsManage() {
         consent_method: 'online',
       });
       setConsents(await api('/sms/consent'));
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
   };
 
   // 일괄 동의
   const bulkConsent = async (consent) => {
     const filtered = filteredConsents.map(c => c.parent_id);
     if (filtered.length === 0) return;
-    if (!confirm(`${filtered.length}명을 ${consent ? '동의' : '철회'} 처리하시겠습니까?`)) return;
+    if (!await askConfirm(`${filtered.length}명을 ${consent ? '동의' : '철회'} 처리하시겠습니까?`)) return;
     try {
       await apiPost('/sms/consent/bulk', { parent_ids: filtered, marketing_consent: consent, consent_method: 'online' });
       setConsents(await api('/sms/consent'));
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
   };
 
   // 예약 취소
   const cancelSchedule = async (id) => {
-    if (!confirm('이 예약을 취소하시겠습니까?')) return;
+    if (!await askConfirm('이 예약을 취소하시겠습니까?')) return;
     try {
       await apiDelete(`/sms/schedule/${id}`);
       setSchedules(await api('/sms/schedule'));
-    } catch (e) { alert(e.message); }
+    } catch (e) { toast.error(e.message); }
   };
 
   const grades = school ? getAllGrades(school) : [];
@@ -446,7 +448,7 @@ export default function SmsManage() {
   // 발송 탭에서 사용할 필터된 템플릿
   const filteredTemplates = templates.filter(t => !t.message_type || t.message_type === messageCategory);
 
-  if (loading) return <div className="content"><div className="card" style={{ padding: 'var(--space-6)', textAlign: 'center' }}>로딩 중...</div></div>;
+  if (loading) return <PageLoading wrap="content" />;
 
   // 공통 스타일
   const S = {

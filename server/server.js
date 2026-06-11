@@ -1,17 +1,30 @@
 require('dotenv').config();
+
+// 환경변수 검증 (production 시 필수값 누락이면 fail fast)
+require('./utils/envCheck').check();
+
+// ⚠️ Sentry는 반드시 다른 모듈 로드 전에 초기화
+const sentry = require('./services/sentry');
+sentry.init();
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-const { pool, runMigration, getConsecutiveErrors } = require('./db/database');
+const { pool, runMigration, getConsecutiveErrors, getOne } = require('./db/database');
+const { authenticateToken } = require('./middleware/auth');
 
 // ── 프로세스 에러 핸들링 (서버 크래시 방지) ──
 let server;
 process.on('unhandledRejection', (reason, promise) => {
   console.error('[FATAL] Unhandled Rejection:', reason);
+  sentry.captureException(reason instanceof Error ? reason : new Error(String(reason)), {
+    type: 'unhandledRejection',
+  });
 });
 process.on('uncaughtException', (err) => {
   console.error('[FATAL] Uncaught Exception:', err);
+  sentry.captureException(err, { type: 'uncaughtException' });
   if (typeof gracefulShutdown === 'function') {
     gracefulShutdown('uncaughtException');
   } else {
@@ -31,14 +44,40 @@ const corsOrigin = process.env.CORS_ORIGIN
 app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json({ limit: '1mb' }));
 
+// Sentry 요청 컨텍스트 (사용자 정보 scope 세팅)
+app.use(sentry.requestHandler());
+
+// ── Helmet 보안 헤더 ──
+// contentSecurityPolicy 는 SPA + 외부 CDN(Sentry, Paperlogy, Tailwind CDN) 고려해 dev에선 비활성
+const helmet = require('helmet');
+app.use(helmet({
+  contentSecurityPolicy: false, // 별도 CSP는 정적 index.html 에서 관리
+  crossOriginEmbedderPolicy: false, // 외부 이미지/폰트 허용
+  hsts: process.env.NODE_ENV === 'production' ? { maxAge: 63072000, includeSubDomains: true, preload: true } : false,
+}));
+
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.removeHeader('X-Powered-By');
   next();
 });
+
+// ── 전역 API Rate Limiting ──
+// 사용자 1명당 1분에 120 요청 (등하원 피크 체크인 폭발 여유 있게)
+// 특정 민감 경로는 별도 제한 (아래 loginAttempts, phone-verify 등)
+const rateLimit = require('express-rate-limit');
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' },
+  // Health check 는 제한 제외 (모니터링 도구가 자주 호출)
+  skip: (req) => req.path === '/api/health' || req.path === '/api/version',
+});
+app.use('/api/', apiLimiter);
 
 // ── Rate Limiting ──
 // 로그인 속도 제한
@@ -77,7 +116,110 @@ app.use(express.static(path.join(__dirname, '../client/dist'), { maxAge: 0, etag
     res.set('Pragma', 'no-cache');
   }
 }}));
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+const uploadsDir = path.join(__dirname, '../uploads');
+const publicUploadFiles = new Set([
+  'bg1.jpg',
+  'bg2.jpg',
+  'bg3.jpg',
+  'bg4.jpg',
+  'bg5.jpg',
+  'bg6.jpg',
+  'bg7.jpg',
+  'bg8.jpg',
+  'character.png',
+  'profile.jpg',
+]);
+
+const uploadStatic = express.static(uploadsDir, {
+  maxAge: '1h',
+  setHeaders: (res) => {
+    res.set('Cache-Control', 'private, max-age=3600');
+  },
+});
+
+function normalizeUploadPath(reqPath) {
+  let decoded;
+  try {
+    decoded = decodeURIComponent(reqPath || '');
+  } catch {
+    return null;
+  }
+
+  const cleaned = decoded.replace(/\\/g, '/').replace(/^\/+/, '');
+  const normalized = path.posix.normalize(cleaned);
+  if (!normalized || normalized === '.' || normalized.startsWith('../') || path.posix.isAbsolute(normalized)) {
+    return null;
+  }
+  return normalized;
+}
+
+async function canAccessUpload(user, relPath) {
+  if (!user) return false;
+  if (user.role === 'superadmin') return true;
+
+  const academyId = Number(user.academy_id);
+  if (!academyId) return false;
+
+  const dbPath = `/uploads/${relPath}`;
+
+  const portfolio = await getOne(
+    'SELECT id FROM portfolios WHERE file_path = ? AND academy_id = ? LIMIT 1',
+    [dbPath, academyId]
+  );
+  if (portfolio) return true;
+
+  const questionByImage = await getOptionalUploadMatch(
+    'SELECT id FROM questions WHERE image = ? AND academy_id = ? LIMIT 1',
+    [dbPath, academyId]
+  );
+  if (questionByImage) return true;
+
+  const questionByImagePath = await getOptionalUploadMatch(
+    'SELECT id FROM questions WHERE image_path = ? AND academy_id = ? LIMIT 1',
+    [dbPath, academyId]
+  );
+  if (questionByImagePath) return true;
+
+  const material = await getOne(
+    'SELECT id FROM class_materials WHERE (file_path = ? OR file_path = ?) AND academy_id = ? LIMIT 1',
+    [relPath, path.posix.basename(relPath), academyId]
+  );
+  return Boolean(material);
+}
+
+async function getOptionalUploadMatch(sql, params) {
+  try {
+    return await getOne(sql, params);
+  } catch (err) {
+    if (err.code === '42703') return null;
+    throw err;
+  }
+}
+
+app.use('/uploads', (req, res, next) => {
+  const relPath = normalizeUploadPath(req.path);
+  if (!relPath) {
+    return res.status(400).json({ error: 'Invalid upload path' });
+  }
+
+  if (publicUploadFiles.has(relPath)) {
+    return uploadStatic(req, res, next);
+  }
+
+  return authenticateToken(req, res, async (err) => {
+    if (err) return next(err);
+
+    try {
+      const allowed = await canAccessUpload(req.user, relPath);
+      if (!allowed) {
+        return res.status(404).json({ error: 'File not found' });
+      }
+      return uploadStatic(req, res, next);
+    } catch (uploadErr) {
+      return next(uploadErr);
+    }
+  });
+});
 
 // ── 헬스 체크 (라우트보다 먼저 등록) ──
 app.get('/api/health', async (req, res) => {
@@ -86,6 +228,17 @@ app.get('/api/health', async (req, res) => {
     await pool.query('SELECT 1');
     const dbLatency = Date.now() - start;
     const mem = process.memoryUsage();
+
+    // 큐 상태 (BullMQ 활성 시)
+    let queueStatus = 'inline';
+    try {
+      const { useQueue } = require('./services/queue');
+      queueStatus = useQueue ? 'bullmq' : 'inline';
+    } catch {}
+
+    // SMS/Sentry 설정 여부
+    const { isConfigured: smsConfigured } = require('./utils/smsHelper');
+
     res.json({
       status: 'ok',
       db: 'connected',
@@ -94,6 +247,14 @@ app.get('/api/health', async (req, res) => {
       consecutiveErrors: getConsecutiveErrors(),
       uptime: `${Math.floor(process.uptime())}s`,
       memory: `${Math.round(mem.rss / 1024 / 1024)}MB`,
+      queue: queueStatus,
+      integrations: {
+        sms: smsConfigured() ? 'configured' : 'missing',
+        sentry: sentry.isActive ? 'active' : 'missing',
+        redis: queueStatus === 'bullmq' ? 'connected' : 'missing',
+      },
+      env: process.env.NODE_ENV || 'development',
+      version: process.env.APP_VERSION || 'dev',
       timestamp: new Date().toISOString(),
     });
   } catch (err) {
@@ -136,6 +297,8 @@ app.use('/api/subscription', require('./routes/subscription'));
 app.use('/api/superadmin', require('./routes/superadmin'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/onboarding', require('./routes/onboarding'));
+app.use('/api/phone-verify', require('./routes/phoneVerification'));
+app.use('/api/tiers', require('./routes/tiers'));
 app.use('/api/legal-info', require('./routes/legalInfo'));
 app.use('/api/permissions', require('./routes/permissions'));
 app.use('/api/audit-logs', require('./routes/auditLogs'));
@@ -152,14 +315,12 @@ const optionalRoutes = [
   { path: '/api/consultation', file: './routes/consultation' },
   { path: '/api/leads', file: './routes/leads' },
   { path: '/api/portfolio', file: './routes/portfolio' },
-  { path: '/api/sms-credits', file: './routes/sms-credits' },
   { path: '/api/classes', file: './routes/classes' },
   { path: '/api/automation', file: './routes/automation' },
   { path: '/api/timeline', file: './routes/timeline' },
   { path: '/api/dashboard', file: './routes/dashboard' },
   { path: '/api/parent', file: './routes/parentApp' },
   { path: '/api/data-import', file: './routes/dataImport' },
-  { path: '/api/sample-data', file: './routes/sampleData' },
 ];
 for (const route of optionalRoutes) {
   try {
@@ -180,9 +341,16 @@ app.all('/api/*', (req, res) => {
   res.status(404).json({ error: 'API endpoint not found' });
 });
 
+// Sentry 에러 핸들러 (반드시 라우트 등록 후, 글로벌 에러 핸들러 전)
+sentry.setupHandler(app);
+
 // ── 글로벌 에러 핸들러 (API 에러를 JSON으로 반환) ──
 app.use((err, req, res, next) => {
   console.error(`[Error] ${req.method} ${req.path}:`, err.message);
+  // 5xx급만 Sentry로 (4xx 클라이언트 에러는 노이즈)
+  if (!err.status || err.status >= 500) {
+    sentry.captureException(err, { path: req.path, method: req.method });
+  }
   if (res.headersSent) return next(err);
 
   const isDbError = err.code === 'ECONNRESET' || err.code === 'ECONNREFUSED' ||
@@ -295,6 +463,14 @@ async function start() {
       console.error('[크론] 스케줄러 초기화 실패:', e.message);
     }
 
+    // BullMQ SMS 워커 시작 (REDIS_URL 있을 때만 실제 큐 동작, 없으면 인라인)
+    try {
+      const { startSmsWorker } = require('./services/smsQueue');
+      startSmsWorker();
+    } catch (e) {
+      console.error('[큐] SMS 워커 초기화 실패:', e.message);
+    }
+
     server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`[나만의 조교] 서버 시작: http://localhost:${PORT}`);
     });
@@ -310,6 +486,17 @@ function gracefulShutdown(signal) {
   if (server) {
     server.close(async () => {
       console.log('[서버] HTTP 연결 종료');
+      try {
+        const { shutdown: shutdownQueue } = require('./services/queue');
+        await shutdownQueue();
+        console.log('[큐] BullMQ 종료');
+      } catch (err) {
+        console.error('[큐] 종료 오류:', err.message);
+      }
+      try {
+        await sentry.flush(2000);
+        if (sentry.isActive) console.log('[Sentry] 이벤트 flush 완료');
+      } catch {}
       try {
         await pool.end();
         console.log('[DB] 연결 풀 종료');

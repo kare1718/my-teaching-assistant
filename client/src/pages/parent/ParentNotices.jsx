@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost } from '../../api';
+import { PageLoading } from '../../components/ui';
 
 export default function ParentNotices() {
   const [notices, setNotices] = useState([]);
@@ -27,7 +28,7 @@ export default function ParentNotices() {
   };
 
   if (loading) {
-    return <div style={styles.container}><p style={{ textAlign: 'center', padding: 40, color: '#6b7280' }}>불러오는 중...</p></div>;
+    return <div style={styles.container}><PageLoading /></div>;
   }
 
   // 상세 보기

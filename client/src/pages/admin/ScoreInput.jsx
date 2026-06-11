@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { useTenantConfig, getAllGrades } from '../../contexts/TenantContext';
 import { BarChart, Bar, AreaChart, Area, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine, ZAxis } from 'recharts';
+import { askConfirm } from '../../lib/feedback';
 
 // === 시험 유형 에디터 (인라인 컴포넌트) ===
 function ExamTypeEditor() {
@@ -202,7 +203,7 @@ export default function ScoreInput() {
   };
 
   const deleteExam = async (examId) => {
-    if (!confirm('이 시험과 관련 성적을 모두 삭제하시겠습니까?')) return;
+    if (!await askConfirm('이 시험과 관련 성적을 모두 삭제하시겠습니까?')) return;
     await apiDelete(`/scores/exams/${examId}`);
     loadExams();
     if (selectedExam === examId) setSelectedExam(null);
@@ -374,7 +375,7 @@ export default function ScoreInput() {
   };
 
   const deleteAnswerKey = async () => {
-    if (!akExamId || !confirm('정답키를 삭제하시겠습니까?')) return;
+    if (!akExamId || !await askConfirm('정답키를 삭제하시겠습니까?')) return;
     try {
       await apiDelete(`/scores/exams/${akExamId}/answer-key`);
       resetAnswerKeyForm(); setAkExistingKey(false);
@@ -1021,7 +1022,7 @@ export default function ScoreInput() {
                                         {sc?.scoreId && (
                                           <button className="btn btn-sm btn-danger" style={{ fontSize: 10, padding: '2px 5px' }}
                                             onClick={async () => {
-                                              if (!confirm(`${s.name}의 성적을 삭제하시겠습니까?`)) return;
+                                              if (!await askConfirm(`${s.name}의 성적을 삭제하시겠습니까?`)) return;
                                               try {
                                                 await apiDelete(`/scores/score/${scoreInputs[s.id].scoreId}`);
                                                 setScoreInputs(prev => { const next = { ...prev }; delete next[s.id]; return next; });
