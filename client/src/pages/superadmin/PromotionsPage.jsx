@@ -146,7 +146,7 @@ export default function PromotionsPage() {
               <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--muted-foreground)', display: 'block', marginBottom: 6 }}>업그레이드 티어</label>
               <select style={inputStyle} value={form.value.tier || 'pro'}
                 onChange={e => setForm({ ...form, value: { ...form.value, tier: e.target.value } })}>
-                <option value="starter">Starter</option>
+                <option value="basic">Basic</option>
                 <option value="pro">Pro</option>
                 <option value="first_class">First Class</option>
               </select>

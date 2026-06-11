@@ -6,7 +6,7 @@ const FONT = "'Paperlogy', 'Noto Sans KR', system-ui, sans-serif";
 
 const TIERS = [
   { value: 'free', label: 'Free (15명)' },
-  { value: 'starter', label: 'Starter (50명)' },
+  { value: 'basic', label: 'Basic (50명)' },
   { value: 'pro', label: 'Pro (100명)' },
   { value: 'first_class', label: 'First Class (무제한)' },
 ];

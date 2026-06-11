@@ -7,7 +7,7 @@ import { PageLoading } from '../../components/ui';
 const FONT = "'Paperlogy', 'Noto Sans KR', system-ui, sans-serif";
 
 // 현행 4단 + 레거시 호환 (기존 DB 데이터 수정 가능하도록 alias 유지)
-const TIERS = ['free', 'starter', 'pro', 'first_class'];
+const TIERS = ['free', 'basic', 'pro', 'first_class'];
 const TIER_LABELS = {
   free: 'Free', starter: 'Starter', pro: 'Pro', first_class: 'First Class',
   // 레거시 호환 (표시만)

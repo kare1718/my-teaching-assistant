@@ -1010,9 +1010,9 @@ export default function LandingPage() {
               <p style={{ fontSize: 14, color: C.textTertiary }}>현직 강사가 학원 운영하면서 직접 만든 관리 솔루션.</p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 24, fontSize: 14, color: C.textTertiary }}>
-              <a href="#" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = C.textPrimary} onMouseOut={e => e.currentTarget.style.color = C.textTertiary}>이용약관</a>
-              <a href="#" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = C.textPrimary} onMouseOut={e => e.currentTarget.style.color = C.textTertiary}>개인정보처리방침</a>
-              <a href="#" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = C.textPrimary} onMouseOut={e => e.currentTarget.style.color = C.textTertiary}>문의하기</a>
+              <a href="/terms" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = C.textPrimary} onMouseOut={e => e.currentTarget.style.color = C.textTertiary}>이용약관</a>
+              <a href="/privacy" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = C.textPrimary} onMouseOut={e => e.currentTarget.style.color = C.textTertiary}>개인정보처리방침</a>
+              <a href="/business-info" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = C.textPrimary} onMouseOut={e => e.currentTarget.style.color = C.textTertiary}>문의하기</a>
             </div>
           </div>
           <div style={{ marginTop: 32, paddingTop: 32, borderTop: `1px solid ${C.border}`, textAlign: 'center' }}>

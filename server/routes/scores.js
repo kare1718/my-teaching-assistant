@@ -86,30 +86,23 @@ router.post('/batch', authenticateToken, requireAdmin, async (req, res) => {
     return res.status(400).json({ error: '유효하지 않은 데이터입니다.' });
   }
 
-  for (const s of scores) {
-    const existing = await getOne(
-      'SELECT id FROM scores WHERE student_id = ? AND exam_id = ? AND academy_id = ?',
-      [s.studentId, examId, req.academyId]
-    );
+  // 시험 소유 검증 (타 학원 examId 차단) — 타임라인용 이름도 함께 확보
+  const exam = await getOne('SELECT id, name FROM exams WHERE id = ? AND academy_id = ?', [examId, req.academyId]);
+  if (!exam) return res.status(404).json({ error: '시험을 찾을 수 없습니다.' });
 
-    if (existing) {
-      await runQuery(
-        'UPDATE scores SET score = ?, note = ?, status = ? WHERE id = ? AND academy_id = ?',
-        [s.score, s.note || '', s.status || 'normal', existing.id, req.academyId]
-      );
-    } else {
-      await runQuery(
-        'INSERT INTO scores (student_id, exam_id, score, note, status, academy_id) VALUES (?, ?, ?, ?, ?, ?)',
-        [s.studentId, examId, s.score, s.note || '', s.status || 'normal', req.academyId]
-      );
-    }
+  // UNIQUE(student_id, exam_id) 기반 upsert — 학생당 SELECT+INSERT/UPDATE 2회 왕복을 1회로
+  for (const s of scores) {
+    await runQuery(
+      `INSERT INTO scores (student_id, exam_id, score, note, status, academy_id) VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT (student_id, exam_id) DO UPDATE SET score = EXCLUDED.score, note = EXCLUDED.note, status = EXCLUDED.status`,
+      [s.studentId, examId, s.score, s.note || '', s.status || 'normal', req.academyId]
+    );
   }
 
   // 등수 자동 계산
   await calculateRanks(examId, req.academyId);
 
   // 타임라인 이벤트 (일괄)
-  const exam = await getOne('SELECT name FROM exams WHERE id = ? AND academy_id = ?', [examId, req.academyId]);
   for (const s of scores) {
     if (s.score != null) {
       addEvent(req.academyId, s.studentId, 'exam_score', `${exam?.name || '시험'}: ${s.score}점`,

@@ -59,6 +59,7 @@ export default function SmsManage() {
   const [message, setMessage] = useState('');
   const [messageCategory, setMessageCategory] = useState('operational');
   const [templates, setTemplates] = useState([]);
+  const [tmplFilter, setTmplFilter] = useState('all');
   const [editTmpl, setEditTmpl] = useState(null);
 
   // 시험 성적
@@ -797,24 +798,27 @@ export default function SmsManage() {
 
           {/* 유형별 필터 */}
           <div style={{ display: 'flex', gap: 6, marginBottom: 'var(--space-3)' }}>
-            <button onClick={() => {}} style={{ padding: '4px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--card)', fontSize: 11, cursor: 'pointer', fontWeight: 600 }}>전체 ({templates.length})</button>
+            <button onClick={() => setTmplFilter('all')}
+              style={{ padding: '4px 10px', borderRadius: 'var(--radius)', border: tmplFilter === 'all' ? '1px solid var(--primary)' : '1px solid var(--border)', background: tmplFilter === 'all' ? 'var(--info-light)' : 'var(--card)', fontSize: 11, cursor: 'pointer', fontWeight: 600 }}>전체 ({templates.length})</button>
             {MSG_TYPES.map(t => {
               const count = templates.filter(tmpl => tmpl.message_type === t.id).length;
+              const active = tmplFilter === t.id;
               return (
-                <button key={t.id} style={{ padding: '4px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--muted)', fontSize: 11, cursor: 'pointer' }}>
+                <button key={t.id} onClick={() => setTmplFilter(active ? 'all' : t.id)}
+                  style={{ padding: '4px 10px', borderRadius: 'var(--radius)', border: active ? '1px solid var(--primary)' : '1px solid var(--border)', background: active ? 'var(--info-light)' : 'var(--muted)', fontSize: 11, cursor: 'pointer', fontWeight: active ? 600 : 400 }}>
                   {t.icon} {t.label} ({count})
                 </button>
               );
             })}
           </div>
 
-          {templates.length === 0 ? (
+          {(tmplFilter === 'all' ? templates : templates.filter(t => t.message_type === tmplFilter)).length === 0 ? (
             <div style={{ padding: 'var(--space-6)', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: 13 }}>
               등록된 템플릿이 없습니다. 새 템플릿을 추가해보세요.
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-2)' }}>
-              {templates.map(t => {
+              {(tmplFilter === 'all' ? templates : templates.filter(t => t.message_type === tmplFilter)).map(t => {
                 const typeInfo = MSG_TYPES.find(m => m.id === t.message_type) || MSG_TYPES[0];
                 return (
                   <div key={t.id} style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 'var(--space-3)', background: 'var(--card)' }}>

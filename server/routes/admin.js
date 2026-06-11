@@ -821,7 +821,7 @@ router.post('/notices', async (req, res) => {
 });
 
 router.get('/notices', async (req, res) => {
-  const notices = await getAll('SELECT * FROM notices WHERE academy_id = ? ORDER BY created_at DESC', [req.academyId]);
+  const notices = await getAll('SELECT * FROM notices WHERE academy_id = ? ORDER BY created_at DESC LIMIT 300', [req.academyId]);
   res.json(notices);
 });
 

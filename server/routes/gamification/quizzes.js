@@ -28,6 +28,32 @@ function releaseQuizLock(studentId) {
   quizLocks.delete(studentId);
 }
 
+// ── 일일 보상 게임(세션) 횟수 제한 ──
+// 게임으로 XP/포인트를 받는 세션을 게임 종류별 하루 N회로 제한 (기본 1회).
+// game_settings 'daily_play_sessions' 값으로 학원별 조정 가능.
+// 완료된 세션(total_questions > 0)만 카운트 — 시작 후 이탈한 판은 횟수를 소모하지 않음.
+const GAME_LOG_TABLES = { vocab: 'vocab_game_logs', knowledge: 'knowledge_game_logs', reading: 'reading_game_logs' };
+
+async function getDailySessionLimit(academyId) {
+  const row = await getOne("SELECT value FROM game_settings WHERE key = 'daily_play_sessions' AND academy_id = ?", [academyId]);
+  const n = row ? parseInt(row.value) : NaN;
+  return Number.isFinite(n) && n > 0 ? n : 1;
+}
+
+// limit 초과 시 400 응답을 보내고 false 반환 (호출부는 즉시 return)
+async function checkSessionLimit(game, studentId, academyId, res) {
+  const limit = await getDailySessionLimit(academyId);
+  const r = await getOne(
+    `SELECT COUNT(*) as cnt FROM ${GAME_LOG_TABLES[game]} WHERE student_id = ? AND total_questions > 0 AND date(played_at) = date(?) AND academy_id = ?`,
+    [studentId, getTodayKST(), academyId]
+  );
+  if ((r ? r.cnt : 0) >= limit) {
+    res.status(400).json({ error: `게임 보상은 하루 ${limit}회까지만 받을 수 있어요. 내일 다시 도전하세요!` });
+    return false;
+  }
+  return true;
+}
+
 // === Vocab Quiz ===
 
 // 단어 카테고리 목록
@@ -47,6 +73,9 @@ router.get('/vocab/start', authenticateToken, async (req, res) => {
   }
 
   try {
+
+  // 보상 세션 횟수 제한 (하루 N판)
+  if (!(await checkSessionLimit('vocab', student.id, req.academyId, res))) return;
 
   // 게임 설정에서 일일 제한 가져오기
   const limitSetting = await getOne("SELECT value FROM game_settings WHERE key = 'daily_quiz_limit' AND academy_id = ?", [req.academyId]);
@@ -152,6 +181,9 @@ router.post('/vocab/submit', authenticateToken, async (req, res) => {
 
   const { answers, logId } = req.body;
   if (!answers || !Array.isArray(answers)) return res.status(400).json({ error: '답안을 제출해주세요.' });
+
+  // 보상 세션 횟수 제한 — start 우회 직접 제출로 보상 파밍 차단
+  if (!(await checkSessionLimit('vocab', student.id, req.academyId, res))) return;
 
   let totalXpEarned = 0;
   let correctCount = 0;
@@ -286,6 +318,9 @@ router.get('/knowledge/start', authenticateToken, async (req, res) => {
 
   try {
 
+  // 보상 세션 횟수 제한 (하루 N판)
+  if (!(await checkSessionLimit('knowledge', student.id, req.academyId, res))) return;
+
   const limitSetting = await getOne("SELECT value FROM game_settings WHERE key = 'daily_knowledge_limit' AND academy_id = ?", [req.academyId]);
   const dailyLimit = limitSetting ? parseInt(limitSetting.value) || 50 : 50;
 
@@ -364,6 +399,9 @@ router.post('/knowledge/submit', authenticateToken, async (req, res) => {
 
   const { answers, logId } = req.body;
   if (!answers || !Array.isArray(answers)) return res.status(400).json({ error: '답안을 제출해주세요.' });
+
+  // 보상 세션 횟수 제한 — start 우회 직접 제출로 보상 파밍 차단
+  if (!(await checkSessionLimit('knowledge', student.id, req.academyId, res))) return;
 
   let totalXpEarned = 0;
   let correctCount = 0;
@@ -502,6 +540,9 @@ router.get('/reading/start', authenticateToken, async (req, res) => {
 
   try {
 
+  // 보상 세션 횟수 제한 (하루 N판)
+  if (!(await checkSessionLimit('reading', student.id, req.academyId, res))) return;
+
   const limitSetting = await getOne("SELECT value FROM game_settings WHERE key = 'daily_reading_limit' AND academy_id = ?", [req.academyId]);
   const dailyLimit = limitSetting ? parseInt(limitSetting.value) || 5 : 5;
 
@@ -597,6 +638,9 @@ router.post('/reading/submit', authenticateToken, async (req, res) => {
 
   const { passageId, answers, logId } = req.body;
   if (!passageId || !answers || !Array.isArray(answers)) return res.status(400).json({ error: '답안을 제출해주세요.' });
+
+  // 보상 세션 횟수 제한 — start 우회 직접 제출로 보상 파밍 차단
+  if (!(await checkSessionLimit('reading', student.id, req.academyId, res))) return;
 
   const passage = await getOne('SELECT * FROM reading_passages WHERE id = ? AND (academy_id = ? OR academy_id = 0)', [passageId, req.academyId]);
   if (!passage) return res.status(404).json({ error: '지문을 찾을 수 없습니다.' });

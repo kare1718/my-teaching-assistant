@@ -254,7 +254,7 @@ export default function SuperAdminDashboard() {
           }}>
           <option value="all">전체 티어</option>
           <option value="free">Free</option>
-          <option value="starter">Starter</option>
+          <option value="basic">Basic</option>
           <option value="pro">Pro</option>
           <option value="first_class">First Class</option>
         </select>
