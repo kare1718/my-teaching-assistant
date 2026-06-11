@@ -75,7 +75,19 @@ export default function SuperAdminDashboard() {
           <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--foreground)', margin: 0 }}>플랫폼 관리</h1>
           <p style={{ color: 'var(--muted-foreground)', margin: '4px 0 0', fontSize: 14 }}>나만의 조교 전체 현황</p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button onClick={() => navigate('/superadmin/pricing')}
+            style={{
+              padding: '12px 18px', background: 'oklch(95% 0.06 150)', color: 'oklch(30% 0.15 150)',
+              border: '1px solid oklch(80% 0.12 150)', borderRadius: 12, fontSize: 13, fontWeight: 700,
+              cursor: 'pointer', fontFamily: FONT,
+            }}>💰 요금제</button>
+          <button onClick={() => navigate('/superadmin/business-info')}
+            style={{
+              padding: '12px 18px', background: 'oklch(96% 0.04 90)', color: 'oklch(35% 0.14 70)',
+              border: '1px solid oklch(85% 0.08 90)', borderRadius: 12, fontSize: 13, fontWeight: 700,
+              cursor: 'pointer', fontFamily: FONT,
+            }}>🏢 사업자 정보</button>
           <button onClick={() => navigate('/superadmin/promotions')}
             style={{
               padding: '12px 20px', background: 'var(--muted)', color: 'var(--foreground)',

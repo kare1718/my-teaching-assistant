@@ -165,36 +165,49 @@ router.get('/student-scores/:studentId', async (req, res) => {
 
 router.get('/clinic-appointments', async (req, res) => {
   const { studentIds } = req.query;
-  let where = "ca.status IN ('approved', 'completed') AND ca.academy_id = ?";
+  const filters = [];
   const params = [req.academyId];
   if (studentIds) {
     const ids = studentIds.split(',').map(Number).filter(Boolean);
     if (ids.length > 0) {
-      where += ` AND ca.student_id IN (${ids.map(() => '?').join(',')})`;
+      filters.push(`ca.student_id IN (${ids.map(() => '?').join(',')})`);
       params.push(...ids);
     }
   }
+  const extraWhere = filters.length ? ` AND ${filters.join(' AND ')}` : '';
   const appointments = await getAll(
     `SELECT ca.id, ca.student_id, ca.appointment_date, ca.time_slot, ca.topic, ca.detail,
             ca.status, ca.admin_note, u.name as student_name, s.school, s.grade
      FROM clinic_appointments ca
      JOIN students s ON ca.student_id = s.id
      JOIN users u ON s.user_id = u.id
-     WHERE ${where}
+     WHERE ca.status IN ('approved', 'completed') AND ca.academy_id = ?${extraWhere}
      ORDER BY ca.appointment_date DESC, ca.time_slot ASC`,
     params
   );
-  const result = [];
-  for (const a of appointments) {
-    const notes = await getAll(
-      `SELECT cn.content, u.name as author_name FROM clinic_notes cn
-       JOIN users u ON cn.author_id = u.id
-       WHERE cn.appointment_id = ? AND cn.academy_id = ? ORDER BY cn.created_at ASC`,
-      [a.id, req.academyId]
-    );
-    result.push({ ...a, notes });
+  if (appointments.length === 0) return res.json([]);
+
+  const appointmentIds = appointments.map(a => a.id);
+  const notePlaceholders = appointmentIds.map(() => '?').join(',');
+  const notes = await getAll(
+    `SELECT cn.appointment_id, cn.content, u.name as author_name
+     FROM clinic_notes cn
+     JOIN users u ON cn.author_id = u.id
+     WHERE cn.academy_id = ? AND cn.appointment_id IN (${notePlaceholders})
+     ORDER BY cn.appointment_id ASC, cn.created_at ASC`,
+    [req.academyId, ...appointmentIds]
+  );
+  const notesByAppointment = new Map();
+  for (const note of notes) {
+    const list = notesByAppointment.get(note.appointment_id) || [];
+    list.push({ content: note.content, author_name: note.author_name });
+    notesByAppointment.set(note.appointment_id, list);
   }
-  res.json(result);
+
+  res.json(appointments.map(a => ({
+    ...a,
+    notes: notesByAppointment.get(a.id) || [],
+  })));
 });
 
 // === 템플릿 CRUD (확장) ===

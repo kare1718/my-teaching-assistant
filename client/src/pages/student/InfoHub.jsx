@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api, apiPost } from '../../api';
 import BottomTabBar from '../../components/BottomTabBar';
-import { SkeletonPage, ErrorState, EmptyState } from '../../components/StudentStates';
+import { SkeletonPage, StudentAccessError, EmptyState } from '../../components/StudentStates';
 
 export default function InfoHub() {
   const [tab, setTab] = useState('notices');
@@ -50,7 +50,12 @@ export default function InfoHub() {
 
   if (loadError) return (
     <div className="content s-page">
-      <ErrorState message={loadError} onRetry={load} />
+      <StudentAccessError
+        pageLabel="안내 / 자료"
+        emoji="📚"
+        message="안내와 자료를 불러올 수 없습니다. 학생 등록 여부를 확인해 주세요."
+        onRetry={load}
+      />
       <BottomTabBar />
     </div>
   );
@@ -81,7 +86,7 @@ export default function InfoHub() {
         <div className="s-card">
           <div className="s-section-title">안내사항 ({notices.length}건)</div>
           {notices.length === 0 ? (
-            <EmptyState message="안내사항이 없습니다." />
+            <EmptyState message="아직 새로운 안내사항이 없어요." />
           ) : (
             notices.map(n => {
               const isExpanded = expandedNoticeId === n.id;
@@ -133,7 +138,7 @@ export default function InfoHub() {
         <div className="s-card">
           <div className="s-section-title">수업 자료 ({materials.length}건)</div>
           {materials.length === 0 ? (
-            <EmptyState message="등록된 자료가 없습니다." />
+            <EmptyState message="아직 등록된 수업 자료가 없어요." />
           ) : (
             materials.map(m => (
               <div key={m.id} style={{ padding: '12px 0', borderBottom: '1px solid var(--student-border)' }}>

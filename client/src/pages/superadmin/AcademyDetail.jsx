@@ -40,6 +40,12 @@ export default function AcademyDetail() {
   // 결제 내역
   const [payments, setPayments] = useState([]);
 
+  // 슬러그 수정 / 학원 삭제
+  const [editingSlug, setEditingSlug] = useState(false);
+  const [slugDraft, setSlugDraft] = useState('');
+  const [showDelete, setShowDelete] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState('');
+
   const showMsg = (text) => { setMsg(text); setTimeout(() => setMsg(''), 3000); };
 
   const load = () => {
@@ -106,6 +112,30 @@ export default function AcademyDetail() {
     try {
       await apiDelete(`/superadmin/memos/${memoId}`);
       setMemos(memos.filter(m => m.id !== memoId));
+    } catch (err) { showMsg(err.message); }
+  };
+
+  const saveSlug = async () => {
+    const next = slugDraft.trim().toLowerCase();
+    if (!next || next === academy.slug) { setEditingSlug(false); return; }
+    try {
+      const r = await apiPut(`/superadmin/academies/${id}/slug`, { slug: next });
+      showMsg(r.message || 'slug가 변경되었습니다.');
+      setEditingSlug(false);
+      load();
+    } catch (err) { showMsg(err.message); }
+  };
+
+  const deleteAcademy = async () => {
+    const confirmText = deleteConfirm.trim();
+    if (!confirmText) { showMsg('학원명 또는 slug를 입력해주세요.'); return; }
+    try {
+      await api(`/superadmin/academies/${id}`, {
+        method: 'DELETE',
+        body: JSON.stringify({ confirm: confirmText }),
+      });
+      showMsg('학원이 삭제되었습니다. 목록으로 이동합니다.');
+      setTimeout(() => navigate('/superadmin'), 800);
     } catch (err) { showMsg(err.message); }
   };
 
@@ -191,7 +221,27 @@ export default function AcademyDetail() {
               <span style={{ color: 'var(--muted-foreground)', fontWeight: 600 }}>학원명</span>
               <span style={{ color: 'var(--foreground)' }}>{academy.name}</span>
               <span style={{ color: 'var(--muted-foreground)', fontWeight: 600 }}>슬러그</span>
-              <span style={{ color: 'var(--foreground)', fontFamily: 'monospace' }}>{academy.slug}</span>
+              {editingSlug ? (
+                <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <input value={slugDraft} onChange={e => setSlugDraft(e.target.value)} autoFocus
+                    onKeyDown={e => { if (e.key === 'Enter') saveSlug(); if (e.key === 'Escape') setEditingSlug(false); }}
+                    style={{
+                      padding: '4px 8px', border: '1.5px solid var(--border)', borderRadius: 6,
+                      fontFamily: 'monospace', fontSize: 14, outline: 'none',
+                      background: 'var(--card)', color: 'var(--foreground)', minWidth: 180,
+                    }} />
+                  <button onClick={saveSlug}
+                    style={{ padding: '4px 10px', background: 'var(--primary)', color: 'var(--card)', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>저장</button>
+                  <button onClick={() => setEditingSlug(false)}
+                    style={{ padding: '4px 10px', background: 'var(--muted)', color: 'var(--foreground)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>취소</button>
+                </span>
+              ) : (
+                <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <span style={{ color: 'var(--foreground)', fontFamily: 'monospace' }}>{academy.slug}</span>
+                  <button onClick={() => { setSlugDraft(academy.slug || ''); setEditingSlug(true); }}
+                    style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)', cursor: 'pointer', fontFamily: FONT }}>수정</button>
+                </span>
+              )}
               <span style={{ color: 'var(--muted-foreground)', fontWeight: 600 }}>현재 티어</span>
               <span style={{ color: 'var(--foreground)', fontWeight: 700 }}>{TIER_LABELS[academy.subscription_tier] || academy.subscription_tier}</span>
               <span style={{ color: 'var(--muted-foreground)', fontWeight: 600 }}>최대 학생</span>
@@ -238,6 +288,49 @@ export default function AcademyDetail() {
                 fontFamily: FONT, cursor: 'pointer', border: 'none',
                 background: isActive ? '#fee2e2' : '#d1fae5', color: isActive ? '#dc2626' : '#059669',
               }}>{isActive ? '학원 비활성화' : '학원 활성화'}</button>
+
+            {/* 위험 구역 — 학원 삭제 */}
+            <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px dashed #fecaca' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#dc2626', marginBottom: 8 }}>⚠ 위험 구역</div>
+              {!showDelete ? (
+                <button onClick={() => setShowDelete(true)}
+                  style={{
+                    padding: '10px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+                    fontFamily: FONT, cursor: 'pointer',
+                    border: '1.5px solid #dc2626', background: 'var(--card)', color: '#dc2626',
+                  }}>학원 영구 삭제…</button>
+              ) : (
+                <div style={{ padding: 14, borderRadius: 10, background: '#fef2f2', border: '1px solid #fecaca' }}>
+                  <p style={{ margin: '0 0 10px', fontSize: 13, color: '#991b1b', lineHeight: 1.5 }}>
+                    이 학원과 모든 연관 데이터(사용자·학생·수업·결제 등)가 <b>영구 삭제</b>됩니다. 되돌릴 수 없습니다.<br/>
+                    계속하려면 학원명(<b>{academy.name}</b>) 또는 slug(<b style={{ fontFamily: 'monospace' }}>{academy.slug}</b>)를 정확히 입력하세요.
+                  </p>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <input value={deleteConfirm} onChange={e => setDeleteConfirm(e.target.value)}
+                      placeholder={`${academy.name} 또는 ${academy.slug}`}
+                      style={{
+                        flex: 1, minWidth: 200, padding: '8px 12px', border: '1.5px solid #fecaca',
+                        borderRadius: 8, fontSize: 13, fontFamily: FONT, outline: 'none',
+                        background: 'var(--card)', color: 'var(--foreground)',
+                      }} />
+                    <button onClick={deleteAcademy}
+                      disabled={!deleteConfirm.trim() || (deleteConfirm.trim() !== academy.name && deleteConfirm.trim() !== academy.slug)}
+                      style={{
+                        padding: '8px 16px', background: '#dc2626', color: '#fff',
+                        border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700,
+                        cursor: 'pointer', fontFamily: FONT,
+                        opacity: (deleteConfirm.trim() === academy.name || deleteConfirm.trim() === academy.slug) ? 1 : 0.5,
+                      }}>영구 삭제</button>
+                    <button onClick={() => { setShowDelete(false); setDeleteConfirm(''); }}
+                      style={{
+                        padding: '8px 16px', background: 'var(--muted)', color: 'var(--foreground)',
+                        border: '1px solid var(--border)', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                        cursor: 'pointer', fontFamily: FONT,
+                      }}>취소</button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </>
       )}

@@ -161,7 +161,7 @@ router.get('/admin/students', requireAdmin, async (req, res) => {
 // 전체 클리닉 목록 (캘린더용) — 학교/학년 필터 지원
 router.get('/admin/all', requireAdmin, async (req, res) => {
   const { month, year, school, grade } = req.query;
-  const conditions = ['ca.academy_id = ?'];
+  const filters = [];
   const params = [parseInt(req.academyId)];
 
   if (year && month) {
@@ -170,26 +170,26 @@ router.get('/admin/all', requireAdmin, async (req, res) => {
     const endDate = endMonth > 12
       ? `${parseInt(year) + 1}-01-01`
       : `${year}-${String(endMonth).padStart(2, '0')}-01`;
-    conditions.push('ca.appointment_date >= ?', 'ca.appointment_date < ?');
+    filters.push('ca.appointment_date >= ?', 'ca.appointment_date < ?');
     params.push(startDate, endDate);
   }
 
   if (school) {
-    conditions.push('s.school = ?');
+    filters.push('s.school = ?');
     params.push(school);
   }
   if (grade) {
-    conditions.push('s.grade = ?');
+    filters.push('s.grade = ?');
     params.push(grade);
   }
 
-  const where = 'WHERE ' + conditions.join(' AND ');
+  const extraWhere = filters.length ? ` AND ${filters.join(' AND ')}` : '';
   const appointments = await getAll(
     `SELECT ca.*, u.name as student_name, s.school, s.grade
      FROM clinic_appointments ca
      JOIN students s ON ca.student_id = s.id
      JOIN users u ON s.user_id = u.id
-     ${where}
+     WHERE ca.academy_id = ?${extraWhere}
      ORDER BY ca.appointment_date ASC, ca.time_slot ASC`,
     params
   );

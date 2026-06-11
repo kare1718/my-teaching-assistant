@@ -101,6 +101,69 @@ router.put('/academies/:id/status', async (req, res) => {
   }
 });
 
+// 학원 슬러그 수정
+router.put('/academies/:id/slug', async (req, res) => {
+  try {
+    const academyId = parseInt(req.params.id);
+    const { slug } = req.body;
+    const newSlug = (slug || '').trim().toLowerCase();
+
+    if (!newSlug) return res.status(400).json({ error: 'slug를 입력해주세요.' });
+    if (!/^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$/.test(newSlug)) {
+      return res.status(400).json({ error: 'slug는 영문 소문자/숫자/하이픈만 허용되며 3~64자여야 합니다.' });
+    }
+
+    const academy = await getOne('SELECT id, slug FROM academies WHERE id = ?', [academyId]);
+    if (!academy) return res.status(404).json({ error: '학원을 찾을 수 없습니다.' });
+    if (academy.slug === newSlug) return res.json({ message: '변경 사항이 없습니다.', slug: newSlug });
+
+    const dup = await getOne('SELECT id FROM academies WHERE slug = ? AND id <> ?', [newSlug, academyId]);
+    if (dup) return res.status(400).json({ error: '이미 사용 중인 slug입니다.' });
+
+    await runQuery('UPDATE academies SET slug = ? WHERE id = ?', [newSlug, academyId]);
+    await logActivity(req.user.id, 'academy_slug_change', 'academy', academyId, { from: academy.slug, to: newSlug });
+    res.json({ message: 'slug가 변경되었습니다.', slug: newSlug });
+  } catch (err) {
+    console.error('[superadmin/academies slug PUT]', err);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// 학원 삭제 (연관 데이터 전부 삭제) — 위험: 되돌릴 수 없음
+router.delete('/academies/:id', async (req, res) => {
+  try {
+    const academyId = parseInt(req.params.id);
+    const { confirm } = req.body || {};
+    const academy = await getOne('SELECT id, name, slug FROM academies WHERE id = ?', [academyId]);
+    if (!academy) return res.status(404).json({ error: '학원을 찾을 수 없습니다.' });
+
+    // 이름 또는 slug로 재확인 (오삭제 방지)
+    if (!confirm || (confirm !== academy.name && confirm !== academy.slug)) {
+      return res.status(400).json({ error: '확인을 위해 학원명 또는 slug를 정확히 입력해주세요.' });
+    }
+
+    // academy_id 컬럼이 있는 모든 테이블에서 삭제
+    const tables = [
+      'vocab_game_logs', 'page_views', 'platform_notifications', 'platform_activity_logs',
+      'academy_memos', 'promotion_grants', 'payments', 'subscriptions', 'sms_credits',
+      'titles', 'characters',
+      'tuition_records', 'attendance', 'homework', 'consultations',
+      'exams', 'schedules', 'classes', 'students',
+      'users',
+    ];
+    for (const t of tables) {
+      try { await runQuery(`DELETE FROM ${t} WHERE academy_id = ?`, [academyId]); } catch {}
+    }
+
+    await runQuery('DELETE FROM academies WHERE id = ?', [academyId]);
+    await logActivity(req.user.id, 'academy_delete', 'academy', academyId, { name: academy.name, slug: academy.slug });
+    res.json({ message: `${academy.name} 학원이 삭제되었습니다.` });
+  } catch (err) {
+    console.error('[superadmin/academies DELETE]', err);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
 // 학원 티어 변경
 router.put('/academies/:id/tier', async (req, res) => {
   try {
@@ -133,16 +196,21 @@ router.get('/stats', async (req, res) => {
       'SELECT subscription_tier, COUNT(*) as count FROM academies WHERE is_active = 1 GROUP BY subscription_tier'
     );
 
-    // MRR 계산 (active subscriptions) — VAT 별도, 현행 4단 + 레거시 매핑
+    // MRR 계산 — DB 기반 동적 요금제 (subscription_tiers 테이블 조인)
     const mrr = await getOne(
-      `SELECT COALESCE(SUM(CASE
-        WHEN a.subscription_tier = 'starter' THEN 49000
-        WHEN a.subscription_tier = 'pro' THEN 129000
-        WHEN a.subscription_tier = 'basic' THEN 49000
-        WHEN a.subscription_tier IN ('standard', 'growth') THEN 129000
-        ELSE 0
-      END), 0) as total
-      FROM academies a WHERE a.is_active = 1 AND a.subscription_tier NOT IN ('free', 'trial', 'first_class', 'premium')`
+      `SELECT COALESCE(SUM(t.monthly_price), 0) as total
+       FROM academies a
+       LEFT JOIN subscription_tiers t ON (
+         t.tier_key = a.subscription_tier
+         OR EXISTS (
+           SELECT 1
+           FROM jsonb_array_elements_text(COALESCE(t.legacy_aliases, '[]'::jsonb)) AS alias(value)
+           WHERE alias.value = a.subscription_tier
+         )
+       )
+       WHERE a.is_active = 1
+         AND t.monthly_price > 0
+         AND t.tier_key NOT IN ('free', 'first_class')`
     );
 
     // 이번달 신규 학원
@@ -467,14 +535,19 @@ router.get('/revenue/summary', async (req, res) => {
     const month = new Date().toISOString().slice(0, 7);
 
     const mrr = await getOne(
-      `SELECT COALESCE(SUM(CASE
-        WHEN subscription_tier = 'starter' THEN 49000
-        WHEN subscription_tier = 'pro' THEN 129000
-        WHEN subscription_tier = 'basic' THEN 49000
-        WHEN subscription_tier IN ('standard', 'growth') THEN 129000
-        ELSE 0
-      END), 0) as total
-      FROM academies WHERE is_active = 1 AND subscription_tier NOT IN ('free', 'trial', 'first_class', 'premium')`
+      `SELECT COALESCE(SUM(t.monthly_price), 0) as total
+       FROM academies a
+       LEFT JOIN subscription_tiers t ON (
+         t.tier_key = a.subscription_tier
+         OR EXISTS (
+           SELECT 1
+           FROM jsonb_array_elements_text(COALESCE(t.legacy_aliases, '[]'::jsonb)) AS alias(value)
+           WHERE alias.value = a.subscription_tier
+         )
+       )
+       WHERE a.is_active = 1
+         AND t.monthly_price > 0
+         AND t.tier_key NOT IN ('free', 'first_class')`
     );
 
     const monthlyRevenue = await getOne(

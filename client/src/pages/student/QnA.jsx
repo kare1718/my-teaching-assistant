@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { api, apiUpload } from '../../api';
+import { api, apiUpload, authFileUrl } from '../../api';
 import BottomTabBar from '../../components/BottomTabBar';
 import { useTenantConfig } from '../../contexts/TenantContext';
 
@@ -245,7 +245,7 @@ export default function QnA() {
               }}>
                 {q.image && (
                   <img
-                    src={q.image}
+                    src={authFileUrl(q.image)}
                     alt="첨부"
                     style={{
                       maxWidth: '100%', maxHeight: 200, borderRadius: 6,

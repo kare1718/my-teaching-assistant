@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { api, apiUpload } from '../../api';
 import BottomTabBar from '../../components/BottomTabBar';
+import { SkeletonPage, StudentAccessError } from '../../components/StudentStates';
 
 export default function Portfolio() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [msg, setMsg] = useState('');
   const [msgType, setMsgType] = useState('');
   const [lightbox, setLightbox] = useState(null);
@@ -16,9 +18,16 @@ export default function Portfolio() {
   const [file, setFile] = useState(null);
 
   const loadItems = () => {
+    setLoading(true);
+    setLoadError(null);
     api('/portfolio/student/me')
       .then(data => { setItems(Array.isArray(data) ? data : []); setLoading(false); })
-      .catch(() => { setItems([]); setLoading(false); });
+      .catch(err => {
+        console.error('[student/portfolio] 포트폴리오 로드 실패', err);
+        setItems([]);
+        setLoadError(err?.message || '포트폴리오를 불러올 수 없습니다.');
+        setLoading(false);
+      });
   };
 
   useEffect(() => { loadItems(); }, []);
@@ -69,7 +78,14 @@ export default function Portfolio() {
       )}
 
       {loading ? (
-        <p style={{ color: 'var(--neutral-500)', fontSize: 14 }}>로딩 중...</p>
+        <SkeletonPage />
+      ) : loadError ? (
+        <StudentAccessError
+          pageLabel="포트폴리오"
+          emoji="🎨"
+          message="포트폴리오를 불러올 수 없습니다. 학생 등록 여부를 확인해 주세요."
+          onRetry={loadItems}
+        />
       ) : items.length === 0 ? (
         <div style={{ padding: 60, textAlign: 'center', color: 'var(--neutral-500)', background: 'var(--card)', borderRadius: 12, border: '1px solid var(--border)' }}>
           <p style={{ fontSize: 40, marginBottom: 12 }}>🎨</p>

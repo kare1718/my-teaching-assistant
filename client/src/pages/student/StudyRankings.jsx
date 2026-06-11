@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { api, getUser } from '../../api';
 import AvatarSVG from '../../components/AvatarSVG';
 import BottomTabBar from '../../components/BottomTabBar';
-import { SkeletonPage, EmptyState } from '../../components/StudentStates';
+import { SkeletonPage, EmptyState, ErrorState } from '../../components/StudentStates';
 
 const TABS = [
   { key: 'today', label: '오늘' },
@@ -40,14 +40,22 @@ export default function StudyRankings() {
   const [tab, setTab] = useState('today');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [activeStudents, setActiveStudents] = useState([]);
 
-  useEffect(() => {
+  const loadRankings = () => {
     setLoading(true);
+    setLoadError('');
     api(`/study-timer/rankings?type=${tab}`)
       .then(d => { setData(d); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, [tab]);
+      .catch(err => {
+        console.error('[student/study-rankings] 공부 랭킹 로드 실패', err);
+        setLoadError(err?.message || '공부 랭킹을 불러올 수 없습니다.');
+        setLoading(false);
+      });
+  };
+
+  useEffect(() => { loadRankings(); }, [tab]);
 
   // 활성 학생 폴링
   useEffect(() => {
@@ -133,11 +141,15 @@ export default function StudyRankings() {
 
       {loading && <SkeletonPage />}
 
-      {!loading && rankings.length === 0 && (
-        <EmptyState message="아직 공부 기록이 없어요. 타이머로 공부를 시작해보세요!" />
+      {!loading && loadError && (
+        <ErrorState message={loadError} onRetry={loadRankings} />
       )}
 
-      {!loading && rankings.length > 0 && (
+      {!loading && !loadError && rankings.length === 0 && (
+        <EmptyState message="아직 공부 기록이 없어요. 타이머로 공부를 시작해 보세요!" />
+      )}
+
+      {!loading && !loadError && rankings.length > 0 && (
         <>
           {/* 시상대 Top 3 */}
           {top3.length >= 2 && (

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api, apiPost, apiDelete } from '../../api';
 import { useTenantConfig } from '../../contexts/TenantContext';
 import BottomTabBar from '../../components/BottomTabBar';
+import { SkeletonPage, StudentAccessError } from '../../components/StudentStates';
 
 const DEFAULT_TIME_SLOTS = [
   '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
@@ -35,18 +36,28 @@ export default function ClinicApply() {
   const [loading, setLoading] = useState(false);
   const [slotCounts, setSlotCounts] = useState({});
   const [maxPerSlot, setMaxPerSlot] = useState(0);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
 
   const load = () => {
-    api('/clinic/my').then(setMyAppointments).catch(console.error);
+    api('/clinic/my').then(data => {
+      setMyAppointments(Array.isArray(data) ? data : []);
+      setLoadError(null);
+      setInitialLoading(false);
+    }).catch(err => {
+      console.error('[student/clinic] 신청 목록 로드 실패', err);
+      setLoadError(err?.message || '클리닉 정보를 불러올 수 없습니다.');
+      setInitialLoading(false);
+    });
   };
   useEffect(() => { load(); }, []);
 
-  // 날짜 선택 시 잔여석 로드
+  // 날짜 선택 시 잔여석 로드 (부가 정보이므로 실패해도 조용히 넘어감)
   useEffect(() => {
     if (form.appointment_date) {
       api(`/clinic/slot-counts?date=${form.appointment_date}`)
         .then(data => { setSlotCounts(data.counts || {}); setMaxPerSlot(data.maxPerSlot || 0); })
-        .catch(console.error);
+        .catch(() => { setSlotCounts({}); setMaxPerSlot(0); });
     } else {
       setSlotCounts({});
       setMaxPerSlot(0);
@@ -118,6 +129,25 @@ export default function ClinicApply() {
   const selectedDay = form.appointment_date
     ? DAY_NAMES[new Date(form.appointment_date + 'T00:00:00').getDay()]
     : '';
+
+  if (initialLoading) return (
+    <div className="content s-page">
+      <SkeletonPage />
+      <BottomTabBar />
+    </div>
+  );
+
+  if (loadError) return (
+    <div className="content s-page">
+      <StudentAccessError
+        pageLabel="클리닉 신청"
+        emoji="📋"
+        message="클리닉 정보를 불러올 수 없습니다. 학생 등록 여부를 확인해 주세요."
+        onRetry={load}
+      />
+      <BottomTabBar />
+    </div>
+  );
 
   return (
     <div className="content s-page" style={{ paddingBottom: 96 }}>
@@ -243,8 +273,8 @@ export default function ClinicApply() {
       <div className="card" style={{ padding: 16, marginTop: 8 }}>
         <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 14 }}>내 클리닉 신청 현황</h3>
         {myAppointments.length === 0 ? (
-          <p style={{ color: 'var(--muted-foreground)', textAlign: 'center', padding: 20, fontSize: 13 }}>
-            신청한 클리닉이 없습니다.
+          <p style={{ color: 'var(--muted-foreground)', textAlign: 'center', padding: 20, fontSize: 13, wordBreak: 'keep-all' }}>
+            아직 신청한 클리닉이 없어요. 위 폼에서 첫 신청을 해 보세요!
           </p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

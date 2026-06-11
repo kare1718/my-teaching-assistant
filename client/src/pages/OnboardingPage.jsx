@@ -30,6 +30,51 @@ export default function OnboardingPage() {
   const [agreeMarketing, setAgreeMarketing] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
 
+  // 핸드폰 인증
+  const [phoneCodeSent, setPhoneCodeSent] = useState(false);
+  const [phoneCode, setPhoneCode] = useState('');
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [phoneVerificationToken, setPhoneVerificationToken] = useState('');
+  const [phoneMsg, setPhoneMsg] = useState('');
+  const [phoneSending, setPhoneSending] = useState(false);
+  const [phoneCooldown, setPhoneCooldown] = useState(0);
+
+  useEffect(() => {
+    if (phoneCooldown <= 0) return;
+    const t = setInterval(() => setPhoneCooldown(c => Math.max(0, c - 1)), 1000);
+    return () => clearInterval(t);
+  }, [phoneCooldown]);
+
+  const sendPhoneCode = async () => {
+    const phone = (form.adminPhone || '').replace(/[^0-9]/g, '');
+    if (!/^01[016789][0-9]{7,8}$/.test(phone)) {
+      setPhoneMsg('올바른 휴대폰 번호를 입력해주세요.');
+      return;
+    }
+    setPhoneSending(true); setPhoneMsg('');
+    try {
+      await apiPost('/phone-verify/send-code', { phone, purpose: 'signup' });
+      setPhoneCodeSent(true);
+      setPhoneCooldown(60);
+      setPhoneMsg('인증번호가 발송되었습니다. 5분 내 입력해주세요.');
+    } catch (err) {
+      setPhoneMsg(err.message);
+    } finally { setPhoneSending(false); }
+  };
+
+  const verifyPhoneCode = async () => {
+    const phone = (form.adminPhone || '').replace(/[^0-9]/g, '');
+    if (!/^[0-9]{6}$/.test(phoneCode)) { setPhoneMsg('6자리 인증번호를 입력해주세요.'); return; }
+    try {
+      const r = await apiPost('/phone-verify/verify-code', { phone, code: phoneCode, purpose: 'signup' });
+      setPhoneVerified(true);
+      setPhoneVerificationToken(r.token);
+      setPhoneMsg('인증되었습니다.');
+    } catch (err) {
+      setPhoneMsg(err.message);
+    }
+  };
+
   const update = (key) => (e) => {
     setForm({ ...form, [key]: e.target.value });
     if (key === 'slug') setSlugAvailable(null);
@@ -78,9 +123,18 @@ export default function OnboardingPage() {
       return;
     }
 
+    if (!phoneVerified || !phoneVerificationToken) {
+      setError('휴대폰 인증을 완료해주세요.');
+      return;
+    }
+
     setLoading(true);
     try {
-      const submitForm = { ...form, adminPhone: form.adminPhone.trim() || '000-0000-0000' };
+      const submitForm = {
+        ...form,
+        adminPhone: form.adminPhone.trim(),
+        phoneVerificationToken,
+      };
       await apiPost('/onboarding/create-academy', submitForm);
       setStep(4);
     } catch (err) {
@@ -286,19 +340,45 @@ export default function OnboardingPage() {
                   <label className="text-xs font-bold text-[#45464e] uppercase tracking-widest ml-1">휴대폰 번호</label>
                   <div className="flex gap-3">
                     <input
-                      className="flex-grow px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 transition-all text-[#191c1d] placeholder:text-[#75777f]/50 font-medium"
+                      className="flex-grow px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 transition-all text-[#191c1d] placeholder:text-[#75777f]/50 font-medium disabled:opacity-60"
                       value={form.adminPhone}
-                      onChange={update('adminPhone')}
+                      onChange={(e) => { update('adminPhone')(e); setPhoneVerified(false); setPhoneVerificationToken(''); setPhoneCodeSent(false); }}
                       placeholder="010-0000-0000"
                       type="tel"
+                      disabled={phoneVerified}
                     />
                     <button
                       type="button"
-                      className="px-6 py-4 bg-[#e7e8e9] hover:bg-[#e1e3e4] text-[var(--primary)] font-bold text-sm rounded-lg transition-colors shrink-0"
+                      onClick={sendPhoneCode}
+                      disabled={phoneSending || phoneCooldown > 0 || phoneVerified}
+                      className="px-6 py-4 bg-[#e7e8e9] hover:bg-[#e1e3e4] text-[var(--primary)] font-bold text-sm rounded-lg transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      인증번호 발송
+                      {phoneVerified ? '인증완료' : phoneCooldown > 0 ? `재발송 ${phoneCooldown}초` : phoneCodeSent ? '재발송' : '인증번호 발송'}
                     </button>
                   </div>
+                  {phoneCodeSent && !phoneVerified && (
+                    <div className="flex gap-3 mt-2">
+                      <input
+                        className="flex-grow px-5 py-4 bg-[#edeeef] rounded-lg border-transparent focus:border-[var(--cta)]/40 focus:bg-white focus:ring-4 focus:ring-[var(--cta)]/5 transition-all text-[#191c1d] placeholder:text-[#75777f]/50 font-medium tracking-widest"
+                        value={phoneCode}
+                        onChange={(e) => setPhoneCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                        placeholder="6자리 인증번호"
+                        type="text"
+                        inputMode="numeric"
+                      />
+                      <button
+                        type="button"
+                        onClick={verifyPhoneCode}
+                        disabled={phoneCode.length !== 6}
+                        className="px-6 py-4 bg-[var(--cta)] hover:bg-[var(--primary)] text-white font-bold text-sm rounded-lg transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        확인
+                      </button>
+                    </div>
+                  )}
+                  {phoneMsg && (
+                    <p className={`text-xs font-semibold mt-1 ${phoneVerified ? 'text-emerald-600' : 'text-[#ba1a1a]'}`}>{phoneMsg}</p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

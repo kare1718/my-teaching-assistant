@@ -291,6 +291,18 @@ async function processScheduledMessages() {
 function initCronJobs() {
   console.log('[크론] 스케줄러 초기화...');
 
+  // 매월 1일 00:05 (KST) — AI 크레딧 월별 리필
+  cron.schedule('5 0 1 * *', async () => {
+    console.log(`[크론] ${new Date().toISOString()} — AI 크레딧 월별 리필 시작`);
+    try {
+      const { refillMonthlyCredits } = require('./aiCredits');
+      const count = await refillMonthlyCredits();
+      console.log(`[크론/AI리필] ${count}개 학원 리필 완료`);
+    } catch (err) {
+      console.error('[크론/AI리필] 실행 실패:', err.message);
+    }
+  }, { timezone: 'Asia/Seoul' });
+
   // 매일 오전 3시 (KST) — Trial 만료 체크
   cron.schedule('0 3 * * *', async () => {
     console.log(`[크론] ${new Date().toISOString()} — Trial 만료 체크 시작`);
@@ -552,6 +564,7 @@ function initCronJobs() {
   }, { timezone: 'Asia/Seoul' });
 
   console.log('[크론] 스케줄 등록 완료:');
+  console.log('  - 매월 1일 00:05 KST: AI 크레딧 월별 리필');
   console.log('  - 매분: 예약 메시지 발송');
   console.log('  - 03:00 KST: Trial 만료 → Free Tier 전환');
   console.log('  - 06:00 KST: 자동 정기결제');

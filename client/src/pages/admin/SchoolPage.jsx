@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { api, apiPost, apiDelete, apiUpload } from '../../api';
+import { api, apiPost, apiDelete, apiUpload, authFileUrl } from '../../api';
 import { useTenantConfig } from '../../contexts/TenantContext';
 
 export default function SchoolPage() {
@@ -302,7 +302,7 @@ export default function SchoolPage() {
                   {m.file_name && (
                     <div style={{ marginTop: 8 }}>
                       <a
-                        href={`/uploads/${m.file_path}`}
+                        href={authFileUrl(`/uploads/${m.file_path}`)}
                         download={m.file_name}
                         className="btn btn-primary btn-sm"
                         style={{ textDecoration: 'none' }}

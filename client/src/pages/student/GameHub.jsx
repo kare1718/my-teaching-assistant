@@ -4,6 +4,7 @@ import { api, apiPost, apiPut } from '../../api';
 import AvatarSVG from '../../components/AvatarSVG';
 import { getLevelInfo, getStageInfo, getXpPercent, getAllStages } from '../../utils/gamification';
 import BottomTabBar from '../../components/BottomTabBar';
+import { SkeletonPage, StudentAccessError } from '../../components/StudentStates';
 import { getUser } from '../../api';
 import { useTenantConfig } from '../../contexts/TenantContext';
 
@@ -22,6 +23,7 @@ export default function GameHub() {
   const [showAllTitles, setShowAllTitles] = useState(false);
   const [allTitles, setAllTitles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [bonusMsg, setBonusMsg] = useState(null);
   const [editingNickname, setEditingNickname] = useState(false);
   const [nicknameInput, setNicknameInput] = useState('');
@@ -63,14 +65,21 @@ export default function GameHub() {
   };
 
   const load = () => {
+    setLoading(true);
     Promise.all([
       api('/gamification/my-character'),
       api('/gamification/my-titles'),
     ]).then(([c, titles]) => {
       setCharData(c);
       setMyTitles(titles);
+      setLoadError(null);
       setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch(err => {
+      console.error('[student/game] 캐릭터/칭호 로드 실패', err);
+      setLoadError(err?.message || '캐릭터 정보를 불러올 수 없습니다.');
+      setLoading(false);
+    });
+    // 오늘 퀴즈 카운트는 부가 정보 — 실패해도 조용히 처리
     api('/gamification/knowledge/today-count').then(d => setTodayKnowledge(d.count || 0)).catch(() => {});
     api('/gamification/reading/today-count').then(d => setTodayReading(d.count || 0)).catch(() => {});
   };
@@ -126,8 +135,23 @@ export default function GameHub() {
     }
   };
 
-  if (loading) return <div className="content" style={{ textAlign: 'center', padding: 40 }}>로딩 중...</div>;
-  if (!charData) return <div className="content" style={{ textAlign: 'center', padding: 40 }}>캐릭터 정보를 불러올 수 없습니다.</div>;
+  if (loading) return (
+    <div className="content s-page">
+      <SkeletonPage />
+      <BottomTabBar />
+    </div>
+  );
+  if (loadError || !charData) return (
+    <div className="content s-page">
+      <StudentAccessError
+        pageLabel="게임 허브"
+        emoji="🎮"
+        message="캐릭터 정보를 불러올 수 없습니다. 학생 등록 여부를 확인해 주세요."
+        onRetry={load}
+      />
+      <BottomTabBar />
+    </div>
+  );
 
   const levelInfo = charData.levelInfo || getLevelInfo(charData.xp);
   const autoStage = getStageInfo(levelInfo.level, subject);

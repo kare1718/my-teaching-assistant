@@ -1,0 +1,82 @@
+# Render.com 배포 설정 (Infrastructure as Code)
+# https://render.com/docs/blueprint-spec
+#
+# 사용법:
+#   1. Render 대시보드 → New → Blueprint → GitHub 연결
+#   2. 이 파일을 감지 → 서비스 자동 생성
+#   3. envVars 섹션의 sync: false 항목은 대시보드에서 수동 입력 (시크릿)
+#
+# 배포 아키텍처:
+#   - web: Express 서버 (port 3002)
+#   - 정적 클라이언트는 server.js가 함께 서빙 (/assets, /)
+#   - 단일 서비스 운영 (MRR 500만 이하) / 이후 web 2대로 확장
+
+services:
+  # ── 메인 서버 ──────────────────────────────
+  - type: web
+    name: najogyo-api
+    runtime: node
+    plan: standard      # 2GB RAM, 1 vCPU (~ $25/월) — Phase 1
+    region: singapore    # 한국 유저 지연 최소화 (Render는 서울 리전 아직 없음)
+    rootDir: .
+    buildCommand: |
+      cd client && npm ci && npm run build
+      cd ../server && npm ci
+    startCommand: node server/server.js
+    healthCheckPath: /api/health
+    numInstances: 1      # Phase 2 진입 시 2로 전환 (Blue-Green)
+
+    # 자동 재시작 (메모리 누수 방어)
+    # Render는 cron 없이는 이 기능 없음 — pre-deploy hook 활용 가능
+    # 대안: 매일 새벽 배포 또는 PM2 설정
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"   # Render 기본 포트
+      - key: APP_VERSION
+        sync: false      # 배포마다 git sha로 수동 설정
+
+      # ── 필수 시크릿 (대시보드 수동 입력) ──
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CORS_ORIGIN
+        value: https://najogyo.com,https://www.najogyo.com
+
+      # ── SMS (Solapi) ──
+      - key: SOLAPI_API_KEY
+        sync: false
+      - key: SOLAPI_API_SECRET
+        sync: false
+      - key: SOLAPI_SENDER
+        sync: false
+
+      # ── Redis (Upstash) ──
+      - key: REDIS_URL
+        sync: false
+
+      # ── Sentry ──
+      - key: SENTRY_DSN
+        sync: false
+
+      # ── 결제 (PortOne) ──
+      - key: PORTONE_API_SECRET
+        sync: false
+
+  # ── (선택) 백그라운드 워커 — Phase 2 이후 분리 권장 ──────────
+  # 현재는 서버 프로세스 내에서 cron + BullMQ 워커 함께 실행.
+  # 학원 300개 넘으면 여기를 활성화하여 분리:
+  #
+  # - type: worker
+  #   name: najogyo-worker
+  #   runtime: node
+  #   plan: starter
+  #   startCommand: node server/workers/standalone.js
+  #   envVars:
+  #     - fromService:
+  #         name: najogyo-api
+  #         type: web
+  #         envVarKey: DATABASE_URL

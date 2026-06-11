@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api, apiPost } from '../../api';
 import BottomTabBar from '../../components/BottomTabBar';
 import LevelUpNotification from '../../components/LevelUpNotification';
+import { SkeletonPage, StudentAccessError } from '../../components/StudentStates';
 
 const DEFAULT_TIMER = 10;
 
@@ -21,6 +22,8 @@ export default function VocabQuiz() {
   const [todayQuizCount, setTodayQuizCount] = useState(0);
   const [timerSeconds, setTimerSeconds] = useState(DEFAULT_TIMER);
   const [quizLogId, setQuizLogId] = useState(null);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const dailyQuizLimit = 50;
 
   // 타이머 관련
@@ -31,18 +34,27 @@ export default function VocabQuiz() {
   const animFrameRef = useRef(null);
   const submittingRef = useRef(false);
 
-  useEffect(() => {
+  const loadInitial = () => {
+    setInitialLoading(true);
+    setLoadError(null);
     api('/gamification/my-character').then(data => {
       setTodayQuizCount(data.todayQuizCount || 0);
-    }).catch(console.error);
-    // 게임 설정 로드 (타이머 시간)
+      setInitialLoading(false);
+    }).catch(err => {
+      console.error('[student/vocab-quiz] 캐릭터 로드 실패', err);
+      setLoadError(err?.message || '어휘 퀴즈를 불러올 수 없습니다.');
+      setInitialLoading(false);
+    });
+    // 게임 설정 로드 (타이머 시간) — 부가 정보, 실패해도 기본값 사용
     api('/gamification/game-settings').then(data => {
       if (data.timer_seconds) {
         setTimerSeconds(data.timer_seconds);
         setTimeLeft(data.timer_seconds);
       }
     }).catch(() => {});
-  }, []);
+  };
+
+  useEffect(() => { loadInitial(); }, []);
 
   // 타이머 만료 시 자동으로 오답 처리
   const handleTimeout = useCallback(() => {
@@ -174,6 +186,23 @@ export default function VocabQuiz() {
 
   // 카테고리 선택
   if (phase === 'select') {
+    if (initialLoading) return (
+      <div className="content s-page">
+        <SkeletonPage />
+        <BottomTabBar />
+      </div>
+    );
+    if (loadError) return (
+      <div className="content s-page">
+        <StudentAccessError
+          pageLabel="어휘 퀴즈"
+          emoji="📝"
+          message="어휘 퀴즈 정보를 불러올 수 없습니다. 학생 등록 여부를 확인해 주세요."
+          onRetry={loadInitial}
+        />
+        <BottomTabBar />
+      </div>
+    );
     return (
       <div className="content s-page s-page-wide" style={{ paddingBottom: 96 }}>
         <div className="card" style={{ padding: 20, textAlign: 'center' }}>

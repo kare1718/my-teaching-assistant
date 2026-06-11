@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { api, apiPost, apiPut, apiDelete } from '../../api';
+import { api, apiPost, apiPut, apiDelete, authFileUrl } from '../../api';
 
 export default function QnAManage() {
   const [questions, setQuestions] = useState([]);
@@ -228,8 +228,8 @@ export default function QnAManage() {
                 <div style={{ background: 'var(--muted)', padding: 'var(--space-3) var(--space-3)', borderRadius: 'var(--radius)', marginBottom: 'var(--space-3)', fontSize: 'var(--text-sm)', lineHeight: 1.6 }}>
                   <strong>Q.</strong> {selectedQ.question || '(이미지 질문)'}
                   {selectedQ.image && (
-                    <img src={selectedQ.image} alt="첨부" style={{ display: 'block', maxWidth: '100%', maxHeight: 300, borderRadius: 'var(--radius-sm)', marginTop: 'var(--space-2)', cursor: 'pointer' }}
-                      onClick={() => window.open(selectedQ.image, '_blank')} />
+                    <img src={authFileUrl(selectedQ.image)} alt="첨부" style={{ display: 'block', maxWidth: '100%', maxHeight: 300, borderRadius: 'var(--radius-sm)', marginTop: 'var(--space-2)', cursor: 'pointer' }}
+                      onClick={() => window.open(authFileUrl(selectedQ.image), '_blank')} />
                   )}
                 </div>
 

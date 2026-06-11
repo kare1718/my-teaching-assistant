@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { api } from '../../api';
+import { api, authFileUrl } from '../../api';
 import BottomTabBar from '../../components/BottomTabBar';
-import { SkeletonPage, ErrorState, EmptyState } from '../../components/StudentStates';
+import { SkeletonPage, StudentAccessError, EmptyState } from '../../components/StudentStates';
 
 export default function Materials() {
   const [materials, setMaterials] = useState([]);
@@ -37,7 +37,12 @@ export default function Materials() {
 
   if (loadError) return (
     <div className="content s-page">
-      <ErrorState message={loadError} onRetry={load} />
+      <StudentAccessError
+        pageLabel="수업 자료"
+        emoji="📚"
+        message="수업 자료를 불러올 수 없습니다. 학생 등록 여부를 확인해 주세요."
+        onRetry={load}
+      />
       <BottomTabBar />
     </div>
   );
@@ -51,7 +56,7 @@ export default function Materials() {
       <div className="s-card">
         <div className="s-section-title">수업 영상 및 자료 {info && `(${info.school})`}</div>
         {materials.length === 0 ? (
-          <EmptyState message="등록된 수업 자료가 없습니다." />
+          <EmptyState message="아직 등록된 수업 자료가 없어요. 곧 선생님이 업로드해 주실 거예요!" />
         ) : (
           <div>
             {materials.map((m) => (
@@ -85,7 +90,7 @@ export default function Materials() {
                 {m.file_name && (
                   <div style={{ marginTop: 8 }}>
                     <a
-                      href={`/uploads/${m.file_path}`}
+                      href={authFileUrl(`/uploads/${m.file_path}`)}
                       download={m.file_name}
                       className="btn btn-primary btn-sm"
                       style={{ textDecoration: 'none' }}

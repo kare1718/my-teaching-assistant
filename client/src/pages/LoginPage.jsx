@@ -50,6 +50,48 @@ export default function LoginPage() {
   const [academyConfig, setAcademyConfig] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
+  // 비번찾기 — 핸드폰 인증
+  const [findPhoneCodeSent, setFindPhoneCodeSent] = useState(false);
+  const [findPhoneCode, setFindPhoneCode] = useState('');
+  const [findPhoneVerified, setFindPhoneVerified] = useState(false);
+  const [findPhoneToken, setFindPhoneToken] = useState('');
+  const [findPhoneMsg, setFindPhoneMsg] = useState('');
+  const [findPhoneCooldown, setFindPhoneCooldown] = useState(0);
+
+  useEffect(() => {
+    if (findPhoneCooldown <= 0) return;
+    const t = setInterval(() => setFindPhoneCooldown(c => Math.max(0, c - 1)), 1000);
+    return () => clearInterval(t);
+  }, [findPhoneCooldown]);
+
+  const sendFindPhoneCode = async () => {
+    const phone = (findForm.phone || '').replace(/[^0-9]/g, '');
+    if (!/^01[016789][0-9]{7,8}$/.test(phone)) { setFindPhoneMsg('올바른 휴대폰 번호를 입력해주세요.'); return; }
+    try {
+      await apiPost('/phone-verify/send-code', { phone, purpose: 'password_reset' });
+      setFindPhoneCodeSent(true);
+      setFindPhoneCooldown(60);
+      setFindPhoneMsg('인증번호가 발송되었습니다.');
+    } catch (err) { setFindPhoneMsg(err.message); }
+  };
+
+  const verifyFindPhoneCode = async () => {
+    const phone = (findForm.phone || '').replace(/[^0-9]/g, '');
+    if (!/^[0-9]{6}$/.test(findPhoneCode)) { setFindPhoneMsg('6자리 인증번호를 입력해주세요.'); return; }
+    try {
+      const r = await apiPost('/phone-verify/verify-code', { phone, code: findPhoneCode, purpose: 'password_reset' });
+      setFindPhoneVerified(true);
+      setFindPhoneToken(r.token);
+      setFindPhoneMsg('인증되었습니다.');
+    } catch (err) { setFindPhoneMsg(err.message); }
+  };
+
+  const resetFindPwState = () => {
+    setFindResult(null); setFindError('');
+    setFindPhoneCodeSent(false); setFindPhoneCode(''); setFindPhoneVerified(false);
+    setFindPhoneToken(''); setFindPhoneMsg(''); setFindPhoneCooldown(0);
+  };
+
   useEffect(() => { injectKeyframes(); }, []);
 
   useEffect(() => {
@@ -89,9 +131,14 @@ export default function LoginPage() {
       setFindError('모든 항목을 입력해주세요.');
       return;
     }
+    if (!findPhoneVerified || !findPhoneToken) {
+      setFindError('휴대폰 인증을 먼저 완료해주세요.');
+      return;
+    }
     try {
-      const data = await apiPost('/auth/find-password', findForm);
-      setFindResult(data.tempPassword);
+      const data = await apiPost('/auth/find-password', { ...findForm, phoneVerificationToken: findPhoneToken });
+      // SMS로 발송된 경우 tempPassword가 응답에 없음 — 안내 메시지만 표시
+      setFindResult(data.tempPassword || 'SMS_SENT');
     } catch (err) {
       setFindError(err.message);
     }
@@ -111,7 +158,7 @@ export default function LoginPage() {
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           background: 'oklch(0% 0 0 / 0.4)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
           zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
-        }} onClick={() => { setShowFindPw(false); setFindResult(null); setFindError(''); }}>
+        }} onClick={() => { setShowFindPw(false); resetFindPwState(); }}>
           <div style={{
             background: C.white, borderRadius: 20, padding: 32, width: 400, maxWidth: '100%',
             boxShadow: '0 24px 48px -12px oklch(0% 0 0 / 0.18)',
@@ -128,11 +175,20 @@ export default function LoginPage() {
             {findResult ? (
               <div style={{ textAlign: 'center' }}>
                 <div style={{ padding: 24, background: C.successBg, borderRadius: 16, marginBottom: 20 }}>
-                  <p style={{ fontSize: 13, color: C.textTertiary, marginBottom: 10 }}>임시 비밀번호가 발급되었습니다</p>
-                  <p style={{ fontSize: 28, fontWeight: 900, color: C.accent, letterSpacing: 4 }}>{findResult}</p>
-                  <p style={{ fontSize: 12, color: C.textTertiary, marginTop: 10 }}>로그인 후 비밀번호를 변경해주세요</p>
+                  {findResult === 'SMS_SENT' ? (
+                    <>
+                      <p style={{ fontSize: 15, fontWeight: 700, color: C.accent, marginBottom: 8 }}>임시 비밀번호가 SMS로 발송되었습니다</p>
+                      <p style={{ fontSize: 13, color: C.textTertiary }}>문자메시지를 확인해주세요. 로그인 후 즉시 변경해주세요.</p>
+                    </>
+                  ) : (
+                    <>
+                      <p style={{ fontSize: 13, color: C.textTertiary, marginBottom: 10 }}>임시 비밀번호가 발급되었습니다</p>
+                      <p style={{ fontSize: 28, fontWeight: 900, color: C.accent, letterSpacing: 4 }}>{findResult}</p>
+                      <p style={{ fontSize: 12, color: C.textTertiary, marginTop: 10 }}>로그인 후 비밀번호를 변경해주세요</p>
+                    </>
+                  )}
                 </div>
-                <button style={primaryBtn} onClick={() => { setShowFindPw(false); setFindResult(null); }}>확인</button>
+                <button style={primaryBtn} onClick={() => { setShowFindPw(false); resetFindPwState(); }}>확인</button>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -152,16 +208,69 @@ export default function LoginPage() {
                 </div>
                 <div>
                   <label style={labelStyle}>전화번호</label>
-                  <input style={inputStyle} placeholder="가입 시 입력한 전화번호" value={findForm.phone}
-                    onChange={e => setFindForm({...findForm, phone: e.target.value})}
-                    onFocus={e => { e.target.style.borderColor = C.accent; e.target.style.boxShadow = `0 0 0 3px ${C.accent}15`; }}
-                    onBlur={e => { e.target.style.borderColor = C.border; e.target.style.boxShadow = 'none'; }} />
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      style={{ ...inputStyle, flex: 1, opacity: findPhoneVerified ? 0.7 : 1 }}
+                      placeholder="가입 시 입력한 전화번호"
+                      value={findForm.phone}
+                      disabled={findPhoneVerified}
+                      onChange={e => {
+                        setFindForm({ ...findForm, phone: e.target.value });
+                        setFindPhoneVerified(false); setFindPhoneToken(''); setFindPhoneCodeSent(false);
+                      }}
+                      onFocus={e => { e.target.style.borderColor = C.accent; e.target.style.boxShadow = `0 0 0 3px ${C.accent}15`; }}
+                      onBlur={e => { e.target.style.borderColor = C.border; e.target.style.boxShadow = 'none'; }} />
+                    <button
+                      type="button"
+                      onClick={sendFindPhoneCode}
+                      disabled={findPhoneCooldown > 0 || findPhoneVerified}
+                      style={{
+                        padding: '0 14px', background: findPhoneVerified ? C.successBg : C.white,
+                        color: findPhoneVerified ? '#059669' : C.textPrimary,
+                        border: `1.5px solid ${C.border}`, borderRadius: 12, fontSize: 13, fontWeight: 700,
+                        fontFamily: FONT, cursor: (findPhoneCooldown > 0 || findPhoneVerified) ? 'default' : 'pointer',
+                        whiteSpace: 'nowrap', opacity: findPhoneCooldown > 0 && !findPhoneVerified ? 0.6 : 1,
+                      }}>
+                      {findPhoneVerified ? '인증완료' : findPhoneCooldown > 0 ? `${findPhoneCooldown}초` : findPhoneCodeSent ? '재발송' : '인증번호'}
+                    </button>
+                  </div>
                 </div>
+                {findPhoneCodeSent && !findPhoneVerified && (
+                  <div>
+                    <label style={labelStyle}>인증번호</label>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input
+                        style={{ ...inputStyle, flex: 1, letterSpacing: 4, textAlign: 'center', fontSize: 18, fontWeight: 700 }}
+                        placeholder="6자리"
+                        value={findPhoneCode}
+                        inputMode="numeric"
+                        onChange={e => setFindPhoneCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))} />
+                      <button
+                        type="button"
+                        onClick={verifyFindPhoneCode}
+                        disabled={findPhoneCode.length !== 6}
+                        style={{
+                          padding: '0 18px', background: C.accent, color: C.white,
+                          border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700,
+                          fontFamily: FONT, cursor: findPhoneCode.length === 6 ? 'pointer' : 'default',
+                          opacity: findPhoneCode.length === 6 ? 1 : 0.5, whiteSpace: 'nowrap',
+                        }}>확인</button>
+                    </div>
+                  </div>
+                )}
+                {findPhoneMsg && (
+                  <p style={{
+                    fontSize: 12, fontWeight: 600, marginTop: -4,
+                    color: findPhoneVerified ? '#059669' : C.error,
+                  }}>{findPhoneMsg}</p>
+                )}
                 <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-                  <button style={{ ...primaryBtn, flex: 1 }} onClick={handleFindPassword}
-                    onMouseOver={e => e.currentTarget.style.background = C.accentDark}
+                  <button style={{ ...primaryBtn, flex: 1, opacity: findPhoneVerified ? 1 : 0.5 }}
+                    disabled={!findPhoneVerified}
+                    onClick={handleFindPassword}
+                    onMouseOver={e => { if (findPhoneVerified) e.currentTarget.style.background = C.accentDark; }}
                     onMouseOut={e => e.currentTarget.style.background = C.accent}>찾기</button>
-                  <button style={{ ...outlineBtn, flex: 1 }} onClick={() => setShowFindPw(false)}
+                  <button style={{ ...outlineBtn, flex: 1 }} onClick={() => { setShowFindPw(false); resetFindPwState(); }}
                     onMouseOver={e => e.currentTarget.style.borderColor = C.textTertiary}
                     onMouseOut={e => e.currentTarget.style.borderColor = C.border}>취소</button>
                 </div>
@@ -194,14 +303,19 @@ export default function LoginPage() {
             <h1 style={{
               fontSize: isMobile ? 26 : 36, fontWeight: 800, color: C.textPrimary,
               lineHeight: 1.3, letterSpacing: '-0.02em', marginBottom: 12,
+              wordBreak: 'keep-all', overflowWrap: 'break-word',
               ...reveal(100),
             }}>
-              하루 3시간,{isMobile ? ' ' : <br />}수업에 돌려드립니다.
+              하루 3시간, 수업에 돌려드립니다.
             </h1>
 
-            <p style={{ fontSize: isMobile ? 14 : 16, color: C.textSecondary, lineHeight: 1.7, marginBottom: isMobile ? 0 : 32, ...reveal(200) }}>
-              학부모 카톡, 출결, 성적 정리 — 매일 반복되는 잡무를{isMobile ? ' ' : <br />}
-              자동화하고 수업에 집중하세요.
+            <p style={{
+              fontSize: isMobile ? 14 : 16, color: C.textSecondary, lineHeight: 1.7,
+              marginBottom: isMobile ? 0 : 32,
+              wordBreak: 'keep-all', overflowWrap: 'break-word',
+              ...reveal(200),
+            }}>
+              학부모 카톡, 출결, 성적 정리 — 매일 반복되는 잡무를 자동화하고 수업에 집중하세요.
             </p>
           </div>
 
@@ -341,7 +455,7 @@ export default function LoginPage() {
               onMouseOut={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.boxShadow = 'none'; }}
             >
               <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: C.textPrimary }}>학원이 없으신가요?</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: C.textPrimary }}>아직 등록하지 않으셨나요? (선생님/학원)</div>
                 <div style={{ fontSize: 12, color: C.textTertiary, marginTop: 2 }}>무료 체험 시작하기 — 카드 등록 없이</div>
               </div>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.textTertiary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
@@ -355,9 +469,8 @@ export default function LoginPage() {
               onMouseOver={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.boxShadow = '0 2px 8px oklch(55% 0.15 250 / 0.08)'; }}
               onMouseOut={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.boxShadow = 'none'; }}
             >
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: C.textPrimary }}>학생이신가요?</div>
-                <div style={{ fontSize: 12, color: C.textTertiary, marginTop: 2 }}>학원 코드로 가입하기</div>
+              <div style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: C.textPrimary }}>학생이라면 담당 학원/선생님께 초대코드를 받아 가입하세요!</div>
               </div>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.textTertiary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
             </Link>

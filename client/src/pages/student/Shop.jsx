@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, apiPost } from '../../api';
 import BottomTabBar from '../../components/BottomTabBar';
+import { SkeletonPage, StudentAccessError, EmptyState } from '../../components/StudentStates';
 
 export default function Shop() {
   const navigate = useNavigate();
@@ -10,19 +11,26 @@ export default function Shop() {
   const [charData, setCharData] = useState(null);
   const [tab, setTab] = useState('shop'); // shop, history
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [buying, setBuying] = useState(null);
 
   const load = () => {
+    setLoading(true);
     Promise.all([
       api('/gamification/shop/items'),
       api('/gamification/shop/my-purchases'),
       api('/gamification/my-character'),
     ]).then(([it, pur, ch]) => {
-      setItems(it);
-      setPurchases(pur);
+      setItems(Array.isArray(it) ? it : []);
+      setPurchases(Array.isArray(pur) ? pur : []);
       setCharData(ch);
+      setLoadError(null);
       setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch(err => {
+      console.error('[student/shop] 상점 정보 로드 실패', err);
+      setLoadError(err?.message || '상점 정보를 불러올 수 없습니다.');
+      setLoading(false);
+    });
   };
 
   useEffect(() => { load(); }, []);
@@ -45,7 +53,23 @@ export default function Shop() {
     setBuying(null);
   };
 
-  if (loading) return <div className="content" style={{ textAlign: 'center', padding: 40 }}>로딩 중...</div>;
+  if (loading) return (
+    <div className="content s-page">
+      <SkeletonPage />
+      <BottomTabBar />
+    </div>
+  );
+  if (loadError) return (
+    <div className="content s-page">
+      <StudentAccessError
+        pageLabel="포인트 상점"
+        emoji="🛒"
+        message="상점 정보를 불러올 수 없습니다. 학생 등록 여부를 확인해 주세요."
+        onRetry={load}
+      />
+      <BottomTabBar />
+    </div>
+  );
 
   return (
     <div className="content s-page s-page-wide" style={{ paddingBottom: 96 }}>
@@ -156,8 +180,8 @@ export default function Shop() {
             );
           })}
           {items.length === 0 && (
-            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 30, color: 'var(--muted-foreground)' }}>
-              등록된 상품이 없습니다.
+            <div style={{ gridColumn: '1 / -1' }}>
+              <EmptyState message="아직 등록된 상품이 없어요. 새로운 상품을 기다려 주세요!" />
             </div>
           )}
         </div>
@@ -192,9 +216,7 @@ export default function Shop() {
             </div>
           ))}
           {purchases.length === 0 && (
-            <div style={{ textAlign: 'center', padding: 30, color: 'var(--muted-foreground)' }}>
-              구매 내역이 없습니다.
-            </div>
+            <EmptyState message="아직 구매 내역이 없어요. 포인트를 모아 첫 상품을 구매해 보세요!" />
           )}
         </div>
       )}
