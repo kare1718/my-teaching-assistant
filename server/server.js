@@ -321,7 +321,6 @@ const optionalRoutes = [
   { path: '/api/dashboard', file: './routes/dashboard' },
   { path: '/api/parent', file: './routes/parentApp' },
   { path: '/api/data-import', file: './routes/dataImport' },
-  { path: '/api/sample-data', file: './routes/sampleData' },
 ];
 for (const route of optionalRoutes) {
   try {
