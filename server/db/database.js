@@ -149,4 +149,46 @@ function getConsecutiveErrors() {
   return consecutiveConnectionErrors;
 }
 
-module.exports = { getDb, runQuery, runInsert, getOne, getAll, runMigration, pool, getConsecutiveErrors };
+// ── 트랜잭션 배치 실행 ──
+// 콜백 정상 반환 → COMMIT 후 반환값 전달, throw → ROLLBACK 후 에러 재전파.
+// tx 메서드는 반드시 동일 client로 실행 (pool.query 사용 금지 — 트랜잭션 밖으로 나감).
+async function runBatch(callback) {
+  const client = await pool.connect();
+  const tx = {
+    async run(sql, params = []) {
+      await client.query(convertPlaceholders(sql), params);
+    },
+    async getOne(sql, params = []) {
+      const result = await client.query(convertPlaceholders(sql), params);
+      return result.rows[0] || null;
+    },
+    async getAll(sql, params = []) {
+      const result = await client.query(convertPlaceholders(sql), params);
+      return result.rows;
+    },
+    async insert(sql, params = []) {
+      const pgSql = convertPlaceholders(sql);
+      // 트랜잭션 내에서는 실패 시 재시도 불가(abort됨) — RETURNING 항상 부착, 에러는 전파
+      const returningSQL = pgSql.includes('RETURNING') ? pgSql : pgSql.replace(/;?\s*$/, ' RETURNING id');
+      const result = await client.query(returningSQL, params);
+      return result.rows[0]?.id ?? null;
+    },
+  };
+  try {
+    await client.query('BEGIN');
+    const result = await callback(tx);
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    try {
+      await client.query('ROLLBACK');
+    } catch (rollbackErr) {
+      console.error('[DB Tx] ROLLBACK 실패:', rollbackErr.message);
+    }
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+module.exports = { getDb, runQuery, runInsert, getOne, getAll, runBatch, runMigration, pool, getConsecutiveErrors };

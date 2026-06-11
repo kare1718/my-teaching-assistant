@@ -7,17 +7,17 @@ import { askConfirm } from '../../lib/feedback';
 // 요금제 4단 — server/middleware/subscription.js 와 동기화 (모든 가격 VAT 별도)
 const PLANS = [
   { id: 'free', name: 'Free', price: 0, yearlyPrice: 0, maxStudents: '15명', features: ['학생 15명', '성적 관리', '출결', '공지', '수업 자료', 'Q&A'], desc: '1인 과외·소규모 체험' },
-  { id: 'starter', name: 'Starter', price: 49000, yearlyPrice: 41650, maxStudents: '50명', features: ['학생 50명', 'Free 기능 전체', '학생 관리 고급', '수납 기본', 'SMS 발송', '보호자 앱', '기본 상담 메모'], desc: '소형 학원 운영 기본팩', popular: true },
-  { id: 'pro', name: 'Pro', price: 129000, yearlyPrice: 109650, maxStudents: '100명', features: ['학생 100명', 'Starter 기능 전체', '자동화 엔진', '상담 CRM + 리드', '수납 예외 처리', '고급 리포트', 'AI 리포트'], desc: '성장 학원' },
+  { id: 'basic', name: 'Basic', price: 99000, yearlyPrice: 84150, maxStudents: '50명', features: ['학생 50명', 'Free 기능 전체', '학생 관리 고급', '수납 기본', 'SMS 발송', '보호자 앱', '기본 상담 메모'], desc: '소형 학원 운영 기본팩', popular: true },
+  { id: 'pro', name: 'Pro', price: 199000, yearlyPrice: 169150, maxStudents: '100명', features: ['학생 100명', 'Basic 기능 전체', '자동화 엔진', '상담 CRM + 리드', '수납 예외 처리', '고급 리포트', 'AI 리포트'], desc: '성장 학원' },
   { id: 'first_class', name: 'First Class', price: 0, yearlyPrice: 0, maxStudents: '무제한', features: ['학생 무제한', 'Pro 기능 전체', '게이미피케이션', '아바타/상점', 'AI 문제 생성', '브랜딩', '전담 지원'], desc: '관리형/입시형 학원', inquiry: true },
 ];
 
-const TIER_ORDER = ['free', 'starter', 'pro', 'first_class'];
+const TIER_ORDER = ['free', 'basic', 'pro', 'first_class'];
 
 // 레거시 tier → 현행 4단 매핑 (기존 DB 데이터 호환)
 const LEGACY_TIER_MAP = {
   trial: 'free',
-  basic: 'starter',
+  starter: 'basic',
   standard: 'pro',
   growth: 'pro',
   premium: 'first_class',
@@ -516,7 +516,7 @@ export default function SubscriptionPage() {
           })}
         </div>
         <p className="text-center text-[11px] text-slate-400 mt-4">
-          모든 요금은 부가세(VAT) 포함 가격입니다 &middot; 언제든 해지 가능
+          모든 요금은 부가세(VAT) 별도 가격입니다 &middot; 언제든 해지 가능
         </p>
       </div>
 

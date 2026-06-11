@@ -36,9 +36,9 @@ export default function LegalFooter() {
           <div>
             <h4 className="text-white text-xs font-bold uppercase tracking-widest mb-3">서비스</h4>
             <ul className="space-y-2 text-xs">
-              <li><Link to="/pricing" className="hover:text-white transition-colors">요금제</Link></li>
-              <li><Link to="/features" className="hover:text-white transition-colors">기능 소개</Link></li>
-              <li><Link to="/demo" className="hover:text-white transition-colors">데모 요청</Link></li>
+              <li><a href="/#pricing" className="hover:text-white transition-colors">요금제</a></li>
+              <li><a href="/#features" className="hover:text-white transition-colors">기능 소개</a></li>
+              <li><Link to="/onboarding" className="hover:text-white transition-colors">무료로 시작하기</Link></li>
             </ul>
           </div>
 
