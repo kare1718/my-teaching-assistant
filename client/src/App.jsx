@@ -6,6 +6,7 @@ import LoadingScreen from './components/LoadingScreen';
 import ThemeToggle from './components/ThemeToggle';
 import ErrorBoundary from './components/ErrorBoundary';
 import RouteErrorBoundary from './components/RouteErrorBoundary';
+import FeedbackHost from './components/FeedbackHost';
 
 // Route and shell chunks
 const SideNav = lazy(() => import('./components/SideNav'));
@@ -191,6 +192,7 @@ function App() {
           <AppLayout />
         </TenantProvider>
       </BrowserRouter>
+      <FeedbackHost />
     </ErrorBoundary>
   );
 }
