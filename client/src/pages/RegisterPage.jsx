@@ -463,6 +463,13 @@ export default function RegisterPage() {
                     <p style={{ marginTop: 8 }}><b>보유 및 이용 기간</b></p>
                     <p>- 서비스 탈퇴 시 또는 이용 목적 달성 시까지</p>
                     <p>- 단, 관련 법령에 의해 보존이 필요한 경우 해당 기간 동안 보관</p>
+                    <p style={{ marginTop: 12 }}>
+                      자세한 내용은{' '}
+                      <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: C.accent, fontWeight: 600 }}>개인정보처리방침 전문</a>
+                      {' '}및{' '}
+                      <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: C.accent, fontWeight: 600 }}>이용약관</a>
+                      에서 확인할 수 있습니다.
+                    </p>
                   </div>
                 )}
 

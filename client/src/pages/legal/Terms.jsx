@@ -13,7 +13,7 @@ export default function Terms() {
 
       <main className="flex-1 max-w-3xl w-full mx-auto px-6 py-12">
         <h1 className="text-3xl font-extrabold text-[var(--primary)] tracking-tight mb-2">이용약관</h1>
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-8">시행일: 2026년 4월 15일</p>
+        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-8">최종 개정일: 2026년 6월 12일 · 최초 시행일: 2026년 4월 15일</p>
 
         <article className="bg-white rounded-xl border border-slate-100 shadow-sm p-8 space-y-8 text-sm leading-7 text-slate-700">
           <section>
@@ -53,17 +53,30 @@ export default function Terms() {
           </section>
 
           <section>
-            <h2 className="text-lg font-bold text-[var(--primary)] mb-3">제6조 (이용자의 의무)</h2>
-            <p>이용자는 타인의 정보 도용, 서비스 운영 방해, 법령 위반 행위를 하여서는 안 되며, 입력한 학생·보호자 정보에 대해 개인정보보호법을 준수하여야 합니다.</p>
+            <h2 className="text-lg font-bold text-[var(--primary)] mb-3">제6조 (AI 기능의 이용)</h2>
+            <ol className="list-decimal pl-5 space-y-1">
+              <li>회사는 인공지능(AI)을 활용한 보조 기능(AI 보조, 퀴즈 생성, AI 리포트 등)을 제공할 수 있습니다.</li>
+              <li>AI가 생성한 결과물은 참고용 자료이며, 회사는 그 정확성·완전성을 보증하지 않습니다. 이용자는 결과물을 검토한 후 활용하여야 하며, 이를 그대로 사용하여 발생한 결과에 대한 책임은 이용자에게 있습니다.</li>
+              <li>AI 기능의 데이터 처리에 관한 사항은 개인정보처리방침에 따릅니다.</li>
+            </ol>
           </section>
 
           <section>
-            <h2 className="text-lg font-bold text-[var(--primary)] mb-3">제7조 (회사의 면책)</h2>
+            <h2 className="text-lg font-bold text-[var(--primary)] mb-3">제7조 (이용자의 의무 및 개인정보 보호)</h2>
+            <ol className="list-decimal pl-5 space-y-1">
+              <li>이용자는 타인의 정보 도용, 서비스 운영 방해, 법령 위반 행위를 하여서는 안 됩니다.</li>
+              <li>학원 운영자가 서비스에 등록하는 학생·보호자 정보의 개인정보처리자는 해당 학원이며, 학원 운영자는 정보주체로부터 적법한 동의(만 14세 미만 학생의 경우 법정대리인 동의)를 받는 등 개인정보보호법을 준수하여야 합니다.</li>
+              <li>회사는 학원이 등록한 정보를 서비스 제공 목적 범위 내에서 수탁 처리하며, 자세한 사항은 개인정보처리방침에 따릅니다.</li>
+            </ol>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-bold text-[var(--primary)] mb-3">제8조 (회사의 면책)</h2>
             <p>회사는 천재지변, 불가항력, 이용자의 귀책사유로 인한 서비스 중단·손해에 대하여 책임을 지지 않습니다.</p>
           </section>
 
           <section>
-            <h2 className="text-lg font-bold text-[var(--primary)] mb-3">제8조 (준거법 및 분쟁 해결)</h2>
+            <h2 className="text-lg font-bold text-[var(--primary)] mb-3">제9조 (준거법 및 분쟁 해결)</h2>
             <p>본 약관은 대한민국 법령에 따라 해석되며, 서비스 이용과 관련한 분쟁은 민사소송법상 관할 법원에 제소합니다.</p>
           </section>
         </article>

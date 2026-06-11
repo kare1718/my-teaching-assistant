@@ -540,12 +540,19 @@ export default function OnboardingPage() {
                     <div className="mt-3 ml-8 p-4 bg-white rounded-lg text-xs leading-relaxed text-slate-500 max-h-[200px] overflow-auto border border-slate-200">
                       <p>'나만의 조교' 서비스 제공을 위해 아래와 같이 개인정보를 수집 및 이용합니다.</p>
                       <p className="mt-2 font-bold text-slate-600">수집 항목</p>
-                      <p>- 성명, 휴대전화 번호</p>
+                      <p>- 성명, 아이디, 휴대전화 번호, 소속 학원명</p>
                       <p className="mt-2 font-bold text-slate-600">수집 및 이용 목적</p>
                       <p>- 서비스 이용에 따른 본인 확인, 학습 관리 서비스 제공, 원활한 상담 및 주요 공지사항 전달</p>
                       <p className="mt-2 font-bold text-slate-600">보유 및 이용 기간</p>
                       <p>- 서비스 탈퇴 시 또는 이용 목적 달성 시까지</p>
                       <p>- 단, 관련 법령에 의해 보존이 필요한 경우 해당 기간 동안 보관</p>
+                      <p className="mt-3">
+                        자세한 내용은{' '}
+                        <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-[var(--cta)] font-semibold hover:underline">개인정보처리방침 전문</a>
+                        {' '}및{' '}
+                        <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-[var(--cta)] font-semibold hover:underline">이용약관</a>
+                        에서 확인할 수 있습니다.
+                      </p>
                     </div>
                   )}
 
