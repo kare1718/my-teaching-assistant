@@ -161,7 +161,7 @@ const STORAGE_KEY   = 'menuFabY';
 const SIDEBAR_KEY   = 'adminSidebarOpen';
 const COLLAPSED_KEY = 'adminNavCollapsed';
 const PINNED_KEY    = 'adminSidebarPinned';
-const FONT = "'Paperlogy', 'Noto Sans KR', system-ui, sans-serif";
+const FONT = "'Paperlogy', 'KoPub Dotum', 'Noto Sans KR', system-ui, sans-serif";
 
 export default function SideNav() {
   const navigate  = useNavigate();
@@ -398,13 +398,13 @@ export default function SideNav() {
               width: '100%', padding: isLg ? '10px 12px' : '9px 10px', borderRadius: 8,
               border: 'none', cursor: 'pointer', fontFamily: 'inherit',
               fontSize: isLg ? 14 : 13, fontWeight: active ? 700 : 600,
-              background: active ? 'rgba(16,32,68,0.08)' : 'transparent',
-              color: active ? 'var(--primary)' : 'var(--foreground)',
+              background: active ? 'var(--nav-active-bg)' : 'transparent',
+              color: active ? '#fff' : 'rgba(255,255,255,0.72)',
               marginBottom: 2, textAlign: 'left',
             }}>
-              <span style={{ color: active ? 'var(--primary)' : 'var(--neutral-500)', display: 'flex' }}>{group.icon}</span>
+              <span style={{ color: active ? '#fff' : 'rgba(255,255,255,0.55)', display: 'flex' }}>{group.icon}</span>
               <span style={{ flex: 1 }}>{group.label}</span>
-              {active && <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--primary)' }} />}
+              {active && <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#fff' }} />}
             </button>
           );
         }
@@ -421,11 +421,11 @@ export default function SideNav() {
               border: 'none', cursor: 'pointer', fontFamily: 'inherit',
               fontSize: isLg ? 14 : 13,
               fontWeight: groupContainsActive ? 700 : 600,
-              background: groupContainsActive ? 'rgba(16,32,68,0.06)' : 'transparent',
-              color: groupContainsActive ? 'var(--primary)' : 'var(--foreground)',
+              background: groupContainsActive ? 'rgba(255,255,255,0.08)' : 'transparent',
+              color: groupContainsActive ? '#fff' : 'rgba(255,255,255,0.72)',
               textAlign: 'left',
             }}>
-              <span style={{ color: groupContainsActive ? 'var(--primary)' : 'var(--neutral-500)', display: 'flex' }}>
+              <span style={{ color: groupContainsActive ? '#fff' : 'rgba(255,255,255,0.55)', display: 'flex' }}>
                 {group.icon}
               </span>
               <span style={{ flex: 1 }}>{group.label}</span>
@@ -446,7 +446,7 @@ export default function SideNav() {
             </button>
 
             {expanded && (
-              <div style={{ paddingLeft: 10, marginTop: 2, borderLeft: '1px solid var(--border)', marginLeft: isLg ? 22 : 20 }}>
+              <div style={{ paddingLeft: 10, marginTop: 2, borderLeft: '1px solid rgba(255,255,255,0.15)', marginLeft: isLg ? 22 : 20 }}>
                 {group.children.map(item => {
                   const active = isChildActive(item.path);
                   const badgeCount = item.badgeKey ? badgeCounts[item.badgeKey] : 0;
@@ -458,11 +458,11 @@ export default function SideNav() {
                       border: 'none', cursor: 'pointer', fontFamily: 'inherit',
                       fontSize: isLg ? 13 : 12,
                       fontWeight: active ? 700 : 500,
-                      background: active ? 'rgba(16,32,68,0.1)' : 'transparent',
-                      color: active ? 'var(--primary)' : 'var(--muted-foreground)',
+                      background: active ? 'var(--nav-active-bg)' : 'transparent',
+                      color: active ? '#fff' : 'rgba(255,255,255,0.6)',
                       transition: 'background 0.12s', marginBottom: 1, textAlign: 'left',
                     }}
-                    onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--neutral-50)'; }}
+                    onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
                     onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}
                     >
                       <span style={{ flex: 1 }}>{item.label}</span>
@@ -494,7 +494,7 @@ export default function SideNav() {
         if (item.divider) {
           return (
             <div key={idx} style={{
-              fontSize: 11, fontWeight: 700, color: 'var(--neutral-400)',
+              fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.45)',
               padding: '16px 10px 6px', letterSpacing: '0.04em',
             }}>
               {item.label}
@@ -508,21 +508,21 @@ export default function SideNav() {
             width: '100%', padding: '8px 10px', borderRadius: 7,
             border: 'none', cursor: 'pointer', fontFamily: 'inherit',
             fontSize: 14, fontWeight: isActive ? 600 : 400,
-            background: isActive ? 'var(--primary-lighter)' : 'transparent',
-            color: isActive ? 'var(--primary)' : 'var(--foreground)',
+            background: isActive ? 'var(--nav-active-bg)' : 'transparent',
+            color: isActive ? '#fff' : 'rgba(255,255,255,0.72)',
             transition: 'background 0.12s', marginBottom: 1, textAlign: 'left',
           }}
-          onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--neutral-50)'; }}
+          onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
           onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
           >
-            <span style={{ color: isActive ? 'var(--primary)' : 'var(--neutral-500)', display: 'flex' }}>
+            <span style={{ color: isActive ? '#fff' : 'rgba(255,255,255,0.55)', display: 'flex' }}>
               {item.icon}
             </span>
             <div style={{ flex: 1 }}>
               <span>{item.label}</span>
-              {item.desc && <div style={{ fontSize: 11, color: 'var(--neutral-400)', fontWeight: 400, marginTop: 2 }}>{item.desc}</div>}
+              {item.desc && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', fontWeight: 400, marginTop: 2 }}>{item.desc}</div>}
             </div>
-            {isActive && <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--primary)' }} />}
+            {isActive && <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#fff' }} />}
           </button>
         );
       })}
@@ -555,15 +555,16 @@ export default function SideNav() {
     </div>
   );
 
-  const renderSwitchButton = (onNavigate) => (
+  const renderSwitchButton = (onNavigate, dark = false) => (
     <div style={{ marginTop: 'auto' }}>
       {user.role === 'superadmin' && !isSuperAdminPage && (
-        <div style={{ padding: '10px 14px', borderTop: '1px solid var(--border)' }}>
+        <div style={{ padding: '10px 14px', borderTop: dark ? '1px solid var(--nav-border)' : '1px solid var(--border)' }}>
           <button onClick={() => onNavigate('/superadmin')} style={{
             width: '100%', padding: '9px', borderRadius: 8,
-            border: '1px solid var(--border)', cursor: 'pointer',
+            border: dark ? '1px solid rgba(255,255,255,0.22)' : '1px solid var(--border)', cursor: 'pointer',
             fontFamily: 'inherit', fontSize: 13, fontWeight: 600,
-            background: 'var(--warning-light)', color: 'var(--foreground)',
+            background: dark ? 'rgba(255,255,255,0.1)' : 'var(--warning-light)',
+            color: dark ? '#fff' : 'var(--foreground)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             transition: 'background 0.12s',
           }}>
@@ -572,13 +573,13 @@ export default function SideNav() {
         </div>
       )}
       {isAdminUser && (
-        <div style={{ padding: '10px 14px', borderTop: '1px solid var(--border)' }}>
+        <div style={{ padding: '10px 14px', borderTop: dark ? '1px solid var(--nav-border)' : '1px solid var(--border)' }}>
           <button onClick={() => onNavigate(isAdminPage ? '/student' : '/admin')} style={{
             width: '100%', padding: '9px', borderRadius: 8,
-            border: '1px solid var(--border)', cursor: 'pointer',
+            border: dark ? '1px solid rgba(255,255,255,0.22)' : '1px solid var(--border)', cursor: 'pointer',
             fontFamily: 'inherit', fontSize: 13, fontWeight: 600,
-            background: isAdminPage ? 'var(--info-light)' : 'var(--warning-light)',
-            color: isAdminPage ? 'var(--primary)' : 'var(--foreground)',
+            background: dark ? 'rgba(255,255,255,0.1)' : (isAdminPage ? 'var(--info-light)' : 'var(--warning-light)'),
+            color: dark ? '#fff' : (isAdminPage ? 'var(--primary)' : 'var(--foreground)'),
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             transition: 'background 0.12s',
           }}>
@@ -599,8 +600,8 @@ export default function SideNav() {
         <div id="admin-sidebar" style={{
           position: 'fixed', top: NAV_H, left: 0, bottom: 0,
           width: sidebarOpen ? SIDEBAR_W : 0,
-          background: 'var(--card)', zIndex: 180,
-          borderRight: sidebarOpen ? '1px solid var(--border)' : 'none',
+          background: 'var(--nav-bg)', zIndex: 180,
+          borderRight: sidebarOpen ? '1px solid var(--nav-border)' : 'none',
           transition: 'width 0.22s cubic-bezier(0.16,1,0.3,1)',
           overflow: 'hidden', display: 'flex', flexDirection: 'column',
           fontFamily: FONT,
@@ -608,11 +609,11 @@ export default function SideNav() {
           <div style={{ width: SIDEBAR_W, minWidth: SIDEBAR_W, display: 'flex', flexDirection: 'column', height: '100%' }}>
             {/* Sidebar header */}
             <div style={{
-              padding: isLg ? '14px 16px' : '12px 14px', borderBottom: '1px solid var(--border)',
+              padding: isLg ? '14px 16px' : '12px 14px', borderBottom: '1px solid var(--nav-border)',
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: isLg ? 14 : 13, fontWeight: 700, color: 'var(--muted-foreground)', margin: 0, letterSpacing: '0.02em' }}>
+                <span style={{ fontSize: isLg ? 14 : 13, fontWeight: 700, color: 'var(--nav-fg-muted)', margin: 0, letterSpacing: '0.02em' }}>
                   {isSuperAdminPage ? '플랫폼 관리' : '관리자 메뉴'}
                 </span>
                 {totalBadge > 0 && (
@@ -632,7 +633,7 @@ export default function SideNav() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <button onClick={togglePin} title={pinned ? '메뉴 고정 해제' : '메뉴 고정'} style={{
                     background: 'none', border: 'none', cursor: 'pointer', padding: 4,
-                    color: pinned ? 'var(--primary)' : 'var(--neutral-400)', display: 'flex', alignItems: 'center',
+                    color: pinned ? '#fff' : 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center',
                     borderRadius: 5, transition: 'color 0.2s',
                   }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill={pinned ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -641,7 +642,7 @@ export default function SideNav() {
                   </button>
                   <button onClick={toggleSidebar} style={{
                     background: 'none', border: 'none', cursor: 'pointer', padding: 4,
-                    color: 'var(--neutral-400)', display: 'flex', alignItems: 'center',
+                    color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center',
                     borderRadius: 5,
                   }}>
                     {Icons.chevronLeft}
@@ -650,7 +651,7 @@ export default function SideNav() {
               )}
             </div>
             {isSuperAdminPage ? renderSuperAdminMenu() : renderAdminMenu()}
-            {renderSwitchButton(navigate)}
+            {renderSwitchButton(navigate, true)}
           </div>
         </div>
 
@@ -679,10 +680,11 @@ export default function SideNav() {
           </button>
         )}
 
-        {/* Push content right — 데스크톱은 항상, 모바일은 고정 시만 */}
+        {/* Push content right — 데스크톱은 항상, 모바일은 고정 시만
+            (#route-content 단일 래퍼를 밀어냄 — 페이지별 클래스 의존 제거) */}
         <style>{`
-          .content, .main-content { margin-left: ${sidebarOpen ? SIDEBAR_W + 'px' : '0'} !important; transition: margin-left 0.22s cubic-bezier(0.16,1,0.3,1); }
-          @media (max-width: 768px) { .content, .main-content { margin-left: ${pinned && sidebarOpen ? SIDEBAR_W + 'px' : '0'} !important; } }
+          #route-content { margin-left: ${sidebarOpen ? SIDEBAR_W + 'px' : '0'} !important; transition: margin-left 0.22s cubic-bezier(0.16,1,0.3,1); }
+          @media (max-width: 768px) { #route-content { margin-left: ${pinned && sidebarOpen ? SIDEBAR_W + 'px' : '0'} !important; } }
           @keyframes badgePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
         `}</style>
       </>
