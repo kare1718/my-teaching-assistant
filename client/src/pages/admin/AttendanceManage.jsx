@@ -42,7 +42,7 @@ export default function AttendanceManage() {
   useEffect(() => { loadStats(); }, [statsMonth]);
 
   if (loading) return <PageLoading wrap="main-content" />;
-  if (error) return <div className="main-content" style={{ padding: 20, color: 'oklch(48% 0.20 25)' }}>{error}</div>;
+  if (error) return <div className="main-content p-5 text-[#ba1a1a]">{error}</div>;
 
   const summary = todayData || {};
   const total = summary.total || 0;
@@ -51,67 +51,57 @@ export default function AttendanceManage() {
   const late = summary.late || 0;
 
   return (
-    <div className="main-content" style={{ padding: '20px 20px', maxWidth: 1400, margin: '0 auto' }}>
-      <h2 style={{ fontSize: '1.5em', fontWeight: 800, marginBottom: 20 }}>출결 / 과제 관리</h2>
+    <div className="main-content p-5 max-w-[1400px] mx-auto">
+      <h2 className="text-2xl font-extrabold text-[var(--primary)] tracking-tight mb-5">출결 / 과제 관리</h2>
 
       {/* 2열 레이아웃: 좌측 출결 + 우측 과제 */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: isLg ? '1fr 1fr' : '1fr',
-        gap: 20,
-        alignItems: 'start',
-      }}>
+      <div
+        className="grid gap-5 items-start"
+        style={{ gridTemplateColumns: isLg ? '1fr 1fr' : '1fr' }}
+      >
         {/* ═══ 좌측: 출결 관리 ═══ */}
         <div>
-          <div style={{
-            background: '#fff', borderRadius: 12, border: '1px solid #f1f5f9',
-            padding: 20, marginBottom: 16,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#102044' }}>📋 출결 현황</h3>
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5 mb-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="m-0 text-base font-extrabold text-[var(--primary)]">📋 출결 현황</h3>
               <input
                 type="date"
                 value={selectedDate}
                 onChange={e => setSelectedDate(e.target.value)}
-                style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, fontFamily: 'inherit' }}
+                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]"
               />
             </div>
 
             {/* 요약 카드 (2x2) */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 16 }}>
+            <div className="grid grid-cols-2 gap-2.5 mb-4">
               {[
                 { label: '총원', value: total, bg: '#f0f4ff', color: '#102044' },
                 { label: '출석', value: present, bg: '#ecfdf5', color: '#059669' },
                 { label: '미출석', value: absent, bg: '#fef2f2', color: '#dc2626' },
                 { label: '지각', value: late, bg: '#fffbeb', color: '#d97706' },
               ].map(c => (
-                <div key={c.label} style={{
-                  background: c.bg, borderRadius: 10, padding: '14px 16px', textAlign: 'center',
-                }}>
-                  <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 4, fontWeight: 600 }}>{c.label}</p>
-                  <p style={{ fontSize: 28, fontWeight: 800, color: c.color, margin: 0, fontVariantNumeric: 'tabular-nums' }}>{c.value}</p>
+                <div key={c.label} className="rounded-lg px-4 py-3.5 text-center" style={{ background: c.bg }}>
+                  <p className="text-xs text-slate-400 mb-1 font-semibold">{c.label}</p>
+                  <p className="text-[28px] font-extrabold m-0 tabular-nums" style={{ color: c.color }}>{c.value}</p>
                 </div>
               ))}
             </div>
 
             {/* 미출석자 목록 */}
             <div>
-              <h4 style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, color: '#102044' }}>미출석 학생</h4>
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2.5">미출석 학생</h4>
               {absentList.length === 0 ? (
-                <p style={{ color: '#94a3b8', fontSize: 13, textAlign: 'center', padding: '16px 0' }}>미출석 학생이 없습니다 ✅</p>
+                <p className="text-slate-400 text-[13px] text-center py-4">미출석 학생이 없습니다 ✅</p>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div className="flex flex-col gap-1.5">
                   {absentList.map((s, i) => (
-                    <div key={i} style={{
-                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                      padding: '10px 14px', borderRadius: 8, background: '#fef2f2', border: '1px solid #fecaca',
-                    }}>
+                    <div key={i} className="flex justify-between items-center px-3.5 py-2.5 rounded-lg bg-red-50 border border-red-200">
                       <div>
-                        <span style={{ fontWeight: 700, color: '#102044', fontSize: 14 }}>{s.name}</span>
-                        <span style={{ marginLeft: 8, fontSize: 12, color: '#94a3b8' }}>{s.school} {s.grade}</span>
+                        <span className="font-bold text-[var(--primary)] text-sm">{s.name}</span>
+                        <span className="ml-2 text-xs text-slate-400">{s.school} {s.grade}</span>
                       </div>
                       {s.parent_phone && (
-                        <span style={{ fontSize: 12, color: '#94a3b8' }}>{s.parent_phone}</span>
+                        <span className="text-xs text-slate-400">{s.parent_phone}</span>
                       )}
                     </div>
                   ))}
@@ -121,56 +111,52 @@ export default function AttendanceManage() {
           </div>
 
           {/* 월간 통계 */}
-          <div style={{
-            background: '#fff', borderRadius: 12, border: '1px solid #f1f5f9',
-            padding: 20,
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#102044' }}>📊 월간 출석 통계</h3>
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="m-0 text-base font-extrabold text-[var(--primary)]">📊 월간 출석 통계</h3>
               <input
                 type="month"
                 value={statsMonth}
                 onChange={e => setStatsMonth(e.target.value)}
-                style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: 13, fontFamily: 'inherit' }}
+                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]"
               />
             </div>
             {stats && stats.daily ? (
-              <div style={{ overflowX: 'auto' }}>
-                <div style={{ display: 'flex', gap: 2, minWidth: stats.daily.length * 24 }}>
+              <div className="overflow-x-auto">
+                <div className="flex gap-0.5" style={{ minWidth: stats.daily.length * 24 }}>
                   {stats.daily.map((d, i) => {
                     const rate = d.total > 0 ? Math.round((d.present / d.total) * 100) : 0;
                     const height = Math.max(8, rate * 0.8);
                     return (
-                      <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, minWidth: 22 }}>
-                        <div style={{
-                          width: 16, height, borderRadius: 4,
-                          background: rate >= 90 ? '#059669' : rate >= 70 ? '#d97706' : '#dc2626',
-                          marginBottom: 4,
-                        }} />
-                        <span style={{ fontSize: 10, color: '#94a3b8' }}>{d.day}</span>
+                      <div key={i} className="flex flex-col items-center flex-1 min-w-[22px]">
+                        <div
+                          className="w-4 rounded mb-1"
+                          style={{
+                            height,
+                            background: rate >= 90 ? '#059669' : rate >= 70 ? '#d97706' : '#dc2626',
+                          }}
+                        />
+                        <span className="text-[10px] text-slate-400">{d.day}</span>
                       </div>
                     );
                   })}
                 </div>
                 {stats.average !== undefined && (
-                  <p style={{ marginTop: 12, fontSize: 14, color: '#64748b' }}>
-                    월 평균 출석률: <strong style={{ color: '#102044' }}>{stats.average}%</strong>
+                  <p className="mt-3 text-sm text-slate-500">
+                    월 평균 출석률: <strong className="text-[var(--primary)]">{stats.average}%</strong>
                   </p>
                 )}
               </div>
             ) : (
-              <p style={{ color: '#94a3b8', fontSize: 13, textAlign: 'center', padding: '16px 0' }}>통계 데이터가 없습니다</p>
+              <p className="text-slate-400 text-[13px] text-center py-4">통계 데이터가 없습니다</p>
             )}
           </div>
         </div>
 
         {/* ═══ 우측: 과제 관리 ═══ */}
-        <div style={{
-          background: '#fff', borderRadius: 12, border: '1px solid #f1f5f9',
-          padding: 20, minHeight: 300,
-        }}>
-          <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 800, color: '#102044' }}>📝 과제 관리</h3>
-          <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>로딩 중...</div>}>
+        <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5 min-h-[300px]">
+          <h3 className="mt-0 mb-4 text-base font-extrabold text-[var(--primary)]">📝 과제 관리</h3>
+          <Suspense fallback={<div className="p-10 text-center text-slate-400">로딩 중...</div>}>
             <HomeworkManage embedded />
           </Suspense>
         </div>
