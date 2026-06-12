@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete, authFileUrl } from '../../api';
 import { askConfirm } from '../../lib/feedback';
+import { Card, StatusBadge, EmptyState } from '../../components/ui';
 
 export default function QnAManage() {
   const [questions, setQuestions] = useState([]);
@@ -77,175 +78,158 @@ export default function QnAManage() {
   const displayQuestions = viewMode === 'students' && selectedStudent ? studentQuestions : filtered;
 
   return (
-    <div className="content max-w-7xl mx-auto w-full">
-      <div className="breadcrumb">
+    <div className="main-content p-5 max-w-[1200px] mx-auto w-full">
+      <div className="text-xs text-slate-400 mb-4">
         <Link to="/admin">대시보드</Link> &gt; <span>질문 관리</span>
       </div>
 
-      {msg && <div className="alert alert-success" style={{ marginBottom: 'var(--space-2)' }}>{msg}</div>}
+      {msg && <div className="px-4 py-2.5 rounded-lg bg-emerald-50 text-emerald-700 mb-4 text-sm font-semibold">{msg}</div>}
 
       {/* 가로 2열: 왼쪽 질문목록 | 오른쪽 답변패널 */}
-      <div className="qna-layout" style={{ display: 'grid', gridTemplateColumns: '1fr min(400px, 40vw)', gap: 14, alignItems: 'start' }}>
+      <div className="grid grid-cols-[1fr_min(400px,40vw)] max-md:grid-cols-1 gap-3.5 items-start">
 
         {/* 왼쪽: 질문 목록 */}
         <div>
           {/* 뷰 전환 + 필터 */}
-          <div style={{ display: 'flex', gap: 'var(--space-1)', marginBottom: 'var(--space-2)', flexWrap: 'wrap', alignItems: 'center' }}>
-            <button className={`btn btn-sm ${viewMode === 'questions' ? 'btn-primary' : 'btn-outline'}`}
+          <div className="flex gap-1.5 mb-2 flex-wrap items-center">
+            <button className={`px-3.5 py-1.5 rounded-full border-none cursor-pointer text-[13px] font-semibold transition-colors ${viewMode === 'questions' ? 'bg-[var(--primary)] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
               onClick={() => { setViewMode('questions'); setSelectedStudent(null); }}>💬 전체 질문</button>
-            <button className={`btn btn-sm ${viewMode === 'students' ? 'btn-primary' : 'btn-outline'}`}
+            <button className={`px-3.5 py-1.5 rounded-full border-none cursor-pointer text-[13px] font-semibold transition-colors ${viewMode === 'students' ? 'bg-[var(--primary)] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
               onClick={() => { setViewMode('students'); setSelectedStudent(null); setSelectedQ(null); }}>📊 학생별</button>
-            <span style={{ borderLeft: '1px solid var(--border)', margin: '0 2px' }} />
+            <span className="self-stretch border-l border-slate-200 mx-0.5" />
             {viewMode === 'questions' && (
               <>
-                <button className={`btn btn-sm ${filter === 'all' ? 'btn-primary' : 'btn-outline'}`} onClick={() => setFilter('all')}>
+                <button className={`px-3.5 py-1.5 rounded-full border-none cursor-pointer text-[13px] font-semibold transition-colors ${filter === 'all' ? 'bg-[var(--primary)] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`} onClick={() => setFilter('all')}>
                   전체 ({questions.length})
                 </button>
-                <button className={`btn btn-sm ${filter === 'pending' ? 'btn-warning' : 'btn-outline'}`} onClick={() => setFilter('pending')}>
+                <button className={`px-3.5 py-1.5 rounded-full border-none cursor-pointer text-[13px] font-semibold transition-colors ${filter === 'pending' ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`} onClick={() => setFilter('pending')}>
                   미답변 ({pendingCount})
                 </button>
-                <button className={`btn btn-sm ${filter === 'answered' ? 'btn-success' : 'btn-outline'}`} onClick={() => setFilter('answered')}>
+                <button className={`px-3.5 py-1.5 rounded-full border-none cursor-pointer text-[13px] font-semibold transition-colors ${filter === 'answered' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`} onClick={() => setFilter('answered')}>
                   답변완료 ({answeredCount})
                 </button>
               </>
             )}
-            <button className={`btn btn-sm ${showGuides ? 'btn-primary' : 'btn-outline'}`}
-              onClick={() => setShowGuides(!showGuides)} style={{ marginLeft: 'auto' }}>
+            <button className={`ml-auto px-3.5 py-1.5 rounded-full border-none cursor-pointer text-[13px] font-semibold transition-colors ${showGuides ? 'bg-[var(--primary)] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+              onClick={() => setShowGuides(!showGuides)}>
               📋 답변 기준
             </button>
           </div>
 
           {/* 학생별 모드: 학생 목록 or 학생 질문 */}
           {viewMode === 'students' && !selectedStudent && (
-            <div className="card" style={{ padding: 'var(--space-4)' }}>
-              <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 'var(--space-3)' }}>📊 학생별 질문 현황</h3>
+            <Card padding="p-5">
+              <h3 className="text-[15px] font-bold text-[var(--primary)] mb-3 mt-0">📊 학생별 질문 현황</h3>
               {summary.length === 0 ? (
-                <p style={{ color: 'var(--muted-foreground)', textAlign: 'center', padding: 30, fontSize: 13 }}>질문 데이터가 없습니다.</p>
+                <EmptyState icon="📊" title="질문 데이터가 없습니다." />
               ) : (
-                <div style={{ maxHeight: 600, overflowY: 'auto' }}>
+                <div className="max-h-[600px] overflow-y-auto">
                   {summary.map(s => (
                     <div key={s.student_id} onClick={() => loadStudentQuestions(s.student_id, s.student_name)}
-                      style={{
-                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                        padding: '10px 14px', borderRadius: 'var(--radius)', border: '1px solid var(--border)',
-                        marginBottom: 'var(--space-1)', cursor: 'pointer', transition: 'background 0.15s'
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'var(--neutral-50)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'var(--card)'}>
+                      className="flex justify-between items-center px-3.5 py-2.5 rounded-lg border border-slate-200 mb-1 cursor-pointer bg-white hover:bg-slate-50 transition-colors">
                       <div>
-                        <span style={{ fontWeight: 700, fontSize: 14 }}>{s.student_name}</span>
-                        <span style={{ fontSize: 12, color: 'var(--muted-foreground)', marginLeft: 6 }}>{s.school} {s.grade}</span>
+                        <span className="font-bold text-sm">{s.student_name}</span>
+                        <span className="text-xs text-slate-400 ml-1.5">{s.school} {s.grade}</span>
                       </div>
-                      <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
-                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--muted-foreground)' }}>{s.total_questions}건</span>
+                      <div className="flex gap-2 items-center">
+                        <span className="text-xs text-slate-400">{s.total_questions}건</span>
                         {s.total_questions - s.answered_count > 0 && (
-                          <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10, background: 'var(--warning-light)', color: 'oklch(35% 0.12 75)' }}>
-                            미답변 {s.total_questions - s.answered_count}
-                          </span>
+                          <StatusBadge variant="warning">미답변 {s.total_questions - s.answered_count}</StatusBadge>
                         )}
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-            </div>
+            </Card>
           )}
 
           {/* 학생별 모드: 선택된 학생 질문 or 전체 질문 */}
           {(viewMode === 'questions' || (viewMode === 'students' && selectedStudent)) && (
-            <div className="card" style={{ padding: 'var(--space-4)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-3)' }}>
-                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>
+            <Card padding="p-5">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="m-0 text-[15px] font-bold text-[var(--primary)]">
                   {selectedStudent ? `📋 ${selectedStudent.name}님의 질문` : '💬 질문 목록'}
                 </h3>
-                <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
-                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--muted-foreground)' }}>{displayQuestions.length}건</span>
+                <div className="flex gap-2 items-center">
+                  <span className="text-xs text-slate-400">{displayQuestions.length}건</span>
                   {selectedStudent && (
-                    <button className="btn btn-outline btn-sm" onClick={() => setSelectedStudent(null)}>← 목록</button>
+                    <button className="bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors" onClick={() => setSelectedStudent(null)}>← 목록</button>
                   )}
                 </div>
               </div>
 
               {displayQuestions.length === 0 ? (
-                <p style={{ color: 'var(--muted-foreground)', textAlign: 'center', padding: 30, fontSize: 13 }}>질문이 없습니다.</p>
+                <EmptyState icon="💬" title="질문이 없습니다." />
               ) : (
-                <div style={{ maxHeight: 600, overflowY: 'auto' }}>
+                <div className="max-h-[600px] overflow-y-auto">
                   {displayQuestions.map(q => (
                     <div key={q.id} onClick={() => { setSelectedQ(q); setEditAnswer(q.answer || ''); }}
-                      style={{
-                        padding: 'var(--space-3) var(--space-3)', borderBottom: '1px solid var(--neutral-50)', cursor: 'pointer',
-                        borderLeft: q.status === 'pending' ? '3px solid var(--warning)' : '3px solid var(--success)',
-                        background: selectedQ?.id === q.id ? 'var(--info-light)' : 'transparent',
-                        transition: 'background 0.15s',
-                      }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-1)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
-                          <span style={{ fontWeight: 600, fontSize: 13 }}>{q.student_name || selectedStudent?.name}</span>
-                          {q.school && <span style={{ color: 'var(--muted-foreground)', fontSize: 11 }}>{q.school} {q.grade}</span>}
+                      className={`p-3 border-b border-slate-50 cursor-pointer border-l-[3px] transition-colors ${q.status === 'pending' ? 'border-l-amber-400' : 'border-l-emerald-500'} ${selectedQ?.id === q.id ? 'bg-blue-50' : 'bg-transparent'}`}>
+                      <div className="flex justify-between items-center mb-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-semibold text-[13px]">{q.student_name || selectedStudent?.name}</span>
+                          {q.school && <span className="text-[11px] text-slate-400">{q.school} {q.grade}</span>}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
-                          <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>{formatDate(q.created_at)}</span>
-                          <span className={`badge ${q.status === 'answered' ? 'badge-success' : 'badge-warning'}`} style={{ fontSize: 10 }}>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] text-slate-400">{formatDate(q.created_at)}</span>
+                          <StatusBadge variant={q.status === 'answered' ? 'success' : 'warning'}>
                             {q.status === 'answered' ? '답변완료' : '미답변'}
-                          </span>
+                          </StatusBadge>
                         </div>
                       </div>
-                      <div style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.5 }}>
+                      <div className="text-[13px] text-slate-600 leading-normal">
                         {(q.question || '(이미지 질문)').length > 80
                           ? (q.question || '(이미지 질문)').slice(0, 80) + '...'
                           : (q.question || '(이미지 질문)')}
                       </div>
-                      {q.image && <span style={{ fontSize: 11, color: 'var(--primary)' }}>📷 이미지 첨부</span>}
+                      {q.image && <span className="text-[11px] text-[var(--primary)]">📷 이미지 첨부</span>}
                     </div>
                   ))}
                 </div>
               )}
-            </div>
+            </Card>
           )}
         </div>
 
         {/* 오른쪽: 답변 패널 + 답변 기준 */}
         <div>
           {/* 선택된 질문 상세 + 답변 */}
-          <div className="card" style={{ padding: 'var(--space-4)', marginBottom: showGuides ? 10 : 0 }}>
+          <Card padding="p-5" className={showGuides ? 'mb-2.5' : 'mb-0'}>
             {!selectedQ ? (
-              <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--muted-foreground)' }}>
-                <div style={{ fontSize: 32, marginBottom: 'var(--space-2)' }}>💬</div>
-                <div style={{ fontSize: 'var(--text-sm)', fontWeight: 600 }}>질문을 선택하세요</div>
-                <div style={{ fontSize: 'var(--text-xs)', marginTop: 'var(--space-1)' }}>왼쪽 목록에서 질문을 클릭하면 여기에 표시됩니다</div>
-              </div>
+              <EmptyState icon="💬" title="질문을 선택하세요" description="왼쪽 목록에서 질문을 클릭하면 여기에 표시됩니다" />
             ) : (
               <>
                 {/* 질문 내용 */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-2)' }}>
+                <div className="flex justify-between items-start mb-2">
                   <div>
-                    <span style={{ fontWeight: 700, fontSize: 15 }}>{selectedQ.student_name}</span>
-                    {selectedQ.school && <span style={{ color: 'var(--muted-foreground)', fontSize: 12, marginLeft: 6 }}>{selectedQ.school} {selectedQ.grade}</span>}
-                    <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginTop: 2 }}>{formatDate(selectedQ.created_at)}</div>
+                    <span className="font-bold text-[15px] text-[var(--primary)]">{selectedQ.student_name}</span>
+                    {selectedQ.school && <span className="text-xs text-slate-400 ml-1.5">{selectedQ.school} {selectedQ.grade}</span>}
+                    <div className="text-[11px] text-slate-400 mt-0.5">{formatDate(selectedQ.created_at)}</div>
                   </div>
-                  <button className="btn btn-danger btn-sm" onClick={() => deleteQuestion(selectedQ.id)} style={{ fontSize: 10, padding: '2px 6px' }}>삭제</button>
+                  <button className="px-1.5 py-0.5 rounded-md border-none cursor-pointer bg-red-50 text-red-600 text-[10px] font-semibold hover:bg-red-100 transition-colors" onClick={() => deleteQuestion(selectedQ.id)}>삭제</button>
                 </div>
 
-                <div style={{ background: 'var(--muted)', padding: 'var(--space-3) var(--space-3)', borderRadius: 'var(--radius)', marginBottom: 'var(--space-3)', fontSize: 'var(--text-sm)', lineHeight: 1.6 }}>
+                <div className="bg-slate-50 p-3 rounded-lg mb-3 text-sm leading-relaxed">
                   <strong>Q.</strong> {selectedQ.question || '(이미지 질문)'}
                   {selectedQ.image && (
-                    <img src={authFileUrl(selectedQ.image)} alt="첨부" style={{ display: 'block', maxWidth: '100%', maxHeight: 300, borderRadius: 'var(--radius-sm)', marginTop: 'var(--space-2)', cursor: 'pointer' }}
+                    <img src={authFileUrl(selectedQ.image)} alt="첨부" className="block max-w-full max-h-[300px] rounded-md mt-2 cursor-pointer"
                       onClick={() => window.open(authFileUrl(selectedQ.image), '_blank')} />
                   )}
                 </div>
 
                 {/* 기존 답변 표시 */}
                 {selectedQ.answer && (
-                  <div style={{ padding: '10px 14px', borderRadius: 'var(--radius)', fontSize: 13, lineHeight: 1.6, border: '1px solid var(--border)', marginBottom: 'var(--space-3)', whiteSpace: 'pre-wrap' }}>
-                    <strong style={{ color: 'var(--primary)' }}>A. 선생님</strong>
-                    {selectedQ.answered_at && <span style={{ fontSize: 11, color: 'var(--muted-foreground)', marginLeft: 'var(--space-2)' }}>{formatDate(selectedQ.answered_at)}</span>}
-                    <div style={{ marginTop: 'var(--space-1)' }}>{selectedQ.answer}</div>
+                  <div className="px-3.5 py-2.5 rounded-lg text-[13px] leading-relaxed border border-slate-200 mb-3 whitespace-pre-wrap">
+                    <strong className="text-[var(--primary)]">A. 선생님</strong>
+                    {selectedQ.answered_at && <span className="text-[11px] text-slate-400 ml-2">{formatDate(selectedQ.answered_at)}</span>}
+                    <div className="mt-1">{selectedQ.answer}</div>
                   </div>
                 )}
 
                 {/* 답변 입력 */}
                 <div>
-                  <label style={{ fontSize: 'var(--text-xs)', fontWeight: 600, display: 'block', marginBottom: 'var(--space-1)' }}>
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">
                     {selectedQ.answer ? '답변 수정' : '답변 작성'}
                   </label>
                   <textarea
@@ -253,34 +237,33 @@ export default function QnAManage() {
                     onChange={(e) => setEditAnswer(e.target.value)}
                     placeholder="답변을 입력하세요..."
                     rows={4}
-                    style={{ width: '100%', padding: 'var(--space-2) 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: 13, resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                    className="w-full box-border px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)] resize-y font-[inherit]"
                   />
-                  <button className="btn btn-primary" onClick={() => submitAnswer(selectedQ.id)} disabled={!editAnswer.trim()}
-                    style={{ width: '100%', marginTop: 'var(--space-1)' }}>
+                  <button className="w-full mt-1 bg-[var(--cta)] text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 font-display border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" onClick={() => submitAnswer(selectedQ.id)} disabled={!editAnswer.trim()}>
                     {selectedQ.answer ? '답변 수정' : '답변 등록'}
                   </button>
                 </div>
               </>
             )}
-          </div>
+          </Card>
 
           {/* 답변 기준 (토글) */}
           {showGuides && (
-            <div className="card" style={{ padding: 'var(--space-4)' }}>
-              <h3 style={{ fontSize: 'var(--text-sm)', fontWeight: 700, marginBottom: 10 }}>📋 답변 기준</h3>
+            <Card padding="p-5">
+              <h3 className="text-sm font-bold text-[var(--primary)] mb-2.5 mt-0">📋 답변 기준</h3>
 
               {/* 기준 추가 폼 */}
-              <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
-                <div style={{ fontSize: 'var(--text-xs)', fontWeight: 600, marginBottom: 'var(--space-1)' }}>{editingGuide ? '기준 수정' : '새 기준 추가'}</div>
+              <div className="border border-slate-200 rounded-lg p-3 mb-3">
+                <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{editingGuide ? '기준 수정' : '새 기준 추가'}</div>
                 <input placeholder="기준 제목" value={guideForm.title}
                   onChange={e => setGuideForm({ ...guideForm, title: e.target.value })}
-                  style={{ width: '100%', padding: '6px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', fontSize: 13, marginBottom: 'var(--space-1)', boxSizing: 'border-box' }} />
+                  className="w-full box-border px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)] mb-1" />
                 <textarea placeholder="답변 기준 내용" value={guideForm.content}
                   onChange={e => setGuideForm({ ...guideForm, content: e.target.value })}
                   rows={3}
-                  style={{ width: '100%', padding: '6px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', fontSize: 13, resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }} />
-                <div style={{ display: 'flex', gap: 'var(--space-1)', marginTop: 'var(--space-1)' }}>
-                  <button className="btn btn-primary btn-sm" onClick={async () => {
+                  className="w-full box-border px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)] resize-y font-[inherit]" />
+                <div className="flex gap-1.5 mt-1">
+                  <button className="bg-[var(--cta)] text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:opacity-90 font-display border-none cursor-pointer" onClick={async () => {
                     if (!guideForm.title.trim() || !guideForm.content.trim()) { setMsg('제목과 내용을 입력해주세요.'); return; }
                     try {
                       if (editingGuide) { await apiPut(`/questions/guidelines/${editingGuide}`, guideForm); }
@@ -293,54 +276,45 @@ export default function QnAManage() {
                     } catch (e) { setMsg(e.message); }
                   }}>{editingGuide ? '수정' : '추가'}</button>
                   {editingGuide && (
-                    <button className="btn btn-outline btn-sm" onClick={() => { setEditingGuide(null); setGuideForm({ title: '', content: '' }); }}>취소</button>
+                    <button className="bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 px-3 py-1.5 rounded-lg text-xs cursor-pointer transition-colors" onClick={() => { setEditingGuide(null); setGuideForm({ title: '', content: '' }); }}>취소</button>
                   )}
                 </div>
               </div>
 
               {/* 기준 목록 */}
               {guidelines.length === 0 ? (
-                <p style={{ color: 'var(--muted-foreground)', textAlign: 'center', padding: 'var(--space-4)', fontSize: 13 }}>등록된 답변 기준이 없습니다.</p>
+                <EmptyState icon="📋" title="등록된 답변 기준이 없습니다." />
               ) : (
-                <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+                <div className="max-h-[300px] overflow-y-auto">
                   {guidelines.map(g => (
-                    <div key={g.id} style={{
-                      border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 10, marginBottom: 'var(--space-1)',
-                      borderLeft: '3px solid var(--primary)'
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-1)' }}>
-                        <h4 style={{ fontSize: 13, fontWeight: 700, margin: 0 }}>{g.title}</h4>
-                        <div style={{ display: 'flex', gap: 'var(--space-1)', flexShrink: 0 }}>
-                          <button className="btn btn-outline btn-sm" onClick={() => {
+                    <div key={g.id} className="border border-slate-200 rounded-lg p-2.5 mb-1 border-l-[3px] border-l-[var(--primary)]">
+                      <div className="flex justify-between items-start mb-1">
+                        <h4 className="text-[13px] font-bold m-0">{g.title}</h4>
+                        <div className="flex gap-1.5 shrink-0">
+                          <button className="px-1.5 py-px rounded-md border border-slate-200 cursor-pointer bg-white text-[10px] text-slate-600 hover:bg-slate-50 transition-colors" onClick={() => {
                             setEditingGuide(g.id);
                             setGuideForm({ title: g.title, content: g.content });
-                          }} style={{ fontSize: 10, padding: '1px 6px' }}>수정</button>
-                          <button className="btn btn-danger btn-sm" onClick={async () => {
+                          }}>수정</button>
+                          <button className="px-1.5 py-px rounded-md border-none cursor-pointer bg-red-50 text-red-600 text-[10px] font-semibold hover:bg-red-100 transition-colors" onClick={async () => {
                             if (!await askConfirm('이 기준을 삭제하시겠습니까?')) return;
                             await apiDelete(`/questions/guidelines/${g.id}`);
                             setMsg('삭제되었습니다.');
                             loadGuidelines();
                             setTimeout(() => setMsg(''), 2000);
-                          }} style={{ fontSize: 10, padding: '1px 6px' }}>삭제</button>
+                          }}>삭제</button>
                         </div>
                       </div>
-                      <div style={{ fontSize: 'var(--text-xs)', color: 'var(--foreground)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                      <div className="text-xs text-slate-600 leading-relaxed whitespace-pre-wrap">
                         {g.content}
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-            </div>
+            </Card>
           )}
         </div>
       </div>
-
-      <style>{`
-        @media (max-width: 768px) {
-          .qna-layout { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
     </div>
   );
 }
