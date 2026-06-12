@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { api, apiPut } from '../../api';
 import { useTenantConfig } from '../../contexts/TenantContext';
 import { toast, askConfirm } from '../../lib/feedback';
+import { Card, StatusBadge } from '../../components/ui';
 import {
   LineChart, Line, BarChart, Bar, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -160,36 +161,36 @@ export default function StudentManage() {
 
   const grades = editForm.school ? ((config.schools || []).find(s => s.name === editForm.school)?.grades || []) : [];
 
-  if (!student) return <div className="content"><p>로딩 중...</p></div>;
+  if (!student) return <div className="main-content"><p className="text-sm text-slate-400">로딩 중...</p></div>;
 
   const getExamBadgeClass = (type) => {
-    if (!type) return 'badge badge-warning';
+    const base = 'inline-flex items-center whitespace-nowrap rounded-full px-3 py-0.5 text-xs font-bold';
+    if (!type) return `${base} bg-amber-100 text-amber-700`;
     const catIdx = (config.examTypes || []).findIndex(c => (c.types || []).includes(type));
-    const badges = ['badge badge-info', 'badge badge-warning', 'badge badge-purple', 'badge badge-danger', 'badge badge-success'];
-    return catIdx >= 0 ? badges[catIdx % badges.length] : 'badge badge-warning';
+    const badges = ['bg-blue-100 text-blue-700', 'bg-amber-100 text-amber-700', 'bg-purple-100 text-purple-700', 'bg-red-100 text-red-700', 'bg-emerald-100 text-emerald-700'];
+    return catIdx >= 0 ? `${base} ${badges[catIdx % badges.length]}` : `${base} bg-amber-100 text-amber-700`;
   };
 
   return (
-    <div className="content max-w-6xl mx-auto">
-      <div className="breadcrumb">
-        <Link to="/admin">대시보드</Link> &gt;{' '}
-        <Link to={`/admin/school/${encodeURIComponent(student.school)}`}>{student.school}</Link> &gt;{' '}
-        <Link to={`/admin/school/${encodeURIComponent(student.school)}/grade/${encodeURIComponent(student.grade)}`}>{student.grade}</Link> &gt;{' '}
-        <span>{student.name}</span>
+    <div className="main-content max-w-6xl mx-auto">
+      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400 mb-4">
+        <Link className="text-[var(--primary)] font-medium hover:underline" to="/admin">대시보드</Link> &gt;{' '}
+        <Link className="text-[var(--primary)] font-medium hover:underline" to={`/admin/school/${encodeURIComponent(student.school)}`}>{student.school}</Link> &gt;{' '}
+        <Link className="text-[var(--primary)] font-medium hover:underline" to={`/admin/school/${encodeURIComponent(student.school)}/grade/${encodeURIComponent(student.grade)}`}>{student.grade}</Link> &gt;{' '}
+        <span className="text-slate-700 font-bold">{student.name}</span>
       </div>
 
-      {msg && <div className="alert alert-success">{msg}</div>}
+      {msg && <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[9999] px-6 py-2.5 rounded-xl bg-[var(--primary)] text-white text-[13px] font-semibold shadow-lg">{msg}</div>}
 
-      <div className="card">
-        <h2 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+      <Card padding="p-5" className="mb-5">
+        <h2 className="flex justify-between items-center flex-wrap gap-2 text-base font-extrabold text-[var(--primary)] tracking-tight mb-4">
           {student.name} 학생 정보
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="flex gap-1.5 flex-wrap items-center">
             {student.blocked ? (
-              <span style={{ fontSize: 11, color: 'oklch(48% 0.20 25)', fontWeight: 700, padding: '2px 8px', background: 'var(--destructive-light)', borderRadius: 6 }}>🚫 차단됨</span>
+              <StatusBadge variant="danger">🚫 차단됨</StatusBadge>
             ) : null}
             <button
-              className={`btn btn-sm ${student.blocked ? 'btn-primary' : 'btn-outline'}`}
-              style={!student.blocked ? { color: 'oklch(48% 0.20 25)', borderColor: 'oklch(48% 0.20 25)' } : {}}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${student.blocked ? 'bg-[var(--primary)] text-white hover:opacity-90' : 'bg-white border border-red-200 text-red-600 hover:bg-red-50'}`}
               onClick={async () => {
                 const action = student.blocked ? '해제' : '차단';
                 if (!await askConfirm(`${student.name} 학생의 접속을 ${action}하시겠습니까?`)) return;
@@ -203,7 +204,7 @@ export default function StudentManage() {
               {student.blocked ? '🔓 차단 해제' : '🔒 접속 차단'}
             </button>
             <button
-              className="btn btn-outline btn-sm"
+              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
               onClick={async () => {
                 const pw = prompt('새 비밀번호를 입력하세요 (4자 이상):');
                 if (!pw || pw.length < 4) { if (pw !== null) toast('비밀번호는 4자 이상이어야 합니다.'); return; }
@@ -217,13 +218,13 @@ export default function StudentManage() {
               🔑 비번 초기화
             </button>
             <button
-              className="btn btn-outline btn-sm"
+              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
               onClick={() => navigate(`/admin/student-view/${id}`)}
             >
               👁️ 학생 페이지 보기
             </button>
             <button
-              className={`btn ${editing ? 'btn-secondary' : 'btn-primary'} btn-sm`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors font-display ${editing ? 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50' : 'bg-[var(--cta)] text-white hover:opacity-90'}`}
               onClick={() => setEditing(!editing)}
             >
               {editing ? '취소' : '정보 수정'}
@@ -233,87 +234,84 @@ export default function StudentManage() {
 
         {editing ? (
           <div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>이름 *</label>
-                <input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">이름 *</label>
+                <input className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
               </div>
-              <div className="form-group">
-                <label>연락처 *</label>
-                <input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} />
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">연락처 *</label>
+                <input className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} />
               </div>
             </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>학교 *</label>
-                <select value={editForm.school} onChange={(e) => setEditForm({ ...editForm, school: e.target.value, grade: '' })}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">학교 *</label>
+                <select className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" value={editForm.school} onChange={(e) => setEditForm({ ...editForm, school: e.target.value, grade: '' })}>
                   {(config.schools || []).map((s) => <option key={s.name} value={s.name}>{s.name}</option>)}
                 </select>
               </div>
-              <div className="form-group">
-                <label>학년 *</label>
-                <select value={editForm.grade} onChange={(e) => setEditForm({ ...editForm, grade: e.target.value })}>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">학년 *</label>
+                <select className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" value={editForm.grade} onChange={(e) => setEditForm({ ...editForm, grade: e.target.value })}>
                   <option value="">선택하세요</option>
                   {grades.map((g) => <option key={g} value={g}>{g}</option>)}
                 </select>
               </div>
             </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>학부모 이름</label>
-                <input value={editForm.parentName} onChange={(e) => setEditForm({ ...editForm, parentName: e.target.value })} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">학부모 이름</label>
+                <input className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" value={editForm.parentName} onChange={(e) => setEditForm({ ...editForm, parentName: e.target.value })} />
               </div>
-              <div className="form-group">
-                <label>학부모 연락처</label>
-                <input value={editForm.parentPhone} onChange={(e) => setEditForm({ ...editForm, parentPhone: e.target.value })} />
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">학부모 연락처</label>
+                <input className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" value={editForm.parentPhone} onChange={(e) => setEditForm({ ...editForm, parentPhone: e.target.value })} />
               </div>
             </div>
-            <div className="btn-group">
-              <button className="btn btn-success" onClick={saveEdit}>저장</button>
-              <button className="btn btn-secondary" onClick={() => setEditing(false)}>취소</button>
+            <div className="flex gap-2 mt-4">
+              <button className="bg-[var(--cta)] text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 font-display" onClick={saveEdit}>저장</button>
+              <button className="bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 px-4 py-2 rounded-lg text-sm font-bold" onClick={() => setEditing(false)}>취소</button>
             </div>
           </div>
         ) : (
-          <table>
+          <table className="w-full">
             <tbody>
-              <tr><th style={{ width: 120 }}>아이디</th><td>{student.username}</td></tr>
-              <tr><th>이름</th><td>{student.name}</td></tr>
-              <tr><th>학교</th><td>{student.school}</td></tr>
-              <tr><th>학년</th><td>{student.grade}</td></tr>
-              <tr><th>연락처</th><td>{student.phone || '-'}</td></tr>
-              <tr><th>학부모</th><td>{student.parent_name || '-'}</td></tr>
-              <tr><th>학부모 연락처</th><td>{student.parent_phone || '-'}</td></tr>
+              <tr><th className="text-left text-xs font-bold text-slate-500 px-3 py-2 bg-slate-50 w-32">아이디</th><td className="px-3 py-2 text-sm border-b border-slate-50">{student.username}</td></tr>
+              <tr><th className="text-left text-xs font-bold text-slate-500 px-3 py-2 bg-slate-50 w-32">이름</th><td className="px-3 py-2 text-sm border-b border-slate-50">{student.name}</td></tr>
+              <tr><th className="text-left text-xs font-bold text-slate-500 px-3 py-2 bg-slate-50 w-32">학교</th><td className="px-3 py-2 text-sm border-b border-slate-50">{student.school}</td></tr>
+              <tr><th className="text-left text-xs font-bold text-slate-500 px-3 py-2 bg-slate-50 w-32">학년</th><td className="px-3 py-2 text-sm border-b border-slate-50">{student.grade}</td></tr>
+              <tr><th className="text-left text-xs font-bold text-slate-500 px-3 py-2 bg-slate-50 w-32">연락처</th><td className="px-3 py-2 text-sm border-b border-slate-50">{student.phone || '-'}</td></tr>
+              <tr><th className="text-left text-xs font-bold text-slate-500 px-3 py-2 bg-slate-50 w-32">학부모</th><td className="px-3 py-2 text-sm border-b border-slate-50">{student.parent_name || '-'}</td></tr>
+              <tr><th className="text-left text-xs font-bold text-slate-500 px-3 py-2 bg-slate-50 w-32">학부모 연락처</th><td className="px-3 py-2 text-sm border-b border-slate-50">{student.parent_phone || '-'}</td></tr>
             </tbody>
           </table>
         )}
-      </div>
+      </Card>
 
-      <div className="card">
-        <h2>특이사항</h2>
+      <Card padding="p-5" className="mb-5">
+        <h2 className="text-base font-extrabold text-[var(--primary)] tracking-tight mb-4">특이사항</h2>
         <textarea
+          className="w-full min-h-[100px] resize-y px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]"
           value={editForm.memo}
           onChange={(e) => setEditForm({ ...editForm, memo: e.target.value })}
           placeholder="학생에 대한 특이사항을 입력하세요..."
         />
-        <div className="btn-group">
-          <button className="btn btn-primary" onClick={saveMemo}>저장</button>
+        <div className="flex gap-2 mt-4">
+          <button className="bg-[var(--cta)] text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 font-display" onClick={saveMemo}>저장</button>
         </div>
-      </div>
+      </Card>
 
       {/* 클리닉 이력 */}
-      <div className="card">
-        <h2 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Card padding="p-5" className="mb-5">
+        <h2 className="flex justify-between items-center text-base font-extrabold text-[var(--primary)] tracking-tight mb-4">
           📋 클리닉 이력
-          <span style={{
-            fontSize: 13, fontWeight: 700, padding: '3px 12px', borderRadius: 20,
-            background: clinicHistory.length > 0 ? 'oklch(92% 0.04 280)' : 'var(--neutral-100)',
-            color: clinicHistory.length > 0 ? 'oklch(28% 0.10 280)' : 'var(--neutral-400)'
-          }}>총 {clinicHistory.length}회</span>
+          <span className={`rounded-full px-3 py-0.5 text-xs font-bold ${clinicHistory.length > 0 ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-400'}`}>총 {clinicHistory.length}회</span>
         </h2>
         {clinicHistory.length === 0 ? (
-          <p style={{ color: 'var(--neutral-400)' }}>클리닉 이력이 없습니다.</p>
+          <p className="text-sm text-slate-400">클리닉 이력이 없습니다.</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="flex flex-col gap-2">
             {clinicHistory.map(h => {
               const stMap = { pending: { text: '대기', bg: 'var(--warning-light)', color: 'oklch(35% 0.12 75)', border: 'var(--warning)' }, approved: { text: '승인', bg: 'var(--success-light)', color: 'oklch(30% 0.12 145)', border: 'var(--success)' }, rejected: { text: '거절', bg: 'var(--destructive-light)', color: 'oklch(35% 0.15 25)', border: 'var(--destructive)' }, completed: { text: '완료', bg: 'oklch(92% 0.04 280)', color: 'oklch(28% 0.10 280)', border: 'oklch(50% 0.20 280)' } };
               const st = stMap[h.status] || stMap.pending;
@@ -321,34 +319,28 @@ export default function StudentManage() {
               const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
               const dateLabel = `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}(${dayNames[d.getDay()]})`;
               return (
-                <div key={h.id} style={{
-                  border: '1px solid var(--border)', borderRadius: 10, padding: 12,
-                  borderLeft: `4px solid ${st.border}`,
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                    <span style={{ fontWeight: 700, fontSize: 14 }}>📅 {dateLabel} {h.time_slot}</span>
-                    <span style={{
-                      fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10,
-                      background: st.bg, color: st.color
-                    }}>{st.text}</span>
+                <div key={h.id} className="border border-slate-100 rounded-xl p-3 bg-white" style={{ borderLeft: `4px solid ${st.border}` }}>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-bold text-sm">📅 {dateLabel} {h.time_slot}</span>
+                    <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: st.bg, color: st.color }}>{st.text}</span>
                   </div>
-                  <div style={{ fontSize: 13, marginBottom: 2 }}>
-                    <span style={{ fontWeight: 600 }}>{h.topic}</span>
-                    {h.detail && <span style={{ color: 'var(--muted-foreground)', marginLeft: 6 }}>{h.detail}</span>}
+                  <div className="text-[13px] mb-0.5">
+                    <span className="font-semibold">{h.topic}</span>
+                    {h.detail && <span className="text-slate-500 ml-1.5">{h.detail}</span>}
                   </div>
                   {h.admin_note && (
-                    <div style={{ fontSize: 12, color: 'var(--primary)', marginBottom: 2 }}>💬 {h.admin_note}</div>
+                    <div className="text-xs text-[var(--primary)] mb-0.5">💬 {h.admin_note}</div>
                   )}
                   {h.notes && h.notes.length > 0 && (
-                    <div style={{ marginTop: 6, paddingTop: 6, borderTop: '1px dashed var(--border)' }}>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: 4 }}>📝 기록 ({h.notes.length}건)</div>
+                    <div className="mt-1.5 pt-1.5 border-t border-dashed border-slate-200">
+                      <div className="text-[11px] font-bold text-slate-400 mb-1">📝 기록 ({h.notes.length}건)</div>
                       {h.notes.map(n => (
-                        <div key={n.id} style={{ background: 'var(--background)', borderRadius: 6, padding: 6, marginBottom: 3, fontSize: 12 }}>
-                          <span style={{ fontWeight: 600 }}>{n.author_name}</span>
-                          <span style={{ color: 'var(--muted-foreground)', marginLeft: 6, fontSize: 11 }}>
+                        <div key={n.id} className="bg-slate-50 rounded-lg p-1.5 mb-1 text-xs">
+                          <span className="font-semibold">{n.author_name}</span>
+                          <span className="text-slate-400 ml-1.5 text-[11px]">
                             {new Date(n.created_at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                           </span>
-                          <div style={{ marginTop: 2, whiteSpace: 'pre-wrap', lineHeight: 1.4 }}>{n.content}</div>
+                          <div className="mt-0.5 whitespace-pre-wrap leading-snug">{n.content}</div>
                         </div>
                       ))}
                     </div>
@@ -358,53 +350,55 @@ export default function StudentManage() {
             })}
           </div>
         )}
-      </div>
+      </Card>
 
-      <div className="card">
-        <h2>성적 현황</h2>
+      <Card padding="p-5" className="mb-5">
+        <h2 className="text-base font-extrabold text-[var(--primary)] tracking-tight mb-4">성적 현황</h2>
         {scores.length === 0 ? (
-          <p style={{ color: 'var(--neutral-400)' }}>등록된 성적이 없습니다.</p>
+          <p className="text-sm text-slate-400">등록된 성적이 없습니다.</p>
         ) : (
-          <table>
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm">
             <thead>
-              <tr><th>분류</th><th>시험명</th><th>날짜</th><th>점수</th><th>등수</th><th>비고</th><th></th></tr>
+              <tr className="bg-slate-50"><th className="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">분류</th><th className="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">시험명</th><th className="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">날짜</th><th className="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">점수</th><th className="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">등수</th><th className="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">비고</th><th className="px-3 py-2"></th></tr>
             </thead>
             <tbody>
               {scores.map((s, i) => (
                 <tr key={i}>
-                  <td>
+                  <td className="px-3 py-2 text-sm border-b border-slate-50">
                     <span className={getExamBadgeClass(s.exam_type)}>
                       {s.exam_type}
                     </span>
                   </td>
-                  <td>{s.exam_name}</td>
-                  <td>{s.exam_date || '-'}</td>
-                  <td style={{ fontWeight: 600 }}>{s.score}/{s.max_score}</td>
-                  <td>{s.rank_num ? `${s.rank_num}등 / ${s.total_students}명` : '-'}</td>
-                  <td>{s.note || '-'}</td>
-                  <td><button className={`btn btn-sm ${showDist === s.exam_id ? 'btn-primary' : 'btn-outline'}`} onClick={() => loadDistribution(s.exam_id)}>분포</button></td>
+                  <td className="px-3 py-2 text-sm border-b border-slate-50">{s.exam_name}</td>
+                  <td className="px-3 py-2 text-sm border-b border-slate-50">{s.exam_date || '-'}</td>
+                  <td className="px-3 py-2 text-sm border-b border-slate-50 font-semibold">{s.score}/{s.max_score}</td>
+                  <td className="px-3 py-2 text-sm border-b border-slate-50">{s.rank_num ? `${s.rank_num}등 / ${s.total_students}명` : '-'}</td>
+                  <td className="px-3 py-2 text-sm border-b border-slate-50">{s.note || '-'}</td>
+                  <td className="px-3 py-2 text-sm border-b border-slate-50"><button className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${showDist === s.exam_id ? 'bg-[var(--cta)] text-white hover:opacity-90' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`} onClick={() => loadDistribution(s.exam_id)}>분포</button></td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         )}
-      </div>
+      </Card>
 
       {showDist && distribution && (
-        <div className="card">
-          <h2 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+        <Card padding="p-5" className="mb-5">
+          <h2 className="flex justify-between items-center flex-wrap gap-2 text-base font-extrabold text-[var(--primary)] tracking-tight mb-4">
             성적 분포 (만점: {distribution.maxScore}점)
-            <button className="btn btn-outline btn-sm" onClick={() => { setShowDist(null); setDistribution(null); }}>닫기</button>
+            <button className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors" onClick={() => { setShowDist(null); setDistribution(null); }}>닫기</button>
           </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10, marginBottom: 20 }}>
-            {distribution.myScore !== null && (<div className="stat-card" style={{ borderColor: 'var(--info)' }}><span className="stat-label">학생 점수</span><span className="stat-value" style={{ color: 'var(--info)' }}>{distribution.myScore}<span className="stat-unit">점</span></span></div>)}
-            <div className="stat-card"><span className="stat-label">평균</span><span className="stat-value">{distribution.average}<span className="stat-unit">점</span></span></div>
-            <div className="stat-card" style={{ borderColor: 'var(--success)' }}><span className="stat-label">최고점</span><span className="stat-value" style={{ color: 'var(--success)' }}>{distribution.highest}<span className="stat-unit">점</span></span></div>
-            <div className="stat-card" style={{ borderColor: 'var(--destructive)' }}><span className="stat-label">최저점</span><span className="stat-value" style={{ color: 'var(--destructive)' }}>{distribution.lowest}<span className="stat-unit">점</span></span></div>
-            <div className="stat-card"><span className="stat-label">응시인원</span><span className="stat-value">{distribution.totalStudents}<span className="stat-unit">명</span></span></div>
+          <div className="grid gap-2.5 mb-5 [grid-template-columns:repeat(auto-fit,minmax(120px,1fr))]">
+            {distribution.myScore !== null && (<div className="flex flex-col items-center p-3 rounded-xl border border-blue-200 bg-white"><span className="text-xs font-bold text-slate-400 mb-1">학생 점수</span><span className="text-xl font-extrabold tracking-tight tabular-nums text-[var(--cta)]">{distribution.myScore}<span className="text-xs font-normal text-slate-400 ml-0.5">점</span></span></div>)}
+            <div className="flex flex-col items-center p-3 rounded-xl border border-slate-100 bg-white"><span className="text-xs font-bold text-slate-400 mb-1">평균</span><span className="text-xl font-extrabold tracking-tight tabular-nums text-[var(--primary)]">{distribution.average}<span className="text-xs font-normal text-slate-400 ml-0.5">점</span></span></div>
+            <div className="flex flex-col items-center p-3 rounded-xl border border-emerald-200 bg-white"><span className="text-xs font-bold text-slate-400 mb-1">최고점</span><span className="text-xl font-extrabold tracking-tight tabular-nums text-emerald-600">{distribution.highest}<span className="text-xs font-normal text-slate-400 ml-0.5">점</span></span></div>
+            <div className="flex flex-col items-center p-3 rounded-xl border border-red-200 bg-white"><span className="text-xs font-bold text-slate-400 mb-1">최저점</span><span className="text-xl font-extrabold tracking-tight tabular-nums text-red-500">{distribution.lowest}<span className="text-xs font-normal text-slate-400 ml-0.5">점</span></span></div>
+            <div className="flex flex-col items-center p-3 rounded-xl border border-slate-100 bg-white"><span className="text-xs font-bold text-slate-400 mb-1">응시인원</span><span className="text-xl font-extrabold tracking-tight tabular-nums text-[var(--primary)]">{distribution.totalStudents}<span className="text-xs font-normal text-slate-400 ml-0.5">명</span></span></div>
           </div>
 
-          {normalData.length > 0 && (<div style={{ marginBottom: 24 }}><h3>표준분포 곡선</h3>
+          {normalData.length > 0 && (<div className="mb-6"><h3 className="text-sm font-bold text-[var(--primary)] mb-2">표준분포 곡선</h3>
             <ResponsiveContainer width="100%" height={250}><AreaChart data={normalData}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="score" fontSize={11} stroke="var(--muted-foreground)" label={{ value: '점수', position: 'insideBottomRight', offset: -5, fill: 'var(--muted-foreground)', fontSize: 12 }} />
@@ -415,7 +409,7 @@ export default function StudentManage() {
               <ReferenceLine x={distribution.average} stroke="var(--foreground)" strokeWidth={1.5} strokeDasharray="3 3" label={{ value: `평균 ${distribution.average}`, fill: 'var(--foreground)', fontSize: 11, position: 'insideTopRight' }} />
             </AreaChart></ResponsiveContainer></div>)}
 
-          <h3>구간별 인원 분포</h3>
+          <h3 className="text-sm font-bold text-[var(--primary)] mb-2">구간별 인원 분포</h3>
           <ResponsiveContainer width="100%" height={250}><BarChart data={distData}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="range" fontSize={11} stroke="var(--muted-foreground)" />
@@ -425,26 +419,26 @@ export default function StudentManage() {
               {distData.map((entry, index) => (<Cell key={index} fill={entry.isStudentRange ? 'var(--destructive)' : 'var(--primary)'} />))}
             </Bar>
           </BarChart></ResponsiveContainer>
-        </div>
+        </Card>
       )}
 
       {visibleTrends.length > 0 && (
-        <div className="card">
-          <h2>성적 추이 그래프</h2>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+        <Card padding="p-5" className="mb-5">
+          <h2 className="text-base font-extrabold text-[var(--primary)] tracking-tight mb-4">성적 추이 그래프</h2>
+          <div className="flex gap-1.5 flex-wrap mb-4">
             {visibleTrends.map(t => (
-              <button key={t.key} className={`btn btn-sm ${showTrend[t.key] ? 'btn-primary' : 'btn-outline'}`} onClick={() => toggleTrend(t.key)}>
+              <button key={t.key} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${showTrend[t.key] ? 'bg-[var(--cta)] text-white hover:opacity-90' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`} onClick={() => toggleTrend(t.key)}>
                 {showTrend[t.key] ? '▲' : '▼'} {t.title}
               </button>
             ))}
           </div>
           {visibleTrends.map(t => showTrend[t.key] && (
-            <div key={t.key} style={{ marginBottom: 20 }}>
-              <h3 style={{ color: t.color }}>{t.title}</h3>
+            <div key={t.key} className="mb-5">
+              <h3 className="text-sm font-bold mb-2" style={{ color: t.color }}>{t.title}</h3>
               {renderTrendChart(t.data, t.title, t.color)}
             </div>
           ))}
-        </div>
+        </Card>
       )}
     </div>
   );

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { askConfirm } from '../../lib/feedback';
-import { PageLoading } from '../../components/ui';
+import { PageLoading, StatusBadge } from '../../components/ui';
 
 const CLASS_TYPES = [
   { value: 'regular', label: '정규반' },
@@ -172,34 +172,34 @@ export default function ClassManage() {
   if (loading) return <PageLoading wrap="main-content" />;
 
   return (
-    <div className="main-content" style={{ padding: 20, maxWidth: 1200, margin: '0 auto' }}>
-      <h2 style={{ fontSize: '1.5em', fontWeight: 800, marginBottom: 16 }}>수업 관리</h2>
+    <div className="main-content p-5 max-w-[1200px] mx-auto">
+      <h2 className="text-2xl font-extrabold text-[var(--primary)] tracking-tight mb-4">수업 관리</h2>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        <button style={{ padding: '10px 20px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'default' }}>
+      <div className="flex gap-2 mb-5">
+        <button className="px-5 py-2.5 bg-[var(--primary)] text-white border-none rounded-lg font-bold text-[13px] cursor-default">
           반 관리
         </button>
-        <Link to="/admin/schedules" style={{ padding: '10px 20px', background: 'white', border: '1px solid #e2e8f0', color: '#64748b', borderRadius: 8, fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
+        <Link to="/admin/schedules" className="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-lg font-bold text-[13px] no-underline hover:bg-slate-50 transition-colors">
           시간표
         </Link>
       </div>
 
       {msg && (
-        <div style={{ padding: '10px 16px', borderRadius: 8, background: 'var(--success-light)', color: 'oklch(52% 0.14 160)', marginBottom: 16, fontSize: 14, fontWeight: 600 }}>
+        <div className="px-4 py-2.5 rounded-lg bg-emerald-50 text-emerald-700 mb-4 text-sm font-semibold">
           {msg}
         </div>
       )}
 
       {/* 필터 + 추가 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+        <div className="flex gap-1.5 flex-wrap">
           <select value={filterType} onChange={e => setFilterType(e.target.value)}
-            style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, fontFamily: 'inherit' }}>
+            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]">
             <option value="">전체 유형</option>
             {CLASS_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
           <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-            style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, fontFamily: 'inherit' }}>
+            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]">
             <option value="">전체 상태</option>
             <option value="active">운영중</option>
             <option value="paused">일시정지</option>
@@ -207,55 +207,47 @@ export default function ClassManage() {
           </select>
         </div>
         <button onClick={() => { setShowForm(true); setEditingClass(null); setForm({ name: '', class_type: 'regular', subject: '', teacher_id: '', capacity: '', room: '', start_date: '', end_date: '', memo: '' }); }}
-          style={{ padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'var(--primary)', color: 'white', fontWeight: 600, fontSize: 13 }}>
+          className="bg-[var(--cta)] text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 font-display cursor-pointer border-none transition-opacity">
           + 반 추가
         </button>
       </div>
 
       {/* 반 카드 목록 */}
       {classes.length === 0 ? (
-        <div style={{ padding: 40, textAlign: 'center', color: 'var(--neutral-500)', background: 'var(--card)', borderRadius: 12, border: '1px solid var(--border)' }}>
+        <div className="p-10 text-center text-slate-400 bg-white rounded-xl border border-slate-100 shadow-sm">
           등록된 반이 없습니다.
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 12 }}>
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-3">
           {classes.map(cls => (
-            <div key={cls.id} onClick={() => openDetail(cls.id)} style={{
-              background: 'var(--card)', borderRadius: 12, padding: 16, border: '1px solid var(--border)',
-              cursor: 'pointer', transition: 'box-shadow 0.15s',
-            }}
+            <div key={cls.id} onClick={() => openDetail(cls.id)}
+              className="bg-white rounded-xl p-4 border border-slate-100 cursor-pointer transition-shadow"
               onMouseEnter={e => e.currentTarget.style.boxShadow = '0 2px 12px oklch(0% 0 0 / 0.08)'}
               onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
-                <div style={{ minWidth: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  <span style={{ fontWeight: 700, fontSize: 15 }} title={cls.name}>{cls.name}</span>
-                  <span style={{
-                    marginLeft: 8, padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
-                    background: badgeColor(cls.class_type) + '20', color: badgeColor(cls.class_type),
-                  }}>
+              <div className="flex justify-between items-start mb-2 gap-2">
+                <div className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+                  <span className="font-bold text-[15px] text-[var(--primary)]" title={cls.name}>{cls.name}</span>
+                  <span className="ml-2 rounded-full px-2 py-0.5 text-[11px] font-bold whitespace-nowrap"
+                    style={{ background: badgeColor(cls.class_type) + '20', color: badgeColor(cls.class_type) }}>
                     {CLASS_TYPES.find(t => t.value === cls.class_type)?.label || cls.class_type}
                   </span>
                 </div>
-                <span style={{
-                  padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
-                  background: cls.status === 'active' ? 'var(--success-light)' : 'var(--muted)',
-                  color: cls.status === 'active' ? 'oklch(52% 0.14 160)' : 'var(--neutral-500)',
-                }}>
+                <StatusBadge variant={cls.status === 'active' ? 'success' : 'neutral'} className="flex-shrink-0">
                   {statusLabel(cls.status)}
-                </span>
+                </StatusBadge>
               </div>
-              <div style={{ fontSize: 13, color: 'var(--neutral-600)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div className="text-[13px] text-slate-600 flex flex-col gap-1">
                 {cls.subject && <div>과목: {cls.subject}</div>}
                 {cls.teacher_name && <div>강사: {cls.teacher_name}</div>}
                 {cls.room && <div>강의실: {cls.room}</div>}
                 <div>정원: {cls.current_count || 0}{cls.capacity ? ` / ${cls.capacity}명` : '명'}</div>
               </div>
-              <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+              <div className="flex gap-1.5 mt-2.5">
                 <button onClick={e => { e.stopPropagation(); openEdit(cls); }}
-                  style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', background: 'white', fontSize: 12, fontFamily: 'inherit' }}>수정</button>
+                  className="px-2.5 py-1 rounded-md border border-slate-200 cursor-pointer bg-white text-xs text-slate-600 hover:bg-slate-50 transition-colors">수정</button>
                 {cls.status !== 'closed' && (
                   <button onClick={e => { e.stopPropagation(); handleClose(cls.id); }}
-                    style={{ padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'var(--destructive-light)', color: 'oklch(48% 0.20 25)', fontSize: 12, fontFamily: 'inherit' }}>종료</button>
+                    className="px-2.5 py-1 rounded-md border-none cursor-pointer bg-red-50 text-red-600 text-xs hover:bg-red-100 transition-colors">종료</button>
                 )}
               </div>
             </div>
@@ -265,44 +257,44 @@ export default function ClassManage() {
 
       {/* 반 생성/수정 모달 */}
       {showForm && (
-        <div style={{ position: 'fixed', inset: 0, background: 'oklch(0% 0 0 / 0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        <div className="fixed inset-0 z-[1000] bg-black/40 flex items-center justify-center p-5"
           onClick={() => setShowForm(false)}>
-          <div style={{ background: 'white', borderRadius: 16, padding: 24, width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto' }}
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-[480px] max-h-[90vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>{editingClass ? '반 수정' : '반 추가'}</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <h3 className="text-lg font-bold text-[var(--primary)] mb-4">{editingClass ? '반 수정' : '반 추가'}</h3>
+            <div className="flex flex-col gap-3">
               <input placeholder="반 이름 *" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
-                style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, fontFamily: 'inherit' }} />
+                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" />
               <select value={form.class_type} onChange={e => setForm({ ...form, class_type: e.target.value })}
-                style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, fontFamily: 'inherit' }}>
+                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]">
                 {CLASS_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
               <input placeholder="과목" value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })}
-                style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, fontFamily: 'inherit' }} />
+                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" />
               <input placeholder="정원" type="number" value={form.capacity} onChange={e => setForm({ ...form, capacity: e.target.value })}
-                style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, fontFamily: 'inherit' }} />
+                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" />
               <input placeholder="강의실" value={form.room} onChange={e => setForm({ ...form, room: e.target.value })}
-                style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, fontFamily: 'inherit' }} />
-              <div style={{ display: 'flex', gap: 8 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: 12, color: 'var(--neutral-500)' }}>시작일</label>
+                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" />
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">시작일</label>
                   <input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })}
-                    style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, fontFamily: 'inherit', boxSizing: 'border-box' }} />
+                    className="w-full box-border px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" />
                 </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: 12, color: 'var(--neutral-500)' }}>종료일</label>
+                <div className="flex-1">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">종료일</label>
                   <input type="date" value={form.end_date} onChange={e => setForm({ ...form, end_date: e.target.value })}
-                    style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, fontFamily: 'inherit', boxSizing: 'border-box' }} />
+                    className="w-full box-border px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" />
                 </div>
               </div>
               <textarea placeholder="메모" value={form.memo} onChange={e => setForm({ ...form, memo: e.target.value })}
-                rows={3} style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, fontFamily: 'inherit', resize: 'vertical' }} />
+                rows={3} className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)] resize-y" />
             </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 20, justifyContent: 'flex-end' }}>
+            <div className="flex gap-2 mt-5 justify-end">
               <button onClick={() => setShowForm(false)}
-                style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid var(--border)', cursor: 'pointer', background: 'white', fontSize: 14, fontFamily: 'inherit' }}>취소</button>
+                className="px-5 py-2 rounded-lg border border-slate-200 cursor-pointer bg-white text-slate-600 text-sm font-bold hover:bg-slate-50 transition-colors">취소</button>
               <button onClick={handleSave}
-                style={{ padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'var(--primary)', color: 'white', fontWeight: 600, fontSize: 14 }}>저장</button>
+                className="px-5 py-2 rounded-lg border-none cursor-pointer bg-[var(--cta)] text-white font-bold text-sm hover:opacity-90 font-display transition-opacity">저장</button>
             </div>
           </div>
         </div>
@@ -310,17 +302,17 @@ export default function ClassManage() {
 
       {/* 반 상세 모달 */}
       {showDetail && detail && (
-        <div style={{ position: 'fixed', inset: 0, background: 'oklch(0% 0 0 / 0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        <div className="fixed inset-0 z-[1000] bg-black/40 flex items-center justify-center p-5"
           onClick={() => setShowDetail(false)}>
-          <div style={{ background: 'white', borderRadius: 16, padding: 24, width: '100%', maxWidth: 640, maxHeight: '90vh', overflowY: 'auto' }}
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-[640px] max-h-[90vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ fontSize: 18, fontWeight: 700 }}>{detail.name}</h3>
-              <button onClick={() => setShowDetail(false)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--neutral-500)' }}>X</button>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-[var(--primary)]">{detail.name}</h3>
+              <button onClick={() => setShowDetail(false)} className="bg-transparent border-none text-xl cursor-pointer text-slate-400 hover:text-slate-600 transition-colors">X</button>
             </div>
 
             {/* 기본 정보 */}
-            <div style={{ fontSize: 14, color: 'var(--neutral-600)', marginBottom: 16, display: 'flex', flexWrap: 'wrap', gap: '4px 16px' }}>
+            <div className="text-sm text-slate-600 mb-4 flex flex-wrap gap-x-4 gap-y-1">
               <span>유형: {CLASS_TYPES.find(t => t.value === detail.class_type)?.label}</span>
               {detail.subject && <span>과목: {detail.subject}</span>}
               {detail.teacher_name && <span>강사: {detail.teacher_name}</span>}
@@ -329,89 +321,85 @@ export default function ClassManage() {
             </div>
 
             {/* 수강생 관리 */}
-            <div style={{ marginBottom: 20 }}>
-              <h4 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>수강생 ({detail.students?.length || 0}명)</h4>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <div className="mb-5">
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">수강생 ({detail.students?.length || 0}명)</h4>
+              <div className="flex gap-2 mb-2">
                 <select value={enrollStudentId} onChange={e => setEnrollStudentId(e.target.value)}
-                  style={{ flex: 1, padding: 8, borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, fontFamily: 'inherit' }}>
+                  className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]">
                   <option value="">학생 선택</option>
                   {students.map(s => <option key={s.id} value={s.id}>{s.name} ({s.school})</option>)}
                 </select>
                 <button onClick={handleEnroll}
-                  style={{ padding: '8px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'var(--primary)', color: 'white', fontWeight: 600, fontSize: 13 }}>등록</button>
+                  className="px-3.5 py-2 rounded-lg border-none cursor-pointer bg-[var(--cta)] text-white font-bold text-[13px] hover:opacity-90 font-display transition-opacity">등록</button>
               </div>
               {detail.students?.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div className="flex flex-col gap-1">
                   {detail.students.map(s => (
-                    <div key={s.student_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px', background: 'var(--muted)', borderRadius: 8, fontSize: 13 }}>
+                    <div key={s.student_id} className="flex justify-between items-center px-2.5 py-1.5 bg-slate-50 rounded-lg text-[13px]">
                       <span>{s.student_name} ({s.school} {s.grade})</span>
                       <button onClick={() => handleDrop(s.student_id)}
-                        style={{ padding: '2px 8px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'var(--destructive-light)', color: 'oklch(48% 0.20 25)', fontSize: 11, fontFamily: 'inherit' }}>해제</button>
+                        className="px-2 py-0.5 rounded-md border-none cursor-pointer bg-red-50 text-red-600 text-[11px] hover:bg-red-100 transition-colors">해제</button>
                     </div>
                   ))}
                 </div>
-              ) : <div style={{ fontSize: 13, color: 'var(--neutral-500)' }}>등록된 수강생이 없습니다.</div>}
+              ) : <div className="text-[13px] text-slate-400">등록된 수강생이 없습니다.</div>}
             </div>
 
             {/* 반복 일정 */}
-            <div style={{ marginBottom: 20 }}>
-              <h4 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>반복 일정</h4>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+            <div className="mb-5">
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">반복 일정</h4>
+              <div className="flex gap-2 mb-2 flex-wrap">
                 <select value={recurForm.day_of_week} onChange={e => setRecurForm({ ...recurForm, day_of_week: parseInt(e.target.value) })}
-                  style={{ padding: 8, borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, fontFamily: 'inherit' }}>
+                  className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]">
                   {DAY_LABELS.map((d, i) => <option key={i} value={i}>{d}요일</option>)}
                 </select>
                 <input type="time" value={recurForm.start_time} onChange={e => setRecurForm({ ...recurForm, start_time: e.target.value })}
-                  style={{ padding: 8, borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, fontFamily: 'inherit' }} />
+                  className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" />
                 <input type="time" value={recurForm.end_time} onChange={e => setRecurForm({ ...recurForm, end_time: e.target.value })}
-                  style={{ padding: 8, borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, fontFamily: 'inherit' }} />
+                  className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" />
                 <button onClick={handleAddRecurring}
-                  style={{ padding: '8px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'var(--primary)', color: 'white', fontWeight: 600, fontSize: 13 }}>추가</button>
+                  className="px-3.5 py-2 rounded-lg border-none cursor-pointer bg-[var(--cta)] text-white font-bold text-[13px] hover:opacity-90 font-display transition-opacity">추가</button>
               </div>
               {detail.recurring?.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div className="flex flex-col gap-1">
                   {detail.recurring.map(r => (
-                    <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px', background: 'var(--muted)', borderRadius: 8, fontSize: 13 }}>
+                    <div key={r.id} className="flex justify-between items-center px-2.5 py-1.5 bg-slate-50 rounded-lg text-[13px]">
                       <span>{DAY_LABELS[r.day_of_week]}요일 {r.start_time?.slice(0, 5)} ~ {r.end_time?.slice(0, 5)}</span>
                       <button onClick={() => handleDeleteRecurring(r.id)}
-                        style={{ padding: '2px 8px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'var(--destructive-light)', color: 'oklch(48% 0.20 25)', fontSize: 11, fontFamily: 'inherit' }}>삭제</button>
+                        className="px-2 py-0.5 rounded-md border-none cursor-pointer bg-red-50 text-red-600 text-[11px] hover:bg-red-100 transition-colors">삭제</button>
                     </div>
                   ))}
                 </div>
-              ) : <div style={{ fontSize: 13, color: 'var(--neutral-500)' }}>반복 일정이 없습니다.</div>}
+              ) : <div className="text-[13px] text-slate-400">반복 일정이 없습니다.</div>}
             </div>
 
             {/* 세션 생성 */}
-            <div style={{ marginBottom: 20 }}>
-              <h4 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>수업 세션</h4>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+            <div className="mb-5">
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">수업 세션</h4>
+              <div className="flex gap-2 mb-2 flex-wrap">
                 <input type="date" value={sessionRange.from} onChange={e => setSessionRange({ ...sessionRange, from: e.target.value })}
-                  style={{ padding: 8, borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, fontFamily: 'inherit' }} />
-                <span style={{ alignSelf: 'center', fontSize: 13 }}>~</span>
+                  className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" />
+                <span className="self-center text-[13px]">~</span>
                 <input type="date" value={sessionRange.to} onChange={e => setSessionRange({ ...sessionRange, to: e.target.value })}
-                  style={{ padding: 8, borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, fontFamily: 'inherit' }} />
+                  className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" />
                 <button onClick={handleGenerateSessions}
-                  style={{ padding: '8px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'oklch(55% 0.15 250)', color: 'white', fontWeight: 600, fontSize: 13 }}>자동 생성</button>
+                  className="px-3.5 py-2 rounded-lg border-none cursor-pointer bg-[var(--cta)] text-white font-bold text-[13px] hover:opacity-90 font-display transition-opacity">자동 생성</button>
               </div>
               {detail.sessions?.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div className="flex flex-col gap-1">
                   {detail.sessions.map(s => (
-                    <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px', background: 'var(--muted)', borderRadius: 8, fontSize: 13 }}>
+                    <div key={s.id} className="flex justify-between items-center px-2.5 py-1.5 bg-slate-50 rounded-lg text-[13px]">
                       <span>
                         {s.session_date?.slice(0, 10)} {s.start_time?.slice(0, 5)}~{s.end_time?.slice(0, 5)}
-                        {s.is_makeup && <span style={{ marginLeft: 4, color: '#f59e0b', fontWeight: 600 }}>[보강]</span>}
+                        {s.is_makeup && <span className="ml-1 text-amber-500 font-semibold">[보강]</span>}
                       </span>
-                      <span style={{
-                        padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600,
-                        background: s.status === 'scheduled' ? 'var(--info-light)' : s.status === 'cancelled' ? 'var(--destructive-light)' : 'var(--success-light)',
-                        color: s.status === 'scheduled' ? 'oklch(48% 0.18 260)' : s.status === 'cancelled' ? 'oklch(48% 0.20 25)' : 'oklch(52% 0.14 160)',
-                      }}>
+                      <StatusBadge variant={s.status === 'scheduled' ? 'info' : s.status === 'cancelled' ? 'danger' : 'success'}>
                         {s.status === 'scheduled' ? '예정' : s.status === 'completed' ? '완료' : s.status === 'cancelled' ? '휴강' : s.status}
-                      </span>
+                      </StatusBadge>
                     </div>
                   ))}
                 </div>
-              ) : <div style={{ fontSize: 13, color: 'var(--neutral-500)' }}>세션이 없습니다. 반복 일정을 추가하고 자동 생성하세요.</div>}
+              ) : <div className="text-[13px] text-slate-400">세션이 없습니다. 반복 일정을 추가하고 자동 생성하세요.</div>}
             </div>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { askConfirm } from '../../lib/feedback';
-import { PageLoading } from '../../components/ui';
+import { PageLoading, EmptyState, StatusBadge } from '../../components/ui';
 
 // 수납 추이 컴포넌트
 function TuitionTrend() {
@@ -18,7 +18,7 @@ function TuitionTrend() {
   if (loading) return <PageLoading />;
   if (!data || data.trend.length === 0) {
     return (
-      <div style={{ padding: 60, textAlign: 'center', color: '#94a3b8', background: 'white', borderRadius: 12, border: '1px solid #f1f5f9' }}>
+      <div className="p-[60px] text-center text-slate-400 bg-white rounded-xl border border-slate-100 shadow-sm">
         수납 데이터가 쌓이면 추이를 확인할 수 있습니다.
       </div>
     );
@@ -27,34 +27,34 @@ function TuitionTrend() {
   const maxAmount = Math.max(...data.trend.map(t => t.total_amount), 1);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div className="flex flex-col gap-4">
       {/* 현재 재원생 */}
-      <div style={{ background: 'white', borderRadius: 12, border: '1px solid #f1f5f9', padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span style={{ fontSize: 13, color: '#64748b' }}>현재 재원생</span>
-        <span style={{ fontSize: 22, fontWeight: 800, color: '#102044' }}>{data.current_students}명</span>
+      <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex items-center gap-3">
+        <span className="text-[13px] text-slate-500">현재 재원생</span>
+        <span className="text-[22px] font-display font-extrabold text-[var(--primary)]">{data.current_students}명</span>
       </div>
 
       {/* 월별 수납 바 차트 */}
-      <div style={{ background: 'white', borderRadius: 12, border: '1px solid #f1f5f9', padding: 20 }}>
-        <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, color: '#102044' }}>월별 수납 추이</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
+        <h3 className="text-[15px] font-bold mb-4 text-[var(--primary)]">월별 수납 추이</h3>
+        <div className="flex flex-col gap-3">
           {data.trend.map(t => {
             const rate = t.total_amount > 0 ? Math.round((t.collected / t.total_amount) * 100) : 0;
             return (
               <div key={t.month}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 13 }}>
-                  <span style={{ fontWeight: 700, color: '#102044' }}>{t.label}</span>
-                  <span style={{ color: '#64748b' }}>수납률 <strong style={{ color: rate >= 80 ? '#16a34a' : '#dc2626' }}>{rate}%</strong></span>
+                <div className="flex justify-between mb-1 text-[13px]">
+                  <span className="font-bold text-[var(--primary)]">{t.label}</span>
+                  <span className="text-slate-500">수납률 <strong className={rate >= 80 ? 'text-emerald-600' : 'text-[#ba1a1a]'}>{rate}%</strong></span>
                 </div>
                 {/* 청구 바 */}
-                <div style={{ height: 14, background: '#e2e8f0', borderRadius: 7, marginBottom: 3, position: 'relative', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${(t.total_amount / maxAmount) * 100}%`, background: '#e2e8f0', borderRadius: 7 }} />
+                <div className="h-3.5 bg-slate-200 rounded-full mb-[3px] relative overflow-hidden">
+                  <div className="h-full bg-slate-200 rounded-full" style={{ width: `${(t.total_amount / maxAmount) * 100}%` }} />
                 </div>
                 {/* 수납 바 */}
-                <div style={{ height: 14, background: '#f1f5f9', borderRadius: 7, position: 'relative', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${(t.collected / maxAmount) * 100}%`, background: '#004bf0', borderRadius: 7 }} />
+                <div className="h-3.5 bg-slate-100 rounded-full relative overflow-hidden">
+                  <div className="h-full bg-[var(--cta)] rounded-full" style={{ width: `${(t.collected / maxAmount) * 100}%` }} />
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 11, color: '#94a3b8' }}>
+                <div className="flex justify-between mt-1 text-[11px] text-slate-400">
                   <span>청구 {t.total_amount.toLocaleString()}원</span>
                   <span>수납 {t.collected.toLocaleString()}원</span>
                   <span>미수 {t.outstanding.toLocaleString()}원</span>
@@ -63,41 +63,43 @@ function TuitionTrend() {
             );
           })}
         </div>
-        <div style={{ marginTop: 12, display: 'flex', gap: 16, fontSize: 11, color: '#94a3b8' }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: '#e2e8f0', display: 'inline-block' }} /> 청구</span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: '#004bf0', display: 'inline-block' }} /> 수납</span>
+        <div className="mt-3 flex gap-4 text-[11px] text-slate-400">
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded inline-block bg-slate-200" /> 청구</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded inline-block bg-[var(--cta)]" /> 수납</span>
         </div>
       </div>
 
       {/* 월별 상세 테이블 */}
-      <div style={{ background: 'white', borderRadius: 12, border: '1px solid #f1f5f9', overflow: 'hidden' }}>
-        <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0', background: '#f8fafc' }}>
-              <th style={{ padding: 10, textAlign: 'left' }}>월</th>
-              <th style={{ padding: 10, textAlign: 'right' }}>청구</th>
-              <th style={{ padding: 10, textAlign: 'right' }}>수납</th>
-              <th style={{ padding: 10, textAlign: 'right' }}>미수</th>
-              <th style={{ padding: 10, textAlign: 'center' }}>수납률</th>
-              <th style={{ padding: 10, textAlign: 'center' }}>건수</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.trend.map(t => {
-              const rate = t.total_amount > 0 ? Math.round((t.collected / t.total_amount) * 100) : 0;
-              return (
-                <tr key={t.month} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: 10, fontWeight: 600 }}>{t.label}</td>
-                  <td style={{ padding: 10, textAlign: 'right' }}>{t.total_amount.toLocaleString()}원</td>
-                  <td style={{ padding: 10, textAlign: 'right', color: '#004bf0', fontWeight: 600 }}>{t.collected.toLocaleString()}원</td>
-                  <td style={{ padding: 10, textAlign: 'right', color: t.outstanding > 0 ? '#dc2626' : '#94a3b8' }}>{t.outstanding.toLocaleString()}원</td>
-                  <td style={{ padding: 10, textAlign: 'center', fontWeight: 700, color: rate >= 80 ? '#16a34a' : '#dc2626' }}>{rate}%</td>
-                  <td style={{ padding: 10, textAlign: 'center', color: '#64748b' }}>{t.paid_count}/{t.total_bills}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr>
+                <th className="text-left text-xs font-bold text-slate-500 uppercase tracking-wider px-3 py-2 bg-slate-50 border-b border-slate-100">월</th>
+                <th className="text-right text-xs font-bold text-slate-500 uppercase tracking-wider px-3 py-2 bg-slate-50 border-b border-slate-100">청구</th>
+                <th className="text-right text-xs font-bold text-slate-500 uppercase tracking-wider px-3 py-2 bg-slate-50 border-b border-slate-100">수납</th>
+                <th className="text-right text-xs font-bold text-slate-500 uppercase tracking-wider px-3 py-2 bg-slate-50 border-b border-slate-100">미수</th>
+                <th className="text-center text-xs font-bold text-slate-500 uppercase tracking-wider px-3 py-2 bg-slate-50 border-b border-slate-100">수납률</th>
+                <th className="text-center text-xs font-bold text-slate-500 uppercase tracking-wider px-3 py-2 bg-slate-50 border-b border-slate-100">건수</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.trend.map(t => {
+                const rate = t.total_amount > 0 ? Math.round((t.collected / t.total_amount) * 100) : 0;
+                return (
+                  <tr key={t.month}>
+                    <td className="px-3 py-2.5 border-b border-slate-50 font-semibold">{t.label}</td>
+                    <td className="px-3 py-2.5 border-b border-slate-50 text-right font-display">{t.total_amount.toLocaleString()}원</td>
+                    <td className="px-3 py-2.5 border-b border-slate-50 text-right font-display font-bold text-[var(--cta)]">{t.collected.toLocaleString()}원</td>
+                    <td className={`px-3 py-2.5 border-b border-slate-50 text-right font-display ${t.outstanding > 0 ? 'text-[#ba1a1a]' : 'text-slate-400'}`}>{t.outstanding.toLocaleString()}원</td>
+                    <td className={`px-3 py-2.5 border-b border-slate-50 text-center font-display font-bold ${rate >= 80 ? 'text-emerald-600' : 'text-[#ba1a1a]'}`}>{rate}%</td>
+                    <td className="px-3 py-2.5 border-b border-slate-50 text-center text-slate-500">{t.paid_count}/{t.total_bills}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -298,35 +300,31 @@ export default function TuitionManage() {
   });
 
   const tabBtn = (key, label) => (
-    <button key={key} onClick={() => setTab(key)} style={{
-      padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer',
-      fontFamily: 'inherit', fontSize: 14, fontWeight: tab === key ? 700 : 500,
-      whiteSpace: 'nowrap', flexShrink: 0,
-      background: tab === key ? 'var(--primary)' : 'var(--muted)',
-      color: tab === key ? 'white' : 'var(--foreground)',
-    }}>{label}</button>
+    <button key={key} onClick={() => setTab(key)} className={`px-5 py-2 rounded-lg text-sm whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
+      tab === key
+        ? 'bg-[var(--primary)] text-white font-bold'
+        : 'bg-slate-100 text-slate-600 font-medium hover:bg-slate-200'
+    }`}>{label}</button>
   );
 
   const cycleLabels = { monthly: '월납', quarterly: '분기납', yearly: '연납', once: '일시납' };
 
   return (
-    <div className="main-content" style={{ padding: 20, maxWidth: 1100, margin: '0 auto' }}>
-      <h2 style={{ fontSize: '1.5em', fontWeight: 800, marginBottom: 20 }}>수납 관리</h2>
+    <div className="main-content p-5 max-w-[1100px] mx-auto">
+      <h2 className="text-2xl font-extrabold text-[var(--primary)] tracking-tight mb-5">수납 관리</h2>
 
       {/* 상단 탭: 청구/납부 | 수납 추이 */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        <button onClick={() => setTuitionTab('billing')} style={{
-          padding: '10px 20px', borderRadius: 8, fontSize: 14, fontWeight: 700,
-          background: tuitionTab === 'billing' ? '#102044' : '#fff',
-          color: tuitionTab === 'billing' ? '#fff' : '#64748b',
-          border: '1px solid #e2e8f0', cursor: 'pointer', whiteSpace: 'nowrap',
-        }}>청구/납부</button>
-        <button onClick={() => setTuitionTab('trend')} style={{
-          padding: '10px 20px', borderRadius: 8, fontSize: 14, fontWeight: 700,
-          background: tuitionTab === 'trend' ? '#102044' : '#fff',
-          color: tuitionTab === 'trend' ? '#fff' : '#64748b',
-          border: '1px solid #e2e8f0', cursor: 'pointer', whiteSpace: 'nowrap',
-        }}>수납 추이</button>
+      <div className="flex gap-2 mb-5">
+        <button onClick={() => setTuitionTab('billing')} className={`px-5 py-2.5 rounded-lg text-sm font-bold whitespace-nowrap cursor-pointer border transition-colors ${
+          tuitionTab === 'billing'
+            ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
+            : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+        }`}>청구/납부</button>
+        <button onClick={() => setTuitionTab('trend')} className={`px-5 py-2.5 rounded-lg text-sm font-bold whitespace-nowrap cursor-pointer border transition-colors ${
+          tuitionTab === 'trend'
+            ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
+            : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+        }`}>수납 추이</button>
       </div>
 
       {tuitionTab === 'trend' ? (
@@ -335,12 +333,12 @@ export default function TuitionManage() {
       <>
 
       {msg && (
-        <div style={{ padding: '10px 16px', borderRadius: 8, background: 'var(--success-light)', color: 'oklch(52% 0.14 160)', marginBottom: 16, fontSize: 14, fontWeight: 600 }}>
+        <div className="px-4 py-2.5 rounded-lg bg-emerald-50 text-emerald-700 mb-4 text-sm font-semibold">
           {msg}
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+      <div className="flex gap-2 mb-5">
         {tabBtn('plans', '수납 플랜')}
         {tabBtn('records', '수납 현황')}
         {tabBtn('discounts', '할인 규칙')}
@@ -349,27 +347,27 @@ export default function TuitionManage() {
       {/* 수납 플랜 탭 */}
       {tab === 'plans' && (
         <section>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 700 }}>수납 플랜 목록</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-base font-bold text-[var(--primary)]">수납 플랜 목록</h3>
             <button onClick={() => { setShowPlanForm(true); setEditingPlan(null); setPlanForm({ name: '', amount: '', description: '', billing_cycle: 'monthly' }); }}
-              style={{ padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'var(--primary)', color: 'white', fontWeight: 600, fontSize: 13 }}>
+              className="bg-[var(--cta)] text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 font-display cursor-pointer">
               + 플랜 추가
             </button>
           </div>
           {plans.length === 0 ? (
-            <div style={{ padding: 40, textAlign: 'center', color: 'var(--neutral-500)', background: 'var(--card)', borderRadius: 12, border: '1px solid var(--border)' }}>
-              등록된 수납 플랜이 없습니다.
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm">
+              <EmptyState title="등록된 수납 플랜이 없습니다." />
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
               {plans.map(p => (
-                <div key={p.id} style={{ background: 'var(--card)', borderRadius: 12, padding: 16, border: '1px solid var(--border)' }}>
-                  <h4 style={{ fontWeight: 700, marginBottom: 8 }}>{p.name}</h4>
-                  <p style={{ fontSize: 22, fontWeight: 800, color: 'var(--primary)' }}>{Number(p.amount).toLocaleString()}원</p>
-                  <p style={{ fontSize: 13, color: 'var(--neutral-500)', marginTop: 4 }}>{cycleLabels[p.billing_cycle] || p.billing_cycle}</p>
-                  {p.description && <p style={{ fontSize: 13, color: 'var(--neutral-500)', marginTop: 4 }}>{p.description}</p>}
+                <div key={p.id} className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+                  <h4 className="font-bold mb-2 text-[var(--primary)]">{p.name}</h4>
+                  <p className="text-[22px] font-display font-extrabold text-[var(--primary)]">{Number(p.amount).toLocaleString()}원</p>
+                  <p className="text-[13px] text-slate-500 mt-1">{cycleLabels[p.billing_cycle] || p.billing_cycle}</p>
+                  {p.description && <p className="text-[13px] text-slate-500 mt-1">{p.description}</p>}
                   <button onClick={() => { setEditingPlan(p); setPlanForm({ name: p.name, amount: p.amount, description: p.description || '', billing_cycle: p.billing_cycle || 'monthly' }); setShowPlanForm(true); }}
-                    style={{ marginTop: 12, padding: '6px 14px', borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', background: 'white', fontSize: 13, fontFamily: 'inherit' }}>
+                    className="mt-3 px-3.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 text-[13px] hover:bg-slate-50 cursor-pointer">
                     수정
                   </button>
                 </div>
@@ -382,31 +380,31 @@ export default function TuitionManage() {
       {/* 수납 현황 탭 */}
       {tab === 'records' && (
         <section>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-            <div style={{ display: 'flex', gap: 6 }}>
+          <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+            <div className="flex gap-1.5">
               {[
                 { key: 'all', label: '전체' },
                 { key: 'unpaid', label: '미납' },
                 { key: 'overdue', label: '연체' },
                 { key: 'paid', label: '완납' },
               ].map(f => (
-                <button key={f.key} onClick={() => setFilter(f.key)} style={{
-                  padding: '6px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 13,
-                  background: filter === f.key ? 'var(--primary)' : 'var(--muted)',
-                  color: filter === f.key ? 'white' : 'var(--foreground)', fontFamily: 'inherit',
-                }}>
+                <button key={f.key} onClick={() => setFilter(f.key)} className={`px-3.5 py-1.5 rounded-full text-[13px] cursor-pointer transition-colors ${
+                  filter === f.key
+                    ? 'bg-[var(--primary)] text-white font-bold'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}>
                   {f.label}
                 </button>
               ))}
             </div>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="flex gap-2">
               <button onClick={() => setShowRecordForm(true)}
-                style={{ padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'var(--primary)', color: 'white', fontWeight: 600, fontSize: 13 }}>
+                className="bg-[var(--cta)] text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 font-display cursor-pointer">
                 + 수납 등록
               </button>
               {overdue.length > 0 && (
                 <button onClick={handleNotifyOverdue}
-                  style={{ padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'oklch(48% 0.20 25)', color: 'white', fontWeight: 600, fontSize: 13 }}>
+                  className="bg-[#ba1a1a] text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 font-display cursor-pointer">
                   미납 알림 ({overdue.length})
                 </button>
               )}
@@ -414,56 +412,54 @@ export default function TuitionManage() {
           </div>
 
           {filteredRecords.length === 0 ? (
-            <div style={{ padding: 40, textAlign: 'center', color: 'var(--neutral-500)', background: 'var(--card)', borderRadius: 12, border: '1px solid var(--border)' }}>
-              수납 기록이 없습니다.
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm">
+              <EmptyState title="수납 기록이 없습니다." />
             </div>
           ) : (
-            <div style={{ background: 'var(--card)', borderRadius: 12, border: '1px solid var(--border)', overflow: 'hidden' }}>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
                   <thead>
-                    <tr style={{ borderBottom: '2px solid var(--border)', background: 'var(--muted)' }}>
-                      <th style={{ padding: 10, textAlign: 'left' }}>학생</th>
-                      <th style={{ padding: 10, textAlign: 'left' }}>플랜</th>
-                      <th style={{ padding: 10, textAlign: 'right' }}>금액</th>
-                      <th style={{ padding: 10, textAlign: 'center' }}>납부일</th>
-                      <th style={{ padding: 10, textAlign: 'center' }}>상태</th>
-                      <th style={{ padding: 10, textAlign: 'center' }}>액션</th>
+                    <tr>
+                      <th className="text-left text-xs font-bold text-slate-500 uppercase tracking-wider px-3 py-2 bg-slate-50 border-b border-slate-100">학생</th>
+                      <th className="text-left text-xs font-bold text-slate-500 uppercase tracking-wider px-3 py-2 bg-slate-50 border-b border-slate-100">플랜</th>
+                      <th className="text-right text-xs font-bold text-slate-500 uppercase tracking-wider px-3 py-2 bg-slate-50 border-b border-slate-100">금액</th>
+                      <th className="text-center text-xs font-bold text-slate-500 uppercase tracking-wider px-3 py-2 bg-slate-50 border-b border-slate-100">납부일</th>
+                      <th className="text-center text-xs font-bold text-slate-500 uppercase tracking-wider px-3 py-2 bg-slate-50 border-b border-slate-100">상태</th>
+                      <th className="text-center text-xs font-bold text-slate-500 uppercase tracking-wider px-3 py-2 bg-slate-50 border-b border-slate-100">액션</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredRecords.map(r => {
                       const isOverdue = r.status === 'overdue' || (r.status === 'pending' && r.due_date && new Date(r.due_date) < new Date());
                       return (
-                        <tr key={r.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                          <td style={{ padding: 10 }}>{r.student_name || r.student_id}</td>
-                          <td style={{ padding: 10 }}>{r.plan_name || '-'}</td>
-                          <td style={{ padding: 10, textAlign: 'right' }}>{Number(r.amount).toLocaleString()}원</td>
-                          <td style={{ padding: 10, textAlign: 'center' }}>{r.due_date ? new Date(r.due_date).toLocaleDateString('ko-KR') : '-'}</td>
-                          <td style={{ padding: 10, textAlign: 'center' }}>
-                            <span style={{
-                              padding: '2px 10px', borderRadius: 4, fontSize: 12, fontWeight: 600,
-                              background: r.status === 'paid' ? 'var(--success-light)' : isOverdue ? 'oklch(97% 0.02 60)' : 'var(--destructive-light)',
-                              color: r.status === 'paid' ? 'oklch(52% 0.14 160)' : isOverdue ? 'oklch(52% 0.18 45)' : 'oklch(48% 0.20 25)',
-                            }}>{r.status === 'paid' ? '완납' : isOverdue ? '연체' : '미납'}</span>
+                        <tr key={r.id} className="hover:bg-slate-50/50">
+                          <td className="px-3 py-2.5 border-b border-slate-50">{r.student_name || r.student_id}</td>
+                          <td className="px-3 py-2.5 border-b border-slate-50">{r.plan_name || '-'}</td>
+                          <td className="px-3 py-2.5 border-b border-slate-50 text-right font-display font-bold text-[var(--primary)]">{Number(r.amount).toLocaleString()}원</td>
+                          <td className="px-3 py-2.5 border-b border-slate-50 text-center">{r.due_date ? new Date(r.due_date).toLocaleDateString('ko-KR') : '-'}</td>
+                          <td className="px-3 py-2.5 border-b border-slate-50 text-center">
+                            <StatusBadge variant={r.status === 'paid' ? 'success' : isOverdue ? 'warning' : 'danger'}>
+                              {r.status === 'paid' ? '완납' : isOverdue ? '연체' : '미납'}
+                            </StatusBadge>
                           </td>
-                          <td style={{ padding: 10, textAlign: 'center' }}>
+                          <td className="px-3 py-2.5 border-b border-slate-50 text-center">
                             {r.status !== 'paid' && (
-                              <div style={{ display: 'flex', gap: 4, justifyContent: 'center', flexWrap: 'wrap' }}>
+                              <div className="flex gap-1 justify-center flex-wrap">
                                 <button onClick={() => handleMarkPaid(r.id)}
-                                  style={{ padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'var(--success)', color: 'white', fontSize: 12, fontWeight: 600 }}>
+                                  className="px-2.5 py-1 rounded-md bg-emerald-600 text-white text-xs font-semibold hover:opacity-90 cursor-pointer">
                                   완납
                                 </button>
                                 <button onClick={() => handleCreatePaymentLink(r.id)} disabled={linkLoading}
-                                  style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--primary)', cursor: 'pointer', background: 'white', color: 'var(--primary)', fontSize: 12, fontWeight: 600 }}>
+                                  className="px-2.5 py-1 rounded-md bg-white border border-[var(--primary)] text-[var(--primary)] text-xs font-semibold hover:bg-slate-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                                   결제링크
                                 </button>
                                 <button onClick={() => openSplitModal(r)}
-                                  style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--cta)', cursor: 'pointer', background: 'white', color: 'var(--cta)', fontSize: 12, fontWeight: 600 }}>
+                                  className="px-2.5 py-1 rounded-md bg-white border border-[var(--cta)] text-[var(--cta)] text-xs font-semibold hover:bg-slate-50 cursor-pointer">
                                   혼합수납
                                 </button>
                                 <button onClick={() => setInstallmentModal({ record: r, count: 3 })}
-                                  style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--primary)', cursor: 'pointer', background: 'white', color: 'var(--primary)', fontSize: 12, fontWeight: 600 }}>
+                                  className="px-2.5 py-1 rounded-md bg-white border border-[var(--primary)] text-[var(--primary)] text-xs font-semibold hover:bg-slate-50 cursor-pointer">
                                   분할납부
                                 </button>
                               </div>
@@ -483,38 +479,38 @@ export default function TuitionManage() {
       {/* 할인 규칙 탭 */}
       {tab === 'discounts' && (
         <section>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 700 }}>할인 규칙 (형제/장학/프로모션)</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-base font-bold text-[var(--primary)]">할인 규칙 (형제/장학/프로모션)</h3>
             <button onClick={() => { setEditingRule(null); setShowRuleForm(true); setRuleForm({ name: '', rule_type: 'sibling', discount_type: 'percent', discount_value: 10, min_siblings: 2, is_active: true }); }}
-              style={{ padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'var(--primary)', color: 'white', fontWeight: 600, fontSize: 13 }}>
+              className="bg-[var(--cta)] text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 font-display cursor-pointer">
               + 규칙 추가
             </button>
           </div>
           {discountRules.length === 0 ? (
-            <div style={{ padding: 40, textAlign: 'center', color: 'var(--neutral-500)', background: 'white', borderRadius: 12, border: '1px solid #e2e8f0' }}>
-              등록된 할인 규칙이 없습니다. 형제 할인/장학금/프로모션을 추가해보세요.
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm">
+              <EmptyState title="등록된 할인 규칙이 없습니다. 형제 할인/장학금/프로모션을 추가해보세요." />
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-3">
               {discountRules.map(r => {
                 const typeLabels = { sibling: '형제 할인', scholarship: '장학금', promotion: '프로모션', custom: '기타' };
                 const cond = typeof r.condition === 'string' ? (() => { try { return JSON.parse(r.condition); } catch { return {}; } })() : (r.condition || {});
                 return (
-                  <div key={r.id} style={{ background: 'white', borderRadius: 12, padding: 16, border: '1px solid #e2e8f0', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 8 }}>
-                      <span style={{ padding: '2px 10px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: '#eef2ff', color: 'var(--primary)' }}>
+                  <div key={r.id} className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="rounded-full px-3 py-0.5 text-xs font-bold bg-indigo-50 text-[var(--primary)]">
                         {typeLabels[r.rule_type] || r.rule_type}
                       </span>
-                      {!r.is_active && <span style={{ fontSize: 11, color: '#94a3b8' }}>비활성</span>}
+                      {!r.is_active && <span className="text-[11px] text-slate-400">비활성</span>}
                     </div>
-                    <h4 style={{ fontSize: 15, fontWeight: 700, color: 'var(--primary)', marginBottom: 4 }}>{r.name}</h4>
-                    <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--cta)' }}>
+                    <h4 className="text-[15px] font-bold text-[var(--primary)] mb-1">{r.name}</h4>
+                    <p className="text-xl font-display font-extrabold text-[var(--cta)]">
                       {r.discount_type === 'percent' ? `${r.discount_value}%` : `${Number(r.discount_value).toLocaleString()}원`}
                     </p>
                     {r.rule_type === 'sibling' && (
-                      <p style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>형제 {cond.min_siblings || 2}명 이상 시 적용</p>
+                      <p className="text-xs text-slate-500 mt-1">형제 {cond.min_siblings || 2}명 이상 시 적용</p>
                     )}
-                    <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
+                    <div className="flex gap-1.5 mt-3">
                       <button onClick={() => {
                         setEditingRule(r);
                         setRuleForm({
@@ -523,9 +519,9 @@ export default function TuitionManage() {
                         });
                         setShowRuleForm(true);
                       }}
-                        style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #e2e8f0', cursor: 'pointer', background: 'white', fontSize: 12, fontFamily: 'inherit' }}>수정</button>
+                        className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 text-xs hover:bg-slate-50 cursor-pointer">수정</button>
                       <button onClick={() => handleDeleteRule(r.id)}
-                        style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #fecaca', cursor: 'pointer', background: 'white', color: '#ba1a1a', fontSize: 12, fontFamily: 'inherit' }}>삭제</button>
+                        className="px-3 py-1.5 rounded-lg bg-white border border-red-200 text-[#ba1a1a] text-xs hover:bg-red-50 cursor-pointer">삭제</button>
                     </div>
                   </div>
                 );
@@ -537,46 +533,46 @@ export default function TuitionManage() {
 
       {/* 할인 규칙 폼 모달 */}
       {showRuleForm && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        <div className="fixed inset-0 bg-black/40 z-[1000] flex items-center justify-center p-5"
           onClick={() => setShowRuleForm(false)}>
-          <div style={{ background: 'white', borderRadius: 16, padding: 24, width: '100%', maxWidth: 440 }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: 'var(--primary)' }}>{editingRule ? '할인 규칙 수정' : '할인 규칙 추가'}</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-[440px] shadow-xl" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold mb-4 text-[var(--primary)]">{editingRule ? '할인 규칙 수정' : '할인 규칙 추가'}</h3>
+            <div className="flex flex-col gap-3">
               <input placeholder="규칙 이름 (예: 형제 10% 할인)" value={ruleForm.name} onChange={e => setRuleForm({ ...ruleForm, name: e.target.value })}
-                style={{ padding: 10, borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, fontFamily: 'inherit' }} />
+                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" />
               <select value={ruleForm.rule_type} onChange={e => setRuleForm({ ...ruleForm, rule_type: e.target.value })}
-                style={{ padding: 10, borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, fontFamily: 'inherit' }}>
+                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]">
                 <option value="sibling">형제 할인</option>
                 <option value="scholarship">장학금</option>
                 <option value="promotion">프로모션</option>
                 <option value="custom">기타</option>
               </select>
               {ruleForm.rule_type === 'sibling' && (
-                <label style={{ fontSize: 13, color: '#64748b' }}>
+                <label className="text-[13px] text-slate-500">
                   최소 형제 수
                   <input type="number" min="2" value={ruleForm.min_siblings} onChange={e => setRuleForm({ ...ruleForm, min_siblings: e.target.value })}
-                    style={{ marginTop: 4, width: '100%', padding: 10, borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, fontFamily: 'inherit' }} />
+                    className="mt-1 w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" />
                 </label>
               )}
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div className="flex gap-2">
                 <select value={ruleForm.discount_type} onChange={e => setRuleForm({ ...ruleForm, discount_type: e.target.value })}
-                  style={{ padding: 10, borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, fontFamily: 'inherit' }}>
+                  className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]">
                   <option value="percent">퍼센트</option>
                   <option value="fixed">정액</option>
                 </select>
                 <input type="number" placeholder={ruleForm.discount_type === 'percent' ? '% 값' : '원 값'} value={ruleForm.discount_value} onChange={e => setRuleForm({ ...ruleForm, discount_value: e.target.value })}
-                  style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, fontFamily: 'inherit' }} />
+                  className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" />
               </div>
-              <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}>
+              <label className="flex gap-2 items-center text-[13px]">
                 <input type="checkbox" checked={ruleForm.is_active} onChange={e => setRuleForm({ ...ruleForm, is_active: e.target.checked })} />
                 활성화
               </label>
             </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 20, justifyContent: 'flex-end' }}>
+            <div className="flex gap-2 mt-5 justify-end">
               <button onClick={() => setShowRuleForm(false)}
-                style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer', background: 'white', fontSize: 14, fontFamily: 'inherit' }}>취소</button>
+                className="px-5 py-2 rounded-lg bg-white border border-slate-200 text-slate-600 text-sm hover:bg-slate-50 cursor-pointer">취소</button>
               <button onClick={handleSaveRule}
-                style={{ padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'var(--primary)', color: 'white', fontWeight: 600, fontSize: 14 }}>저장</button>
+                className="bg-[var(--cta)] text-white px-5 py-2 rounded-lg text-sm font-bold hover:opacity-90 font-display cursor-pointer">저장</button>
             </div>
           </div>
         </div>
@@ -584,43 +580,43 @@ export default function TuitionManage() {
 
       {/* 혼합 수납 모달 */}
       {splitModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        <div className="fixed inset-0 bg-black/40 z-[1000] flex items-center justify-center p-5"
           onClick={() => setSplitModal(null)}>
-          <div style={{ background: 'white', borderRadius: 16, padding: 24, width: '100%', maxWidth: 500 }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, color: 'var(--primary)' }}>혼합 수납</h3>
-            <p style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-[500px] shadow-xl" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold mb-2 text-[var(--primary)]">혼합 수납</h3>
+            <p className="text-[13px] text-slate-500 mb-4">
               {splitModal.record.student_name || splitModal.record.student_id} · 청구액 {Number(splitModal.record.amount).toLocaleString()}원
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="flex flex-col gap-2">
               {splitModal.splits.map((s, i) => (
-                <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <div key={i} className="flex gap-1.5 items-center">
                   <select value={s.method} onChange={e => updateSplitLine(i, 'method', e.target.value)}
-                    style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', fontSize: 13, fontFamily: 'inherit' }}>
+                    className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]">
                     <option value="card">카드</option>
                     <option value="cash">현금</option>
                     <option value="bank">계좌이체</option>
                     <option value="portone">PortOne</option>
                   </select>
                   <input type="number" placeholder="금액" value={s.amount} onChange={e => updateSplitLine(i, 'amount', e.target.value)}
-                    style={{ flex: 1, padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', fontSize: 13, fontFamily: 'inherit' }} />
+                    className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" />
                   <button onClick={() => removeSplitLine(i)}
-                    style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #fecaca', background: 'white', color: '#ba1a1a', cursor: 'pointer', fontSize: 12 }}>×</button>
+                    className="px-2.5 py-1.5 rounded-md bg-white border border-red-200 text-[#ba1a1a] text-xs hover:bg-red-50 cursor-pointer">×</button>
                 </div>
               ))}
             </div>
             <button onClick={addSplitLine}
-              style={{ marginTop: 10, padding: '6px 12px', borderRadius: 6, border: '1px dashed #cbd5e1', background: 'white', cursor: 'pointer', fontSize: 12, color: '#64748b', fontFamily: 'inherit' }}>
+              className="mt-2.5 px-3 py-1.5 rounded-md bg-white border border-dashed border-slate-300 text-slate-500 text-xs hover:bg-slate-50 cursor-pointer">
               + 결제 수단 추가
             </button>
-            <div style={{ marginTop: 12, padding: 10, background: '#f8f9fa', borderRadius: 8, fontSize: 13, color: 'var(--primary)' }}>
-              합계: <strong>{splitModal.splits.reduce((s, x) => s + Number(x.amount || 0), 0).toLocaleString()}원</strong>
-              {' / '}청구: <strong>{Number(splitModal.record.amount).toLocaleString()}원</strong>
+            <div className="mt-3 px-3 py-2.5 bg-slate-50 rounded-lg text-[13px] text-[var(--primary)]">
+              합계: <strong className="font-display">{splitModal.splits.reduce((s, x) => s + Number(x.amount || 0), 0).toLocaleString()}원</strong>
+              {' / '}청구: <strong className="font-display">{Number(splitModal.record.amount).toLocaleString()}원</strong>
             </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
+            <div className="flex gap-2 mt-4 justify-end">
               <button onClick={() => setSplitModal(null)}
-                style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer', background: 'white', fontSize: 14, fontFamily: 'inherit' }}>취소</button>
+                className="px-5 py-2 rounded-lg bg-white border border-slate-200 text-slate-600 text-sm hover:bg-slate-50 cursor-pointer">취소</button>
               <button onClick={handleSubmitSplit}
-                style={{ padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'var(--cta)', color: 'white', fontWeight: 600, fontSize: 14 }}>수납 기록</button>
+                className="bg-[var(--cta)] text-white px-5 py-2 rounded-lg text-sm font-bold hover:opacity-90 font-display cursor-pointer">수납 기록</button>
             </div>
           </div>
         </div>
@@ -628,28 +624,28 @@ export default function TuitionManage() {
 
       {/* 분할 납부 모달 */}
       {installmentModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        <div className="fixed inset-0 bg-black/40 z-[1000] flex items-center justify-center p-5"
           onClick={() => setInstallmentModal(null)}>
-          <div style={{ background: 'white', borderRadius: 16, padding: 24, width: '100%', maxWidth: 420 }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, color: 'var(--primary)' }}>분할 납부</h3>
-            <p style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-[420px] shadow-xl" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold mb-2 text-[var(--primary)]">분할 납부</h3>
+            <p className="text-[13px] text-slate-500 mb-4">
               청구액 {Number(installmentModal.record.amount).toLocaleString()}원을 몇 회로 나눠 청구할지 선택하세요.
             </p>
-            <label style={{ fontSize: 13, color: '#64748b', display: 'block', marginBottom: 12 }}>
+            <label className="text-[13px] text-slate-500 block mb-3">
               분할 횟수 (2~12)
               <input type="number" min="2" max="12" value={installmentModal.count}
                 onChange={e => setInstallmentModal({ ...installmentModal, count: Math.max(2, Math.min(12, Number(e.target.value) || 2)) })}
-                style={{ marginTop: 4, width: '100%', padding: 10, borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, fontFamily: 'inherit' }} />
+                className="mt-1 w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" />
             </label>
-            <div style={{ padding: 10, background: '#f8f9fa', borderRadius: 8, fontSize: 13, color: 'var(--primary)' }}>
-              회차당 약 <strong>{Math.floor(installmentModal.record.amount / installmentModal.count).toLocaleString()}원</strong>
+            <div className="px-3 py-2.5 bg-slate-50 rounded-lg text-[13px] text-[var(--primary)]">
+              회차당 약 <strong className="font-display">{Math.floor(installmentModal.record.amount / installmentModal.count).toLocaleString()}원</strong>
               {' · '}매월 청구 생성
             </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
+            <div className="flex gap-2 mt-4 justify-end">
               <button onClick={() => setInstallmentModal(null)}
-                style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer', background: 'white', fontSize: 14, fontFamily: 'inherit' }}>취소</button>
+                className="px-5 py-2 rounded-lg bg-white border border-slate-200 text-slate-600 text-sm hover:bg-slate-50 cursor-pointer">취소</button>
               <button onClick={handleSubmitInstallment}
-                style={{ padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'var(--primary)', color: 'white', fontWeight: 600, fontSize: 14 }}>생성</button>
+                className="bg-[var(--cta)] text-white px-5 py-2 rounded-lg text-sm font-bold hover:opacity-90 font-display cursor-pointer">생성</button>
             </div>
           </div>
         </div>
@@ -657,31 +653,31 @@ export default function TuitionManage() {
 
       {/* 플랜 폼 모달 */}
       {showPlanForm && (
-        <div style={{ position: 'fixed', inset: 0, background: 'oklch(0% 0 0 / 0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        <div className="fixed inset-0 bg-black/40 z-[1000] flex items-center justify-center p-5"
           onClick={() => setShowPlanForm(false)}>
-          <div style={{ background: 'white', borderRadius: 16, padding: 24, width: '100%', maxWidth: 420 }}
+          <div className="bg-white rounded-2xl p-6 w-full max-w-[420px] shadow-xl"
             onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>{editingPlan ? '플랜 수정' : '플랜 추가'}</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <h3 className="text-lg font-bold mb-4 text-[var(--primary)]">{editingPlan ? '플랜 수정' : '플랜 추가'}</h3>
+            <div className="flex flex-col gap-3">
               <input placeholder="플랜 이름" value={planForm.name} onChange={e => setPlanForm({ ...planForm, name: e.target.value })}
-                style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, fontFamily: 'inherit' }} />
+                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" />
               <input type="number" placeholder="금액 (원)" value={planForm.amount} onChange={e => setPlanForm({ ...planForm, amount: e.target.value })}
-                style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, fontFamily: 'inherit' }} />
+                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" />
               <select value={planForm.billing_cycle} onChange={e => setPlanForm({ ...planForm, billing_cycle: e.target.value })}
-                style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, fontFamily: 'inherit' }}>
+                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]">
                 <option value="monthly">월납</option>
                 <option value="quarterly">분기납</option>
                 <option value="yearly">연납</option>
                 <option value="once">일시납</option>
               </select>
               <textarea placeholder="설명 (선택)" value={planForm.description} onChange={e => setPlanForm({ ...planForm, description: e.target.value })}
-                rows={3} style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, fontFamily: 'inherit', resize: 'vertical' }} />
+                rows={3} className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)] resize-y" />
             </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 20, justifyContent: 'flex-end' }}>
+            <div className="flex gap-2 mt-5 justify-end">
               <button onClick={() => setShowPlanForm(false)}
-                style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid var(--border)', cursor: 'pointer', background: 'white', fontSize: 14, fontFamily: 'inherit' }}>취소</button>
+                className="px-5 py-2 rounded-lg bg-white border border-slate-200 text-slate-600 text-sm hover:bg-slate-50 cursor-pointer">취소</button>
               <button onClick={handleSavePlan}
-                style={{ padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'var(--primary)', color: 'white', fontWeight: 600, fontSize: 14 }}>저장</button>
+                className="bg-[var(--cta)] text-white px-5 py-2 rounded-lg text-sm font-bold hover:opacity-90 font-display cursor-pointer">저장</button>
             </div>
           </div>
         </div>
@@ -689,31 +685,31 @@ export default function TuitionManage() {
 
       {/* 수납 등록 모달 */}
       {showRecordForm && (
-        <div style={{ position: 'fixed', inset: 0, background: 'oklch(0% 0 0 / 0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        <div className="fixed inset-0 bg-black/40 z-[1000] flex items-center justify-center p-5"
           onClick={() => setShowRecordForm(false)}>
-          <div style={{ background: 'white', borderRadius: 16, padding: 24, width: '100%', maxWidth: 420 }}
+          <div className="bg-white rounded-2xl p-6 w-full max-w-[420px] shadow-xl"
             onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>수납 등록</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <h3 className="text-lg font-bold mb-4 text-[var(--primary)]">수납 등록</h3>
+            <div className="flex flex-col gap-3">
               <input type="number" placeholder="학생 ID" value={recordForm.student_id} onChange={e => setRecordForm({ ...recordForm, student_id: e.target.value })}
-                style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, fontFamily: 'inherit' }} />
+                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" />
               <select value={recordForm.plan_id} onChange={e => {
                 const plan = plans.find(p => p.id === Number(e.target.value));
                 setRecordForm({ ...recordForm, plan_id: e.target.value, amount: plan ? plan.amount : '' });
-              }} style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, fontFamily: 'inherit' }}>
+              }} className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]">
                 <option value="">플랜 선택</option>
                 {plans.map(p => <option key={p.id} value={p.id}>{p.name} ({Number(p.amount).toLocaleString()}원)</option>)}
               </select>
               <input type="date" value={recordForm.due_date} onChange={e => setRecordForm({ ...recordForm, due_date: e.target.value })}
-                style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, fontFamily: 'inherit' }} />
+                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" />
               <input type="number" placeholder="금액 (원)" value={recordForm.amount} onChange={e => setRecordForm({ ...recordForm, amount: e.target.value })}
-                style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, fontFamily: 'inherit' }} />
+                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" />
             </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 20, justifyContent: 'flex-end' }}>
+            <div className="flex gap-2 mt-5 justify-end">
               <button onClick={() => setShowRecordForm(false)}
-                style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid var(--border)', cursor: 'pointer', background: 'white', fontSize: 14, fontFamily: 'inherit' }}>취소</button>
+                className="px-5 py-2 rounded-lg bg-white border border-slate-200 text-slate-600 text-sm hover:bg-slate-50 cursor-pointer">취소</button>
               <button onClick={handleCreateRecord}
-                style={{ padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'var(--primary)', color: 'white', fontWeight: 600, fontSize: 14 }}>등록</button>
+                className="bg-[var(--cta)] text-white px-5 py-2 rounded-lg text-sm font-bold hover:opacity-90 font-display cursor-pointer">등록</button>
             </div>
           </div>
         </div>
@@ -721,35 +717,35 @@ export default function TuitionManage() {
 
       {/* 결제 링크 모달 */}
       {linkModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'oklch(0% 0 0 / 0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        <div className="fixed inset-0 bg-black/40 z-[1000] flex items-center justify-center p-5"
           onClick={() => setLinkModal(null)}>
-          <div style={{ background: 'white', borderRadius: 16, padding: 24, width: '100%', maxWidth: 420 }}
+          <div className="bg-white rounded-2xl p-6 w-full max-w-[420px] shadow-xl"
             onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>결제 링크 생성 완료</h3>
+            <h3 className="text-lg font-bold mb-4 text-[var(--primary)]">결제 링크 생성 완료</h3>
 
-            <div style={{ background: 'var(--muted)', borderRadius: 10, padding: 16, marginBottom: 16 }}>
-              <p style={{ fontSize: 13, color: 'var(--neutral-500)', marginBottom: 4 }}>학생: <strong style={{ color: 'var(--foreground)' }}>{linkModal.studentName}</strong></p>
-              <p style={{ fontSize: 13, color: 'var(--neutral-500)', marginBottom: 4 }}>금액: <strong style={{ color: 'var(--foreground)' }}>{Number(linkModal.amount).toLocaleString()}원</strong></p>
-              <p style={{ fontSize: 13, color: 'var(--neutral-500)' }}>납부 기한: <strong style={{ color: 'var(--foreground)' }}>{linkModal.dueDate ? new Date(linkModal.dueDate).toLocaleDateString('ko-KR') : '-'}</strong></p>
+            <div className="bg-slate-50 rounded-xl p-4 mb-4">
+              <p className="text-[13px] text-slate-500 mb-1">학생: <strong className="text-[var(--primary)]">{linkModal.studentName}</strong></p>
+              <p className="text-[13px] text-slate-500 mb-1">금액: <strong className="font-display text-[var(--primary)]">{Number(linkModal.amount).toLocaleString()}원</strong></p>
+              <p className="text-[13px] text-slate-500">납부 기한: <strong className="text-[var(--primary)]">{linkModal.dueDate ? new Date(linkModal.dueDate).toLocaleDateString('ko-KR') : '-'}</strong></p>
             </div>
 
-            <div style={{ background: 'var(--background)', borderRadius: 8, padding: 12, marginBottom: 16, wordBreak: 'break-all', fontSize: 13, color: 'var(--muted-foreground)', border: '1px solid var(--border)' }}>
+            <div className="bg-white rounded-lg p-3 mb-4 break-all text-[13px] text-slate-500 border border-slate-200">
               {linkModal.paymentUrl}
             </div>
 
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="flex gap-2">
               <button onClick={handleCopyLink}
-                style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'var(--primary)', color: 'white', fontWeight: 700, fontSize: 14, fontFamily: 'inherit' }}>
+                className="flex-1 py-2.5 rounded-lg bg-[var(--cta)] text-white font-bold text-sm hover:opacity-90 font-display cursor-pointer">
                 링크 복사
               </button>
               <button onClick={handleSendAlimtalk}
-                style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: '1px solid oklch(80% 0.14 85)', cursor: 'pointer', background: 'var(--warning-light)', color: 'oklch(35% 0.12 75)', fontWeight: 700, fontSize: 14, fontFamily: 'inherit' }}>
+                className="flex-1 py-2.5 rounded-lg bg-amber-50 border border-amber-300 text-amber-700 font-bold text-sm hover:bg-amber-100 cursor-pointer">
                 알림톡 발송
               </button>
             </div>
 
             <button onClick={() => setLinkModal(null)}
-              style={{ width: '100%', marginTop: 10, padding: '8px 0', borderRadius: 8, border: '1px solid var(--border)', cursor: 'pointer', background: 'white', fontSize: 14, fontFamily: 'inherit', color: 'var(--neutral-500)' }}>
+              className="w-full mt-2.5 py-2 rounded-lg bg-white border border-slate-200 text-slate-500 text-sm hover:bg-slate-50 cursor-pointer">
               닫기
             </button>
           </div>

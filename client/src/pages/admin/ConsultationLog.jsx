@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { askConfirm } from '../../lib/feedback';
-import { PageLoading } from '../../components/ui';
+import { PageLoading, PageHeader, Card, EmptyState } from '../../components/ui';
 
 const TAGS = ['학습상담', '진로상담', '학부모상담', '생활지도', '성적관리', '기타'];
 
@@ -82,105 +82,105 @@ export default function ConsultationLog() {
   if (loading) return <PageLoading wrap="main-content" />;
 
   return (
-    <div className="main-content" style={{ padding: 20, maxWidth: 1100, margin: '0 auto' }}>
-      <h2 style={{ fontSize: '1.5em', fontWeight: 800, marginBottom: 20 }}>상담 일지</h2>
+    <div className="main-content p-5 max-w-[1100px] mx-auto">
+      <PageHeader title="상담 일지" />
 
       {msg && (
-        <div style={{ padding: '10px 16px', borderRadius: 8, background: 'var(--success-light)', color: 'oklch(52% 0.14 160)', marginBottom: 16, fontSize: 14, fontWeight: 600 }}>
+        <div className="px-4 py-2.5 rounded-lg bg-emerald-50 text-emerald-700 mb-4 text-sm font-semibold">
           {msg}
         </div>
       )}
 
       {/* 필터 + 추가 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          <button onClick={() => setSelectedTag('')} style={{
-            padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit',
-            background: !selectedTag ? 'var(--primary)' : 'var(--muted)', color: !selectedTag ? 'white' : 'var(--foreground)',
-          }}>전체</button>
+      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+        <div className="flex gap-1.5 flex-wrap">
+          <button onClick={() => setSelectedTag('')}
+            className={`px-3.5 py-1.5 rounded-full border-none cursor-pointer text-[13px] font-semibold transition-colors ${
+              !selectedTag ? 'bg-[var(--primary)] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}>전체</button>
           {TAGS.map(t => (
-            <button key={t} onClick={() => setSelectedTag(selectedTag === t ? '' : t)} style={{
-              padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit',
-              background: selectedTag === t ? 'var(--primary)' : 'var(--muted)', color: selectedTag === t ? 'white' : 'var(--foreground)',
-            }}>{t}</button>
+            <button key={t} onClick={() => setSelectedTag(selectedTag === t ? '' : t)}
+              className={`px-3.5 py-1.5 rounded-full border-none cursor-pointer text-[13px] font-semibold transition-colors ${
+                selectedTag === t ? 'bg-[var(--primary)] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}>{t}</button>
           ))}
         </div>
         <button onClick={() => { setShowForm(true); setEditingLog(null); setForm({ student_id: '', date: new Date().toISOString().slice(0, 10), tags: [], content: '' }); }}
-          style={{ padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'var(--primary)', color: 'white', fontWeight: 600, fontSize: 13 }}>
+          className="bg-[var(--cta)] text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 font-display border-none cursor-pointer">
           + 상담 기록
         </button>
       </div>
 
       {/* 학생 검색 */}
       <input placeholder="학생 이름 검색..." value={searchStudent} onChange={e => setSearchStudent(e.target.value)}
-        style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, fontFamily: 'inherit', marginBottom: 16, boxSizing: 'border-box' }} />
+        className="w-full box-border px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)] mb-4" />
 
       {/* 일지 목록 */}
       {logs.length === 0 ? (
-        <div style={{ padding: 40, textAlign: 'center', color: 'var(--neutral-500)', background: 'var(--card)', borderRadius: 12, border: '1px solid var(--border)' }}>
-          상담 기록이 없습니다.
-        </div>
+        <Card padding="p-0">
+          <EmptyState icon="📋" title="상담 기록이 없습니다." />
+        </Card>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="flex flex-col gap-3">
           {logs.map(log => (
-            <div key={log.id} style={{ background: 'var(--card)', borderRadius: 12, padding: 16, border: '1px solid var(--border)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+            <Card key={log.id} padding="p-5">
+              <div className="flex justify-between items-start mb-2">
                 <div>
-                  <span style={{ fontWeight: 700, fontSize: 15 }}>{log.student_name || `학생 #${log.student_id}`}</span>
-                  <span style={{ marginLeft: 10, fontSize: 13, color: 'var(--neutral-500)' }}>{log.date ? new Date(log.date).toLocaleDateString('ko-KR') : ''}</span>
+                  <span className="font-bold text-[15px] text-[var(--primary)]">{log.student_name || `학생 #${log.student_id}`}</span>
+                  <span className="ml-2.5 text-[13px] text-slate-400">{log.date ? new Date(log.date).toLocaleDateString('ko-KR') : ''}</span>
                 </div>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <button onClick={() => openEdit(log)} style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', background: 'white', fontSize: 12, fontFamily: 'inherit' }}>수정</button>
-                  <button onClick={() => handleDelete(log.id)} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'var(--destructive-light)', color: 'oklch(48% 0.20 25)', fontSize: 12, fontFamily: 'inherit' }}>삭제</button>
+                <div className="flex gap-1.5">
+                  <button onClick={() => openEdit(log)} className="px-2.5 py-1 rounded-md border border-slate-200 cursor-pointer bg-white text-xs text-slate-600 hover:bg-slate-50 transition-colors">수정</button>
+                  <button onClick={() => handleDelete(log.id)} className="px-2.5 py-1 rounded-md border-none cursor-pointer bg-red-50 text-red-600 text-xs font-semibold hover:bg-red-100 transition-colors">삭제</button>
                 </div>
               </div>
               {log.tags && (
-                <div style={{ display: 'flex', gap: 4, marginBottom: 8, flexWrap: 'wrap' }}>
+                <div className="flex gap-1 mb-2 flex-wrap">
                   {(typeof log.tags === 'string' ? log.tags.split(',') : log.tags).map(t => (
-                    <span key={t} style={{ padding: '2px 10px', borderRadius: 12, background: 'var(--info-light)', color: 'oklch(48% 0.18 260)', fontSize: 12, fontWeight: 600 }}>{t}</span>
+                    <span key={t} className="rounded-full px-3 py-0.5 text-xs font-bold bg-purple-100 text-purple-700">{t}</span>
                   ))}
                 </div>
               )}
-              <p style={{ fontSize: 14, color: 'var(--foreground)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{log.content}</p>
-            </div>
+              <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{log.content}</p>
+            </Card>
           ))}
         </div>
       )}
 
       {/* 상담 폼 모달 */}
       {showForm && (
-        <div style={{ position: 'fixed', inset: 0, background: 'oklch(0% 0 0 / 0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        <div className="fixed inset-0 bg-black/40 z-[1000] flex items-center justify-center p-5"
           onClick={() => setShowForm(false)}>
-          <div style={{ background: 'white', borderRadius: 16, padding: 24, width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto' }}
+          <div className="bg-white rounded-2xl p-6 w-full max-w-[480px] max-h-[90vh] overflow-y-auto shadow-xl"
             onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>{editingLog ? '상담 일지 수정' : '상담 기록 추가'}</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <h3 className="text-lg font-bold text-[var(--primary)] mb-4">{editingLog ? '상담 일지 수정' : '상담 기록 추가'}</h3>
+            <div className="flex flex-col gap-3">
               <select value={form.student_id} onChange={e => setForm({ ...form, student_id: e.target.value })}
-                style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, fontFamily: 'inherit' }}>
+                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]">
                 <option value="">학생 선택</option>
                 {students.map(s => <option key={s.id} value={s.id}>{s.name} ({s.school})</option>)}
               </select>
               <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })}
-                style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, fontFamily: 'inherit' }} />
+                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" />
               <div>
-                <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>태그</p>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">태그</p>
+                <div className="flex gap-1.5 flex-wrap">
                   {TAGS.map(t => (
-                    <button key={t} onClick={() => toggleTag(t)} style={{
-                      padding: '5px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit',
-                      background: form.tags.includes(t) ? 'oklch(48% 0.18 260)' : 'var(--secondary)', color: form.tags.includes(t) ? 'white' : 'var(--neutral-700)',
-                    }}>{t}</button>
+                    <button key={t} onClick={() => toggleTag(t)}
+                      className={`px-3.5 py-1 rounded-full border-none cursor-pointer text-[13px] font-semibold transition-colors ${
+                        form.tags.includes(t) ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}>{t}</button>
                   ))}
                 </div>
               </div>
               <textarea placeholder="상담 내용" value={form.content} onChange={e => setForm({ ...form, content: e.target.value })}
-                rows={6} style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, fontFamily: 'inherit', resize: 'vertical' }} />
+                rows={6} className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)] resize-y" />
             </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 20, justifyContent: 'flex-end' }}>
+            <div className="flex gap-2 mt-5 justify-end">
               <button onClick={() => setShowForm(false)}
-                style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid var(--border)', cursor: 'pointer', background: 'white', fontSize: 14, fontFamily: 'inherit' }}>취소</button>
+                className="px-5 py-2 rounded-lg border border-slate-200 cursor-pointer bg-white text-sm text-slate-600 hover:bg-slate-50 transition-colors">취소</button>
               <button onClick={handleSave}
-                style={{ padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'var(--primary)', color: 'white', fontWeight: 600, fontSize: 14 }}>저장</button>
+                className="px-5 py-2 rounded-lg border-none cursor-pointer bg-[var(--cta)] text-white font-bold text-sm hover:opacity-90 font-display">저장</button>
             </div>
           </div>
         </div>

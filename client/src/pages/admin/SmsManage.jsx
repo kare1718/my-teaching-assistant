@@ -449,84 +449,68 @@ export default function SmsManage() {
   // 발송 탭에서 사용할 필터된 템플릿
   const filteredTemplates = templates.filter(t => !t.message_type || t.message_type === messageCategory);
 
-  if (loading) return <PageLoading wrap="content" />;
-
-  // 공통 스타일
-  const S = {
-    badge: (bg, color) => ({ padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600, background: bg, color, display: 'inline-block' }),
-    th: { padding: '8px 10px', textAlign: 'left', whiteSpace: 'nowrap' },
-    td: { padding: '8px 10px' },
-    input: { width: '100%', padding: 'var(--space-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13, boxSizing: 'border-box' },
-    sectionTitle: { fontSize: 'var(--text-sm)', fontWeight: 700, marginBottom: 'var(--space-2)', margin: 0 },
-  };
+  if (loading) return <PageLoading wrap="main-content" />;
 
   return (
-    <div className="content max-w-7xl mx-auto w-full">
-      <div className="card" style={{ padding: 'var(--space-4)', textAlign: 'center' }}>
-        <h2 style={{ fontSize: 'var(--text-lg)', margin: 0 }}>📱 메시지 정책 관리</h2>
+    <div className="main-content max-w-7xl mx-auto w-full">
+      <div className="mb-4">
+        <h2 className="text-2xl font-extrabold text-[var(--primary)] tracking-tight">📱 메시지 정책 관리</h2>
       </div>
 
       {/* 상단 탭: 문자 발송 | SMS 충전 */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 'var(--space-2)' }}>
-        <button onClick={() => setSmsTab('send')} style={{
-          padding: '10px 20px', borderRadius: 8, fontSize: 14, fontWeight: 700,
-          background: smsTab === 'send' ? '#102044' : '#fff',
-          color: smsTab === 'send' ? '#fff' : '#64748b',
-          border: '1px solid #e2e8f0', cursor: 'pointer', whiteSpace: 'nowrap',
-        }}>문자 발송</button>
-        <button onClick={() => setSmsTab('credits')} style={{
-          padding: '10px 20px', borderRadius: 8, fontSize: 14, fontWeight: 700,
-          background: smsTab === 'credits' ? '#102044' : '#fff',
-          color: smsTab === 'credits' ? '#fff' : '#64748b',
-          border: '1px solid #e2e8f0', cursor: 'pointer', whiteSpace: 'nowrap',
-        }}>SMS 충전</button>
+      <div className="flex gap-2 mb-3">
+        <button onClick={() => setSmsTab('send')}
+          className={`px-5 py-2.5 rounded-lg text-sm font-bold whitespace-nowrap border transition-colors font-display ${
+            smsTab === 'send'
+              ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
+              : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+          }`}>문자 발송</button>
+        <button onClick={() => setSmsTab('credits')}
+          className={`px-5 py-2.5 rounded-lg text-sm font-bold whitespace-nowrap border transition-colors font-display ${
+            smsTab === 'credits'
+              ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
+              : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+          }`}>SMS 충전</button>
       </div>
 
       {smsTab === 'credits' ? (
-        <Suspense fallback={<div style={{ textAlign: 'center', padding: 40, color: '#94a3b8' }}>로딩 중...</div>}>
+        <Suspense fallback={<div className="text-center py-10 text-slate-400">로딩 중...</div>}>
           <LazySmsCredits />
         </Suspense>
       ) : (
       <>
 
       {!configured && (
-        <div style={{ padding: 'var(--space-3)', background: 'var(--warning-light)', borderRadius: 'var(--radius)', marginBottom: 'var(--space-2)', border: '1px solid var(--warning)', fontSize: 13, color: 'oklch(35% 0.12 75)' }}>
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg mb-2 text-[13px] text-amber-700">
           SMS 설정이 필요합니다. 서버 .env에 SOLAPI 키를 설정해주세요.
         </div>
       )}
 
       {/* 크레딧 잔액 바 */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '12px 16px', borderRadius: 'var(--radius)',
-        background: isLowBalance ? 'var(--destructive-light)' : 'var(--success-light)',
-        border: `1px solid ${isLowBalance ? 'oklch(75% 0.10 25)' : 'oklch(80% 0.14 150)'}`,
-        marginBottom: 'var(--space-2)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: isLowBalance ? 'oklch(48% 0.20 25)' : 'oklch(52% 0.14 160)' }}>잔액</span>
-          <span style={{ fontSize: 20, fontWeight: 800, color: isLowBalance ? 'oklch(48% 0.20 25)' : 'oklch(52% 0.14 160)' }}>{balance.toLocaleString()}원</span>
-          {isLowBalance && <span style={{ fontSize: 11, color: 'oklch(48% 0.20 25)' }}>잔액 부족</span>}
+      <div className={`flex items-center justify-between px-4 py-3 rounded-xl border mb-2 ${
+        isLowBalance ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200'
+      }`}>
+        <div className="flex items-center gap-3">
+          <span className={`text-[13px] font-semibold ${isLowBalance ? 'text-[#ba1a1a]' : 'text-emerald-600'}`}>잔액</span>
+          <span className={`font-display text-xl font-extrabold ${isLowBalance ? 'text-[#ba1a1a]' : 'text-emerald-600'}`}>{balance.toLocaleString()}원</span>
+          {isLowBalance && <span className="text-[11px] text-[#ba1a1a]">잔액 부족</span>}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>SMS {pricing.SMS}원 / LMS {pricing.LMS}원</span>
-          <button onClick={() => setChargeModal(true)} style={{
-            padding: '6px 14px', borderRadius: 'var(--radius)', border: 'none',
-            background: 'var(--primary)', color: 'white', fontWeight: 600, fontSize: 13, cursor: 'pointer',
-          }}>충전</button>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-slate-500">SMS {pricing.SMS}원 / LMS {pricing.LMS}원</span>
+          <button onClick={() => setChargeModal(true)}
+            className="bg-[var(--cta)] text-white px-3.5 py-1.5 rounded-lg text-[13px] font-bold hover:opacity-90 font-display">충전</button>
         </div>
       </div>
 
       {/* 6탭 네비게이션 */}
-      <div style={{ display: 'flex', gap: 2, marginBottom: 'var(--space-2)', overflowX: 'auto' }}>
+      <div className="flex gap-0.5 mb-2 overflow-x-auto">
         {TAB_LIST.map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
-            flex: 1, padding: '8px 0', border: 'none', cursor: 'pointer', minWidth: 60,
-            fontWeight: 600, fontSize: 12, borderRadius: 'var(--radius) var(--radius) 0 0',
-            background: activeTab === tab.id ? 'var(--card)' : 'var(--muted)',
-            color: activeTab === tab.id ? 'var(--primary)' : 'var(--muted-foreground)',
-            borderBottom: activeTab === tab.id ? '2px solid var(--primary)' : '2px solid transparent',
-          }}>{tab.icon} {tab.label}</button>
+          <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+            className={`flex-1 min-w-[60px] py-2 text-xs font-semibold rounded-t-lg border-b-2 transition-colors ${
+              activeTab === tab.id
+                ? 'bg-white text-[var(--primary)] border-[var(--primary)]'
+                : 'bg-slate-100 text-slate-500 border-transparent hover:text-[var(--primary)]'
+            }`}>{tab.icon} {tab.label}</button>
         ))}
       </div>
 
@@ -536,65 +520,65 @@ export default function SmsManage() {
       {activeTab === 'send' && (
         <>
           {/* 메시지 유형 선택 */}
-          <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-2)' }}>
+          <div className="flex gap-2 mb-2">
             {MSG_TYPES.map(t => (
-              <button key={t.id} onClick={() => setMessageCategory(t.id)} style={{
-                flex: 1, padding: '10px 8px', borderRadius: 'var(--radius)',
-                border: messageCategory === t.id ? '2px solid var(--primary)' : '2px solid var(--border)',
-                background: messageCategory === t.id ? 'var(--info-light)' : 'var(--card)',
-                cursor: 'pointer', textAlign: 'center',
-              }}>
-                <div style={{ fontSize: 18 }}>{t.icon}</div>
-                <div style={{ fontSize: 13, fontWeight: 700, marginTop: 2 }}>{t.label}</div>
-                <div style={{ fontSize: 10, color: 'var(--muted-foreground)', marginTop: 2 }}>{t.desc}</div>
+              <button key={t.id} onClick={() => setMessageCategory(t.id)}
+                className={`flex-1 px-2 py-2.5 rounded-xl border-2 text-center transition-colors ${
+                  messageCategory === t.id
+                    ? 'border-[var(--primary)] bg-blue-50'
+                    : 'border-slate-200 bg-white hover:border-slate-300'
+                }`}>
+                <div className="text-lg">{t.icon}</div>
+                <div className="text-[13px] font-bold mt-0.5 text-[var(--primary)]">{t.label}</div>
+                <div className="text-[10px] text-slate-400 mt-0.5">{t.desc}</div>
               </button>
             ))}
           </div>
 
           {/* 마케팅 경고 */}
           {messageCategory === 'marketing' && (
-            <div style={{ padding: 'var(--space-3)', background: 'oklch(95% 0.03 60)', borderRadius: 'var(--radius)', marginBottom: 'var(--space-2)', border: '1px solid oklch(85% 0.08 60)', fontSize: 12 }}>
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg mb-2 text-xs text-amber-700">
               <strong>광고성 메시지 안내:</strong> 수신 동의한 보호자만 발송됩니다. "(광고)" 표시와 수신거부 안내가 자동 삽입됩니다.
             </div>
           )}
 
           {/* 메인 3열 레이아웃 */}
-          <div className="sms-main-row" style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'flex-start' }}>
+          <div className="sms-main-row flex gap-3 items-start">
 
             {/* 1. 발송 대상 */}
-            <div className="card" style={{ padding: 14, flex: '0 0 28%', minWidth: 0 }}>
-              <h3 style={S.sectionTitle}>발송 대상</h3>
-              <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex-[0_0_28%] min-w-0">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">발송 대상</h3>
+              <div className="flex gap-1.5 mb-2.5">
                 {[
                   { id: 'parent', label: '학부모' },
                   { id: 'student', label: '학생' },
                   { id: 'both', label: '동시' },
                   { id: 'custom', label: '직접' },
                 ].map(t => (
-                  <button key={t.id} onClick={() => { setTargetType(t.id); setSelected(new Set()); setSelectAll(false); }} style={{
-                    flex: 1, padding: 'var(--space-2) 0', borderRadius: 'var(--radius)', border: 'none', cursor: 'pointer',
-                    fontWeight: 600, fontSize: 12,
-                    background: targetType === t.id ? 'var(--primary)' : 'var(--muted)',
-                    color: targetType === t.id ? 'white' : 'var(--foreground)',
-                  }}>{t.label}</button>
+                  <button key={t.id} onClick={() => { setTargetType(t.id); setSelected(new Set()); setSelectAll(false); }}
+                    className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                      targetType === t.id
+                        ? 'bg-[var(--primary)] text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}>{t.label}</button>
                 ))}
               </div>
 
               {targetType !== 'custom' && (
                 <>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 'var(--space-2)' }}>
+                  <div className="grid grid-cols-3 gap-1.5 mb-2">
                     <select value={school} onChange={e => { setSchool(e.target.value); setGrade(''); }}
-                      style={{ padding: 'var(--space-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13 }}>
+                      className="px-2 py-2 bg-white border border-slate-200 rounded-lg text-[13px] outline-none focus:border-[var(--cta)] min-w-0">
                       <option value="">전체 학교</option>
                       {studentSchools.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
                     </select>
                     <select value={grade} onChange={e => setGrade(e.target.value)}
-                      style={{ padding: 'var(--space-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13 }}>
+                      className="px-2 py-2 bg-white border border-slate-200 rounded-lg text-[13px] outline-none focus:border-[var(--cta)] min-w-0">
                       <option value="">전체 학년</option>
                       {grades.map(g => <option key={g} value={g}>{g}</option>)}
                     </select>
                     <select value={selectedExam} onChange={e => handleExamSelect(e.target.value)}
-                      style={{ padding: 'var(--space-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13 }}>
+                      className="px-2 py-2 bg-white border border-slate-200 rounded-lg text-[13px] outline-none focus:border-[var(--cta)] min-w-0">
                       <option value="">시험 선택</option>
                       {exams.filter(e => { if (school && e.school && e.school !== school) return false; return true; }).map(e => (
                         <option key={e.id} value={e.id}>{e.name} ({e.exam_date || ''}){e.school ? ` [${e.school}]` : ''}</option>
@@ -602,42 +586,38 @@ export default function SmsManage() {
                     </select>
                   </div>
                   {examStats && (
-                    <div style={{ fontSize: 11, color: 'var(--primary)', marginBottom: 6, padding: 'var(--space-1) var(--space-2)', background: 'var(--info-light)', borderRadius: 'var(--radius-sm)' }}>
+                    <div className="text-[11px] text-[var(--primary)] mb-1.5 px-2 py-1 bg-blue-50 rounded-md">
                       평균: {examStats.avg}점 / 최고점: {examStats.max}점 / 응시: {selected.size}명
                     </div>
                   )}
 
-                  <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius)', maxHeight: 350, overflowY: 'auto' }}>
-                    <div onClick={toggleSelectAll} style={{
-                      display: 'flex', alignItems: 'center', gap: 'var(--space-2)', padding: 'var(--space-2) var(--space-3)',
-                      background: 'var(--neutral-50)', borderBottom: '1px solid var(--border)', cursor: 'pointer',
-                      fontSize: 13, fontWeight: 600, position: 'sticky', top: 0, zIndex: 1,
-                    }}>
-                      <input type="checkbox" checked={selectAll} readOnly style={{ accentColor: 'var(--primary)' }} />
+                  <div className="border border-slate-200 rounded-lg max-h-[350px] overflow-y-auto">
+                    <div onClick={toggleSelectAll}
+                      className="flex items-center gap-2 px-3 py-2 bg-slate-50 border-b border-slate-200 cursor-pointer text-[13px] font-semibold sticky top-0 z-[1]">
+                      <input type="checkbox" checked={selectAll} readOnly className="accent-[var(--primary)]" />
                       <span>전체 ({selected.size}/{filteredRecipients.length})</span>
                     </div>
                     {filteredRecipients.map(r => {
                       const phone = getPhone(r);
                       return (
-                        <div key={r.id} onClick={() => toggleOne(r.id)} style={{
-                          display: 'flex', alignItems: 'center', padding: '6px var(--space-3)',
-                          borderBottom: '1px solid var(--neutral-50)', cursor: 'pointer', fontSize: 12,
-                          background: selected.has(r.id) ? 'var(--info-light)' : 'var(--card)', gap: 'var(--space-2)',
-                        }}>
-                          <input type="checkbox" checked={selected.has(r.id)} readOnly style={{ accentColor: 'var(--primary)' }} />
-                          <span style={{ fontWeight: 600, minWidth: 40 }}>{r.name}</span>
-                          <span style={{ color: 'var(--muted-foreground)', fontSize: 11, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.school} {r.grade}</span>
-                          <span style={{ color: phone ? 'var(--success)' : 'var(--destructive)', fontSize: 11, flexShrink: 0 }}>
+                        <div key={r.id} onClick={() => toggleOne(r.id)}
+                          className={`flex items-center px-3 py-1.5 border-b border-slate-50 cursor-pointer text-xs gap-2 ${
+                            selected.has(r.id) ? 'bg-blue-50' : 'bg-white'
+                          }`}>
+                          <input type="checkbox" checked={selected.has(r.id)} readOnly className="accent-[var(--primary)]" />
+                          <span className="font-semibold min-w-[40px]">{r.name}</span>
+                          <span className="text-slate-500 text-[11px] flex-1 truncate">{r.school} {r.grade}</span>
+                          <span className={`text-[11px] shrink-0 ${phone ? 'text-emerald-600' : 'text-[#ba1a1a]'}`}>
                             {phone || '번호없음'}
                           </span>
                         </div>
                       );
                     })}
                     {filteredRecipients.length === 0 && (
-                      <div style={{ padding: 'var(--space-4)', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: 13 }}>학생이 없습니다.</div>
+                      <div className="p-4 text-center text-slate-400 text-[13px]">학생이 없습니다.</div>
                     )}
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginTop: 'var(--space-1)' }}>
+                  <div className="text-[11px] text-slate-500 mt-1">
                     선택: {selected.size}명 / 유효: {validRecipients.length}명
                   </div>
                 </>
@@ -653,21 +633,19 @@ export default function SmsManage() {
                     else f = raw.slice(0,3)+'-'+raw.slice(3,7)+'-'+raw.slice(7,11);
                     setCustomPhone(f);
                   }}
-                  maxLength={13} style={S.input} />
+                  maxLength={13} className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" />
               )}
             </div>
 
             {/* 2. 메시지 */}
-            <div className="card" style={{ padding: 14, flex: '1 1 50%', minWidth: 0 }}>
-              <h3 style={S.sectionTitle}>메시지</h3>
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex-[1_1_50%] min-w-0">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">메시지</h3>
               {/* 템플릿 퀵 선택 */}
               {filteredTemplates.length > 0 && (
-                <div style={{ display: 'flex', gap: 4, marginBottom: 'var(--space-2)', flexWrap: 'wrap' }}>
+                <div className="flex gap-1 mb-2 flex-wrap">
                   {filteredTemplates.slice(0, 5).map(t => (
-                    <button key={t.id} onClick={() => selectTemplate(t)} style={{
-                      padding: '4px 10px', borderRadius: 'var(--radius)', border: '1px solid var(--border)',
-                      background: 'var(--muted)', fontSize: 11, cursor: 'pointer', fontWeight: 500,
-                    }}>{t.name}</button>
+                    <button key={t.id} onClick={() => selectTemplate(t)}
+                      className="px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-medium text-slate-600 hover:bg-slate-100">{t.name}</button>
                   ))}
                 </div>
               )}
@@ -676,40 +654,40 @@ export default function SmsManage() {
                 value={message}
                 onChange={e => setMessage(e.target.value)}
                 rows={14}
-                style={{ resize: 'vertical', width: '100%', padding: 10, border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13, boxSizing: 'border-box' }}
+                className="resize-y w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-[13px] outline-none focus:border-[var(--cta)] box-border"
               />
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'var(--space-1)' }}>
-                <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
+              <div className="flex justify-between mt-1">
+                <span className="text-[11px] text-slate-500">
                   {getMessageType(message) === 'LMS' ? `LMS (장문) ${pricing.LMS}원/건` : `SMS (단문) ${pricing.SMS}원/건`}
                 </span>
-                <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>{message.length}/2000자</span>
+                <span className="text-[11px] text-slate-500">{message.length}/2000자</span>
               </div>
               {/* 변수 안내 */}
-              <div style={{ fontSize: 10, color: 'var(--muted-foreground)', marginTop: 'var(--space-1)', lineHeight: 1.8 }}>
+              <div className="text-[10px] text-slate-400 mt-1 leading-[1.8]">
                 {'{{학생이름}} {{학교}} {{학년}} {{시험명}} {{점수}} {{만점}} {{등수}} {{총인원}} {{시험평균}} {{최고점}} {{클리닉내용}} {{날짜}}'}
               </div>
 
               {/* 예약 발송 옵션 */}
-              <div style={{ marginTop: 'var(--space-2)', padding: 'var(--space-2)', background: 'var(--neutral-50)', borderRadius: 'var(--radius)' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+              <div className="mt-2 p-2 bg-slate-50 rounded-lg">
+                <label className="flex items-center gap-2 text-[13px] cursor-pointer">
                   <input type="checkbox" checked={isScheduled} onChange={e => setIsScheduled(e.target.checked)}
-                    style={{ accentColor: 'var(--primary)' }} />
-                  <span style={{ fontWeight: 600 }}>예약 발송</span>
+                    className="accent-[var(--primary)]" />
+                  <span className="font-semibold">예약 발송</span>
                 </label>
                 {isScheduled && (
-                  <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-2)' }}>
+                  <div className="flex gap-2 mt-2">
                     <input type="date" value={scheduleDate} onChange={e => setScheduleDate(e.target.value)}
-                      style={{ ...S.input, flex: 1 }} />
+                      className="flex-1 min-w-0 px-3 py-2 bg-white border border-slate-200 rounded-lg text-[13px] outline-none focus:border-[var(--cta)]" />
                     <input type="time" value={scheduleTime} onChange={e => setScheduleTime(e.target.value)}
-                      style={{ ...S.input, flex: 1 }} />
+                      className="flex-1 min-w-0 px-3 py-2 bg-white border border-slate-200 rounded-lg text-[13px] outline-none focus:border-[var(--cta)]" />
                   </div>
                 )}
               </div>
             </div>
 
             {/* 3. 비용 미리보기 */}
-            <div className="card" style={{ padding: 14, flex: '0 0 20%', minWidth: 120 }}>
-              <h3 style={S.sectionTitle}>비용 미리보기</h3>
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex-[0_0_20%] min-w-[120px]">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">비용 미리보기</h3>
               {(() => {
                 const count = targetType === 'custom'
                   ? (customPhone ? 1 : 0)
@@ -719,21 +697,21 @@ export default function SmsManage() {
                 const unitCost = pricing[getMessageType(message)] || 13;
                 const total = count * unitCost;
                 return (
-                  <div style={{ fontSize: 12 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span>수신자</span><span style={{ fontWeight: 700 }}>{count}명</span>
+                  <div className="text-xs text-slate-600">
+                    <div className="flex justify-between mb-1.5">
+                      <span>수신자</span><span className="font-bold text-[var(--primary)]">{count}명</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <div className="flex justify-between mb-1.5">
                       <span>단가</span><span>{unitCost}원 ({getMessageType(message)})</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 6, borderTop: '1px solid var(--border)', fontWeight: 700 }}>
-                      <span>예상 비용</span><span style={{ color: 'var(--primary)' }}>{total.toLocaleString()}원</span>
+                    <div className="flex justify-between pt-1.5 border-t border-slate-200 font-bold">
+                      <span>예상 비용</span><span className="font-display font-bold text-[var(--primary)]">{total.toLocaleString()}원</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11, color: total > balance ? 'oklch(48% 0.20 25)' : 'var(--muted-foreground)' }}>
+                    <div className={`flex justify-between mt-1.5 text-[11px] ${total > balance ? 'text-[#ba1a1a]' : 'text-slate-400'}`}>
                       <span>잔액</span><span>{balance.toLocaleString()}원</span>
                     </div>
                     {total > balance && (
-                      <div style={{ marginTop: 6, color: 'oklch(48% 0.20 25)', fontWeight: 600, fontSize: 11 }}>잔액 부족</div>
+                      <div className="mt-1.5 text-[#ba1a1a] font-semibold text-[11px]">잔액 부족</div>
                     )}
                   </div>
                 );
@@ -743,23 +721,22 @@ export default function SmsManage() {
 
           {/* 검증 경고 */}
           {validationResult && validationResult.warnings && validationResult.warnings.length > 0 && (
-            <div style={{ padding: 'var(--space-2) var(--space-3)', background: 'oklch(95% 0.03 60)', borderRadius: 'var(--radius)', border: '1px solid oklch(85% 0.08 60)', fontSize: 12, marginTop: 'var(--space-2)' }}>
-              {validationResult.warnings.map((w, i) => <div key={i} style={{ marginBottom: 2 }}>- {w}</div>)}
+            <div className="px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 mt-2">
+              {validationResult.warnings.map((w, i) => <div key={i} className="mb-0.5">- {w}</div>)}
             </div>
           )}
 
           {msg && (
-            <div style={{
-              padding: '10px 14px', borderRadius: 'var(--radius)', fontSize: 13, fontWeight: 500, marginTop: 'var(--space-2)',
-              background: msg.includes('완료') || msg.includes('성공') || msg.includes('등록') ? 'var(--success-light)' : 'var(--destructive-light)',
-              color: msg.includes('완료') || msg.includes('성공') || msg.includes('등록') ? 'var(--success)' : 'var(--destructive)',
-              border: `1px solid ${msg.includes('완료') || msg.includes('성공') || msg.includes('등록') ? 'var(--success)' : 'var(--destructive)'}`
-            }}>{msg}</div>
+            <div className={`px-3.5 py-2.5 rounded-lg text-[13px] font-medium mt-2 border ${
+              msg.includes('완료') || msg.includes('성공') || msg.includes('등록')
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : 'bg-red-50 text-[#ba1a1a] border-red-200'
+            }`}>{msg}</div>
           )}
 
-          <button className="btn btn-primary" onClick={preparePreview}
+          <button onClick={preparePreview}
             disabled={sending || !configured}
-            style={{ width: '100%', padding: 14, fontSize: 15, marginTop: 'var(--space-2)' }}>
+            className="w-full py-3.5 text-[15px] mt-2 bg-[var(--cta)] text-white rounded-lg font-bold hover:opacity-90 font-display disabled:opacity-50 disabled:cursor-not-allowed">
             {isScheduled ? '예약 발송 미리보기' : '발송 미리보기'} ({targetType === 'custom' ? (customPhone ? 1 : 0) : validRecipients.length}건)
           </button>
 
@@ -770,10 +747,10 @@ export default function SmsManage() {
               return true;
             });
             return (
-              <div className="card" style={{ padding: 14, marginTop: 'var(--space-2)' }}>
-                <h3 style={S.sectionTitle}>시험 선택 (성적 자동 입력)</h3>
+              <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4 mt-2">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">시험 선택 (성적 자동 입력)</h3>
                 <select value={selectedExam} onChange={e => setSelectedExam(e.target.value)}
-                  style={{ ...S.input, marginTop: 'var(--space-1)' }}>
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)] mt-1">
                   <option value="">시험을 선택하세요</option>
                   {filteredExams.map(e => (
                     <option key={e.id} value={e.id}>{e.name} ({e.exam_date || '날짜 미정'}){e.school ? ` [${e.school}]` : ''}</option>
@@ -789,23 +766,27 @@ export default function SmsManage() {
       {/* 2. 템플릿 탭 */}
       {/* ========================================== */}
       {activeTab === 'templates' && (
-        <div className="card" style={{ padding: 14 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-3)' }}>
-            <h3 style={S.sectionTitle}>메시지 템플릿</h3>
+        <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">메시지 템플릿</h3>
             <button onClick={() => setEditTmpl({ id: 'new', name: '', content: '', message_type: 'operational' })}
-              className="btn btn-primary" style={{ fontSize: 12, padding: '6px 14px' }}>+ 새 템플릿</button>
+              className="bg-[var(--cta)] text-white px-3.5 py-1.5 rounded-lg text-xs font-bold hover:opacity-90 font-display">+ 새 템플릿</button>
           </div>
 
           {/* 유형별 필터 */}
-          <div style={{ display: 'flex', gap: 6, marginBottom: 'var(--space-3)' }}>
+          <div className="flex gap-1.5 mb-3">
             <button onClick={() => setTmplFilter('all')}
-              style={{ padding: '4px 10px', borderRadius: 'var(--radius)', border: tmplFilter === 'all' ? '1px solid var(--primary)' : '1px solid var(--border)', background: tmplFilter === 'all' ? 'var(--info-light)' : 'var(--card)', fontSize: 11, cursor: 'pointer', fontWeight: 600 }}>전체 ({templates.length})</button>
+              className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
+                tmplFilter === 'all' ? 'border-[var(--primary)] bg-blue-50 text-[var(--primary)]' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+              }`}>전체 ({templates.length})</button>
             {MSG_TYPES.map(t => {
               const count = templates.filter(tmpl => tmpl.message_type === t.id).length;
               const active = tmplFilter === t.id;
               return (
                 <button key={t.id} onClick={() => setTmplFilter(active ? 'all' : t.id)}
-                  style={{ padding: '4px 10px', borderRadius: 'var(--radius)', border: active ? '1px solid var(--primary)' : '1px solid var(--border)', background: active ? 'var(--info-light)' : 'var(--muted)', fontSize: 11, cursor: 'pointer', fontWeight: active ? 600 : 400 }}>
+                  className={`px-2.5 py-1 rounded-full text-[11px] border ${
+                    active ? 'border-[var(--primary)] bg-blue-50 text-[var(--primary)] font-semibold' : 'border-slate-200 bg-slate-50 text-slate-600 font-normal hover:bg-slate-100'
+                  }`}>
                   {t.icon} {t.label} ({count})
                 </button>
               );
@@ -813,31 +794,31 @@ export default function SmsManage() {
           </div>
 
           {(tmplFilter === 'all' ? templates : templates.filter(t => t.message_type === tmplFilter)).length === 0 ? (
-            <div style={{ padding: 'var(--space-6)', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: 13 }}>
+            <div className="py-10 text-center text-slate-400 text-[13px]">
               등록된 템플릿이 없습니다. 새 템플릿을 추가해보세요.
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-2)' }}>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-2">
               {(tmplFilter === 'all' ? templates : templates.filter(t => t.message_type === tmplFilter)).map(t => {
                 const typeInfo = MSG_TYPES.find(m => m.id === t.message_type) || MSG_TYPES[0];
                 return (
-                  <div key={t.id} style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 'var(--space-3)', background: 'var(--card)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-1)' }}>
-                      <span style={{ fontWeight: 700, fontSize: 13 }}>{t.name}</span>
-                      <span style={S.badge('var(--info-light)', 'var(--primary)')}>{typeInfo.icon} {typeInfo.label}</span>
+                  <div key={t.id} className="border border-slate-200 rounded-xl p-3 bg-white">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-bold text-[13px] text-[var(--primary)]">{t.name}</span>
+                      <span className="rounded-full px-3 py-0.5 text-xs font-bold bg-blue-50 text-[var(--primary)] whitespace-nowrap">{typeInfo.icon} {typeInfo.label}</span>
                     </div>
-                    <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 'var(--space-2)', maxHeight: 60, overflow: 'hidden', lineHeight: 1.5 }}>
+                    <div className="text-xs text-slate-500 mb-2 max-h-[60px] overflow-hidden leading-normal">
                       {t.content.substring(0, 100)}{t.content.length > 100 ? '...' : ''}
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 10, color: 'var(--muted-foreground)' }}>사용 {t.usage_count || 0}회</span>
-                      <div style={{ display: 'flex', gap: 4 }}>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] text-slate-400">사용 {t.usage_count || 0}회</span>
+                      <div className="flex gap-1">
                         <button onClick={() => { setMessage(t.content); setMessageCategory(t.message_type || 'operational'); setActiveTab('send'); }}
-                          style={{ padding: '3px 8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--success-light)', fontSize: 10, cursor: 'pointer' }}>사용</button>
+                          className="px-2 py-0.5 rounded-md border border-emerald-200 bg-emerald-50 text-emerald-700 text-[10px] font-semibold hover:bg-emerald-100">사용</button>
                         <button onClick={() => setEditTmpl({ ...t })}
-                          style={{ padding: '3px 8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--info-light)', fontSize: 10, cursor: 'pointer' }}>수정</button>
+                          className="px-2 py-0.5 rounded-md border border-slate-200 bg-blue-50 text-[var(--primary)] text-[10px] font-semibold hover:bg-blue-100">수정</button>
                         <button onClick={() => deleteTmpl(t.id)}
-                          style={{ padding: '3px 8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--destructive-light)', fontSize: 10, cursor: 'pointer', color: 'var(--destructive)' }}>삭제</button>
+                          className="px-2 py-0.5 rounded-md border border-red-200 bg-red-50 text-[#ba1a1a] text-[10px] font-semibold hover:bg-red-100">삭제</button>
                       </div>
                     </div>
                   </div>
@@ -852,65 +833,63 @@ export default function SmsManage() {
       {/* 3. 이력 탭 */}
       {/* ========================================== */}
       {activeTab === 'history' && (
-        <div className="card" style={{ padding: 14 }}>
-          <h3 style={{ ...S.sectionTitle, marginBottom: 'var(--space-3)' }}>발송 이력</h3>
+        <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">발송 이력</h3>
           {sendLogs.length === 0 ? (
-            <div style={{ padding: 'var(--space-6)', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: 13 }}>발송 이력이 없습니다.</div>
+            <div className="py-10 text-center text-slate-400 text-[13px]">발송 이력이 없습니다.</div>
           ) : (
             <>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-xs">
                   <thead>
-                    <tr style={{ background: 'var(--neutral-50)', borderBottom: '2px solid var(--border)' }}>
-                      <th style={S.th}>시간</th>
-                      <th style={S.th}>수신자</th>
-                      <th style={{ ...S.th, textAlign: 'center' }}>유형</th>
-                      <th style={{ ...S.th, textAlign: 'center' }}>분류</th>
-                      <th style={{ ...S.th, textAlign: 'center' }}>비용</th>
-                      <th style={{ ...S.th, textAlign: 'center' }}>상태</th>
+                    <tr className="bg-slate-50 border-b-2 border-slate-200">
+                      <th className="px-2.5 py-2 text-left whitespace-nowrap text-xs font-bold text-slate-500 uppercase tracking-widest">시간</th>
+                      <th className="px-2.5 py-2 text-left whitespace-nowrap text-xs font-bold text-slate-500 uppercase tracking-widest">수신자</th>
+                      <th className="px-2.5 py-2 text-center whitespace-nowrap text-xs font-bold text-slate-500 uppercase tracking-widest">유형</th>
+                      <th className="px-2.5 py-2 text-center whitespace-nowrap text-xs font-bold text-slate-500 uppercase tracking-widest">분류</th>
+                      <th className="px-2.5 py-2 text-center whitespace-nowrap text-xs font-bold text-slate-500 uppercase tracking-widest">비용</th>
+                      <th className="px-2.5 py-2 text-center whitespace-nowrap text-xs font-bold text-slate-500 uppercase tracking-widest">상태</th>
                     </tr>
                   </thead>
                   <tbody>
                     {sendLogs.map(log => (
-                      <tr key={log.id} style={{ borderBottom: '1px solid var(--neutral-50)' }}>
-                        <td style={{ ...S.td, whiteSpace: 'nowrap' }}>{new Date(log.created_at).toLocaleString('ko-KR')}</td>
-                        <td style={S.td}>
-                          <span style={{ fontWeight: 600 }}>{log.recipient_name || '-'}</span>
-                          <span style={{ color: 'var(--muted-foreground)', marginLeft: 6 }}>{log.recipient_phone}</span>
+                      <tr key={log.id} className="border-b border-slate-50">
+                        <td className="px-2.5 py-2 whitespace-nowrap">{new Date(log.created_at).toLocaleString('ko-KR')}</td>
+                        <td className="px-2.5 py-2">
+                          <span className="font-semibold text-[var(--primary)]">{log.recipient_name || '-'}</span>
+                          <span className="text-slate-400 ml-1.5">{log.recipient_phone}</span>
                         </td>
-                        <td style={{ ...S.td, textAlign: 'center' }}>
-                          <span style={S.badge(
-                            log.message_type === 'LMS' ? 'var(--info-light)' : 'var(--success-light)',
-                            log.message_type === 'LMS' ? 'oklch(48% 0.18 260)' : 'oklch(52% 0.14 160)'
-                          )}>{log.message_type}</span>
+                        <td className="px-2.5 py-2 text-center">
+                          <span className={`rounded-full px-3 py-0.5 text-xs font-bold ${
+                            log.message_type === 'LMS' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'
+                          }`}>{log.message_type}</span>
                         </td>
-                        <td style={{ ...S.td, textAlign: 'center' }}>
+                        <td className="px-2.5 py-2 text-center">
                           {log.message_category && log.message_category !== 'operational' && (
-                            <span style={S.badge('var(--muted)', 'var(--foreground)')}>
+                            <span className="rounded-full px-3 py-0.5 text-xs font-bold bg-slate-100 text-slate-600">
                               {MSG_TYPES.find(m => m.id === log.message_category)?.label || log.message_category}
                             </span>
                           )}
                         </td>
-                        <td style={{ ...S.td, textAlign: 'center', fontWeight: 600 }}>{log.cost}원</td>
-                        <td style={{ ...S.td, textAlign: 'center' }}>
-                          <span style={S.badge(
-                            log.status === 'sent' ? 'var(--success-light)' : 'var(--destructive-light)',
-                            log.status === 'sent' ? 'oklch(52% 0.14 160)' : 'oklch(48% 0.20 25)'
-                          )}>{log.status === 'sent' ? '성공' : '실패'}</span>
+                        <td className="px-2.5 py-2 text-center font-semibold">{log.cost}원</td>
+                        <td className="px-2.5 py-2 text-center">
+                          <span className={`rounded-full px-3 py-0.5 text-xs font-bold ${
+                            log.status === 'sent' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                          }`}>{log.status === 'sent' ? '성공' : '실패'}</span>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'var(--space-3)', fontSize: 12 }}>
-                <span style={{ color: 'var(--muted-foreground)' }}>총 {logTotal}건</span>
-                <div style={{ display: 'flex', gap: 4 }}>
+              <div className="flex justify-between items-center mt-3 text-xs">
+                <span className="text-slate-400">총 {logTotal}건</span>
+                <div className="flex gap-1">
                   <button disabled={logPage <= 1} onClick={() => setLogPage(p => p - 1)}
-                    style={{ padding: '4px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', cursor: logPage <= 1 ? 'default' : 'pointer', background: 'var(--card)' }}>이전</button>
-                  <span style={{ padding: '4px 10px', color: 'var(--muted-foreground)' }}>{logPage} / {Math.max(1, Math.ceil(logTotal / 20))}</span>
+                    className="px-2.5 py-1 border border-slate-200 rounded-lg bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-default">이전</button>
+                  <span className="px-2.5 py-1 text-slate-400">{logPage} / {Math.max(1, Math.ceil(logTotal / 20))}</span>
                   <button disabled={logPage >= Math.ceil(logTotal / 20)} onClick={() => setLogPage(p => p + 1)}
-                    style={{ padding: '4px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', cursor: logPage >= Math.ceil(logTotal / 20) ? 'default' : 'pointer', background: 'var(--card)' }}>다음</button>
+                    className="px-2.5 py-1 border border-slate-200 rounded-lg bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-default">다음</button>
                 </div>
               </div>
             </>
@@ -922,14 +901,14 @@ export default function SmsManage() {
       {/* 4. 예약 탭 */}
       {/* ========================================== */}
       {activeTab === 'schedule' && (
-        <div className="card" style={{ padding: 14 }}>
-          <h3 style={{ ...S.sectionTitle, marginBottom: 'var(--space-3)' }}>예약 발송 목록</h3>
+        <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">예약 발송 목록</h3>
           {schedules.length === 0 ? (
-            <div style={{ padding: 'var(--space-6)', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: 13 }}>
+            <div className="py-10 text-center text-slate-400 text-[13px]">
               예약된 발송이 없습니다. 발송 탭에서 예약 발송을 등록하세요.
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+            <div className="flex flex-col gap-2">
               {schedules.map(s => {
                 const statusLabel = { pending: '대기', sent: '발송완료', cancelled: '취소됨', failed: '실패' }[s.status] || s.status;
                 const statusColor = { pending: 'oklch(48% 0.18 260)', sent: 'oklch(52% 0.14 160)', cancelled: 'var(--muted-foreground)', failed: 'oklch(48% 0.20 25)' }[s.status];
@@ -937,29 +916,29 @@ export default function SmsManage() {
                 const recipients = typeof s.recipients === 'string' ? JSON.parse(s.recipients) : s.recipients;
                 const phoneCount = recipients?.phones?.length || 0;
                 return (
-                  <div key={s.id} style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 'var(--space-3)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-1)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={S.badge(statusBg, statusColor)}>{statusLabel}</span>
-                        <span style={{ fontSize: 12, fontWeight: 600 }}>
+                  <div key={s.id} className="border border-slate-200 rounded-xl p-3">
+                    <div className="flex justify-between items-center mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-full px-3 py-0.5 text-xs font-bold inline-block" style={{ background: statusBg, color: statusColor }}>{statusLabel}</span>
+                        <span className="text-xs font-semibold text-[var(--primary)]">
                           {new Date(s.scheduled_at).toLocaleString('ko-KR')}
                         </span>
-                        <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>{phoneCount}명</span>
+                        <span className="text-[11px] text-slate-400">{phoneCount}명</span>
                       </div>
                       {s.status === 'pending' && (
                         <button onClick={() => cancelSchedule(s.id)}
-                          style={{ padding: '3px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--destructive)', background: 'var(--destructive-light)', color: 'var(--destructive)', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                          className="px-2.5 py-0.5 rounded-md border border-red-200 bg-red-50 text-[#ba1a1a] text-[11px] font-semibold hover:bg-red-100">
                           취소
                         </button>
                       )}
                     </div>
-                    <div style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.5, maxHeight: 40, overflow: 'hidden' }}>
+                    <div className="text-xs text-slate-600 leading-normal max-h-10 overflow-hidden">
                       {s.message.substring(0, 120)}{s.message.length > 120 ? '...' : ''}
                     </div>
                     {s.error_message && (
-                      <div style={{ fontSize: 11, color: 'oklch(48% 0.20 25)', marginTop: 4 }}>{s.error_message}</div>
+                      <div className="text-[11px] text-[#ba1a1a] mt-1">{s.error_message}</div>
                     )}
-                    <div style={{ fontSize: 10, color: 'var(--muted-foreground)', marginTop: 4 }}>
+                    <div className="text-[10px] text-slate-400 mt-1">
                       등록: {s.created_by_name || '-'} / {new Date(s.created_at).toLocaleString('ko-KR')}
                     </div>
                   </div>
@@ -974,59 +953,56 @@ export default function SmsManage() {
       {/* 5. 수신동의 탭 */}
       {/* ========================================== */}
       {activeTab === 'consent' && (
-        <div className="card" style={{ padding: 14 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-3)' }}>
-            <h3 style={S.sectionTitle}>보호자 수신 동의 현황</h3>
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-              <button onClick={() => bulkConsent(true)} className="btn btn-outline" style={{ fontSize: 11, padding: '4px 10px' }}>
+        <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">보호자 수신 동의 현황</h3>
+            <div className="flex gap-2">
+              <button onClick={() => bulkConsent(true)}
+                className="bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 px-2.5 py-1 rounded-lg text-[11px] font-bold">
                 일괄 동의
               </button>
-              <button onClick={() => bulkConsent(false)} className="btn btn-outline" style={{ fontSize: 11, padding: '4px 10px' }}>
+              <button onClick={() => bulkConsent(false)}
+                className="bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 px-2.5 py-1 rounded-lg text-[11px] font-bold">
                 일괄 철회
               </button>
             </div>
           </div>
 
           <input placeholder="이름 또는 전화번호 검색..." value={consentSearch} onChange={e => setConsentSearch(e.target.value)}
-            style={{ ...S.input, marginBottom: 'var(--space-2)' }} />
+            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)] mb-2" />
 
-          <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 'var(--space-2)' }}>
+          <div className="text-xs text-slate-500 mb-2">
             동의: {consents.filter(c => c.marketing_consent).length}명 / 전체: {consents.length}명
           </div>
 
           {filteredConsents.length === 0 ? (
-            <div style={{ padding: 'var(--space-6)', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: 13 }}>보호자 데이터가 없습니다.</div>
+            <div className="py-10 text-center text-slate-400 text-[13px]">보호자 데이터가 없습니다.</div>
           ) : (
-            <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius)', maxHeight: 500, overflowY: 'auto' }}>
+            <div className="border border-slate-200 rounded-lg max-h-[500px] overflow-y-auto">
               {filteredConsents.map(c => (
-                <div key={c.parent_id} style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '8px var(--space-3)', borderBottom: '1px solid var(--neutral-50)', fontSize: 12,
-                }}>
-                  <div style={{ flex: 1 }}>
-                    <span style={{ fontWeight: 600 }}>{c.name}</span>
-                    <span style={{ color: 'var(--muted-foreground)', marginLeft: 8 }}>{c.phone}</span>
+                <div key={c.parent_id} className="flex items-center justify-between px-3 py-2 border-b border-slate-50 text-xs">
+                  <div className="flex-1">
+                    <span className="font-semibold text-[var(--primary)]">{c.name}</span>
+                    <span className="text-slate-400 ml-2">{c.phone}</span>
                     {c.children_names && (
-                      <span style={{ color: 'var(--primary)', marginLeft: 8, fontSize: 11 }}>({c.children_names})</span>
+                      <span className="text-[var(--primary)] ml-2 text-[11px]">({c.children_names})</span>
                     )}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                  <div className="flex items-center gap-2 shrink-0">
                     {c.consented_at && (
-                      <span style={{ fontSize: 10, color: 'var(--muted-foreground)' }}>
+                      <span className="text-[10px] text-slate-400">
                         {new Date(c.consented_at).toLocaleDateString('ko-KR')}
                       </span>
                     )}
                     {c.consent_method && (
-                      <span style={S.badge('var(--muted)', 'var(--foreground)')}>
+                      <span className="rounded-full px-3 py-0.5 text-xs font-bold bg-slate-100 text-slate-600">
                         {{ online: '온라인', written: '서면', verbal: '구두' }[c.consent_method] || c.consent_method}
                       </span>
                     )}
-                    <button onClick={() => toggleConsent(c.parent_id, c.marketing_consent)} style={{
-                      padding: '4px 12px', borderRadius: 'var(--radius)', border: 'none', cursor: 'pointer',
-                      fontWeight: 600, fontSize: 11,
-                      background: c.marketing_consent ? 'var(--success-light)' : 'var(--muted)',
-                      color: c.marketing_consent ? 'oklch(52% 0.14 160)' : 'var(--muted-foreground)',
-                    }}>
+                    <button onClick={() => toggleConsent(c.parent_id, c.marketing_consent)}
+                      className={`px-3 py-1 rounded-full text-[11px] font-semibold ${
+                        c.marketing_consent ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'
+                      }`}>
                       {c.marketing_consent ? '동의' : '미동의'}
                     </button>
                   </div>
@@ -1041,61 +1017,61 @@ export default function SmsManage() {
       {/* 6. 통계 탭 */}
       {/* ========================================== */}
       {activeTab === 'stats' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+        <div className="flex flex-col gap-2">
           {/* 요약 카드 */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-2)' }}>
-            <div className="card" style={{ padding: 'var(--space-3)', textAlign: 'center' }}>
-              <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>오늘 발송</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--primary)' }}>{stats?.today?.count || 0}건</div>
-              <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>{(stats?.today?.cost || 0).toLocaleString()}원</div>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-3 text-center">
+              <div className="text-[11px] text-slate-400">오늘 발송</div>
+              <div className="font-display font-bold text-[22px] text-[var(--primary)]">{stats?.today?.count || 0}건</div>
+              <div className="text-[11px] text-slate-400">{(stats?.today?.cost || 0).toLocaleString()}원</div>
             </div>
-            <div className="card" style={{ padding: 'var(--space-3)', textAlign: 'center' }}>
-              <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>이번 달</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--primary)' }}>{stats?.this_month?.count || 0}건</div>
-              <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>{(stats?.this_month?.cost || 0).toLocaleString()}원</div>
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-3 text-center">
+              <div className="text-[11px] text-slate-400">이번 달</div>
+              <div className="font-display font-bold text-[22px] text-[var(--primary)]">{stats?.this_month?.count || 0}건</div>
+              <div className="text-[11px] text-slate-400">{(stats?.this_month?.cost || 0).toLocaleString()}원</div>
             </div>
-            <div className="card" style={{ padding: 'var(--space-3)', textAlign: 'center' }}>
-              <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>잔액</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: isLowBalance ? 'oklch(48% 0.20 25)' : 'oklch(52% 0.14 160)' }}>
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-3 text-center">
+              <div className="text-[11px] text-slate-400">잔액</div>
+              <div className={`font-display font-bold text-[22px] ${isLowBalance ? 'text-[#ba1a1a]' : 'text-emerald-600'}`}>
                 {balance.toLocaleString()}원
               </div>
-              <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>SMS {Math.floor(balance / pricing.SMS)}건</div>
+              <div className="text-[11px] text-slate-400">SMS {Math.floor(balance / pricing.SMS)}건</div>
             </div>
           </div>
 
           {/* 월별 통계 테이블 */}
-          <div className="card" style={{ padding: 14 }}>
-            <h3 style={{ ...S.sectionTitle, marginBottom: 'var(--space-3)' }}>월별 발송 통계</h3>
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">월별 발송 통계</h3>
             {!stats?.monthly || stats.monthly.length === 0 ? (
-              <div style={{ padding: 'var(--space-6)', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: 13 }}>통계 데이터가 없습니다.</div>
+              <div className="py-10 text-center text-slate-400 text-[13px]">통계 데이터가 없습니다.</div>
             ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-xs">
                   <thead>
-                    <tr style={{ background: 'var(--neutral-50)', borderBottom: '2px solid var(--border)' }}>
-                      <th style={S.th}>월</th>
-                      <th style={{ ...S.th, textAlign: 'center' }}>분류</th>
-                      <th style={{ ...S.th, textAlign: 'center' }}>채널</th>
-                      <th style={{ ...S.th, textAlign: 'center' }}>전체</th>
-                      <th style={{ ...S.th, textAlign: 'center' }}>성공</th>
-                      <th style={{ ...S.th, textAlign: 'center' }}>실패</th>
-                      <th style={{ ...S.th, textAlign: 'right' }}>비용</th>
+                    <tr className="bg-slate-50 border-b-2 border-slate-200">
+                      <th className="px-2.5 py-2 text-left whitespace-nowrap text-xs font-bold text-slate-500 uppercase tracking-widest">월</th>
+                      <th className="px-2.5 py-2 text-center whitespace-nowrap text-xs font-bold text-slate-500 uppercase tracking-widest">분류</th>
+                      <th className="px-2.5 py-2 text-center whitespace-nowrap text-xs font-bold text-slate-500 uppercase tracking-widest">채널</th>
+                      <th className="px-2.5 py-2 text-center whitespace-nowrap text-xs font-bold text-slate-500 uppercase tracking-widest">전체</th>
+                      <th className="px-2.5 py-2 text-center whitespace-nowrap text-xs font-bold text-slate-500 uppercase tracking-widest">성공</th>
+                      <th className="px-2.5 py-2 text-center whitespace-nowrap text-xs font-bold text-slate-500 uppercase tracking-widest">실패</th>
+                      <th className="px-2.5 py-2 text-right whitespace-nowrap text-xs font-bold text-slate-500 uppercase tracking-widest">비용</th>
                     </tr>
                   </thead>
                   <tbody>
                     {stats.monthly.map((row, i) => (
-                      <tr key={i} style={{ borderBottom: '1px solid var(--neutral-50)' }}>
-                        <td style={S.td}>{row.month}</td>
-                        <td style={{ ...S.td, textAlign: 'center' }}>
-                          <span style={S.badge('var(--muted)', 'var(--foreground)')}>
+                      <tr key={i} className="border-b border-slate-50">
+                        <td className="px-2.5 py-2">{row.month}</td>
+                        <td className="px-2.5 py-2 text-center">
+                          <span className="rounded-full px-3 py-0.5 text-xs font-bold bg-slate-100 text-slate-600">
                             {MSG_TYPES.find(m => m.id === row.message_category)?.label || row.message_category || '운영'}
                           </span>
                         </td>
-                        <td style={{ ...S.td, textAlign: 'center' }}>{row.channel || 'sms'}</td>
-                        <td style={{ ...S.td, textAlign: 'center', fontWeight: 600 }}>{row.total_count}</td>
-                        <td style={{ ...S.td, textAlign: 'center', color: 'oklch(52% 0.14 160)' }}>{row.success_count}</td>
-                        <td style={{ ...S.td, textAlign: 'center', color: row.fail_count > 0 ? 'oklch(48% 0.20 25)' : 'var(--muted-foreground)' }}>{row.fail_count}</td>
-                        <td style={{ ...S.td, textAlign: 'right', fontWeight: 600 }}>{(row.total_cost || 0).toLocaleString()}원</td>
+                        <td className="px-2.5 py-2 text-center">{row.channel || 'sms'}</td>
+                        <td className="px-2.5 py-2 text-center font-semibold">{row.total_count}</td>
+                        <td className="px-2.5 py-2 text-center text-emerald-600">{row.success_count}</td>
+                        <td className={`px-2.5 py-2 text-center ${row.fail_count > 0 ? 'text-[#ba1a1a]' : 'text-slate-400'}`}>{row.fail_count}</td>
+                        <td className="px-2.5 py-2 text-right font-semibold">{(row.total_cost || 0).toLocaleString()}원</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1105,21 +1081,21 @@ export default function SmsManage() {
           </div>
 
           {/* 충전/차감 이력 */}
-          <div className="card" style={{ padding: 14 }}>
-            <h3 style={{ ...S.sectionTitle, marginBottom: 'var(--space-3)' }}>충전/차감 이력</h3>
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">충전/차감 이력</h3>
             {transactions.length === 0 ? (
-              <div style={{ padding: 'var(--space-6)', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: 13 }}>거래 내역이 없습니다.</div>
+              <div className="py-10 text-center text-slate-400 text-[13px]">거래 내역이 없습니다.</div>
             ) : (
               <>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse text-xs">
                     <thead>
-                      <tr style={{ background: 'var(--neutral-50)', borderBottom: '2px solid var(--border)' }}>
-                        <th style={S.th}>시간</th>
-                        <th style={{ ...S.th, textAlign: 'center' }}>유형</th>
-                        <th style={{ ...S.th, textAlign: 'right' }}>금액</th>
-                        <th style={{ ...S.th, textAlign: 'right' }}>잔액</th>
-                        <th style={S.th}>설명</th>
+                      <tr className="bg-slate-50 border-b-2 border-slate-200">
+                        <th className="px-2.5 py-2 text-left whitespace-nowrap text-xs font-bold text-slate-500 uppercase tracking-widest">시간</th>
+                        <th className="px-2.5 py-2 text-center whitespace-nowrap text-xs font-bold text-slate-500 uppercase tracking-widest">유형</th>
+                        <th className="px-2.5 py-2 text-right whitespace-nowrap text-xs font-bold text-slate-500 uppercase tracking-widest">금액</th>
+                        <th className="px-2.5 py-2 text-right whitespace-nowrap text-xs font-bold text-slate-500 uppercase tracking-widest">잔액</th>
+                        <th className="px-2.5 py-2 text-left whitespace-nowrap text-xs font-bold text-slate-500 uppercase tracking-widest">설명</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1128,28 +1104,28 @@ export default function SmsManage() {
                         const typeColor = { charge: 'oklch(52% 0.14 160)', deduct: 'oklch(48% 0.20 25)', refund: 'oklch(48% 0.18 260)' }[tx.type];
                         const typeBg = { charge: 'var(--success-light)', deduct: 'var(--destructive-light)', refund: 'var(--info-light)' }[tx.type];
                         return (
-                          <tr key={tx.id} style={{ borderBottom: '1px solid var(--neutral-50)' }}>
-                            <td style={{ ...S.td, whiteSpace: 'nowrap' }}>{new Date(tx.created_at).toLocaleString('ko-KR')}</td>
-                            <td style={{ ...S.td, textAlign: 'center' }}><span style={S.badge(typeBg, typeColor)}>{typeLabel}</span></td>
-                            <td style={{ ...S.td, textAlign: 'right', fontWeight: 700, color: tx.amount > 0 ? 'oklch(52% 0.14 160)' : 'oklch(48% 0.20 25)' }}>
+                          <tr key={tx.id} className="border-b border-slate-50">
+                            <td className="px-2.5 py-2 whitespace-nowrap">{new Date(tx.created_at).toLocaleString('ko-KR')}</td>
+                            <td className="px-2.5 py-2 text-center"><span className="rounded-full px-3 py-0.5 text-xs font-bold inline-block" style={{ background: typeBg, color: typeColor }}>{typeLabel}</span></td>
+                            <td className={`px-2.5 py-2 text-right font-bold font-display ${tx.amount > 0 ? 'text-emerald-600' : 'text-[#ba1a1a]'}`}>
                               {tx.amount > 0 ? '+' : ''}{(tx.amount || 0).toLocaleString()}원
                             </td>
-                            <td style={{ ...S.td, textAlign: 'right', fontWeight: 600 }}>{(tx.balance_after || 0).toLocaleString()}원</td>
-                            <td style={{ ...S.td, color: 'var(--muted-foreground)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.description || '-'}</td>
+                            <td className="px-2.5 py-2 text-right font-semibold">{(tx.balance_after || 0).toLocaleString()}원</td>
+                            <td className="px-2.5 py-2 text-slate-400 max-w-[200px] truncate">{tx.description || '-'}</td>
                           </tr>
                         );
                       })}
                     </tbody>
                   </table>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'var(--space-3)', fontSize: 12 }}>
-                  <span style={{ color: 'var(--muted-foreground)' }}>총 {txTotal}건</span>
-                  <div style={{ display: 'flex', gap: 4 }}>
+                <div className="flex justify-between items-center mt-3 text-xs">
+                  <span className="text-slate-400">총 {txTotal}건</span>
+                  <div className="flex gap-1">
                     <button disabled={txPage <= 1} onClick={() => setTxPage(p => p - 1)}
-                      style={{ padding: '4px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', cursor: txPage <= 1 ? 'default' : 'pointer', background: 'var(--card)' }}>이전</button>
-                    <span style={{ padding: '4px 10px', color: 'var(--muted-foreground)' }}>{txPage} / {Math.max(1, Math.ceil(txTotal / 20))}</span>
+                      className="px-2.5 py-1 border border-slate-200 rounded-lg bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-default">이전</button>
+                    <span className="px-2.5 py-1 text-slate-400">{txPage} / {Math.max(1, Math.ceil(txTotal / 20))}</span>
                     <button disabled={txPage >= Math.ceil(txTotal / 20)} onClick={() => setTxPage(p => p + 1)}
-                      style={{ padding: '4px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', cursor: txPage >= Math.ceil(txTotal / 20) ? 'default' : 'pointer', background: 'var(--card)' }}>다음</button>
+                      className="px-2.5 py-1 border border-slate-200 rounded-lg bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-default">다음</button>
                   </div>
                 </div>
               </>
@@ -1163,27 +1139,30 @@ export default function SmsManage() {
       {/* ========================================== */}
       {editTmpl && (
         <>
-          <div onClick={() => setEditTmpl(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'oklch(0% 0 0 / 0.4)', zIndex: 10000 }} />
-          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: 'var(--card)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-5)', width: 380, zIndex: 10001, boxShadow: 'var(--shadow-md)' }}>
-            <h3 style={{ fontSize: 'var(--text-base)', marginBottom: 'var(--space-3)' }}>{editTmpl.id === 'new' ? '새 템플릿' : '템플릿 수정'}</h3>
-            <label style={{ fontSize: 'var(--text-xs)', fontWeight: 600 }}>이름</label>
+          <div onClick={() => setEditTmpl(null)} className="fixed inset-0 bg-black/40 z-[10000]" />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl p-5 w-[380px] z-[10001] shadow-lg">
+            <h3 className="text-base font-bold text-[var(--primary)] mb-3">{editTmpl.id === 'new' ? '새 템플릿' : '템플릿 수정'}</h3>
+            <label className="text-xs font-semibold text-slate-500">이름</label>
             <input value={editTmpl.name} onChange={e => setEditTmpl({ ...editTmpl, name: e.target.value })}
-              placeholder="예: 클리닉 결과 안내" style={{ ...S.input, marginBottom: 'var(--space-2)' }} />
-            <label style={{ fontSize: 'var(--text-xs)', fontWeight: 600 }}>유형</label>
+              placeholder="예: 클리닉 결과 안내"
+              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)] mb-2" />
+            <label className="text-xs font-semibold text-slate-500">유형</label>
             <select value={editTmpl.message_type || 'operational'} onChange={e => setEditTmpl({ ...editTmpl, message_type: e.target.value })}
-              style={{ ...S.input, marginBottom: 'var(--space-2)' }}>
+              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)] mb-2">
               {MSG_TYPES.map(t => <option key={t.id} value={t.id}>{t.icon} {t.label} — {t.desc}</option>)}
             </select>
-            <label style={{ fontSize: 'var(--text-xs)', fontWeight: 600 }}>내용</label>
+            <label className="text-xs font-semibold text-slate-500">내용</label>
             <textarea value={editTmpl.content} onChange={e => setEditTmpl({ ...editTmpl, content: e.target.value })}
               rows={6} placeholder={`[${config.academyName || '나만의 조교'}] {{학생이름}} 학생 안내\n\n내용...\n\n감사합니다.`}
-              style={{ ...S.input, resize: 'vertical', fontSize: 'var(--text-xs)', marginBottom: 'var(--space-2)' }} />
-            <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 10, background: 'var(--neutral-50)', padding: 6, borderRadius: 'var(--space-1)' }}>
+              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:border-[var(--cta)] resize-y mb-2" />
+            <div className="text-[11px] text-slate-400 mb-2.5 bg-slate-50 p-1.5 rounded-md">
               {'{{학생이름}} {{학교}} {{학년}} {{날짜}} {{시험명}} {{점수}} {{만점}} {{등수}} {{총인원}} {{클리닉내용}}'}
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-              <button className="btn btn-outline" onClick={() => setEditTmpl(null)} style={{ flex: 1 }}>취소</button>
-              <button className="btn btn-primary" onClick={saveTmpl} style={{ flex: 1 }}>저장</button>
+            <div className="flex gap-2">
+              <button onClick={() => setEditTmpl(null)}
+                className="flex-1 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 px-4 py-2 rounded-lg text-sm font-bold">취소</button>
+              <button onClick={saveTmpl}
+                className="flex-1 bg-[var(--cta)] text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 font-display">저장</button>
             </div>
           </div>
         </>
@@ -1192,46 +1171,49 @@ export default function SmsManage() {
       {/* 모달: 충전 */}
       {chargeModal && (
         <>
-          <div onClick={() => setChargeModal(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'oklch(0% 0 0 / 0.4)', zIndex: 10000 }} />
-          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: 'var(--card)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-5)', width: 360, zIndex: 10001, boxShadow: 'var(--shadow-md)' }}>
-            <h3 style={{ fontSize: 'var(--text-base)', marginBottom: 'var(--space-3)' }}>크레딧 충전</h3>
-            <div style={{ marginBottom: 'var(--space-3)' }}>
-              <label style={{ fontSize: 'var(--text-xs)', fontWeight: 600, display: 'block', marginBottom: 4 }}>충전 금액 (원)</label>
+          <div onClick={() => setChargeModal(false)} className="fixed inset-0 bg-black/40 z-[10000]" />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl p-5 w-[360px] z-[10001] shadow-lg">
+            <h3 className="text-base font-bold text-[var(--primary)] mb-3">크레딧 충전</h3>
+            <div className="mb-3">
+              <label className="text-xs font-semibold text-slate-500 block mb-1">충전 금액 (원)</label>
               <input type="number" value={chargeAmount} onChange={e => setChargeAmount(e.target.value)}
                 placeholder="금액 입력"
-                style={{ ...S.input, fontSize: 15, fontWeight: 700 }} />
-              <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-[15px] font-bold outline-none focus:border-[var(--cta)]" />
+              <div className="flex gap-1.5 mt-2">
                 {[5000, 10000, 30000, 50000].map(amt => (
-                  <button key={amt} onClick={() => setChargeAmount(String(amt))} style={{
-                    flex: 1, padding: '6px 0', borderRadius: 'var(--radius)', border: '1px solid var(--border)',
-                    background: parseInt(chargeAmount) === amt ? 'var(--primary)' : 'var(--muted)',
-                    color: parseInt(chargeAmount) === amt ? 'white' : 'var(--foreground)',
-                    fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                  }}>{(amt / 10000).toLocaleString()}만원</button>
+                  <button key={amt} onClick={() => setChargeAmount(String(amt))}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                      parseInt(chargeAmount) === amt
+                        ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
+                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                    }`}>{(amt / 10000).toLocaleString()}만원</button>
                 ))}
               </div>
             </div>
-            <div style={{ marginBottom: 'var(--space-3)' }}>
-              <label style={{ fontSize: 'var(--text-xs)', fontWeight: 600, display: 'block', marginBottom: 4 }}>메모 (선택)</label>
+            <div className="mb-3">
+              <label className="text-xs font-semibold text-slate-500 block mb-1">메모 (선택)</label>
               <input value={chargeDesc} onChange={e => setChargeDesc(e.target.value)}
-                placeholder="예: 4월분 충전" style={S.input} />
+                placeholder="예: 4월분 충전"
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" />
             </div>
             {chargeAmount && parseInt(chargeAmount) > 0 && (
-              <div style={{ padding: 'var(--space-2)', background: 'var(--neutral-50)', borderRadius: 'var(--radius)', marginBottom: 'var(--space-3)', fontSize: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span>현재 잔액</span><span style={{ fontWeight: 600 }}>{balance.toLocaleString()}원</span>
+              <div className="p-2 bg-slate-50 rounded-lg mb-3 text-xs">
+                <div className="flex justify-between mb-1">
+                  <span>현재 잔액</span><span className="font-semibold">{balance.toLocaleString()}원</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, color: 'var(--primary)' }}>
-                  <span>충전 금액</span><span style={{ fontWeight: 600 }}>+{parseInt(chargeAmount).toLocaleString()}원</span>
+                <div className="flex justify-between mb-1 text-[var(--primary)]">
+                  <span>충전 금액</span><span className="font-semibold">+{parseInt(chargeAmount).toLocaleString()}원</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: 4, fontWeight: 700 }}>
-                  <span>충전 후</span><span style={{ color: 'oklch(52% 0.14 160)' }}>{(balance + parseInt(chargeAmount)).toLocaleString()}원</span>
+                <div className="flex justify-between border-t border-slate-200 pt-1 font-bold">
+                  <span>충전 후</span><span className="text-emerald-600">{(balance + parseInt(chargeAmount)).toLocaleString()}원</span>
                 </div>
               </div>
             )}
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-              <button className="btn btn-outline" onClick={() => { setChargeModal(false); setChargeAmount(''); setChargeDesc(''); }} style={{ flex: 1 }}>취소</button>
-              <button className="btn btn-primary" onClick={handleCharge} style={{ flex: 1 }} disabled={!chargeAmount || parseInt(chargeAmount) <= 0}>충전하기</button>
+            <div className="flex gap-2">
+              <button onClick={() => { setChargeModal(false); setChargeAmount(''); setChargeDesc(''); }}
+                className="flex-1 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 px-4 py-2 rounded-lg text-sm font-bold">취소</button>
+              <button onClick={handleCharge} disabled={!chargeAmount || parseInt(chargeAmount) <= 0}
+                className="flex-1 bg-[var(--cta)] text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 font-display disabled:opacity-50 disabled:cursor-not-allowed">충전하기</button>
             </div>
           </div>
         </>
@@ -1240,22 +1222,18 @@ export default function SmsManage() {
       {/* 모달: 발송 확인 */}
       {confirmModal && (
         <>
-          <div onClick={() => setConfirmModal(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'oklch(0% 0 0 / 0.5)', zIndex: 10000 }} />
-          <div style={{
-            position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-            background: 'var(--card)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-5)', width: '90%', maxWidth: 500, maxHeight: '85vh',
-            zIndex: 10001, boxShadow: 'var(--shadow-md)', display: 'flex', flexDirection: 'column',
-          }}>
-            <h3 style={{ fontSize: 'var(--text-base)', marginBottom: 'var(--space-1)', flexShrink: 0 }}>
+          <div onClick={() => setConfirmModal(null)} className="fixed inset-0 bg-black/50 z-[10000]" />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl p-5 w-[90%] max-w-[500px] max-h-[85vh] z-[10001] shadow-lg flex flex-col">
+            <h3 className="text-base font-bold text-[var(--primary)] mb-1 shrink-0">
               {isScheduled ? '예약 발송 확인' : '발송 확인'}
             </h3>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 'var(--space-2)', flexShrink: 0 }}>
-              <span style={S.badge('var(--info-light)', 'var(--primary)')}>
+            <div className="flex gap-2 items-center mb-2 shrink-0">
+              <span className="rounded-full px-3 py-0.5 text-xs font-bold bg-blue-50 text-[var(--primary)]">
                 {MSG_TYPES.find(m => m.id === messageCategory)?.label || '운영'}
               </span>
-              <span style={{ fontSize: 13, color: 'var(--muted-foreground)' }}>{confirmModal.messages.length}건</span>
+              <span className="text-[13px] text-slate-500">{confirmModal.messages.length}건</span>
               {isScheduled && scheduleDate && scheduleTime && (
-                <span style={S.badge('oklch(95% 0.03 60)', 'oklch(40% 0.12 60)')}>
+                <span className="rounded-full px-3 py-0.5 text-xs font-bold bg-amber-100 text-amber-700">
                   예약: {scheduleDate} {scheduleTime}
                 </span>
               )}
@@ -1263,76 +1241,71 @@ export default function SmsManage() {
 
             {/* 검증 경고 표시 */}
             {validationResult?.warnings?.length > 0 && (
-              <div style={{ padding: 'var(--space-2)', background: 'oklch(95% 0.03 60)', borderRadius: 'var(--radius)', marginBottom: 'var(--space-2)', fontSize: 11, flexShrink: 0 }}>
+              <div className="p-2 bg-amber-50 border border-amber-200 rounded-lg mb-2 text-[11px] text-amber-700 shrink-0">
                 {validationResult.warnings.map((w, i) => <div key={i}>- {w}</div>)}
               </div>
             )}
 
             {/* 비용 요약 */}
             {confirmModal.costPreview && !isScheduled && (
-              <div style={{
-                padding: '10px 14px', borderRadius: 'var(--radius)',
-                background: confirmModal.costPreview.total > balance ? 'var(--destructive-light)' : 'var(--success-light)',
-                border: `1px solid ${confirmModal.costPreview.total > balance ? 'oklch(75% 0.10 25)' : 'oklch(80% 0.14 150)'}`,
-                marginBottom: 'var(--space-2)', flexShrink: 0, fontSize: 12,
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontWeight: 600 }}>예상 비용</span>
-                  <span style={{ fontWeight: 700, fontSize: 14 }}>{confirmModal.costPreview.total.toLocaleString()}원</span>
+              <div className={`px-3.5 py-2.5 rounded-lg border mb-2 shrink-0 text-xs ${
+                confirmModal.costPreview.total > balance
+                  ? 'bg-red-50 border-red-200'
+                  : 'bg-emerald-50 border-emerald-200'
+              }`}>
+                <div className="flex justify-between mb-1">
+                  <span className="font-semibold">예상 비용</span>
+                  <span className="font-display font-bold text-sm text-[var(--primary)]">{confirmModal.costPreview.total.toLocaleString()}원</span>
                 </div>
-                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 4 }}>
+                <div className="flex gap-3 flex-wrap mb-1">
                   {Object.entries(confirmModal.costPreview.breakdown).map(([type, info]) => (
-                    <span key={type} style={{ color: 'var(--muted-foreground)' }}>
+                    <span key={type} className="text-slate-500">
                       {type} {info.count}건 x {info.unitCost}원 = {info.subtotal.toLocaleString()}원
                     </span>
                   ))}
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div className="flex justify-between">
                   <span>잔액: {balance.toLocaleString()}원</span>
-                  <span style={{ fontWeight: 600, color: confirmModal.costPreview.total > balance ? 'oklch(48% 0.20 25)' : 'oklch(52% 0.14 160)' }}>
+                  <span className={`font-semibold ${confirmModal.costPreview.total > balance ? 'text-[#ba1a1a]' : 'text-emerald-600'}`}>
                     발송 후: {(balance - confirmModal.costPreview.total).toLocaleString()}원
                   </span>
                 </div>
                 {confirmModal.costPreview.total > balance && (
-                  <div style={{ marginTop: 6, color: 'oklch(48% 0.20 25)', fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="mt-1.5 text-[#ba1a1a] font-semibold flex justify-between items-center">
                     <span>잔액 부족</span>
-                    <button onClick={() => { setConfirmModal(null); setChargeModal(true); }} style={{
-                      padding: '3px 10px', border: 'none', borderRadius: 'var(--radius)', background: 'oklch(48% 0.20 25)', color: 'white', fontSize: 11, fontWeight: 600, cursor: 'pointer',
-                    }}>충전하기</button>
+                    <button onClick={() => { setConfirmModal(null); setChargeModal(true); }}
+                      className="px-2.5 py-0.5 rounded-lg bg-[#ba1a1a] text-white text-[11px] font-semibold hover:opacity-90">충전하기</button>
                   </div>
                 )}
               </div>
             )}
 
-            <div style={{ flex: 1, overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
+            <div className="flex-1 overflow-y-auto border border-slate-200 rounded-lg">
               {confirmModal.messages.map((m, i) => (
-                <div key={i} style={{ padding: '10px var(--space-3)', borderBottom: '1px solid var(--neutral-50)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-1)', fontSize: 'var(--text-xs)' }}>
-                    <span style={{ fontWeight: 700 }}>{m.name}{m.tag ? ` [${m.tag}]` : ''} {m.school ? `(${m.school} ${m.grade})` : ''}</span>
-                    <span style={{ color: 'var(--muted-foreground)' }}>{m.phone}</span>
+                <div key={i} className="px-3 py-2.5 border-b border-slate-50">
+                  <div className="flex justify-between mb-1 text-xs">
+                    <span className="font-bold text-[var(--primary)]">{m.name}{m.tag ? ` [${m.tag}]` : ''} {m.school ? `(${m.school} ${m.grade})` : ''}</span>
+                    <span className="text-slate-400">{m.phone}</span>
                   </div>
                   <textarea
                     value={m.message}
                     onChange={e => updateModalMessage(i, e.target.value)}
                     rows={Math.max(3, m.message.split('\n').length + 1)}
-                    style={{
-                      width: '100%', padding: 'var(--space-2)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)',
-                      fontSize: 'var(--text-xs)', lineHeight: 1.6, resize: 'vertical', boxSizing: 'border-box',
-                      background: 'var(--neutral-50)',
-                    }}
+                    className="w-full px-2 py-2 rounded-md border border-slate-200 text-xs leading-relaxed resize-y box-border bg-slate-50 outline-none focus:border-[var(--cta)]"
                   />
-                  <div style={{ fontSize: 10, color: 'var(--muted-foreground)', textAlign: 'right', marginTop: 2 }}>
+                  <div className="text-[10px] text-slate-400 text-right mt-0.5">
                     {m.message.length}자 / {getMessageType(m.message)} / {pricing[getMessageType(m.message)]}원
                   </div>
                 </div>
               ))}
             </div>
 
-            <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-3)', flexShrink: 0 }}>
-              <button className="btn btn-outline" onClick={() => setConfirmModal(null)} style={{ flex: 1 }}>취소</button>
-              <button className="btn btn-primary" onClick={handleSend}
+            <div className="flex gap-2 mt-3 shrink-0">
+              <button onClick={() => setConfirmModal(null)}
+                className="flex-1 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 px-4 py-2 rounded-lg text-sm font-bold">취소</button>
+              <button onClick={handleSend}
                 disabled={sending || (!isScheduled && confirmModal.costPreview && confirmModal.costPreview.total > balance)}
-                style={{ flex: 1 }}>
+                className="flex-1 bg-[var(--cta)] text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 font-display disabled:opacity-50 disabled:cursor-not-allowed">
                 {sending ? '처리 중...' : isScheduled
                   ? `예약 등록 (${confirmModal.messages.length}건)`
                   : `${confirmModal.messages.length}건 발송 (${confirmModal.costPreview?.total?.toLocaleString() || 0}원)`}
@@ -1345,8 +1318,8 @@ export default function SmsManage() {
       </>
       )}
 
-      <button className="btn btn-outline" onClick={() => navigate('/admin')}
-        style={{ width: '100%', marginTop: 'var(--space-2)' }}>대시보드로</button>
+      <button onClick={() => navigate('/admin')}
+        className="w-full mt-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 px-4 py-2 rounded-lg text-sm font-bold">대시보드로</button>
     </div>
   );
 }

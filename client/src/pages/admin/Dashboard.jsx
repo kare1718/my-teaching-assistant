@@ -42,29 +42,22 @@ function QuickActionsBar({ actions, isLg }) {
   const navigate = useNavigate();
   if (!actions || actions.length === 0) return null;
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: `repeat(${actions.length}, minmax(0, 1fr))`,
-      gap: 12,
-      marginBottom: isLg ? 18 : 14,
-    }}>
+    <div
+      className={`grid gap-3 ${isLg ? 'mb-[18px]' : 'mb-3.5'}`}
+      style={{ gridTemplateColumns: `repeat(${actions.length}, minmax(0, 1fr))` }}
+    >
       {actions.map((a, i) => (
         <button
           key={i}
           onClick={() => navigate(a.url)}
-          style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            padding: isLg ? '16px 12px' : '12px 10px',
-            background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12,
-            cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
-          }}
+          className={`flex flex-col items-center justify-center bg-white border border-slate-200 rounded-xl cursor-pointer transition-all ${isLg ? 'px-3 py-4' : 'px-2.5 py-3'}`}
           onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(0,75,240,0.3)'; e.currentTarget.style.background = '#f8fafc'; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#fff'; }}
         >
           {a.icon && (
-            <span className="material-symbols-outlined" style={{ fontSize: 24, color: 'var(--cta)', marginBottom: 6 }}>{a.icon}</span>
+            <span className="material-symbols-outlined text-2xl text-[var(--cta)] mb-1.5">{a.icon}</span>
           )}
-          <span style={{ fontSize: isLg ? 14 : 12, fontWeight: 700, color: 'var(--primary)' }}>{a.label}</span>
+          <span className={`${isLg ? 'text-sm' : 'text-xs'} font-bold text-[var(--primary)]`}>{a.label}</span>
         </button>
       ))}
     </div>
@@ -76,58 +69,42 @@ function TodayTasksCard({ tasks, total, isLg, emptyText = '오늘 처리할 일�
   const displayTasks = (tasks || []).slice(0, 5);
   const count = total ?? (tasks?.length || 0);
   return (
-    <div style={{
-      background: '#fff', borderRadius: 12, border: '1px solid #f1f5f9',
-      padding: isLg ? 24 : 18, marginBottom: isLg ? 18 : 14,
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isLg ? 16 : 12 }}>
-        <h2 style={{ margin: 0, fontSize: isLg ? 18 : 15, fontWeight: 800, color: 'var(--primary)', letterSpacing: '-0.01em' }}>
+    <div className={`bg-white rounded-xl border border-slate-100 shadow-sm ${isLg ? 'p-6 mb-[18px]' : 'p-[18px] mb-3.5'}`}>
+      <div className={`flex justify-between items-center ${isLg ? 'mb-4' : 'mb-3'}`}>
+        <h2 className={`m-0 ${isLg ? 'text-lg' : 'text-[15px]'} font-extrabold text-[var(--primary)] tracking-tight`}>
           오늘 처리할 일
           {count > 0 && (
-            <span style={{
-              marginLeft: 10, fontSize: isLg ? 13 : 11, fontWeight: 700,
-              padding: '2px 10px', borderRadius: 999, background: '#fee2e2', color: '#b91c1c',
-            }}>{count}건</span>
+            <span className={`ml-2.5 ${isLg ? 'text-[13px]' : 'text-[11px]'} rounded-full px-2.5 py-0.5 font-bold bg-red-100 text-red-700`}>{count}건</span>
           )}
         </h2>
       </div>
       {displayTasks.length === 0 ? (
-        <p style={{ fontSize: isLg ? 14 : 12, color: '#64748b', textAlign: 'center', padding: '24px 0', margin: 0 }}>
+        <p className={`${isLg ? 'text-sm' : 'text-xs'} text-slate-500 text-center py-6 m-0`}>
           {emptyText}
         </p>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="flex flex-col gap-2.5">
           {displayTasks.map(task => {
             const pri = priorityStyle[task.priority] || priorityStyle.normal;
             return (
-              <div key={task.id} style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                padding: isLg ? '12px 14px' : '10px 12px',
-                borderRadius: 10, background: '#f8fafc', border: '1px solid #f1f5f9',
-              }}>
-                <span style={{
-                  flexShrink: 0, fontSize: 10, fontWeight: 800, letterSpacing: '0.04em',
-                  padding: '3px 10px', borderRadius: 999,
-                  background: pri.bg, color: pri.text,
-                }}>{pri.label}</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ margin: 0, fontSize: isLg ? 14 : 12, fontWeight: 700, color: 'var(--primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div key={task.id} className={`flex items-center gap-3 rounded-[10px] bg-slate-50 border border-slate-100 ${isLg ? 'px-3.5 py-3' : 'px-3 py-2.5'}`}>
+                <span
+                  className="flex-shrink-0 text-[10px] font-extrabold tracking-wider px-2.5 py-[3px] rounded-full"
+                  style={{ background: pri.bg, color: pri.text }}
+                >{pri.label}</span>
+                <div className="flex-1 min-w-0">
+                  <p className={`m-0 ${isLg ? 'text-sm' : 'text-xs'} font-bold text-[var(--primary)] truncate`}>
                     {task.title}
                   </p>
                   {task.description && (
-                    <p style={{ margin: '2px 0 0', fontSize: isLg ? 12 : 10, color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p className={`mt-0.5 mb-0 ${isLg ? 'text-xs' : 'text-[10px]'} text-slate-500 truncate`}>
                       {task.description}
                     </p>
                   )}
                 </div>
                 <button
                   onClick={() => navigate(task.action_url)}
-                  style={{
-                    flexShrink: 0, background: 'var(--primary)', color: '#fff',
-                    padding: isLg ? '8px 14px' : '6px 10px', borderRadius: 8,
-                    fontSize: isLg ? 12 : 11, fontWeight: 700, border: 'none',
-                    cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
-                  }}
+                  className={`flex-shrink-0 bg-[var(--primary)] text-white rounded-lg font-bold whitespace-nowrap cursor-pointer hover:opacity-90 ${isLg ? 'px-3.5 py-2 text-xs' : 'px-2.5 py-1.5 text-[11px]'}`}
                 >{task.action_label || '처리'}</button>
               </div>
             );
@@ -135,11 +112,7 @@ function TodayTasksCard({ tasks, total, isLg, emptyText = '오늘 처리할 일�
           {count > displayTasks.length && (
             <button
               onClick={() => navigate('/admin/automation')}
-              style={{
-                marginTop: 4, background: 'none', border: 'none',
-                color: 'var(--cta)', fontSize: isLg ? 13 : 11, fontWeight: 700,
-                cursor: 'pointer', fontFamily: 'inherit', padding: 6, textAlign: 'right',
-              }}
+              className={`mt-1 bg-transparent border-none text-[var(--cta)] ${isLg ? 'text-[13px]' : 'text-[11px]'} font-bold cursor-pointer p-1.5 text-right`}
             >전체 보기 →</button>
           )}
         </div>
@@ -153,11 +126,11 @@ function TodayTasksCard({ tasks, total, isLg, emptyText = '오늘 처리할 일�
 // ════════════════════════════════════════
 function EmptyState({ icon, title, description }) {
   return (
-    <div style={{ textAlign: 'center', padding: '32px 16px' }}>
-      <div style={{ fontSize: 40, marginBottom: 12 }}>{icon}</div>
-      <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--primary)', margin: 0 }}>{title}</p>
+    <div className="text-center px-4 py-8">
+      <div className="text-[40px] mb-3">{icon}</div>
+      <p className="text-sm font-semibold text-[var(--primary)] m-0">{title}</p>
       {description && (
-        <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 4, margin: '4px 0 0' }}>{description}</p>
+        <p className="text-xs text-slate-400 mt-1 mb-0">{description}</p>
       )}
     </div>
   );
@@ -246,17 +219,11 @@ function OwnerDashboard({ isLg, user }) {
   const revenueData = revenue_trend || [];
   const maxRevenue = Math.max(...revenueData.map(r => r.amount || 0), 1);
 
-  // 카드 공통 스타일
-  const cardStyle = {
-    background: '#ffffff', borderRadius: 12, border: '1px solid #e2e8f0',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-  };
-
   return (
-    <div style={{ width: '100%' }}>
+    <div className="w-full">
       {/* ═══ A. 환영 헤더 ═══ */}
-      <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontSize: isLg ? 26 : 22, fontWeight: 800, color: 'var(--primary)', margin: 0, letterSpacing: '-0.02em' }}>
+      <div className="mb-5">
+        <h1 className={`${isLg ? 'text-[26px]' : 'text-[22px]'} font-extrabold text-[var(--primary)] m-0 tracking-tight`}>
           안녕하세요, {user?.name || ''} {
             (() => {
               const titleMap = { owner: '원장님', instructor: '선생님', staff: '담당님', counselor: '상담사님' };
@@ -267,57 +234,44 @@ function OwnerDashboard({ isLg, user }) {
             })()
           }!
         </h1>
-        <p style={{ fontSize: 14, color: '#94a3b8', marginTop: 4, margin: '4px 0 0' }}>
+        <p className="text-sm text-slate-400 mt-1 mb-0">
           {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
         </p>
       </div>
 
       {/* ═══ A2. 빠른 액션 6개 ═══ */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: isMd ? 'repeat(6, 1fr)' : 'repeat(3, 1fr)',
-        gap: 10, marginBottom: 20,
-      }}>
+      <div className={`grid gap-2.5 mb-5 ${isMd ? 'grid-cols-6' : 'grid-cols-3'}`}>
         {(quick_actions || []).map((a, i) => (
           <button
             key={i}
             onClick={() => navigate(a.url)}
-            style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              padding: isLg ? '16px 8px' : '12px 6px', gap: 6,
-              background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12,
-              cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
-            }}
+            className={`flex flex-col items-center justify-center gap-1.5 bg-white border border-slate-200 rounded-xl cursor-pointer transition-all ${isLg ? 'px-2 py-4' : 'px-1.5 py-3'}`}
             onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--cta)'; e.currentTarget.style.background = '#f8fafc'; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#fff'; }}
           >
             {a.icon && (
-              <span className="material-symbols-outlined" style={{ fontSize: 22, color: 'var(--cta)' }}>{a.icon}</span>
+              <span className="material-symbols-outlined text-[22px] text-[var(--cta)]">{a.icon}</span>
             )}
-            <span style={{ fontSize: isLg ? 13 : 11, fontWeight: 700, color: 'var(--primary)', whiteSpace: 'nowrap' }}>{a.label}</span>
+            <span className={`${isLg ? 'text-[13px]' : 'text-[11px]'} font-bold text-[var(--primary)] whitespace-nowrap`}>{a.label}</span>
           </button>
         ))}
       </div>
 
       {/* 빈 학원 배너 */}
       {showEmptyBanner && (
-        <div style={{
-          marginBottom: 16, padding: '20px 24px', borderRadius: 12,
-          background: '#f0f4ff', border: '1px solid rgba(0,75,240,0.15)',
-          display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
-        }}>
-          <span style={{ fontSize: 32 }}>🏫</span>
-          <div style={{ flex: 1, minWidth: 200 }}>
-            <p style={{ fontWeight: 700, color: 'var(--primary)', margin: 0 }}>첫 학생을 등록해 운영을 시작해보세요</p>
-            <p style={{ fontSize: 13, color: '#64748b', margin: '4px 0 0' }}>학생을 추가하면 출결, 수납, 리포트가 활성화됩니다</p>
+        <div className="mb-4 px-6 py-5 rounded-xl bg-[#f0f4ff] border border-[rgba(0,75,240,0.15)] flex items-center gap-4 flex-wrap">
+          <span className="text-[32px]">🏫</span>
+          <div className="flex-1 min-w-[200px]">
+            <p className="font-bold text-[var(--primary)] m-0">첫 학생을 등록해 운영을 시작해보세요</p>
+            <p className="text-[13px] text-slate-500 mt-1 mb-0">학생을 추가하면 출결, 수납, 리포트가 활성화됩니다</p>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="flex gap-2">
             <button onClick={() => navigate('/admin/students')}
-              style={{ padding: '10px 18px', background: 'var(--primary)', color: '#fff', borderRadius: 8, fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: 13 }}>
+              className="px-[18px] py-2.5 bg-[var(--primary)] text-white rounded-lg font-bold text-[13px] cursor-pointer hover:opacity-90 font-display">
               학생 추가
             </button>
             <button onClick={() => navigate('/admin/data-import')}
-              style={{ padding: '10px 18px', background: 'var(--cta)', color: '#fff', borderRadius: 8, fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: 13 }}>
+              className="px-[18px] py-2.5 bg-[var(--cta)] text-white rounded-lg font-bold text-[13px] cursor-pointer hover:opacity-90 font-display">
               엑셀 Import
             </button>
           </div>
@@ -326,39 +280,25 @@ function OwnerDashboard({ isLg, user }) {
 
       {/* ═══ B. KPI 4카드 (전체 폭) ═══ */}
       {dc.show_kpi !== false && (
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: isMd ? 'repeat(4, 1fr)' : 'repeat(2, 1fr)',
-        gap: 12, marginBottom: 20,
-      }}>
+      <div className={`grid gap-3 mb-5 ${isMd ? 'grid-cols-4' : 'grid-cols-2'}`}>
         {kpiItems.map((kpi, i) => (
-          <div key={i} onClick={() => navigate(kpi.path)} style={{
-            ...cardStyle, padding: isLg ? '20px 22px' : '16px 18px', cursor: 'pointer',
-            display: 'flex', flexDirection: 'column', justifyContent: 'center',
-            minHeight: isLg ? 120 : 100, transition: 'all 0.15s', overflow: 'hidden',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--cta)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,75,240,0.08)'; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.04)'; }}
+          <div key={i} onClick={() => navigate(kpi.path)}
+            className={`bg-white rounded-xl border border-slate-200 shadow-sm cursor-pointer flex flex-col justify-center overflow-hidden transition-all ${isLg ? 'px-[22px] py-5 min-h-[120px]' : 'px-[18px] py-4 min-h-[100px]'}`}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--cta)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,75,240,0.08)'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.04)'; }}
           >
-            <p style={{
-              margin: 0, fontSize: isLg ? 12 : 11, fontWeight: 600, color: '#94a3b8',
-              letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-            }}>
+            <p className={`m-0 ${isLg ? 'text-xs' : 'text-[11px]'} font-semibold text-slate-400 tracking-wide truncate`}>
               {kpi.label}
             </p>
-            <div style={{
-              marginTop: 8, fontSize: isLg ? 34 : 28, fontWeight: 800, color: kpi.color,
-              lineHeight: 1, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap',
-              overflow: 'hidden', textOverflow: 'ellipsis',
-            }}>
+            <div
+              className={`mt-2 ${isLg ? 'text-[34px]' : 'text-[28px]'} font-display font-bold leading-none tabular-nums truncate`}
+              style={{ color: kpi.color }}
+            >
               {kpi.value}
-              <span style={{ fontSize: isLg ? 14 : 12, fontWeight: 600, color: '#94a3b8', marginLeft: 3 }}>{kpi.unit}</span>
+              <span className={`${isLg ? 'text-sm' : 'text-xs'} font-semibold text-slate-400 ml-[3px]`}>{kpi.unit}</span>
             </div>
             {kpi.trend && (
-              <p style={{
-                margin: '8px 0 0', fontSize: isLg ? 12 : 10, fontWeight: 700, color: kpi.trendColor,
-                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-              }}>
+              <p className={`mt-2 mb-0 ${isLg ? 'text-xs' : 'text-[10px]'} font-bold truncate`} style={{ color: kpi.trendColor }}>
                 {kpi.trend}
               </p>
             )}
@@ -369,58 +309,43 @@ function OwnerDashboard({ isLg, user }) {
 
       {/* ═══ C. 오늘의 할일 + 이번 주 수업 (2열) ═══ */}
       {(dc.show_tasks !== false || dc.show_schedule !== false) && (
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: (dc.show_tasks !== false && dc.show_schedule !== false && isLg) ? '1fr 1fr' : '1fr',
-        gap: 16, marginBottom: 20,
-      }}>
+      <div className={`grid gap-4 mb-5 ${(dc.show_tasks !== false && dc.show_schedule !== false && isLg) ? 'grid-cols-2' : 'grid-cols-1'}`}>
         {/* 오늘의 할일 */}
         {dc.show_tasks !== false && (
-        <div style={{ ...cardStyle, padding: isLg ? 24 : 18 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: 'var(--primary)' }}>
+        <div className={`bg-white rounded-xl border border-slate-100 shadow-sm ${isLg ? 'p-6' : 'p-[18px]'}`}>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className={`m-0 ${isLg ? 'text-[17px]' : 'text-[15px]'} font-extrabold text-[var(--primary)]`}>
               오늘의 할일
               {today_tasks_total > 0 && (
-                <span style={{
-                  marginLeft: 10, fontSize: 12, fontWeight: 700,
-                  padding: '2px 10px', borderRadius: 999, background: '#fee2e2', color: '#b91c1c',
-                }}>{today_tasks_total}건</span>
+                <span className="ml-2.5 text-xs rounded-full px-2.5 py-0.5 font-bold bg-red-100 text-red-700">{today_tasks_total}건</span>
               )}
             </h2>
           </div>
           {(today_tasks || []).length === 0 ? (
             <EmptyState icon="✅" title="오늘 처리할 일이 없습니다" description="모든 업무가 정리되었습니다" />
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="flex flex-col gap-2">
               {(today_tasks || []).slice(0, 6).map(task => {
                 const pri = priorityStyle[task.priority] || priorityStyle.normal;
                 return (
-                  <div key={task.id} style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '10px 14px', borderRadius: 10, background: '#f8fafc', border: '1px solid #f1f5f9',
-                  }}>
-                    <span style={{
-                      flexShrink: 0, fontSize: 10, fontWeight: 800, letterSpacing: '0.04em',
-                      padding: '3px 10px', borderRadius: 999, background: pri.bg, color: pri.text,
-                    }}>{pri.label}</span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ margin: 0, fontSize: isLg ? 13 : 12, fontWeight: 700, color: 'var(--primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div key={task.id} className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-[10px] bg-slate-50 border border-slate-100">
+                    <span
+                      className="flex-shrink-0 text-[10px] font-extrabold tracking-wider px-2.5 py-[3px] rounded-full"
+                      style={{ background: pri.bg, color: pri.text }}
+                    >{pri.label}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className={`m-0 ${isLg ? 'text-[13px]' : 'text-xs'} font-bold text-[var(--primary)] truncate`}>
                         {task.title}
                       </p>
                       {task.description && (
-                        <p style={{ margin: '2px 0 0', fontSize: 11, color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <p className="mt-0.5 mb-0 text-[11px] text-slate-500 truncate">
                           {task.description}
                         </p>
                       )}
                     </div>
                     <button
                       onClick={() => navigate(task.action_url)}
-                      style={{
-                        flexShrink: 0, background: 'var(--primary)', color: '#fff',
-                        padding: '6px 12px', borderRadius: 8,
-                        fontSize: 11, fontWeight: 700, border: 'none',
-                        cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
-                      }}
+                      className="flex-shrink-0 bg-[var(--primary)] text-white px-3 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap cursor-pointer hover:opacity-90"
                     >{task.action_label || '처리'}</button>
                   </div>
                 );
@@ -428,11 +353,7 @@ function OwnerDashboard({ isLg, user }) {
               {today_tasks_total > 6 && (
                 <button
                   onClick={() => navigate('/admin/automation')}
-                  style={{
-                    marginTop: 4, background: 'none', border: 'none',
-                    color: 'var(--cta)', fontSize: 12, fontWeight: 700,
-                    cursor: 'pointer', fontFamily: 'inherit', padding: 4, textAlign: 'right',
-                  }}
+                  className="mt-1 bg-transparent border-none text-[var(--cta)] text-xs font-bold cursor-pointer p-1 text-right"
                 >전체 {today_tasks_total}건 보기 →</button>
               )}
             </div>
@@ -442,59 +363,41 @@ function OwnerDashboard({ isLg, user }) {
 
         {/* 이번 주 수업 일정 */}
         {dc.show_schedule !== false && (
-        <div style={{ ...cardStyle, padding: isLg ? 24 : 18 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: 'var(--primary)' }}>
+        <div className={`bg-white rounded-xl border border-slate-100 shadow-sm ${isLg ? 'p-6' : 'p-[18px]'}`}>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className={`m-0 ${isLg ? 'text-[17px]' : 'text-[15px]'} font-extrabold text-[var(--primary)]`}>
               이번 주 수업
             </h2>
-            <span onClick={() => navigate('/admin/classes')} style={{ fontSize: 12, color: 'var(--cta)', cursor: 'pointer', fontWeight: 700 }}>수업 관리 →</span>
+            <span onClick={() => navigate('/admin/classes')} className="text-xs text-[var(--cta)] cursor-pointer font-bold">수업 관리 →</span>
           </div>
           {weeklyDays.length === 0 ? (
             <EmptyState icon="📅" title="등록된 수업이 없습니다" description="수업을 등록하면 일정이 표시됩니다" />
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="flex flex-col gap-3">
               {weeklyDays.map(day => {
                 const isToday = day.date.toDateString() === new Date().toDateString();
                 return (
                   <div key={day.date.toISOString()}>
-                    <div style={{
-                      fontSize: 12, fontWeight: 800, color: isToday ? 'var(--cta)' : '#64748b',
-                      marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6,
-                    }}>
+                    <div className={`text-xs font-extrabold ${isToday ? 'text-[var(--cta)]' : 'text-slate-500'} mb-1.5 flex items-center gap-1.5`}>
                       <span>{day.dayName}요일</span>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8' }}>
+                      <span className="text-[11px] font-semibold text-slate-400">
                         {day.date.getMonth() + 1}/{day.date.getDate()}
                       </span>
                       {isToday && (
-                        <span style={{
-                          fontSize: 10, fontWeight: 700, padding: '1px 8px', borderRadius: 999,
-                          background: '#dbeafe', color: 'var(--cta)',
-                        }}>오늘</span>
+                        <span className="text-[10px] font-bold px-2 py-px rounded-full bg-blue-100 text-[var(--cta)]">오늘</span>
                       )}
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <div className="flex flex-col gap-1">
                       {day.items.map((cls, j) => (
-                        <div key={j} style={{
-                          display: 'flex', alignItems: 'center', gap: 10,
-                          padding: '8px 12px', borderRadius: 8, background: '#f8fafc', border: '1px solid #f1f5f9',
-                        }}>
-                          <span style={{
-                            fontSize: 12, fontWeight: 700, color: 'var(--cta)', fontVariantNumeric: 'tabular-nums',
-                            whiteSpace: 'nowrap', minWidth: 44,
-                          }}>
+                        <div key={j} className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-slate-50 border border-slate-100">
+                          <span className="text-xs font-bold text-[var(--cta)] tabular-nums whitespace-nowrap min-w-[44px]">
                             {(cls.start_time || '').slice(0, 5)}
                           </span>
-                          <span style={{
-                            fontSize: 13, fontWeight: 600, color: 'var(--primary)', flex: 1, minWidth: 0,
-                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                          }}>
+                          <span className="text-[13px] font-semibold text-[var(--primary)] flex-1 min-w-0 truncate">
                             {cls.class_name}
                           </span>
                           {cls.class_type && (
-                            <span style={{
-                              fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999,
-                              background: '#f1f5f9', color: '#64748b', whiteSpace: 'nowrap', flexShrink: 0,
-                            }}>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 whitespace-nowrap flex-shrink-0">
                               {cls.class_type}
                             </span>
                           )}
@@ -513,35 +416,30 @@ function OwnerDashboard({ isLg, user }) {
 
       {/* ═══ D. 매출 추이 + 원생 추이 (2열) ═══ */}
       {(dc.show_revenue !== false || dc.show_attendance !== false) && (
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: (dc.show_revenue !== false && dc.show_attendance !== false && isLg) ? '1fr 1fr' : '1fr',
-        gap: 16, marginBottom: 20,
-      }}>
+      <div className={`grid gap-4 mb-5 ${(dc.show_revenue !== false && dc.show_attendance !== false && isLg) ? 'grid-cols-2' : 'grid-cols-1'}`}>
         {/* 매출 추이 (최근 6개월) */}
         {dc.show_revenue !== false && (
-        <div style={{ ...cardStyle, padding: isLg ? 24 : 18 }}>
-          <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: 'var(--primary)', marginBottom: 16 }}>
+        <div className={`bg-white rounded-xl border border-slate-100 shadow-sm ${isLg ? 'p-6' : 'p-[18px]'}`}>
+          <h2 className={`mt-0 mx-0 ${isLg ? 'text-[17px]' : 'text-[15px]'} font-extrabold text-[var(--primary)] mb-4`}>
             매출 추이
-            <span style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', marginLeft: 8 }}>최근 6개월</span>
+            <span className="text-xs font-semibold text-slate-400 ml-2">최근 6개월</span>
           </h2>
           {revenueData.length === 0 ? (
             <EmptyState icon="📊" title="아직 데이터가 없습니다" description="수납 데이터가 쌓이면 추이를 확인할 수 있습니다" />
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="flex flex-col gap-2">
               {revenueData.map((m, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ width: 40, fontSize: 12, color: '#94a3b8', textAlign: 'right', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                <div key={idx} className="flex items-center gap-2">
+                  <span className="w-10 text-xs text-slate-400 text-right font-semibold whitespace-nowrap flex-shrink-0">
                     {m.month}
                   </span>
-                  <div style={{ flex: 1, height: 24, background: '#f1f5f9', borderRadius: 6, overflow: 'hidden' }}>
-                    <div style={{
+                  <div className="flex-1 h-6 bg-slate-100 rounded-md overflow-hidden">
+                    <div className="h-full bg-[var(--cta)] rounded-md transition-[width] duration-300" style={{
                       width: `${Math.max((m.amount / maxRevenue) * 100, 0)}%`,
-                      height: '100%', background: 'var(--cta)', borderRadius: 6,
-                      minWidth: m.amount > 0 ? 2 : 0, transition: 'width 0.3s',
+                      minWidth: m.amount > 0 ? 2 : 0,
                     }} />
                   </div>
-                  <span style={{ width: 64, fontSize: 12, fontWeight: 700, color: 'var(--primary)', textAlign: 'right', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  <span className="w-16 text-xs font-display font-bold text-[var(--primary)] text-right tabular-nums whitespace-nowrap flex-shrink-0">
                     {fmtWon(m.amount || 0)}
                   </span>
                 </div>
@@ -553,11 +451,11 @@ function OwnerDashboard({ isLg, user }) {
 
         {/* 출결 현황 + 수납 진행률 (컴팩트) */}
         {dc.show_attendance !== false && (
-        <div style={{ ...cardStyle, padding: isLg ? 24 : 18 }}>
-          <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: 'var(--primary)', marginBottom: 16 }}>
+        <div className={`bg-white rounded-xl border border-slate-100 shadow-sm ${isLg ? 'p-6' : 'p-[18px]'}`}>
+          <h2 className={`mt-0 mx-0 ${isLg ? 'text-[17px]' : 'text-[15px]'} font-extrabold text-[var(--primary)] mb-4`}>
             오늘의 출결 현황
           </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, marginBottom: 14 }}>
+          <div className="grid grid-cols-5 gap-1.5 mb-3.5">
             {[
               { label: '출석', value: att.present || 0, bg: '#d1fae5', color: '#059669' },
               { label: '지각', value: att.late || 0, bg: '#fef3c7', color: '#b45309' },
@@ -565,29 +463,28 @@ function OwnerDashboard({ isLg, user }) {
               { label: '인정', value: att.excused || 0, bg: '#dbeafe', color: '#1d4ed8' },
               { label: '미체크', value: att.not_checked || 0, bg: '#f1f5f9', color: '#475569' },
             ].map((s, i) => (
-              <div key={i} style={{ background: s.bg, borderRadius: 8, padding: '10px 4px', textAlign: 'center' }}>
-                <p style={{ margin: 0, fontSize: isLg ? 18 : 15, fontWeight: 800, color: s.color, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{s.value}</p>
-                <p style={{ margin: '4px 0 0', fontSize: 10, fontWeight: 700, color: s.color, whiteSpace: 'nowrap' }}>{s.label}</p>
+              <div key={i} className="rounded-lg px-1 py-2.5 text-center" style={{ background: s.bg }}>
+                <p className={`m-0 ${isLg ? 'text-lg' : 'text-[15px]'} font-display font-bold leading-none tabular-nums`} style={{ color: s.color }}>{s.value}</p>
+                <p className="mt-1 mb-0 text-[10px] font-bold whitespace-nowrap" style={{ color: s.color }}>{s.label}</p>
               </div>
             ))}
           </div>
           {/* 수납 진행률 미니 */}
-          <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 14 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)' }}>이번달 수납 진행률</span>
-              <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--primary)', fontVariantNumeric: 'tabular-nums' }}>{collectionRate}%</span>
+          <div className="border-t border-slate-100 pt-3.5">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-[13px] font-bold text-[var(--primary)]">이번달 수납 진행률</span>
+              <span className="text-sm font-display font-bold text-[var(--primary)] tabular-nums">{collectionRate}%</span>
             </div>
-            <div style={{ height: 8, borderRadius: 4, background: '#f1f5f9', overflow: 'hidden', marginBottom: 8 }}>
-              <div style={{
-                height: '100%', borderRadius: 4, transition: 'width 0.3s',
+            <div className="h-2 rounded bg-slate-100 overflow-hidden mb-2">
+              <div className="h-full rounded transition-[width] duration-300" style={{
                 width: `${Math.min(collectionRate, 100)}%`,
                 background: collectionRate >= 80 ? '#059669' : collectionRate >= 50 ? '#d97706' : '#dc2626',
               }} />
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
-              <span style={{ color: '#64748b' }}>청구 <b style={{ color: 'var(--primary)' }}>{fmtWon(tui.this_month_billed || 0)}</b></span>
-              <span style={{ color: '#64748b' }}>수납 <b style={{ color: '#059669' }}>{fmtWon(tui.this_month_collected || 0)}</b></span>
-              <span style={{ color: '#64748b' }}>미수 <b style={{ color: '#dc2626' }}>{fmtWon(tui.outstanding_total || 0)}</b></span>
+            <div className="flex justify-between text-[11px]">
+              <span className="text-slate-500">청구 <b className="text-[var(--primary)]">{fmtWon(tui.this_month_billed || 0)}</b></span>
+              <span className="text-slate-500">수납 <b className="text-emerald-600">{fmtWon(tui.this_month_collected || 0)}</b></span>
+              <span className="text-slate-500">미수 <b className="text-red-600">{fmtWon(tui.outstanding_total || 0)}</b></span>
             </div>
           </div>
         </div>
@@ -597,48 +494,40 @@ function OwnerDashboard({ isLg, user }) {
 
       {/* ═══ E. 위험 알림 + 최근 활동 (2열) ═══ */}
       {(dc.show_risks !== false || dc.show_activity !== false) && (
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: (dc.show_risks !== false && dc.show_activity !== false && isLg) ? '1fr 1fr' : '1fr',
-        gap: 16, marginBottom: 20,
-      }}>
+      <div className={`grid gap-4 mb-5 ${(dc.show_risks !== false && dc.show_activity !== false && isLg) ? 'grid-cols-2' : 'grid-cols-1'}`}>
         {/* 위험 알림 */}
         {dc.show_risks !== false && (
-        <div style={{ ...cardStyle, padding: isLg ? 24 : 18 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: 'var(--primary)' }}>
+        <div className={`bg-white rounded-xl border border-slate-100 shadow-sm ${isLg ? 'p-6' : 'p-[18px]'}`}>
+          <div className="flex justify-between items-center mb-3.5">
+            <h2 className={`m-0 ${isLg ? 'text-[17px]' : 'text-[15px]'} font-extrabold text-[var(--primary)]`}>
               위험 알림
             </h2>
-            <span style={{ fontSize: 12, fontWeight: 700, color: risk_alerts.length > 0 ? '#dc2626' : '#059669' }}>
+            <span className={`text-xs font-bold ${risk_alerts.length > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
               {risk_alerts.length > 0 ? `${risk_alerts.length}건` : '없음'}
             </span>
           </div>
           {risk_alerts.length === 0 ? (
             <EmptyState icon="🎉" title="위험 알림이 없습니다" description="모든 학생의 출결과 수납이 정상입니다" />
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div className="flex flex-col gap-1.5">
               {risk_alerts.slice(0, 8).map((alert, i) => {
                 const sev = severityColor[alert.severity] || severityColor.medium;
                 return (
-                  <div key={i} style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '10px 14px', borderRadius: 8,
+                  <div key={i} className="flex items-center justify-between px-3.5 py-2.5 rounded-lg" style={{
                     background: sev.bg, border: `1px solid ${sev.border}`,
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
-                      <span style={{
-                        fontSize: 13, fontWeight: 700, color: 'var(--primary)', cursor: 'pointer',
-                        whiteSpace: 'nowrap', flexShrink: 0,
-                      }}
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <span
+                        className="text-[13px] font-bold text-[var(--primary)] cursor-pointer whitespace-nowrap flex-shrink-0"
                         onClick={() => navigate(`/admin/student/${alert.student_id}`)}
                       >
                         {alert.student_name}
                       </span>
-                      <span style={{ fontSize: 12, color: sev.text, fontWeight: 600, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span className="text-xs font-semibold min-w-0 truncate" style={{ color: sev.text }}>
                         {alert.message}
                       </span>
                     </div>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: sev.border, color: sev.text, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0" style={{ background: sev.border, color: sev.text }}>
                       {alert.type === 'consecutive_absence' ? '연속 결석' : '수납 연체'}
                     </span>
                   </div>
@@ -651,27 +540,24 @@ function OwnerDashboard({ isLg, user }) {
 
         {/* 최근 활동 */}
         {dc.show_activity !== false && (
-        <div style={{ ...cardStyle, padding: isLg ? 24 : 18 }}>
-          <h2 style={{ margin: 0, fontSize: isLg ? 17 : 15, fontWeight: 800, color: 'var(--primary)', marginBottom: 14 }}>
+        <div className={`bg-white rounded-xl border border-slate-100 shadow-sm ${isLg ? 'p-6' : 'p-[18px]'}`}>
+          <h2 className={`mt-0 mx-0 ${isLg ? 'text-[17px]' : 'text-[15px]'} font-extrabold text-[var(--primary)] mb-3.5`}>
             최근 활동
           </h2>
           {recent_events.length === 0 ? (
             <EmptyState icon="🕐" title="아직 활동 기록이 없습니다" description="학생 등록, 출결, 수납 등의 활동이 기록됩니다" />
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div className="flex flex-col gap-1">
               {recent_events.map(ev => {
                 const d = new Date(ev.event_date);
                 const dateStr = `${d.getMonth() + 1}/${d.getDate()}`;
                 return (
-                  <div key={ev.id} style={{
-                    display: 'flex', gap: 10, alignItems: 'center',
-                    padding: '8px 0', borderBottom: '1px solid #f1f5f9',
-                  }}>
-                    <span style={{ fontSize: 11, color: '#94a3b8', whiteSpace: 'nowrap', minWidth: 36, fontVariantNumeric: 'tabular-nums' }}>{dateStr}</span>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: 'var(--primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={ev.title}>{ev.title}</p>
+                  <div key={ev.id} className="flex gap-2.5 items-center py-2 border-b border-slate-100">
+                    <span className="text-[11px] text-slate-400 whitespace-nowrap min-w-[36px] tabular-nums">{dateStr}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-semibold m-0 text-[var(--primary)] truncate" title={ev.title}>{ev.title}</p>
                       {ev.student_name && (
-                        <p style={{ fontSize: 11, color: '#94a3b8', margin: '2px 0 0' }}>{ev.student_name}</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5 mb-0">{ev.student_name}</p>
                       )}
                     </div>
                   </div>
@@ -713,17 +599,17 @@ function TeacherDashboard({ isLg }) {
       <TodayTasksCard tasks={today_tasks} total={today_tasks_total} isLg={isLg} emptyText="오늘 할 일이 모두 정리되었습니다 ✅" />
 
       {/* KPI */}
-      <div className="dash-kpi-row" style={{ marginBottom: isLg ? 18 : 14 }}>
+      <div className={`dash-kpi-row ${isLg ? 'mb-[18px]' : 'mb-3.5'}`}>
         {[
           { label: '오늘 수업', value: today_classes.length, unit: '건', color: 'var(--primary)' },
           { label: '출결 미입력', value: attendance_pending, unit: '명', color: attendance_pending > 0 ? 'var(--destructive)' : 'var(--success)' },
           { label: '학생 특이사항', value: student_alerts.length, unit: '건', color: student_alerts.length > 0 ? 'var(--warning)' : 'var(--success)' },
         ].map((kpi, i) => (
-          <div key={i} style={{ flex: 1, minWidth: 0 }}>
-            <div className="card" style={{ margin: 0, padding: isLg ? '18px 22px' : '14px 16px', height: '100%', boxSizing: 'border-box' }}>
-              <p style={{ fontSize: isLg ? 12 : 10, fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: isLg ? 6 : 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{kpi.label}</p>
-              <div style={{ fontSize: isLg ? 30 : 24, fontWeight: 800, color: kpi.color, lineHeight: 1 }}>
-                {kpi.value}<span style={{ fontSize: isLg ? 14 : 12, fontWeight: 500, color: 'var(--muted-foreground)', marginLeft: 2 }}>{kpi.unit}</span>
+          <div key={i} className="flex-1 min-w-0">
+            <div className={`bg-white rounded-xl border border-slate-100 shadow-sm m-0 h-full box-border ${isLg ? 'px-[22px] py-[18px]' : 'px-4 py-3.5'}`}>
+              <p className={`${isLg ? 'text-xs mb-1.5' : 'text-[10px] mb-1'} mt-0 font-bold text-slate-400 uppercase tracking-widest`}>{kpi.label}</p>
+              <div className={`${isLg ? 'text-3xl' : 'text-2xl'} font-display font-bold leading-none`} style={{ color: kpi.color }}>
+                {kpi.value}<span className={`${isLg ? 'text-sm' : 'text-xs'} font-medium text-slate-400 ml-0.5`}>{kpi.unit}</span>
               </div>
             </div>
           </div>
@@ -731,30 +617,26 @@ function TeacherDashboard({ isLg }) {
       </div>
 
       {/* 오늘 수업 목록 */}
-      <div className="card" style={{ marginBottom: isLg ? 14 : 10 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isLg ? 14 : 10 }}>
-          <h2 style={{ margin: 0, fontSize: isLg ? 16 : 14, fontWeight: 700 }}>오늘 수업</h2>
-          <span onClick={() => navigate('/admin/attendance')} style={{ fontSize: isLg ? 13 : 11, color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}>출결 입력 &rarr;</span>
+      <div className={`bg-white rounded-xl border border-slate-100 shadow-sm p-5 ${isLg ? 'mb-3.5' : 'mb-2.5'}`}>
+        <div className={`flex justify-between items-center ${isLg ? 'mb-3.5' : 'mb-2.5'}`}>
+          <h2 className={`m-0 ${isLg ? 'text-base' : 'text-sm'} font-extrabold text-[var(--primary)]`}>오늘 수업</h2>
+          <span onClick={() => navigate('/admin/attendance')} className={`${isLg ? 'text-[13px]' : 'text-[11px]'} text-[var(--cta)] cursor-pointer font-bold`}>출결 입력 &rarr;</span>
         </div>
         {today_classes.length === 0 ? (
-          <p style={{ fontSize: isLg ? 14 : 12, color: 'var(--muted-foreground)', textAlign: 'center', padding: '16px 0' }}>오늘 예정된 수업이 없습니다</p>
+          <p className={`${isLg ? 'text-sm' : 'text-xs'} text-slate-500 text-center py-4 m-0`}>오늘 예정된 수업이 없습니다</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div className="flex flex-col gap-1.5">
             {today_classes.map(cls => (
-              <div key={cls.id} style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: isLg ? '12px 16px' : '10px 12px', borderRadius: 8,
-                background: 'var(--neutral-50)', border: '1px solid var(--border)',
-              }}>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <p style={{ fontSize: isLg ? 14 : 12, fontWeight: 700, margin: 0, color: 'var(--foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={cls.name}>{cls.name}</p>
-                  <p style={{ fontSize: isLg ? 12 : 10, color: 'var(--muted-foreground)', margin: '2px 0 0' }}>
+              <div key={cls.id} className={`flex justify-between items-center rounded-lg bg-slate-50 border border-slate-100 ${isLg ? 'px-4 py-3' : 'px-3 py-2.5'}`}>
+                <div className="min-w-0 flex-1">
+                  <p className={`${isLg ? 'text-sm' : 'text-xs'} font-bold m-0 text-[var(--primary)] truncate`} title={cls.name}>{cls.name}</p>
+                  <p className={`${isLg ? 'text-xs' : 'text-[10px]'} text-slate-500 mt-0.5 mb-0`}>
                     {cls.start_time?.slice(0, 5)}~{cls.end_time?.slice(0, 5)} {cls.room ? `| ${cls.room}` : ''}
                   </p>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: isLg ? 13 : 11, fontWeight: 600, color: 'var(--primary)' }}>{cls.student_count || 0}명</span>
-                  {cls.subject && <p style={{ fontSize: isLg ? 11 : 10, color: 'var(--muted-foreground)', margin: '2px 0 0' }}>{cls.subject}</p>}
+                <div className="text-right">
+                  <span className={`${isLg ? 'text-[13px]' : 'text-[11px]'} font-semibold text-[var(--primary)]`}>{cls.student_count || 0}명</span>
+                  {cls.subject && <p className={`${isLg ? 'text-[11px]' : 'text-[10px]'} text-slate-500 mt-0.5 mb-0`}>{cls.subject}</p>}
                 </div>
               </div>
             ))}
@@ -764,19 +646,15 @@ function TeacherDashboard({ isLg }) {
 
       {/* 학생 특이사항 */}
       {student_alerts.length > 0 && (
-        <div className="card">
-          <h2 style={{ margin: 0, fontSize: isLg ? 16 : 14, fontWeight: 700, marginBottom: isLg ? 14 : 10 }}>학생 특이사항</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
+          <h2 className={`mt-0 mx-0 ${isLg ? 'text-base mb-3.5' : 'text-sm mb-2.5'} font-extrabold text-[var(--primary)]`}>학생 특이사항</h2>
+          <div className="flex flex-col gap-1.5">
             {student_alerts.map((a, i) => (
-              <div key={i} style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: isLg ? '10px 14px' : '8px 12px', borderRadius: 8,
-                background: 'var(--warning-light)', border: '1px solid oklch(88% 0.06 75)',
-              }}>
-                <span style={{ fontSize: isLg ? 14 : 12, fontWeight: 700, cursor: 'pointer' }}
+              <div key={i} className={`flex items-center justify-between rounded-lg bg-amber-50 border border-amber-200 ${isLg ? 'px-3.5 py-2.5' : 'px-3 py-2'}`}>
+                <span className={`${isLg ? 'text-sm' : 'text-xs'} font-bold text-[var(--primary)] cursor-pointer`}
                   onClick={() => navigate(`/admin/student/${a.student_id}`)}
                 >{a.student_name}</span>
-                <span style={{ fontSize: isLg ? 13 : 11, color: 'oklch(35% 0.12 75)', fontWeight: 600 }}>{a.message}</span>
+                <span className={`${isLg ? 'text-[13px]' : 'text-[11px]'} text-amber-700 font-semibold`}>{a.message}</span>
               </div>
             ))}
           </div>
@@ -812,59 +690,51 @@ function CounselorDashboard({ isLg }) {
       <TodayTasksCard tasks={today_tasks} total={today_tasks_total} isLg={isLg} emptyText="오늘 처리할 상담/후속조치가 없습니다 ✅" />
 
       {/* KPI */}
-      <div className="dash-kpi-row" style={{ marginBottom: isLg ? 18 : 14 }}>
+      <div className={`dash-kpi-row ${isLg ? 'mb-[18px]' : 'mb-3.5'}`}>
         {[
           { label: '오늘 상담', value: today_consultations.length, unit: '건', color: 'var(--primary)' },
           { label: '후속조치 필요', value: follow_up_due.length, unit: '건', color: follow_up_due.length > 0 ? 'var(--warning)' : 'var(--success)' },
           { label: '신규 문의', value: new_inquiries.length, unit: '건', color: new_inquiries.length > 0 ? 'var(--primary)' : 'var(--muted-foreground)' },
           { label: '전환율', value: cs.conversion_rate, unit: '%', color: cs.conversion_rate >= 30 ? 'var(--success)' : 'var(--warning)' },
         ].map((kpi, i) => (
-          <div key={i} style={{ flex: 1, minWidth: 0 }}>
-            <div className="card" style={{ margin: 0, padding: isLg ? '18px 22px' : '14px 16px', height: '100%', boxSizing: 'border-box' }}>
-              <p style={{ fontSize: isLg ? 12 : 10, fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: isLg ? 6 : 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{kpi.label}</p>
-              <div style={{ fontSize: isLg ? 30 : 24, fontWeight: 800, color: kpi.color, lineHeight: 1 }}>
-                {kpi.value}<span style={{ fontSize: isLg ? 14 : 12, fontWeight: 500, color: 'var(--muted-foreground)', marginLeft: 2 }}>{kpi.unit}</span>
+          <div key={i} className="flex-1 min-w-0">
+            <div className={`bg-white rounded-xl border border-slate-100 shadow-sm m-0 h-full box-border ${isLg ? 'px-[22px] py-[18px]' : 'px-4 py-3.5'}`}>
+              <p className={`${isLg ? 'text-xs mb-1.5' : 'text-[10px] mb-1'} mt-0 font-bold text-slate-400 uppercase tracking-widest`}>{kpi.label}</p>
+              <div className={`${isLg ? 'text-3xl' : 'text-2xl'} font-display font-bold leading-none`} style={{ color: kpi.color }}>
+                {kpi.value}<span className={`${isLg ? 'text-sm' : 'text-xs'} font-medium text-slate-400 ml-0.5`}>{kpi.unit}</span>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="dash-mid-grid" style={{ marginBottom: isLg ? 14 : 10 }}>
+      <div className={`dash-mid-grid ${isLg ? 'mb-3.5' : 'mb-2.5'}`}>
         {/* 오늘 상담 / 후속조치 */}
-        <div className="card" style={{ margin: 0, flex: 3, minWidth: 0 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isLg ? 14 : 10 }}>
-            <h2 style={{ margin: 0, fontSize: isLg ? 16 : 14, fontWeight: 700 }}>오늘 상담 / 후속조치</h2>
-            <span onClick={() => navigate('/admin/consultation')} style={{ fontSize: isLg ? 13 : 11, color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}>전체 보기 &rarr;</span>
+        <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5 m-0 min-w-0 flex-[3]">
+          <div className={`flex justify-between items-center ${isLg ? 'mb-3.5' : 'mb-2.5'}`}>
+            <h2 className={`m-0 ${isLg ? 'text-base' : 'text-sm'} font-extrabold text-[var(--primary)]`}>오늘 상담 / 후속조치</h2>
+            <span onClick={() => navigate('/admin/consultation')} className={`${isLg ? 'text-[13px]' : 'text-[11px]'} text-[var(--cta)] cursor-pointer font-bold`}>전체 보기 &rarr;</span>
           </div>
           {today_consultations.length === 0 && follow_up_due.length === 0 ? (
-            <p style={{ fontSize: isLg ? 14 : 12, color: 'var(--muted-foreground)', textAlign: 'center', padding: '16px 0' }}>오늘 예정된 상담/후속조치가 없습니다</p>
+            <p className={`${isLg ? 'text-sm' : 'text-xs'} text-slate-500 text-center py-4 m-0`}>오늘 예정된 상담/후속조치가 없습니다</p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div className="flex flex-col gap-1.5">
               {follow_up_due.map(c => (
-                <div key={`fu-${c.id}`} style={{
-                  padding: isLg ? '10px 14px' : '8px 12px', borderRadius: 8,
-                  background: 'var(--warning-light)', border: '1px solid oklch(88% 0.06 75)',
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                }}>
+                <div key={`fu-${c.id}`} className={`${isLg ? 'px-3.5 py-2.5' : 'px-3 py-2'} rounded-lg bg-amber-50 border border-amber-200 flex justify-between items-center`}>
                   <div>
-                    <span style={{ fontSize: isLg ? 14 : 12, fontWeight: 700 }}>{c.student_name || '미배정'}</span>
-                    <span style={{ fontSize: isLg ? 12 : 10, color: 'var(--muted-foreground)', marginLeft: 8 }}>{c.consultation_type}</span>
+                    <span className={`${isLg ? 'text-sm' : 'text-xs'} font-bold text-[var(--primary)]`}>{c.student_name || '미배정'}</span>
+                    <span className={`${isLg ? 'text-xs' : 'text-[10px]'} text-slate-500 ml-2`}>{c.consultation_type}</span>
                   </div>
-                  <span style={{ fontSize: isLg ? 11 : 10, fontWeight: 600, padding: '2px 8px', borderRadius: 4, background: 'oklch(88% 0.06 75)', color: 'oklch(35% 0.12 75)' }}>후속조치</span>
+                  <span className={`${isLg ? 'text-[11px]' : 'text-[10px]'} font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700`}>후속조치</span>
                 </div>
               ))}
               {today_consultations.map(c => (
-                <div key={`tc-${c.id}`} style={{
-                  padding: isLg ? '10px 14px' : '8px 12px', borderRadius: 8,
-                  background: 'var(--info-light)', border: '1px solid oklch(88% 0.06 260)',
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                }}>
+                <div key={`tc-${c.id}`} className={`${isLg ? 'px-3.5 py-2.5' : 'px-3 py-2'} rounded-lg bg-blue-50 border border-blue-200 flex justify-between items-center`}>
                   <div>
-                    <span style={{ fontSize: isLg ? 14 : 12, fontWeight: 700 }}>{c.student_name || '미배정'}</span>
-                    <span style={{ fontSize: isLg ? 12 : 10, color: 'var(--muted-foreground)', marginLeft: 8 }}>{c.consultation_type}</span>
+                    <span className={`${isLg ? 'text-sm' : 'text-xs'} font-bold text-[var(--primary)]`}>{c.student_name || '미배정'}</span>
+                    <span className={`${isLg ? 'text-xs' : 'text-[10px]'} text-slate-500 ml-2`}>{c.consultation_type}</span>
                   </div>
-                  <span style={{ fontSize: isLg ? 11 : 10, fontWeight: 600, padding: '2px 8px', borderRadius: 4, background: 'oklch(88% 0.06 260)', color: 'oklch(32% 0.12 260)' }}>오늘 상담</span>
+                  <span className={`${isLg ? 'text-[11px]' : 'text-[10px]'} font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700`}>오늘 상담</span>
                 </div>
               ))}
             </div>
@@ -872,37 +742,33 @@ function CounselorDashboard({ isLg }) {
         </div>
 
         {/* 신규 문의 */}
-        <div className="card" style={{ margin: 0, flex: 2, minWidth: 0 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isLg ? 14 : 10 }}>
-            <h2 style={{ margin: 0, fontSize: isLg ? 16 : 14, fontWeight: 700 }}>신규 문의</h2>
-            <span onClick={() => navigate('/admin/leads')} style={{ fontSize: isLg ? 13 : 11, color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}>전체 보기 &rarr;</span>
+        <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5 m-0 min-w-0 flex-[2]">
+          <div className={`flex justify-between items-center ${isLg ? 'mb-3.5' : 'mb-2.5'}`}>
+            <h2 className={`m-0 ${isLg ? 'text-base' : 'text-sm'} font-extrabold text-[var(--primary)]`}>신규 문의</h2>
+            <span onClick={() => navigate('/admin/leads')} className={`${isLg ? 'text-[13px]' : 'text-[11px]'} text-[var(--cta)] cursor-pointer font-bold`}>전체 보기 &rarr;</span>
           </div>
           {new_inquiries.length === 0 ? (
-            <p style={{ fontSize: isLg ? 14 : 12, color: 'var(--muted-foreground)', textAlign: 'center', padding: '16px 0' }}>신규 문의가 없습니다</p>
+            <p className={`${isLg ? 'text-sm' : 'text-xs'} text-slate-500 text-center py-4 m-0`}>신규 문의가 없습니다</p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div className="flex flex-col gap-1.5">
               {new_inquiries.slice(0, 8).map(lead => (
-                <div key={lead.id} style={{
-                  padding: isLg ? '10px 14px' : '8px 12px', borderRadius: 8,
-                  background: 'var(--neutral-50)', border: '1px solid var(--border)',
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                }}>
+                <div key={lead.id} className={`${isLg ? 'px-3.5 py-2.5' : 'px-3 py-2'} rounded-lg bg-slate-50 border border-slate-100 flex justify-between items-center`}>
                   <div>
-                    <span style={{ fontSize: isLg ? 14 : 12, fontWeight: 700 }}>{lead.student_name}</span>
-                    {lead.school && <span style={{ fontSize: isLg ? 12 : 10, color: 'var(--muted-foreground)', marginLeft: 8 }}>{lead.school} {lead.grade}</span>}
+                    <span className={`${isLg ? 'text-sm' : 'text-xs'} font-bold text-[var(--primary)]`}>{lead.student_name}</span>
+                    {lead.school && <span className={`${isLg ? 'text-xs' : 'text-[10px]'} text-slate-500 ml-2`}>{lead.school} {lead.grade}</span>}
                   </div>
-                  {lead.source && <span style={{ fontSize: isLg ? 11 : 10, color: 'var(--muted-foreground)' }}>{lead.source}</span>}
+                  {lead.source && <span className={`${isLg ? 'text-[11px]' : 'text-[10px]'} text-slate-500`}>{lead.source}</span>}
                 </div>
               ))}
             </div>
           )}
           {/* 전환 통계 */}
-          <div style={{ marginTop: 12, padding: '10px 12px', borderRadius: 8, background: 'var(--neutral-50)', border: '1px solid var(--border)' }}>
-            <p style={{ fontSize: isLg ? 12 : 10, fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: 4 }}>이번달 전환 통계</p>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <span style={{ fontSize: isLg ? 13 : 11 }}>문의 <strong>{cs.this_month_inquiries}</strong></span>
-              <span style={{ fontSize: isLg ? 13 : 11 }}>등록 <strong>{cs.this_month_enrolled}</strong></span>
-              <span style={{ fontSize: isLg ? 13 : 11 }}>전환율 <strong style={{ color: 'var(--primary)' }}>{cs.conversion_rate}%</strong></span>
+          <div className="mt-3 px-3 py-2.5 rounded-lg bg-slate-50 border border-slate-100">
+            <p className={`${isLg ? 'text-xs' : 'text-[10px]'} font-bold text-slate-400 uppercase tracking-widest mt-0 mb-1`}>이번달 전환 통계</p>
+            <div className="flex gap-3">
+              <span className={`${isLg ? 'text-[13px]' : 'text-[11px]'} text-slate-600`}>문의 <strong className="text-[var(--primary)]">{cs.this_month_inquiries}</strong></span>
+              <span className={`${isLg ? 'text-[13px]' : 'text-[11px]'} text-slate-600`}>등록 <strong className="text-[var(--primary)]">{cs.this_month_enrolled}</strong></span>
+              <span className={`${isLg ? 'text-[13px]' : 'text-[11px]'} text-slate-600`}>전환율 <strong className="text-[var(--cta)]">{cs.conversion_rate}%</strong></span>
             </div>
           </div>
         </div>
@@ -935,43 +801,39 @@ function StaffDashboard({ isLg }) {
     <>
       <TodayTasksCard tasks={today_tasks} total={today_tasks_total} isLg={isLg} emptyText="오늘 수납 처리 대상이 없습니다 ✅" />
 
-      <div className="dash-kpi-row" style={{ marginBottom: isLg ? 18 : 14 }}>
+      <div className={`dash-kpi-row ${isLg ? 'mb-[18px]' : 'mb-3.5'}`}>
         {[
           { label: '오늘 납부기한', value: tt.due_today, unit: '건', color: tt.due_today > 0 ? 'var(--warning)' : 'var(--success)' },
           { label: '수납 확인 대기', value: tt.pending_confirmation, unit: '건', color: 'var(--primary)' },
           { label: '미납 독촉 대상', value: overdue_list.length, unit: '건', color: overdue_list.length > 0 ? 'var(--destructive)' : 'var(--success)' },
           { label: 'SMS 잔액', value: fmt(sms_balance.balance), unit: '건', color: 'var(--primary)' },
         ].map((kpi, i) => (
-          <div key={i} style={{ flex: 1, minWidth: 0 }}>
-            <div className="card" style={{ margin: 0, padding: isLg ? '18px 22px' : '14px 16px', height: '100%', boxSizing: 'border-box' }}>
-              <p style={{ fontSize: isLg ? 12 : 10, fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: isLg ? 6 : 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{kpi.label}</p>
-              <div style={{ fontSize: isLg ? 30 : 24, fontWeight: 800, color: kpi.color, lineHeight: 1 }}>
-                {kpi.value}<span style={{ fontSize: isLg ? 14 : 12, fontWeight: 500, color: 'var(--muted-foreground)', marginLeft: 2 }}>{kpi.unit}</span>
+          <div key={i} className="flex-1 min-w-0">
+            <div className={`bg-white rounded-xl border border-slate-100 shadow-sm m-0 h-full box-border ${isLg ? 'px-[22px] py-[18px]' : 'px-4 py-3.5'}`}>
+              <p className={`${isLg ? 'text-xs mb-1.5' : 'text-[10px] mb-1'} mt-0 font-bold text-slate-400 uppercase tracking-widest`}>{kpi.label}</p>
+              <div className={`${isLg ? 'text-3xl' : 'text-2xl'} font-display font-bold leading-none`} style={{ color: kpi.color }}>
+                {kpi.value}<span className={`${isLg ? 'text-sm' : 'text-xs'} font-medium text-slate-400 ml-0.5`}>{kpi.unit}</span>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isLg ? 14 : 10 }}>
-          <h2 style={{ margin: 0, fontSize: isLg ? 16 : 14, fontWeight: 700 }}>미납 독촉 대상 TOP {overdue_list.length}</h2>
-          <span onClick={() => navigate('/admin/tuition')} style={{ fontSize: isLg ? 13 : 11, color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}>전체 보기 &rarr;</span>
+      <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
+        <div className={`flex justify-between items-center ${isLg ? 'mb-3.5' : 'mb-2.5'}`}>
+          <h2 className={`m-0 ${isLg ? 'text-base' : 'text-sm'} font-extrabold text-[var(--primary)]`}>미납 독촉 대상 TOP {overdue_list.length}</h2>
+          <span onClick={() => navigate('/admin/tuition')} className={`${isLg ? 'text-[13px]' : 'text-[11px]'} text-[var(--cta)] cursor-pointer font-bold`}>전체 보기 &rarr;</span>
         </div>
         {overdue_list.length === 0 ? (
-          <p style={{ fontSize: isLg ? 14 : 12, color: 'var(--muted-foreground)', textAlign: 'center', padding: '16px 0' }}>미납 건이 없습니다</p>
+          <p className={`${isLg ? 'text-sm' : 'text-xs'} text-slate-500 text-center py-4 m-0`}>미납 건이 없습니다</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div className="flex flex-col gap-1.5">
             {overdue_list.map(t => (
-              <div key={t.id} style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: isLg ? '10px 14px' : '8px 12px', borderRadius: 8,
-                background: 'var(--destructive-light)', border: '1px solid oklch(85% 0.08 25)',
-              }}>
-                <span style={{ fontSize: isLg ? 14 : 12, fontWeight: 700, cursor: 'pointer' }}
+              <div key={t.id} className={`flex justify-between items-center rounded-lg bg-red-50 border border-red-200 ${isLg ? 'px-3.5 py-2.5' : 'px-3 py-2'}`}>
+                <span className={`${isLg ? 'text-sm' : 'text-xs'} font-bold text-[var(--primary)] cursor-pointer`}
                   onClick={() => navigate(`/admin/student-view/${t.student_id}`)}
                 >{t.student_name}</span>
-                <span style={{ fontSize: isLg ? 13 : 11, color: 'var(--destructive)', fontWeight: 600 }}>
+                <span className={`${isLg ? 'text-[13px]' : 'text-[11px]'} text-[#ba1a1a] font-semibold`}>
                   {parseInt(t.amount || 0).toLocaleString()}원 · 기한 {t.due_date}
                 </span>
               </div>
@@ -988,16 +850,16 @@ function StaffDashboard({ isLg }) {
 // ════════════════════════════════════════
 function LoadingState() {
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '60px 0' }}>
-      <div style={{ fontSize: 14, color: 'var(--muted-foreground)' }}>데이터를 불러오는 중...</div>
+    <div className="flex justify-center items-center py-[60px]">
+      <div className="text-sm text-slate-400">데이터를 불러오는 중...</div>
     </div>
   );
 }
 
 function ErrorState() {
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '60px 0' }}>
-      <div style={{ fontSize: 14, color: 'var(--destructive)' }}>데이터를 불러오지 못했습니다. 새로고침해 주세요.</div>
+    <div className="flex justify-center items-center py-[60px]">
+      <div className="text-sm text-[#ba1a1a]">데이터를 불러오지 못했습니다. 새로고침해 주세요.</div>
     </div>
   );
 }
@@ -1108,19 +970,14 @@ function LegacyDashboard({ isLg }) {
     <>
       {/* Action Required */}
       {actionItems.length > 0 && (
-        <div style={{ marginBottom: isLg ? 18 : 14 }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: isLg ? 8 : 6 }}>
+        <div className={isLg ? 'mb-[18px]' : 'mb-3.5'}>
+          <div className={`flex flex-wrap ${isLg ? 'gap-2' : 'gap-1.5'}`}>
             {actionItems.map((item, i) => (
-              <button key={i} onClick={() => navigate(item.path)} style={{
-                display: 'flex', alignItems: 'center', gap: isLg ? 10 : 8,
-                padding: isLg ? '10px 18px' : '8px 14px', borderRadius: 8,
-                border: `1px solid ${item.urgent ? 'oklch(90% 0.06 25)' : 'var(--border)'}`,
-                background: item.urgent ? 'var(--destructive-light)' : 'var(--card)',
-                cursor: 'pointer', fontFamily: 'inherit',
-              }}>
-                <span style={{ fontSize: isLg ? 20 : 16, fontWeight: 800, color: item.urgent ? 'var(--destructive)' : 'var(--primary)', lineHeight: 1 }}>{item.count}</span>
-                <span style={{ fontSize: isLg ? 14 : 12, fontWeight: 600, color: 'var(--foreground)' }}>{item.label}</span>
-                <span style={{ fontSize: isLg ? 15 : 13, color: 'var(--muted-foreground)', marginLeft: 2 }}>&rarr;</span>
+              <button key={i} onClick={() => navigate(item.path)}
+                className={`flex items-center rounded-lg border cursor-pointer ${isLg ? 'gap-2.5 px-[18px] py-2.5' : 'gap-2 px-3.5 py-2'} ${item.urgent ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
+                <span className={`${isLg ? 'text-xl' : 'text-base'} font-display font-bold leading-none ${item.urgent ? 'text-[#ba1a1a]' : 'text-[var(--primary)]'}`}>{item.count}</span>
+                <span className={`${isLg ? 'text-sm' : 'text-xs'} font-semibold text-slate-600`}>{item.label}</span>
+                <span className={`${isLg ? 'text-[15px]' : 'text-[13px]'} text-slate-400 ml-0.5`}>&rarr;</span>
               </button>
             ))}
           </div>
@@ -1128,47 +985,44 @@ function LegacyDashboard({ isLg }) {
       )}
 
       {/* KPI Row */}
-      <div className="dash-kpi-row" style={{ marginBottom: isLg ? 18 : 14 }}>
+      <div className={`dash-kpi-row ${isLg ? 'mb-[18px]' : 'mb-3.5'}`}>
         {[
           { label: '재원생', value: totalStudents, unit: '명', sub: '재학 중', color: 'var(--primary)' },
           { label: '오늘 클리닉', value: todayClinic, unit: '건', sub: todayClinic === 0 ? '일정 없음' : '오늘 진행', color: todayClinic > 0 ? 'oklch(48% 0.22 295)' : 'var(--muted-foreground)' },
           { label: '이번 주 수업', value: upcomingClasses.length, unit: '회', sub: '남은 수업', color: 'var(--success)' },
           { label: '다음 시험', value: nextExam ? `D-${daysUntil(nextExam.exam_date)}` : '-', unit: '', sub: nextExam ? nextExam.name : '예정 없음', color: nextExam && daysUntil(nextExam.exam_date) <= 7 ? 'var(--warning)' : 'var(--foreground)' },
         ].map((kpi, i) => (
-          <div key={i} style={{ flex: 1, minWidth: 0 }}>
-            <div className="card" style={{ margin: 0, padding: isLg ? '18px 22px' : '14px 16px', height: '100%', boxSizing: 'border-box' }}>
-              <p style={{ fontSize: isLg ? 12 : 10, fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: isLg ? 6 : 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{kpi.label}</p>
-              <div style={{ fontSize: isLg ? 30 : 24, fontWeight: 800, color: kpi.color, lineHeight: 1, marginBottom: isLg ? 5 : 3 }}>
+          <div key={i} className="flex-1 min-w-0">
+            <div className={`bg-white rounded-xl border border-slate-100 shadow-sm m-0 h-full box-border ${isLg ? 'px-[22px] py-[18px]' : 'px-4 py-3.5'}`}>
+              <p className={`${isLg ? 'text-xs mb-1.5' : 'text-[10px] mb-1'} mt-0 font-bold text-slate-400 uppercase tracking-widest`}>{kpi.label}</p>
+              <div className={`${isLg ? 'text-3xl mb-[5px]' : 'text-2xl mb-[3px]'} font-display font-bold leading-none`} style={{ color: kpi.color }}>
                 {kpi.value}
-                {kpi.unit && <span style={{ fontSize: isLg ? 14 : 12, fontWeight: 500, color: 'var(--muted-foreground)', marginLeft: 2 }}>{kpi.unit}</span>}
+                {kpi.unit && <span className={`${isLg ? 'text-sm' : 'text-xs'} font-medium text-slate-400 ml-0.5`}>{kpi.unit}</span>}
               </div>
-              <p style={{ fontSize: isLg ? 13 : 11, color: 'var(--muted-foreground)', margin: 0 }}>{kpi.sub}</p>
+              <p className={`${isLg ? 'text-[13px]' : 'text-[11px]'} text-slate-500 m-0`}>{kpi.sub}</p>
             </div>
           </div>
         ))}
       </div>
 
       {/* Student counts */}
-      <div className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isLg ? 14 : 10 }}>
-          <h2 style={{ margin: 0, fontSize: isLg ? 16 : 13, fontWeight: 700 }}>학교별 현황</h2>
-          <span style={{ fontSize: isLg ? 16 : 13, fontWeight: 800, color: 'var(--primary)' }}>{totalStudents}명</span>
+      <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
+        <div className={`flex justify-between items-center ${isLg ? 'mb-3.5' : 'mb-2.5'}`}>
+          <h2 className={`m-0 ${isLg ? 'text-base' : 'text-[13px]'} font-extrabold text-[var(--primary)]`}>학교별 현황</h2>
+          <span className={`${isLg ? 'text-base' : 'text-[13px]'} font-display font-bold text-[var(--primary)]`}>{totalStudents}명</span>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div className="flex flex-col gap-1">
           {SCHOOLS.filter(s => !['조교', '선생님'].includes(s.name)).map(s => (
             <div key={s.name}>
-              <div onClick={() => navigate(`/admin/school/${encodeURIComponent(s.name)}`)} style={{
-                padding: isLg ? '9px 12px' : '7px 10px', borderRadius: 7, cursor: 'pointer',
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                background: 'var(--neutral-50)', border: '1px solid var(--border)',
-              }}>
-                <span style={{ fontSize: isLg ? 14 : 12, fontWeight: 600, color: 'var(--foreground)' }}>{s.name}</span>
-                <span style={{ fontSize: isLg ? 14 : 12, fontWeight: 700, color: 'var(--primary)' }}>{schoolCounts[s.name] || 0}명</span>
+              <div onClick={() => navigate(`/admin/school/${encodeURIComponent(s.name)}`)}
+                className={`${isLg ? 'px-3 py-[9px]' : 'px-2.5 py-[7px]'} rounded-lg cursor-pointer flex justify-between items-center bg-slate-50 border border-slate-100 hover:bg-slate-100`}>
+                <span className={`${isLg ? 'text-sm' : 'text-xs'} font-semibold text-slate-600`}>{s.name}</span>
+                <span className={`${isLg ? 'text-sm' : 'text-xs'} font-bold text-[var(--primary)]`}>{schoolCounts[s.name] || 0}명</span>
               </div>
               {gradeDetails[s.name]?.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginTop: 3, paddingLeft: 8 }}>
+                <div className="flex flex-wrap gap-[3px] mt-[3px] pl-2">
                   {gradeDetails[s.name].map(g => (
-                    <span key={g.grade} style={{ fontSize: 11, color: 'var(--muted-foreground)', background: 'var(--neutral-100)', padding: '1px 6px', borderRadius: 4 }}>
+                    <span key={g.grade} className="text-[11px] text-slate-500 bg-slate-100 px-1.5 py-px rounded">
                       {g.grade} {g.student_count}
                     </span>
                   ))}
@@ -1222,26 +1076,23 @@ export default function AdminDashboard() {
   const roleLabel = role === 'admin' ? '원장' : role === 'teacher' ? '강사' : role === 'assistant' ? '조교' : role === 'counselor' ? '상담' : '';
 
   return (
-    <div className="content max-w-7xl mx-auto">
+    <div className="main-content max-w-7xl mx-auto">
 
       {/* Password Modal */}
       {showPwModal && (
-        <div onClick={() => setShowPwModal(false)} style={{
-          position: 'fixed', inset: 0, background: 'oklch(0% 0 0 / 0.45)',
-          zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <div className="card" onClick={e => e.stopPropagation()} style={{ width: 340, maxWidth: '90vw', padding: 24, margin: 0 }}>
-            <h3 style={{ marginBottom: 16, fontSize: 16, fontWeight: 700 }}>비밀번호 변경</h3>
+        <div onClick={() => setShowPwModal(false)} className="fixed inset-0 bg-black/45 z-[10000] flex items-center justify-center">
+          <div onClick={e => e.stopPropagation()} className="bg-white rounded-xl border border-slate-100 shadow-lg w-[340px] max-w-[90vw] p-6 m-0">
+            <h3 className="mb-4 mt-0 text-base font-extrabold text-[var(--primary)]">비밀번호 변경</h3>
             {pwMsg && (
-              <div className={`alert ${pwMsg.includes('변경') ? 'alert-success' : 'alert-error'}`} style={{ marginBottom: 12 }}>{pwMsg}</div>
+              <div className={`mb-3 px-3 py-2 rounded-lg text-sm font-semibold ${pwMsg.includes('변경') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-[#ba1a1a]'}`}>{pwMsg}</div>
             )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <input type="password" placeholder="현재 비밀번호" value={pwForm.currentPassword} onChange={e => setPwForm({ ...pwForm, currentPassword: e.target.value })} />
-              <input type="password" placeholder="새 비밀번호 (4자 이상)" value={pwForm.newPassword} onChange={e => setPwForm({ ...pwForm, newPassword: e.target.value })} />
-              <input type="password" placeholder="새 비밀번호 확인" value={pwForm.confirmPassword} onChange={e => setPwForm({ ...pwForm, confirmPassword: e.target.value })} />
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleChangePassword}>변경</button>
-                <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setShowPwModal(false)}>취소</button>
+            <div className="flex flex-col gap-2.5">
+              <input type="password" className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" placeholder="현재 비밀번호" value={pwForm.currentPassword} onChange={e => setPwForm({ ...pwForm, currentPassword: e.target.value })} />
+              <input type="password" className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" placeholder="새 비밀번호 (4자 이상)" value={pwForm.newPassword} onChange={e => setPwForm({ ...pwForm, newPassword: e.target.value })} />
+              <input type="password" className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[var(--cta)]" placeholder="새 비밀번호 확인" value={pwForm.confirmPassword} onChange={e => setPwForm({ ...pwForm, confirmPassword: e.target.value })} />
+              <div className="flex gap-2">
+                <button className="flex-1 bg-[var(--cta)] text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 font-display" onClick={handleChangePassword}>변경</button>
+                <button className="flex-1 bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-50" onClick={() => setShowPwModal(false)}>취소</button>
               </div>
             </div>
           </div>
@@ -1250,17 +1101,17 @@ export default function AdminDashboard() {
 
       {/* Page Header (owner role has its own greeting inside OwnerDashboard) */}
       {role !== 'admin' && (
-        <div style={{ marginBottom: isLg ? 20 : 16, paddingBottom: isLg ? 16 : 12, borderBottom: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-            <h1 style={{ fontSize: isLg ? 24 : 20, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.03em', margin: 0 }}>
+        <div className={`${isLg ? 'mb-5 pb-4' : 'mb-4 pb-3'} border-b border-slate-100`}>
+          <div className="flex items-baseline gap-2.5">
+            <h1 className={`${isLg ? 'text-2xl' : 'text-xl'} font-extrabold text-[var(--primary)] tracking-tight m-0`}>
               대시보드
             </h1>
             {roleLabel && (
-              <span style={{ fontSize: isLg ? 12 : 10, fontWeight: 600, padding: '2px 8px', borderRadius: 4, background: 'var(--primary-light)', color: 'var(--primary)' }}>
+              <span className={`${isLg ? 'text-xs' : 'text-[10px]'} rounded-full px-3 py-0.5 font-bold bg-blue-50 text-[var(--primary)]`}>
                 {roleLabel}
               </span>
             )}
-            <p style={{ fontSize: isLg ? 14 : 12, color: 'var(--muted-foreground)', margin: 0 }}>
+            <p className={`${isLg ? 'text-sm' : 'text-xs'} text-slate-400 m-0`}>
               {today.getFullYear()}년 {today.getMonth() + 1}월 {today.getDate()}일 ({DAY_NAMES[today.getDay()]})
             </p>
           </div>
@@ -1269,43 +1120,26 @@ export default function AdminDashboard() {
 
       {/* 초대 코드 (admin만) */}
       {role === 'admin' && inviteCode && (
-        <div style={{
-          marginBottom: 14, padding: '16px 18px', borderRadius: 14,
-          background: 'var(--card)', border: '1.5px solid var(--border)',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-            <span style={{ fontSize: isLg ? 16 : 14, fontWeight: 700, color: 'var(--foreground)' }}>학생 초대</span>
-            {academyName && <span style={{ fontSize: isLg ? 14 : 12, color: 'var(--muted-foreground)' }}>({academyName})</span>}
+        <div className="mb-3.5 px-[18px] py-4 rounded-xl bg-white border border-slate-100 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <span className={`${isLg ? 'text-base' : 'text-sm'} font-bold text-[var(--primary)]`}>학생 초대</span>
+            {academyName && <span className={`${isLg ? 'text-sm' : 'text-xs'} text-slate-500`}>({academyName})</span>}
           </div>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10,
-            padding: '10px 14px', borderRadius: 10, background: 'var(--muted)',
-          }}>
-            <span style={{ fontSize: 11, color: 'var(--muted-foreground)', fontWeight: 600, whiteSpace: 'nowrap' }}>초대 코드</span>
-            <span style={{ fontSize: 18, fontWeight: 800, letterSpacing: 3, fontFamily: 'monospace', color: 'var(--primary)', flex: 1 }}>{inviteCode}</span>
+          <div className="flex items-center gap-2.5 mb-2.5 px-3.5 py-2.5 rounded-[10px] bg-slate-50">
+            <span className="text-[11px] text-slate-400 font-semibold whitespace-nowrap">초대 코드</span>
+            <span className="text-lg font-extrabold tracking-[3px] font-mono text-[var(--primary)] flex-1">{inviteCode}</span>
             <button onClick={() => { navigator.clipboard.writeText(inviteCode); setCopiedType('code'); setTimeout(() => setCopiedType(''), 2000); }}
-              style={{
-                padding: '5px 12px', borderRadius: 6, border: '1px solid var(--border)',
-                background: copiedType === 'code' ? 'var(--success-light)' : 'var(--card)',
-                color: copiedType === 'code' ? 'var(--success)' : 'var(--foreground)',
-                cursor: 'pointer', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', fontFamily: 'inherit',
-              }}>{copiedType === 'code' ? '복사됨' : '코드 복사'}</button>
+              className={`px-3 py-[5px] rounded-md border text-[11px] font-semibold whitespace-nowrap cursor-pointer ${copiedType === 'code' ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+            >{copiedType === 'code' ? '복사됨' : '코드 복사'}</button>
           </div>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            padding: '10px 14px', borderRadius: 10, background: 'var(--muted)',
-          }}>
-            <span style={{ fontSize: 11, color: 'var(--muted-foreground)', fontWeight: 600, whiteSpace: 'nowrap' }}>가입 링크</span>
-            <span style={{ fontSize: 12, color: 'var(--foreground)', fontFamily: 'monospace', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-[10px] bg-slate-50">
+            <span className="text-[11px] text-slate-400 font-semibold whitespace-nowrap">가입 링크</span>
+            <span className="text-xs text-slate-600 font-mono flex-1 truncate">
               {window.location.origin}/register?academy={inviteCode}
             </span>
             <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/register?academy=${inviteCode}`); setCopiedType('link'); setTimeout(() => setCopiedType(''), 2000); }}
-              style={{
-                padding: '5px 12px', borderRadius: 6, border: '1px solid var(--border)',
-                background: copiedType === 'link' ? 'var(--success-light)' : 'var(--card)',
-                color: copiedType === 'link' ? 'var(--success)' : 'var(--foreground)',
-                cursor: 'pointer', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', fontFamily: 'inherit',
-              }}>{copiedType === 'link' ? '복사됨' : '링크 복사'}</button>
+              className={`px-3 py-[5px] rounded-md border text-[11px] font-semibold whitespace-nowrap cursor-pointer ${copiedType === 'link' ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+            >{copiedType === 'link' ? '복사됨' : '링크 복사'}</button>
           </div>
         </div>
       )}
@@ -1338,7 +1172,7 @@ export default function AdminDashboard() {
         }
         @media (max-width: 900px) {
           .dash-mid-grid { flex-direction: column; gap: 10px; }
-          .dash-mid-grid > .card { flex: 1 !important; }
+          .dash-mid-grid > div { flex: 1 !important; width: 100%; }
         }
         @media (max-width: 600px) {
           .dash-kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
