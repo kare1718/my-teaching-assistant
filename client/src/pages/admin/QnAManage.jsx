@@ -161,7 +161,57 @@ export default function QnAManage() {
 
               {displayQuestions.length === 0 ? (
                 <EmptyState icon="💬" title="질문이 없습니다." />
-              ) : (
+              ) : selectedStudent ? (() => {
+                // 질문 요약 뷰(학생별): 총건수·기간·답변현황 요약 헤더 + 날짜별(최신순) 연속 번호 목록.
+                const items = [...displayQuestions].map(q => ({ ...q, _t: Date.parse(q.created_at) || 0 })).sort((a, b) => b._t - a._t);
+                const total = items.length;
+                const answered = items.filter(q => q.status === 'answered').length;
+                const times = items.map(q => q._t).filter(Boolean);
+                const fmtMD = (t) => { const d = new Date(t); return `${d.getMonth() + 1}.${d.getDate()}`; };
+                const buckets = []; let n = 0;
+                for (const q of items) {
+                  const label = q._t ? (() => { const d = new Date(q._t); return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`; })() : '날짜 미상';
+                  let b = buckets.find(x => x.label === label);
+                  if (!b) { b = { label, items: [] }; buckets.push(b); }
+                  b.items.push({ q, no: ++n });
+                }
+                return (
+                  <div className="max-h-[600px] overflow-y-auto">
+                    {/* 요약 헤더 */}
+                    <div className="p-3 bg-slate-50 rounded-lg mb-2.5 text-[13px] leading-relaxed">
+                      <b>{selectedStudent.name}</b> 학생 — 총 <b>{total}건</b>
+                      {times.length > 0 && <span className="text-slate-400"> ({fmtMD(Math.min(...times))} ~ {fmtMD(Math.max(...times))})</span>}
+                      <span className="ml-2">· 답변완료 {answered} · 미답변 {total - answered}</span>
+                    </div>
+                    {/* 날짜별 번호 목록 (최신순, 전체 연속 번호) */}
+                    {buckets.map(bucket => (
+                      <div key={bucket.label} className="mb-2">
+                        <div className="text-xs font-bold text-slate-400 px-0.5 py-1">🗓️ {bucket.label}</div>
+                        {bucket.items.map(({ q, no }) => (
+                          <div key={q.id} onClick={() => { setSelectedQ(q); setEditAnswer(q.answer || ''); }}
+                            className={`flex gap-2 p-2.5 border-b border-slate-50 cursor-pointer border-l-[3px] transition-colors ${q.status === 'pending' ? 'border-l-amber-400' : 'border-l-emerald-500'} ${selectedQ?.id === q.id ? 'bg-blue-50' : 'bg-transparent'}`}>
+                            <span className="font-bold text-slate-400 text-xs min-w-[22px] text-right shrink-0">{no}.</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-[11px] text-slate-400">{formatDate(q.created_at)}</span>
+                                <StatusBadge variant={q.status === 'answered' ? 'success' : 'warning'}>
+                                  {q.status === 'answered' ? '답변완료' : '미답변'}
+                                </StatusBadge>
+                              </div>
+                              <div className="text-[13px] text-slate-600 leading-normal">
+                                {(q.question || '(이미지 질문)').length > 80
+                                  ? (q.question || '(이미지 질문)').slice(0, 80) + '...'
+                                  : (q.question || '(이미지 질문)')}
+                              </div>
+                              {q.image && <span className="text-[11px] text-[var(--primary)]">📷 이미지 첨부</span>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })() : (
                 <div className="max-h-[600px] overflow-y-auto">
                   {displayQuestions.map(q => (
                     <div key={q.id} onClick={() => { setSelectedQ(q); setEditAnswer(q.answer || ''); }}
