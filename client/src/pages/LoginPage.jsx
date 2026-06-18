@@ -292,9 +292,7 @@ export default function LoginPage() {
         <div style={{ flex: 1, width: '100%', ...reveal(0) }}>
           <div style={{ marginBottom: isMobile ? 0 : 32 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: isMobile ? 16 : 24 }}>
-              <img src="/logo.png" alt={siteTitle}
-                style={{ width: isMobile ? 40 : 48, height: isMobile ? 40 : 48 }}
-                onError={e => { e.target.style.display = 'none'; }} />
+              {/* 강인국어(logo.png) 로고 누수 제거 — SaaS 브랜드는 '나만의 조교' 워드마크만 노출 */}
               <span style={{ fontSize: isMobile ? 20 : 24, fontWeight: 800, color: C.textPrimary, letterSpacing: '-0.02em' }}>
                 {siteTitle}
               </span>
