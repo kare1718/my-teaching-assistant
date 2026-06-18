@@ -28,13 +28,18 @@ export default function ProfileManage() {
 
   useEffect(() => {
     api('/admin/site-settings/instructor_profile').then(data => {
-      if (data && data.name) {
-        setProfile(data);
-        setName(data.name || '');
-        setSlogan(data.slogan || '');
-        setBioText((data.bio || []).join('\n'));
-      }
-    }).catch(console.error);
+      // 설정이 비어있어도(신규 학원 → 서버가 {} 반환) 폼을 표시해야 함.
+      //   기존엔 data.name 가드로 setProfile 을 건너뛰어 profile 이 영구 null →
+      //   '로딩 중...' 무한 표시되던 버그. 항상 profile 을 세팅(빈 객체라도)해 폼 노출.
+      const p = (data && typeof data === 'object') ? data : {};
+      setProfile(p);
+      setName(p.name || '');
+      setSlogan(p.slogan || '');
+      setBioText(Array.isArray(p.bio) ? p.bio.join('\n') : '');
+    }).catch(err => {
+      console.error(err);
+      setProfile({}); // 조회 실패해도 폼 표시(무한 로딩 방지)
+    });
   }, []);
 
   const handleAdminTypeChange = async (newType) => {
