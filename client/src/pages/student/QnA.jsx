@@ -212,7 +212,7 @@ export default function QnA() {
           marginBottom: 16, padding: '12px 0'
         }}>
           <img
-            src="/uploads/character.png"
+            src="/icons/icon-192.png"
             alt="선생님"
             style={{
               width: 40, height: 40, borderRadius: '10px',
@@ -265,7 +265,7 @@ export default function QnA() {
             {q.answer ? (
               <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                 <img
-                  src="/uploads/character.png"
+                  src="/icons/icon-192.png"
                   alt="선생님"
                   style={{
                     width: 36, height: 36, borderRadius: '10px',
@@ -293,7 +293,7 @@ export default function QnA() {
             ) : (
               <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                 <img
-                  src="/uploads/character.png"
+                  src="/icons/icon-192.png"
                   alt="선생님"
                   style={{
                     width: 36, height: 36, borderRadius: '10px',

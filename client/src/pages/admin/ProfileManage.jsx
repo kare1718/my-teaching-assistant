@@ -196,11 +196,12 @@ export default function ProfileManage() {
         <div style={{
           width: 100, height: 100, borderRadius: 'var(--radius-full)', overflow: 'hidden',
           margin: '0 auto var(--space-4)', border: '3px solid var(--border)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'var(--muted)', color: 'var(--primary)', fontSize: 38, fontWeight: 800,
         }}>
-          <img src="/uploads/profile.jpg" alt="프로필"
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            onError={e => { e.target.style.display = 'none'; }}
-          />
+          {/* 모든 학원이 공유하던 하드코딩 /uploads/profile.jpg(강인국어 강사 사진) 누수 제거.
+              학원별 사진 업로드 기능 전까지는 강사 이름 이니셜을 중립 표시. */}
+          {(name || '강사').charAt(0)}
         </div>
         <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 700, marginBottom: 'var(--space-3)', color: 'var(--primary)' }}>
           {name || '강사 이름'}
