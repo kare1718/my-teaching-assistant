@@ -231,8 +231,7 @@ export default function RegisterPage() {
         {/* 헤더 */}
         <div style={{ textAlign: 'center', marginBottom: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 16 }}>
-            <img src="/logo.png" alt={SITE_TITLE} style={{ width: 40, height: 40 }}
-              onError={e => { e.target.style.display = 'none'; }} />
+            {/* 강인국어(logo.png) 로고 누수 제거 — SaaS 브랜드는 '나만의 조교' 워드마크만 노출 */}
             <span style={{ fontSize: 20, fontWeight: 800, color: C.textPrimary, letterSpacing: '-0.02em' }}>{SITE_TITLE}</span>
           </div>
 
