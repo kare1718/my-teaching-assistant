@@ -9,6 +9,7 @@ sentry.init();
 
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 const path = require('path');
 const fs = require('fs');
 const { pool, runMigration, getConsecutiveErrors, getOne } = require('./db/database');
@@ -42,6 +43,10 @@ const corsOrigin = process.env.CORS_ORIGIN
     ? true
     : ['http://localhost:5174', 'http://localhost:3002'];
 app.use(cors({ origin: corsOrigin, credentials: true }));
+
+// gzip 압축 (JS/CSS/JSON 응답 크기 70~80% 감소)
+app.use(compression());
+
 app.use(express.json({ limit: '1mb' }));
 
 // Sentry 요청 컨텍스트 (사용자 정보 scope 세팅)
