@@ -11,12 +11,14 @@ const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
 // 공통 유틸
 // ════════════════════════════════════════
 const fmt = (n) => {
+  n = Number(n) || 0;
   if (n >= 10000) return (n / 10000).toFixed(1).replace(/\.0$/, '') + '만';
   if (n >= 1000) return n.toLocaleString();
   return String(n);
 };
 
 const fmtWon = (n) => {
+  n = Number(n) || 0;
   if (n >= 100000000) return (n / 100000000).toFixed(1).replace(/\.0$/, '') + '억';
   if (n >= 10000) return (n / 10000).toFixed(0) + '만';
   return n.toLocaleString();
