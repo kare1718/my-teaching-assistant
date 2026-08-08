@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import * as XLSX from 'xlsx';
 import { apiPost } from '../../api';
 
 const TYPE_DEFS = {
@@ -53,6 +52,8 @@ export default function DataImport() {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
+      // xlsx 는 파일을 실제로 고른 시점에만 로드 (~500KB 청크 분리)
+      const XLSX = await import('xlsx');
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: 'array' });
       const ws = wb.Sheets[wb.SheetNames[0]];
