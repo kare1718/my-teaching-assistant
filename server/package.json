@@ -10,7 +10,7 @@
     "audit:queries": "node tests/audit-queries.js"
   },
   "dependencies": {
-    "@sentry/node": "^8.55.1",
+    "@sentry/node": "^10.69.0",
     "bcryptjs": "^2.4.3",
     "bullmq": "^5.74.1",
     "compression": "^1.8.1",
