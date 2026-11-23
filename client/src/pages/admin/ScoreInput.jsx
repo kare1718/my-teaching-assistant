@@ -4,6 +4,7 @@ import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { useTenantConfig, getAllGrades } from '../../contexts/TenantContext';
 import { BarChart, Bar, AreaChart, Area, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine, ZAxis } from 'recharts';
 import { askConfirm } from '../../lib/feedback';
+import { parseExplanationFileUrl } from '../../lib/explanationFile';
 
 // === 시험 유형 에디터 (인라인 컴포넌트) ===
 function ExamTypeEditor() {
@@ -311,6 +312,11 @@ export default function ScoreInput() {
   const [akDefaultPoints, setAkDefaultPoints] = useState(5);
   const [akAnswers, setAkAnswers] = useState({});
   const [akPoints, setAkPoints] = useState({});
+  const [akExpFileUrl, setAkExpFileUrl] = useState('');
+  const [akExpFileTitle, setAkExpFileTitle] = useState('');
+  const [akExpPages, setAkExpPages] = useState({});
+  const [akExpUrls, setAkExpUrls] = useState({});
+  const [akPageRangeStr, setAkPageRangeStr] = useState('');
   const [akExplanations, setAkExplanations] = useState({});
   const [akShowExplanations, setAkShowExplanations] = useState(false);
   const [akShowBulkExplanation, setAkShowBulkExplanation] = useState(false);
@@ -359,16 +365,22 @@ export default function ScoreInput() {
         setAkMaxAttempts(data.max_attempts ?? key.maxAttempts ?? 2);
         setAkResubmitMode(data.resubmit_mode || key.resubmitMode || 'wrong_only');
         setAkRevealAnswersPolicy(data.reveal_answers_policy || key.revealAnswersPolicy || 'after_final');
-        const ans = {}, pts = {}, exps = {};
+        setAkExpFileUrl(key.explanationFile?.url || '');
+        setAkExpFileTitle(key.explanationFile?.title || '');
+        const ans = {}, pts = {}, exps = {}, pages = {}, urls = {};
         (key.questions || []).forEach(q => {
           ans[q.num] = q.answer;
           if (q.points !== undefined) pts[q.num] = q.points;
           if (typeof q.explanation === 'string' && q.explanation.trim()) exps[q.num] = q.explanation;
+          if (q.explanationPage) pages[q.num] = q.explanationPage;
+          if (typeof q.explanationUrl === 'string' && q.explanationUrl.trim()) urls[q.num] = q.explanationUrl;
         });
         setAkAnswers(ans);
         setAkPoints(pts);
         setAkExplanations(exps);
-        setAkShowExplanations(Object.keys(exps).length > 0);
+        setAkExpPages(pages);
+        setAkExpUrls(urls);
+        setAkShowExplanations(Object.keys(exps).length > 0 || Object.keys(pages).length > 0 || Object.keys(urls).length > 0);
         setAkQuickString((key.questions || []).map(q => q.answer).join(''));
         setAkExistingKey(true);
       } else { resetAnswerKeyForm(); setAkExistingKey(false); }
@@ -378,6 +390,7 @@ export default function ScoreInput() {
 
   const resetAnswerKeyForm = () => {
     setAkAnswers({}); setAkPoints({}); setAkExplanations({});
+    setAkExpFileUrl(''); setAkExpFileTitle(''); setAkExpPages({}); setAkExpUrls({}); setAkPageRangeStr('');
     setAkShowExplanations(false); setAkShowBulkExplanation(false); setAkBulkExplanationText('');
     setAkQuickString('');
     setAkNumQuestions(20); setAkNumChoices(5);
@@ -396,6 +409,33 @@ export default function ScoreInput() {
       next[idx + 1] = ans;
     });
     setAkAnswers(next);
+  };
+
+  // 문항 범위별 해설지 쪽수 일괄 배정 (예: "1-5:1, 6-10:2, 11:3")
+  const applyPageRangeMap = () => {
+    if (!akPageRangeStr.trim()) return;
+    const tokens = akPageRangeStr.split(/[,/\n]+/).map(t => t.trim()).filter(Boolean);
+    const next = { ...akExpPages };
+    let updated = 0;
+    for (const token of tokens) {
+      const m = token.match(/^(\d+)(?:\s*[-~]\s*(\d+))?\s*[:=]\s*(\d+)\s*p?$/i);
+      if (!m) continue;
+      const startQ = Math.max(1, parseInt(m[1], 10));
+      const endQ = Math.min(akNumQuestions, m[2] ? parseInt(m[2], 10) : startQ);
+      const pageNum = Math.max(1, parseInt(m[3], 10));
+      for (let q = startQ; q <= endQ; q++) {
+        next[q] = pageNum;
+        updated++;
+      }
+    }
+    if (updated === 0) {
+      setMsg('형식을 확인해 주세요. 예: 1-5:1, 6-10:2');
+      return;
+    }
+    setAkExpPages(next);
+    setAkShowExplanations(true);
+    setMsg(`${updated}개 문항에 해설지 쪽수가 배정되었습니다.`);
+    setTimeout(() => setMsg(''), 2500);
   };
 
   // 해설 일괄 붙여넣기 자동 분리 (예: "1. 해설...", "[2번] 해설...", "3) 해설...")
@@ -454,6 +494,21 @@ export default function ScoreInput() {
 
   const saveAnswerKey = async () => {
     if (!akExamId) { setMsg('시험을 선택하세요.'); return; }
+    const trimmedFileUrl = akExpFileUrl.trim();
+    let explanationFile = null;
+    if (trimmedFileUrl) {
+      const parsedFile = parseExplanationFileUrl(trimmedFileUrl);
+      if (!parsedFile) {
+        setMsg('해설 파일 링크 형식이 올바르지 않습니다. https:// 로 시작하는 공유 링크를 입력해 주세요.');
+        return;
+      }
+      explanationFile = {
+        url: parsedFile.openUrl,
+        title: akExpFileTitle.trim(),
+        provider: parsedFile.provider,
+      };
+    }
+
     const questions = [];
     for (let i = 1; i <= akNumQuestions; i++) {
       if (!akAnswers[i]) { setMsg(`${i}번 문항의 정답을 선택하세요.`); return; }
@@ -461,6 +516,17 @@ export default function ScoreInput() {
       if (akScoringType === 'individual') q.points = akPoints[i] !== undefined ? parseFloat(akPoints[i]) : akDefaultPoints;
       if (typeof akExplanations[i] === 'string' && akExplanations[i].trim()) {
         q.explanation = akExplanations[i].trim();
+      }
+      if (akExpPages[i] && Number(akExpPages[i]) > 0) {
+        q.explanationPage = parseInt(akExpPages[i], 10);
+      }
+      if (typeof akExpUrls[i] === 'string' && akExpUrls[i].trim()) {
+        const parsedQFile = parseExplanationFileUrl(akExpUrls[i].trim());
+        if (!parsedQFile) {
+          setMsg(`${i}번 문항의 개별 해설 링크 형식이 올바르지 않습니다.`);
+          return;
+        }
+        q.explanationUrl = parsedQFile.openUrl;
       }
       questions.push(q);
     }
@@ -471,6 +537,7 @@ export default function ScoreInput() {
         scoringType: akScoringType,
         maxScore: akMaxScore,
         defaultPoints: akDefaultPoints,
+        explanationFile,
         questions,
         studentOmrEnabled: akStudentOmrEnabled,
         timeLimitMinutes: akTimeLimitMinutes === '' || Number(akTimeLimitMinutes) <= 0 ? null : parseInt(akTimeLimitMinutes),
@@ -480,7 +547,7 @@ export default function ScoreInput() {
         resubmitMode: akResubmitMode,
         revealAnswersPolicy: akRevealAnswersPolicy,
       });
-      setMsg('정답키·해설 및 학생 OMR 설정이 저장되었습니다.'); setAkExistingKey(true);
+      setMsg('정답키·해설 파일 연동 및 OMR 설정이 저장되었습니다.'); setAkExistingKey(true);
       loadExams();
       setTimeout(() => setMsg(''), 2500);
     } catch (err) { setMsg(err.message); }
@@ -1644,13 +1711,17 @@ export default function ScoreInput() {
                       for (let col = 0; col < 5; col++) {
                         const qNum = row * 5 + col + 1;
                         if (qNum > akNumQuestions) break;
-                        const hasExp = Boolean(typeof akExplanations[qNum] === 'string' && akExplanations[qNum].trim());
+                        const hasExp = Boolean(
+                          (typeof akExplanations[qNum] === 'string' && akExplanations[qNum].trim()) ||
+                          akExpPages[qNum] ||
+                          (typeof akExpUrls[qNum] === 'string' && akExpUrls[qNum].trim())
+                        );
                         items.push(
                           <div key={qNum} style={{ display: 'flex', alignItems: 'center', gap: 3, minWidth: 0 }}>
                             <button
                               type="button"
                               onClick={() => jumpToAdminExplanation(qNum)}
-                              title={`${qNum}번 해설 입력으로 이동`}
+                              title={`${qNum}번 해설 쪽수·링크 설정으로 이동`}
                               style={{
                                 fontSize: 11, fontWeight: 700, width: 28, textAlign: 'right', flexShrink: 0,
                                 background: 'none', border: 'none', padding: 0, cursor: 'pointer',
@@ -1695,136 +1766,265 @@ export default function ScoreInput() {
                   })()}
                 </div>
 
-                {/* 정답과 해설 입력 영역 */}
-                <div style={{
-                  marginBottom: 16, borderRadius: 10,
-                  border: '1px solid #DCE2EC', background: '#F8F9FB', overflow: 'hidden',
-                }}>
-                  <div style={{
-                    padding: '10px 14px', background: '#F4F6FA', borderBottom: akShowExplanations || akShowBulkExplanation ? '1px solid #DCE2EC' : 'none',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8,
-                  }}>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#102044' }}>
-                        문항별 정답과 해설 입력
-                        <span style={{
-                          marginLeft: 8, fontSize: 11, fontWeight: 600, padding: '2px 7px', borderRadius: 4,
-                          background: '#FFFFFF', color: '#335B48', border: '1px solid #CADAD1',
-                        }}>
-                          {Object.keys(akExplanations).filter(k => Number(k) <= akNumQuestions && (akExplanations[k] || '').trim()).length} / {akNumQuestions}문항 작성
-                        </span>
-                      </div>
-                      <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>
-                        학생 결과 화면의 빠른 정답 아래에 문항별 해설로 표시되며, 문항 클릭 시 해당 해설로 바로 이동합니다.
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      <button
-                        type="button"
-                        onClick={() => setAkShowBulkExplanation(prev => !prev)}
-                        style={{
-                          fontSize: 11.5, fontWeight: 600, padding: '5px 10px', borderRadius: 6, cursor: 'pointer',
-                          border: '1px solid #DCE2EC', background: akShowBulkExplanation ? '#102044' : '#FFFFFF',
-                          color: akShowBulkExplanation ? '#FFFFFF' : '#102044',
-                        }}
-                      >
-                        해설 일괄 붙여넣기
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setAkShowExplanations(prev => !prev)}
-                        style={{
-                          fontSize: 11.5, fontWeight: 600, padding: '5px 10px', borderRadius: 6, cursor: 'pointer',
-                          border: '1px solid #DCE2EC', background: '#FFFFFF', color: '#1E293B',
-                        }}
-                      >
-                        {akShowExplanations ? '해설 접기' : '문항별 해설 펼치기'}
-                      </button>
-                    </div>
-                  </div>
+                {/* 정답과 해설 연동 영역 (Google Drive · 네이버 MYBOX / N드라이브) */}
+                {(() => {
+                  const parsedPreview = akExpFileUrl.trim() ? parseExplanationFileUrl(akExpFileUrl.trim()) : null;
+                  const configuredCount = Array.from({ length: akNumQuestions }, (_, i) => i + 1).filter(qNum => (
+                    akExpPages[qNum] ||
+                    (akExpUrls[qNum] || '').trim() ||
+                    (akExplanations[qNum] || '').trim()
+                  )).length;
 
-                  {/* 해설 일괄 붙여넣기 자동 분리 박스 */}
-                  {akShowBulkExplanation && (
-                    <div style={{ padding: 12, background: '#FFFFFF', borderBottom: akShowExplanations ? '1px solid #DCE2EC' : 'none' }}>
-                      <div style={{ fontSize: 11.5, color: '#475569', marginBottom: 6 }}>
-                        한글/워드/PDF 해설지를 그대로 붙여넣으면 <code style={{ background: '#F4F6FA', padding: '1px 4px', borderRadius: 3 }}>1. ...</code>, <code style={{ background: '#F4F6FA', padding: '1px 4px', borderRadius: 3 }}>2번 ...</code>, <code style={{ background: '#F4F6FA', padding: '1px 4px', borderRadius: 3 }}>[3번] ...</code> 형식을 자동 인식해 문항별로 나눠 입력합니다.
+                  return (
+                    <div style={{
+                      marginBottom: 16, borderRadius: 10,
+                      border: '1px solid #DCE2EC', background: '#F8F9FB', overflow: 'hidden',
+                    }}>
+                      {/* 헤더 */}
+                      <div style={{
+                        padding: '10px 14px', background: '#F4F6FA', borderBottom: '1px solid #DCE2EC',
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8,
+                      }}>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: '#102044', display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
+                            <span>정답과 해설 파일 연동 (Google Drive · 네이버 MYBOX / N드라이브)</span>
+                            {parsedPreview && (
+                              <span style={{
+                                fontSize: 11, fontWeight: 600, padding: '2px 7px', borderRadius: 4,
+                                background: '#F1F6F3', color: '#335B48', border: '1px solid #CADAD1',
+                              }}>
+                                {parsedPreview.providerLabel} 연결됨
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>
+                            구글 드라이브나 네이버 MYBOX(N드라이브) 해설지 공유 링크를 넣으면 학생의 빠른 정답 아래에 바로 연동됩니다.
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            onClick={() => setAkShowExplanations(prev => !prev)}
+                            style={{
+                              fontSize: 11.5, fontWeight: 600, padding: '5px 10px', borderRadius: 6, cursor: 'pointer',
+                              border: '1px solid #DCE2EC', background: akShowExplanations ? '#102044' : '#FFFFFF',
+                              color: akShowExplanations ? '#FFFFFF' : '#1E293B',
+                            }}
+                          >
+                            {akShowExplanations ? '문항별 연결 접기' : `문항별 쪽수·개별 링크 (${configuredCount}/${akNumQuestions})`}
+                          </button>
+                        </div>
                       </div>
-                      <textarea
-                        rows={6}
-                        value={akBulkExplanationText}
-                        onChange={e => setAkBulkExplanationText(e.target.value)}
-                        placeholder={'1. 화자는 자연물에 빗대어 정서를 드러내고 있습니다.\n2. ③번 선지는 본문의 인과 관계를 반대로 서술하여 적절하지 않습니다.\n3. ...'}
-                        style={{
-                          width: '100%', padding: '8px 10px', border: '1px solid #DCE2EC', borderRadius: 6,
-                          fontSize: 12.5, lineHeight: 1.6, fontFamily: 'inherit', boxSizing: 'border-box', resize: 'vertical',
-                        }}
-                      />
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, marginTop: 8 }}>
-                        <button type="button" onClick={() => { setAkShowBulkExplanation(false); setAkBulkExplanationText(''); }}
-                          style={{ fontSize: 11.5, padding: '5px 10px', borderRadius: 6, border: '1px solid #DCE2EC', background: '#FFFFFF', color: '#64748B', cursor: 'pointer' }}>
-                          취소
-                        </button>
-                        <button type="button" onClick={applyBulkExplanations}
-                          style={{ fontSize: 11.5, fontWeight: 600, padding: '5px 12px', borderRadius: 6, border: 'none', background: '#102044', color: '#FFFFFF', cursor: 'pointer' }}>
-                          문항별 자동 분리 적용
-                        </button>
-                      </div>
-                    </div>
-                  )}
 
-                  {/* 문항별 해설 입력 리스트 */}
-                  {akShowExplanations && (
-                    <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 420, overflowY: 'auto' }}>
-                      {Array.from({ length: akNumQuestions }, (_, i) => i + 1).map(qNum => {
-                        const symbols = ['', '\u2460', '\u2461', '\u2462', '\u2463', '\u2464'];
-                        const ansVal = akAnswers[qNum];
-                        return (
-                          <div key={qNum} style={{
-                            background: '#FFFFFF', border: '1px solid #E5EAF1', borderRadius: 7, padding: '8px 10px',
-                          }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <span style={{ fontSize: 12, fontWeight: 700, color: '#102044' }}>
-                                  {String(qNum).padStart(2, '0')}번
-                                </span>
-                                <span style={{
-                                  fontSize: 11, fontWeight: 600, padding: '1px 6px', borderRadius: 4,
-                                  background: ansVal ? '#F4F6FA' : '#FAF3F3',
-                                  color: ansVal ? '#102044' : '#913E43',
-                                }}>
-                                  {ansVal ? `정답 ${symbols[ansVal] || ansVal}` : '정답 미선택'}
-                                </span>
-                              </div>
-                              {(akExplanations[qNum] || '').trim() && (
-                                <button
-                                  type="button"
-                                  onClick={() => setAkExplanations(prev => ({ ...prev, [qNum]: '' }))}
-                                  style={{ fontSize: 10.5, color: '#94A3B8', background: 'none', border: 'none', cursor: 'pointer' }}
+                      {/* 1. 시험 전체 해설 파일 연동 입력 */}
+                      <div style={{ padding: 13, background: '#FFFFFF', borderBottom: akShowExplanations || akShowBulkExplanation ? '1px solid #DCE2EC' : 'none' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 8, marginBottom: 8 }}>
+                          <div>
+                            <label style={{ fontSize: 11, fontWeight: 700, color: '#102044', display: 'block', marginBottom: 4 }}>
+                              해설 파일 공유 링크 (Google Drive · 네이버 MYBOX / N드라이브 · PDF)
+                            </label>
+                            <div style={{ display: 'flex', gap: 6 }}>
+                              <input
+                                type="url"
+                                value={akExpFileUrl}
+                                onChange={e => setAkExpFileUrl(e.target.value)}
+                                placeholder="https://drive.google.com/file/d/... 또는 https://mybox.naver.com/..."
+                                style={{
+                                  flex: 1, padding: '7px 10px', border: '1px solid #DCE2EC', borderRadius: 6,
+                                  fontSize: 12.5, boxSizing: 'border-box',
+                                }}
+                              />
+                              {parsedPreview && (
+                                <a
+                                  href={parsedPreview.openUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    padding: '7px 10px', borderRadius: 6, border: '1px solid #DCE2EC',
+                                    background: '#F8F9FB', color: '#102044', fontSize: 11.5, fontWeight: 600,
+                                    textDecoration: 'none', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center',
+                                  }}
                                 >
-                                  지우기
-                                </button>
+                                  열기 &#8599;
+                                </a>
                               )}
                             </div>
-                            <textarea
-                              ref={el => { akExplanationRefs.current[qNum] = el; }}
-                              rows={2}
-                              value={akExplanations[qNum] || ''}
-                              onChange={e => setAkExplanations(prev => ({ ...prev, [qNum]: e.target.value }))}
-                              placeholder={`${qNum}번 문항의 해설을 입력하세요 (선택)`}
+                          </div>
+                          <div>
+                            <label style={{ fontSize: 11, fontWeight: 700, color: '#102044', display: 'block', marginBottom: 4 }}>
+                              파일 표시 제목 (선택)
+                            </label>
+                            <input
+                              type="text"
+                              value={akExpFileTitle}
+                              onChange={e => setAkExpFileTitle(e.target.value)}
+                              placeholder="예: 고1 주간 모의고사 3회 해설지.pdf"
                               style={{
-                                width: '100%', padding: '6px 8px', border: '1px solid #DCE2EC', borderRadius: 5,
-                                fontSize: 12.5, lineHeight: 1.55, fontFamily: 'inherit', boxSizing: 'border-box', resize: 'vertical',
+                                width: '100%', padding: '7px 10px', border: '1px solid #DCE2EC', borderRadius: 6,
+                                fontSize: 12.5, boxSizing: 'border-box',
                               }}
                             />
                           </div>
-                        );
-                      })}
+                        </div>
+
+                        {akExpFileUrl.trim() && !parsedPreview ? (
+                          <div style={{ fontSize: 11.5, color: '#913E43', fontWeight: 600 }}>
+                            유효한 웹 링크(https://...)를 입력해 주세요.
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: 11, color: '#64748B', lineHeight: 1.55 }}>
+                            {parsedPreview
+                              ? parsedPreview.helperNote
+                              : '구글 드라이브는 "링크가 있는 모든 사용자(뷰어)", 네이버 MYBOX(N드라이브)는 "공유 링크 생성(보기 허용)" 링크를 붙여넣어 주세요. 재제출 완료 전에는 학생에게 링크가 노출되지 않습니다.'}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 2. 문항별 해설지 쪽수 / 개별 파일 링크 / 짧은 메모 설정 (선택) */}
+                      {akShowExplanations && (
+                        <div style={{ padding: 12 }}>
+                          {/* 빠른 쪽수 일괄 배정 & 텍스트 일괄 붙여넣기 툴바 */}
+                          <div style={{
+                            padding: '9px 11px', background: '#FFFFFF', border: '1px solid #DCE2EC', borderRadius: 7,
+                            marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8,
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', flex: 1 }}>
+                              <span style={{ fontSize: 11.5, fontWeight: 700, color: '#102044', whiteSpace: 'nowrap' }}>
+                                해설지 쪽수 일괄 배정:
+                              </span>
+                              <input
+                                type="text"
+                                value={akPageRangeStr}
+                                onChange={e => setAkPageRangeStr(e.target.value)}
+                                placeholder="예: 1-5:1, 6-10:2, 11-15:3"
+                                style={{
+                                  flex: '1 1 180px', maxWidth: 260, padding: '4px 8px',
+                                  border: '1px solid #DCE2EC', borderRadius: 5, fontSize: 12,
+                                }}
+                              />
+                              <button
+                                type="button"
+                                onClick={applyPageRangeMap}
+                                style={{
+                                  fontSize: 11.5, fontWeight: 600, padding: '4px 10px', borderRadius: 5,
+                                  border: 'none', background: '#102044', color: '#FFFFFF', cursor: 'pointer',
+                                }}
+                              >
+                                쪽수 배정
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setAkShowBulkExplanation(prev => !prev)}
+                              style={{
+                                fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 5, cursor: 'pointer',
+                                border: '1px solid #DCE2EC', background: akShowBulkExplanation ? '#102044' : '#F8F9FB',
+                                color: akShowBulkExplanation ? '#FFFFFF' : '#475569',
+                              }}
+                            >
+                              텍스트 해설 일괄 붙여넣기
+                            </button>
+                          </div>
+
+                          {/* 텍스트 해설 일괄 붙여넣기 (보조 옵션) */}
+                          {akShowBulkExplanation && (
+                            <div style={{ padding: 10, marginBottom: 10, background: '#FFFFFF', border: '1px solid #DCE2EC', borderRadius: 7 }}>
+                              <div style={{ fontSize: 11, color: '#475569', marginBottom: 6 }}>
+                                문항별 텍스트 메모를 한꺼번에 넣을 때 사용합니다. (<code style={{ background: '#F4F6FA', padding: '1px 4px', borderRadius: 3 }}>1. ...</code>, <code style={{ background: '#F4F6FA', padding: '1px 4px', borderRadius: 3 }}>2번 ...</code> 자동 인식)
+                              </div>
+                              <textarea
+                                rows={4}
+                                value={akBulkExplanationText}
+                                onChange={e => setAkBulkExplanationText(e.target.value)}
+                                placeholder={'1. 화자의 정서를 자연물에 빗대어 표현.\n2. ③번 선지는 인과 관계가 반대.'}
+                                style={{
+                                  width: '100%', padding: '7px 9px', border: '1px solid #DCE2EC', borderRadius: 6,
+                                  fontSize: 12, lineHeight: 1.55, fontFamily: 'inherit', boxSizing: 'border-box', resize: 'vertical',
+                                }}
+                              />
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, marginTop: 6 }}>
+                                <button type="button" onClick={() => { setAkShowBulkExplanation(false); setAkBulkExplanationText(''); }}
+                                  style={{ fontSize: 11, padding: '4px 9px', borderRadius: 5, border: '1px solid #DCE2EC', background: '#FFFFFF', color: '#64748B', cursor: 'pointer' }}>
+                                  취소
+                                </button>
+                                <button type="button" onClick={applyBulkExplanations}
+                                  style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 5, border: 'none', background: '#102044', color: '#FFFFFF', cursor: 'pointer' }}>
+                                  자동 분리 적용
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 문항별 쪽수 · 개별 파일 링크 · 짧은 메모 리스트 */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 7, maxHeight: 400, overflowY: 'auto' }}>
+                            {Array.from({ length: akNumQuestions }, (_, i) => i + 1).map(qNum => {
+                              const symbols = ['', '\u2460', '\u2461', '\u2462', '\u2463', '\u2464'];
+                              const ansVal = akAnswers[qNum];
+                              return (
+                                <div key={qNum} style={{
+                                  background: '#FFFFFF', border: '1px solid #DCE2EC', borderRadius: 7, padding: '8px 10px',
+                                }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
+                                    <span style={{ fontSize: 12, fontWeight: 700, color: '#102044', width: 32 }}>
+                                      {String(qNum).padStart(2, '0')}번
+                                    </span>
+                                    <span style={{
+                                      fontSize: 11, fontWeight: 600, padding: '1px 6px', borderRadius: 4,
+                                      background: ansVal ? '#F4F6FA' : '#FAF3F3',
+                                      color: ansVal ? '#102044' : '#913E43',
+                                    }}>
+                                      {ansVal ? `정답 ${symbols[ansVal] || ansVal}` : '정답 미선택'}
+                                    </span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                      <span style={{ fontSize: 11, color: '#64748B' }}>해설지</span>
+                                      <input
+                                        ref={el => { akExplanationRefs.current[qNum] = el; }}
+                                        type="number"
+                                        min="1"
+                                        max="500"
+                                        value={akExpPages[qNum] || ''}
+                                        onChange={e => setAkExpPages(prev => ({ ...prev, [qNum]: e.target.value ? parseInt(e.target.value, 10) : '' }))}
+                                        placeholder="쪽"
+                                        style={{
+                                          width: 52, padding: '3px 6px', border: '1px solid #DCE2EC', borderRadius: 5,
+                                          fontSize: 12, textAlign: 'center',
+                                        }}
+                                      />
+                                      <span style={{ fontSize: 11, color: '#64748B' }}>쪽</span>
+                                    </div>
+                                    <input
+                                      type="url"
+                                      value={akExpUrls[qNum] || ''}
+                                      onChange={e => setAkExpUrls(prev => ({ ...prev, [qNum]: e.target.value }))}
+                                      placeholder="문항별 개별 구글/MYBOX 파일 링크 (선택)"
+                                      style={{
+                                        flex: '1 1 200px', padding: '4px 8px', border: '1px solid #DCE2EC', borderRadius: 5,
+                                        fontSize: 11.5, boxSizing: 'border-box',
+                                      }}
+                                    />
+                                  </div>
+                                  <input
+                                    type="text"
+                                    value={akExplanations[qNum] || ''}
+                                    onChange={e => setAkExplanations(prev => ({ ...prev, [qNum]: e.target.value }))}
+                                    placeholder={`${qNum}번 짧은 핵심 해설 메모 (선택)`}
+                                    style={{
+                                      width: '100%', padding: '5px 8px', border: '1px solid #EAEFF5', borderRadius: 5,
+                                      fontSize: 12, background: '#FAFBFD', boxSizing: 'border-box',
+                                    }}
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  );
+                })()}
 
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <button className="btn btn-primary" onClick={saveAnswerKey}>정답키·해설 및 OMR 설정 저장</button>
+                  <button className="btn btn-primary" onClick={saveAnswerKey}>정답키·해설 파일 연동 및 OMR 설정 저장</button>
                   {akExistingKey && (
                     <button className="btn btn-outline" onClick={() => regradeAllSubmissions(akExamId)}>
                       🔄 기존 제출자 일괄 재채점

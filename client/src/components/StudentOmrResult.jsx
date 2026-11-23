@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { parseExplanationFileUrl } from '../lib/explanationFile';
 
 const CHOICE_SYMBOLS = ['', '①', '②', '③', '④', '⑤'];
 const FONT_D = "var(--font-display, 'Paperlogy', 'KoPub Dotum', sans-serif)";
@@ -37,16 +38,19 @@ function formatChoice(val) {
 /**
  * 학생 OMR 채점 결과 카드
  * - 상단: 점수 요약
- * - 중단: 빠른 정답 (문항별 O/X·정답 요약, 문항 클릭 시 하단 해설로 부드럽게 이동)
- * - 하단: 정답과 해설 (전체 / 틀린 문항 / 해설 있음 필터 + 빠른 정답으로 복귀 버튼)
- * - 재제출 대기 중(canRevealAnswers=false)에는 정답 번호와 해설을 서버·UI 모두 비공개 유지
+ * - 중단: 빠른 정답 (문항 클릭 시 하단 정답과 해설로 부드럽게 이동)
+ * - 하단: 정답과 해설 (Google Drive · 네이버 MYBOX(N드라이브) · PDF 연동 뷰어 + 선택 문항 포커스 바 + 문항별 해설)
+ * - 재제출 대기 중(canRevealAnswers=false)에는 정답·해설 파일 링크·해설 본문 모두 비공개 유지
  */
 export default function StudentOmrResult({ data, maxScore = 100 }) {
-  const [filterMode, setFilterMode] = useState('all'); // 'all' | 'wrong' | 'explained'
+  const [filterMode, setFilterMode] = useState('all'); // 'all' | 'wrong'
+  const [selectedQ, setSelectedQ] = useState(null);
   const [highlightedQ, setHighlightedQ] = useState(null);
   const [hoveredQ, setHoveredQ] = useState(null);
+  const [forceEmbedExternal, setForceEmbedExternal] = useState(false);
 
   const quickAnswerRef = useRef(null);
+  const explanationSectionRef = useRef(null);
   const lockedNoticeRef = useRef(null);
   const expRefs = useRef({});
   const highlightTimerRef = useRef(null);
@@ -66,22 +70,61 @@ export default function StudentOmrResult({ data, maxScore = 100 }) {
   const percentage = questionCount > 0 ? Math.round((correctCount / questionCount) * 100) : 0;
   const canReveal = Boolean(data.canRevealAnswers);
   const hasRetest = (data.attemptCount || 1) >= 2 && data.firstScore !== null && data.firstScore !== undefined;
-  const explainedCount = results.filter(r => Boolean(r.hasExplanation || (r.explanation && r.explanation.trim()))).length;
+
+  const rawExamFile = canReveal ? data.explanationFile : null;
+  const activeResult = selectedQ !== null
+    ? results.find(r => (r.num || r.questionNum) === selectedQ) || null
+    : null;
+  const activePage = activeResult?.explanationPage || null;
+  const activeQuestionFile = canReveal && activeResult?.explanationUrl
+    ? parseExplanationFileUrl(activeResult.explanationUrl, activePage)
+    : null;
+  const parsedExamFile = rawExamFile?.url
+    ? parseExplanationFileUrl(rawExamFile.url, activePage)
+    : null;
+
+  // 문항별 텍스트 해설이나 문항별 개별 파일 링크가 하나라도 있는지 확인
+  const perQuestionDetailCount = results.filter(r => (
+    (typeof r.explanation === 'string' && r.explanation.trim().length > 0) ||
+    Boolean(r.explanationUrl)
+  )).length;
+  const hasAnyFile = Boolean(parsedExamFile) || Boolean(data.hasExplanationFile);
 
   const visibleExplanations = results.filter(r => {
     if (filterMode === 'wrong') return !r.isCorrect;
-    if (filterMode === 'explained') return Boolean(r.hasExplanation || (r.explanation && r.explanation.trim()));
     return true;
   });
 
+  const triggerHighlight = (qNum) => {
+    setHighlightedQ(qNum);
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    highlightTimerRef.current = setTimeout(() => setHighlightedQ(null), 2200);
+  };
+
   const scrollToExplanation = (qNum) => {
+    setSelectedQ(qNum);
+
     if (!canReveal) {
       if (lockedNoticeRef.current) {
         lockedNoticeRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-      setHighlightedQ(qNum);
-      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
-      highlightTimerRef.current = setTimeout(() => setHighlightedQ(null), 1600);
+      triggerHighlight(qNum);
+      return;
+    }
+
+    // 연동 해설 파일(구글 드라이브/MYBOX)이 메인인 경우: 해설 파일 뷰어 상단 포커스 바로 이동
+    const targetItem = results.find(r => (r.num || r.questionNum) === qNum);
+    const hasCardForTarget = perQuestionDetailCount > 0 && (
+      (typeof targetItem?.explanation === 'string' && targetItem.explanation.trim().length > 0) ||
+      Boolean(targetItem?.explanationUrl) ||
+      !parsedExamFile
+    );
+
+    if (parsedExamFile && !hasCardForTarget) {
+      if (explanationSectionRef.current) {
+        explanationSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      triggerHighlight(qNum);
       return;
     }
 
@@ -91,13 +134,11 @@ export default function StudentOmrResult({ data, maxScore = 100 }) {
     }
 
     const doScroll = () => {
-      const el = expRefs.current[qNum];
+      const el = expRefs.current[qNum] || explanationSectionRef.current;
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.scrollIntoView({ behavior: 'smooth', block: parsedExamFile ? 'start' : 'center' });
       }
-      setHighlightedQ(qNum);
-      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
-      highlightTimerRef.current = setTimeout(() => setHighlightedQ(null), 2200);
+      triggerHighlight(qNum);
     };
 
     if (!isCurrentlyVisible) {
@@ -112,6 +153,23 @@ export default function StudentOmrResult({ data, maxScore = 100 }) {
       quickAnswerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
+
+  const stepSelectedQuestion = (delta) => {
+    const nums = results.map(r => r.num || r.questionNum);
+    if (nums.length === 0) return;
+    const currentIdx = selectedQ !== null ? nums.indexOf(selectedQ) : -1;
+    const nextIdx = currentIdx === -1
+      ? 0
+      : Math.max(0, Math.min(nums.length - 1, currentIdx + delta));
+    setSelectedQ(nums[nextIdx]);
+    triggerHighlight(nums[nextIdx]);
+  };
+
+  // 현재 표시할 메인 파일 뷰어 대상 (문항별 개별 파일이 있으면 우선, 없으면 시험 전체 파일)
+  const displayFile = activeQuestionFile || parsedExamFile;
+  const displayFileTitle = activeQuestionFile
+    ? `${String(selectedQ).padStart(2, '0')}번 문항 해설 파일`
+    : (rawExamFile?.title || `${displayFile?.providerLabel || '연동'} 정답 및 해설지`);
 
   return (
     <div style={{
@@ -220,18 +278,18 @@ export default function StudentOmrResult({ data, maxScore = 100 }) {
           </div>
         </div>
 
-        {/* 빠른 정답 클릭 그리드 (5문항 단위 정돈된 표 형태) */}
+        {/* 빠른 정답 클릭 그리드 */}
         <div style={{
           padding: 10,
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(74px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(76px, 1fr))',
           gap: 6,
         }}>
           {results.map(r => {
             const qNum = r.num || r.questionNum;
             const changedOnRetry = r.firstStudent !== undefined && r.firstStudent !== '' && String(r.firstStudent) !== String(r.student);
-            const hasExp = Boolean(r.hasExplanation || (r.explanation && r.explanation.trim()));
             const isHovered = hoveredQ === qNum;
+            const isSelected = selectedQ === qNum;
 
             return (
               <button
@@ -246,19 +304,18 @@ export default function StudentOmrResult({ data, maxScore = 100 }) {
                   padding: '7px 8px',
                   borderRadius: 7,
                   background: r.isCorrect ? PALETTE.sageBg : PALETTE.brickBg,
-                  border: isHovered
+                  border: isSelected || isHovered
                     ? `1.5px solid ${PALETTE.navy}`
                     : `1px solid ${r.isCorrect ? PALETTE.sageBorder : PALETTE.brickBorder}`,
                   cursor: 'pointer',
                   transition: 'border-color 0.12s ease, transform 0.1s ease, box-shadow 0.12s ease',
-                  boxShadow: isHovered ? '0 2px 6px rgba(16, 32, 68, 0.08)' : 'none',
+                  boxShadow: isSelected || isHovered ? '0 2px 6px rgba(16, 32, 68, 0.08)' : 'none',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 3,
                   minHeight: 62,
                 }}
               >
-                {/* 상단: 문항 번호 + O/X */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                   <span style={{
                     fontFamily: FONT_D, fontSize: 11, fontWeight: 700,
@@ -274,7 +331,6 @@ export default function StudentOmrResult({ data, maxScore = 100 }) {
                   </span>
                 </div>
 
-                {/* 중단: 빠른 정답 번호 / 내 답 */}
                 {canReveal ? (
                   <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 4 }}>
                     <span style={{
@@ -313,15 +369,14 @@ export default function StudentOmrResult({ data, maxScore = 100 }) {
                   </div>
                 )}
 
-                {/* 하단: 해설 이동 힌트 */}
                 {canReveal && (
                   <div style={{
                     fontFamily: FONT_D, fontSize: 9.5,
-                    color: isHovered ? PALETTE.navy : PALETTE.muted,
+                    color: isSelected || isHovered ? PALETTE.navy : PALETTE.muted,
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     marginTop: 'auto',
                   }}>
-                    <span>{hasExp ? '해설 보기' : '정답 보기'}</span>
+                    <span>{r.explanationPage ? `${r.explanationPage}쪽` : '해설 보기'}</span>
                     <span>&darr;</span>
                   </div>
                 )}
@@ -332,70 +387,85 @@ export default function StudentOmrResult({ data, maxScore = 100 }) {
       </div>
 
       {/* 3. 정답과 해설 섹션 */}
-      <div style={{
-        background: PALETTE.white,
-        borderRadius: 9,
-        border: `1px solid ${PALETTE.border}`,
-        overflow: 'hidden',
-      }}>
-        {/* 정답과 해설 헤더 + 필터 */}
+      <div
+        ref={explanationSectionRef}
+        style={{
+          background: PALETTE.white,
+          borderRadius: 9,
+          border: `1px solid ${PALETTE.border}`,
+          overflow: 'hidden',
+          scrollMarginTop: 16,
+        }}
+      >
+        {/* 정답과 해설 헤더 */}
         <div style={{
           padding: '10px 13px',
           background: PALETTE.headerBg,
           borderBottom: `1px solid ${PALETTE.border}`,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span style={{ fontFamily: FONT_D, fontSize: 13.5, fontWeight: 700, color: PALETTE.navy }}>
               정답과 해설
             </span>
-            {canReveal && explainedCount > 0 && (
+            {canReveal && displayFile && (
               <span style={{
                 fontFamily: FONT_D, fontSize: 11, fontWeight: 600,
-                padding: '2px 7px', borderRadius: 4,
+                padding: '2px 8px', borderRadius: 4,
                 background: PALETTE.white, color: PALETTE.navySub, border: `1px solid ${PALETTE.border}`,
               }}>
-                해설 {explainedCount}/{results.length}문항
+                {displayFile.providerLabel} 연동
               </span>
             )}
           </div>
 
-          {canReveal && (
-            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-              {[
-                { key: 'all', label: `전체 ${results.length}` },
-                { key: 'wrong', label: `틀린 문항 ${wrongCount}` },
-                ...(explainedCount > 0 && explainedCount < results.length
-                  ? [{ key: 'explained', label: `해설 있음 ${explainedCount}` }]
-                  : []),
-              ].map(tab => {
-                const active = filterMode === tab.key;
-                return (
-                  <button
-                    key={tab.key}
-                    type="button"
-                    onClick={() => setFilterMode(tab.key)}
-                    style={{
-                      fontFamily: FONT_D,
-                      fontSize: 11.5,
-                      fontWeight: 600,
-                      padding: '4px 10px',
-                      borderRadius: 6,
-                      cursor: 'pointer',
-                      border: `1px solid ${active ? PALETTE.navy : PALETTE.border}`,
-                      background: active ? PALETTE.navy : PALETTE.white,
-                      color: active ? PALETTE.white : PALETTE.muted,
-                    }}
-                  >
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            {canReveal && displayFile && (
+              <a
+                href={displayFile.openUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  fontFamily: FONT_D, fontSize: 11.5, fontWeight: 600,
+                  padding: '4px 10px', borderRadius: 6,
+                  border: `1px solid ${PALETTE.navy}`,
+                  background: PALETTE.navy, color: PALETTE.white,
+                  textDecoration: 'none',
+                }}
+              >
+                새 창에서 열기 &#8599;
+              </a>
+            )}
+            {canReveal && (!parsedExamFile || perQuestionDetailCount > 0) && (
+              <>
+                {[
+                  { key: 'all', label: `전체 ${results.length}` },
+                  { key: 'wrong', label: `틀린 문항 ${wrongCount}` },
+                ].map(tab => {
+                  const active = filterMode === tab.key;
+                  return (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => setFilterMode(tab.key)}
+                      style={{
+                        fontFamily: FONT_D, fontSize: 11.5, fontWeight: 600,
+                        padding: '4px 10px', borderRadius: 6, cursor: 'pointer',
+                        border: `1px solid ${active ? PALETTE.navy : PALETTE.border}`,
+                        background: active ? PALETTE.navy : PALETTE.white,
+                        color: active ? PALETTE.white : PALETTE.muted,
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </>
+            )}
+          </div>
         </div>
 
-        {/* 본문: 비공개 안내 또는 문항별 정답과 해설 카드 */}
+        {/* 본문: 비공개 안내 또는 연동 해설 파일 / 문항별 해설 */}
         {!canReveal ? (
           <div
             ref={lockedNoticeRef}
@@ -412,113 +482,358 @@ export default function StudentOmrResult({ data, maxScore = 100 }) {
               정답과 해설 비공개 (재제출 대기 중)
             </div>
             <div style={{ fontSize: 12.5, color: PALETTE.text, lineHeight: 1.65 }}>
-              재제출 기회가 남아 있어 베끼기 방지를 위해 실제 정답 번호와 문항별 해설을 숨겨 두었습니다.
-              오답 재도전을 마치거나 최종 확정하면 이 영역에 문항별 정답과 해설이 모두 열립니다.
+              재제출 기회가 남아 있어 베끼기 방지를 위해 실제 정답 번호와 연동된 해설 파일을 숨겨 두었습니다.
+              오답 재도전을 마치거나 최종 확정하면 이 영역에 정답과 해설이 모두 열립니다.
             </div>
-            {explainedCount > 0 && (
+            {hasAnyFile && (
               <div style={{ fontFamily: FONT_D, fontSize: 11.5, fontWeight: 600, color: PALETTE.sandText, marginTop: 6 }}>
-                · 등록된 문항 해설 {explainedCount}개 준비됨
+                · 연동된 해설지 파일이 준비되어 있습니다
               </div>
             )}
           </div>
         ) : (
-          <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {visibleExplanations.length === 0 ? (
-              <div style={{ padding: '20px 12px', textAlign: 'center', fontSize: 12.5, color: PALETTE.muted }}>
-                {filterMode === 'wrong'
-                  ? '틀린 문항이 없습니다. 전체 문항을 모두 맞혔습니다.'
-                  : '표시할 문항이 없습니다.'}
-              </div>
-            ) : (
-              visibleExplanations.map(r => {
-                const qNum = r.num || r.questionNum;
-                const isHighlighted = highlightedQ === qNum;
-                const changedOnRetry = r.firstStudent !== undefined && r.firstStudent !== '' && String(r.firstStudent) !== String(r.student);
-                const expText = typeof r.explanation === 'string' ? r.explanation.trim() : '';
-
-                return (
-                  <div
-                    key={qNum}
-                    ref={el => { expRefs.current[qNum] = el; }}
-                    style={{
-                      borderRadius: 8,
-                      border: isHighlighted ? `1.5px solid ${PALETTE.navy}` : `1px solid ${PALETTE.border}`,
-                      borderLeft: `3.5px solid ${r.isCorrect ? PALETTE.sageFill : PALETTE.brickText}`,
-                      background: PALETTE.white,
-                      boxShadow: isHighlighted ? '0 0 0 3px rgba(16, 32, 68, 0.12)' : 'none',
-                      transition: 'box-shadow 0.25s ease, border-color 0.25s ease, background-color 0.25s ease',
-                      overflow: 'hidden',
-                      scrollMarginTop: 20,
-                    }}
-                  >
-                    {/* 문항 헤더 바 */}
-                    <div style={{
-                      padding: '8px 12px',
-                      background: isHighlighted ? PALETTE.headerBg : PALETTE.surface,
-                      borderBottom: `1px solid ${PALETTE.borderSoft}`,
-                      display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8,
+          <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {/* A. 선택한 문항 포커스 바 (연동 파일이 있고 문항을 클릭했을 때) */}
+            {displayFile && activeResult && (
+              <div style={{
+                padding: '10px 12px',
+                borderRadius: 8,
+                background: highlightedQ === selectedQ ? PALETTE.headerBg : PALETTE.surface,
+                border: highlightedQ === selectedQ ? `1.5px solid ${PALETTE.navy}` : `1px solid ${PALETTE.border}`,
+                boxShadow: highlightedQ === selectedQ ? '0 0 0 3px rgba(16, 32, 68, 0.10)' : 'none',
+                transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
+                    <span style={{ fontFamily: FONT_D, fontSize: 13.5, fontWeight: 700, color: PALETTE.navy }}>
+                      {String(activeResult.num || activeResult.questionNum).padStart(2, '0')}번
+                    </span>
+                    <span style={{
+                      fontFamily: FONT_D, fontSize: 11, fontWeight: 600,
+                      padding: '1px 7px', borderRadius: 4,
+                      background: activeResult.isCorrect ? PALETTE.sageBg : PALETTE.brickBg,
+                      color: activeResult.isCorrect ? PALETTE.sageText : PALETTE.brickText,
+                      border: `1px solid ${activeResult.isCorrect ? PALETTE.sageBorder : PALETTE.brickBorder}`,
                     }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
-                        <span style={{
-                          fontFamily: FONT_D, fontSize: 13, fontWeight: 700,
-                          color: PALETTE.navy, fontVariantNumeric: 'tabular-nums',
-                        }}>
-                          {String(qNum).padStart(2, '0')}번
-                        </span>
-                        <span style={{
-                          fontFamily: FONT_D, fontSize: 11, fontWeight: 600,
-                          padding: '1px 7px', borderRadius: 4,
-                          background: r.isCorrect ? PALETTE.sageBg : PALETTE.brickBg,
-                          color: r.isCorrect ? PALETTE.sageText : PALETTE.brickText,
-                          border: `1px solid ${r.isCorrect ? PALETTE.sageBorder : PALETTE.brickBorder}`,
-                        }}>
-                          {r.isCorrect ? '정답' : '오답'}
-                        </span>
-                        {r.maxPoints !== undefined && (
-                          <span style={{ fontFamily: FONT_D, fontSize: 11, color: PALETTE.muted }}>
-                            {r.maxPoints}점
-                          </span>
-                        )}
-                        <span style={{ color: PALETTE.border }}>|</span>
-                        <span style={{ fontFamily: FONT_D, fontSize: 12.5, fontWeight: 700, color: PALETTE.navy }}>
-                          정답 {formatChoice(r.correct)}
-                        </span>
-                        <span style={{ fontFamily: FONT_D, fontSize: 12, color: r.isCorrect ? PALETTE.sageText : PALETTE.brickText }}>
-                          {changedOnRetry
-                            ? `1차 ${formatChoice(r.firstStudent)} → 재제출 ${formatChoice(r.student)}`
-                            : `내 답 ${formatChoice(r.student)}`}
-                        </span>
-                      </div>
+                      {activeResult.isCorrect ? '정답' : '오답'}
+                    </span>
+                    <span style={{ fontFamily: FONT_D, fontSize: 12.5, fontWeight: 700, color: PALETTE.navy }}>
+                      정답 {formatChoice(activeResult.correct)}
+                    </span>
+                    <span style={{ fontFamily: FONT_D, fontSize: 12, color: activeResult.isCorrect ? PALETTE.sageText : PALETTE.brickText }}>
+                      내 답 {formatChoice(activeResult.student)}
+                    </span>
+                    {activePage && (
+                      <span style={{
+                        fontFamily: FONT_D, fontSize: 11, fontWeight: 700,
+                        padding: '2px 7px', borderRadius: 4,
+                        background: PALETTE.white, color: PALETTE.navy, border: `1px solid ${PALETTE.border}`,
+                      }}>
+                        해설지 {activePage}쪽
+                      </span>
+                    )}
+                  </div>
 
-                      <button
-                        type="button"
-                        onClick={scrollBackToQuickAnswer}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <button type="button" onClick={() => stepSelectedQuestion(-1)}
+                      style={{
+                        fontFamily: FONT_D, fontSize: 11, fontWeight: 600,
+                        padding: '3px 8px', borderRadius: 5,
+                        border: `1px solid ${PALETTE.border}`, background: PALETTE.white,
+                        color: PALETTE.text, cursor: 'pointer',
+                      }}>
+                      &larr; 이전
+                    </button>
+                    <button type="button" onClick={() => stepSelectedQuestion(1)}
+                      style={{
+                        fontFamily: FONT_D, fontSize: 11, fontWeight: 600,
+                        padding: '3px 8px', borderRadius: 5,
+                        border: `1px solid ${PALETTE.border}`, background: PALETTE.white,
+                        color: PALETTE.text, cursor: 'pointer',
+                      }}>
+                      다음 &rarr;
+                    </button>
+                    <button type="button" onClick={scrollBackToQuickAnswer}
+                      style={{
+                        fontFamily: FONT_D, fontSize: 11, fontWeight: 600,
+                        padding: '3px 8px', borderRadius: 5,
+                        border: `1px solid ${PALETTE.border}`, background: PALETTE.white,
+                        color: PALETTE.muted, cursor: 'pointer',
+                      }}>
+                      &uarr; 빠른 정답
+                    </button>
+                  </div>
+                </div>
+                {typeof activeResult.explanation === 'string' && activeResult.explanation.trim() && (
+                  <div style={{
+                    marginTop: 8, paddingTop: 8, borderTop: `1px solid ${PALETTE.borderSoft}`,
+                    fontSize: 13, lineHeight: 1.7, color: PALETTE.text, whiteSpace: 'pre-wrap',
+                  }}>
+                    {activeResult.explanation.trim()}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* B. 연동된 구글 드라이브 / 네이버 MYBOX(N드라이브) / PDF 뷰어 */}
+            {displayFile && (
+              <div style={{
+                borderRadius: 8,
+                border: `1px solid ${PALETTE.border}`,
+                background: PALETTE.surface,
+                overflow: 'hidden',
+              }}>
+                <div style={{
+                  padding: '9px 12px',
+                  background: PALETTE.white,
+                  borderBottom: `1px solid ${PALETTE.borderSoft}`,
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{
+                      fontFamily: FONT_D, fontSize: 11, fontWeight: 700,
+                      padding: '2px 7px', borderRadius: 4,
+                      background: PALETTE.headerBg, color: PALETTE.navy, border: `1px solid ${PALETTE.border}`,
+                    }}>
+                      {displayFile.providerLabel}
+                    </span>
+                    <span style={{ fontFamily: FONT_D, fontSize: 13, fontWeight: 600, color: PALETTE.navy }}>
+                      {displayFileTitle}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {activeQuestionFile && parsedExamFile && (
+                      <button type="button" onClick={() => setSelectedQ(null)}
                         style={{
                           fontFamily: FONT_D, fontSize: 11, fontWeight: 600,
-                          padding: '3px 8px', borderRadius: 5,
-                          border: `1px solid ${PALETTE.border}`,
-                          background: PALETTE.white, color: PALETTE.muted,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        &uarr; 빠른 정답
+                          padding: '4px 8px', borderRadius: 5,
+                          border: `1px solid ${PALETTE.border}`, background: PALETTE.white,
+                          color: PALETTE.muted, cursor: 'pointer',
+                        }}>
+                        전체 해설지로 돌아가기
                       </button>
-                    </div>
+                    )}
+                    {!displayFile.canEmbed && (
+                      <button type="button" onClick={() => setForceEmbedExternal(prev => !prev)}
+                        style={{
+                          fontFamily: FONT_D, fontSize: 11, fontWeight: 600,
+                          padding: '4px 8px', borderRadius: 5,
+                          border: `1px solid ${PALETTE.border}`, background: PALETTE.white,
+                          color: PALETTE.muted, cursor: 'pointer',
+                        }}>
+                        {forceEmbedExternal ? '미리보기 닫기' : '화면 내 열기 시도'}
+                      </button>
+                    )}
+                  </div>
+                </div>
 
-                    {/* 해설 본문 */}
+                {/* 임베드 뷰어 (Google Drive / Google 문서 / PDF / 이미지) */}
+                {displayFile.embedType === 'image' ? (
+                  <div style={{ padding: 12, textAlign: 'center', background: PALETTE.white }}>
+                    <img
+                      src={displayFile.embedUrl}
+                      alt={displayFileTitle}
+                      style={{ maxWidth: '100%', borderRadius: 6, border: `1px solid ${PALETTE.borderSoft}` }}
+                    />
+                  </div>
+                ) : (displayFile.canEmbed || forceEmbedExternal) ? (
+                  <div>
+                    <iframe
+                      key={displayFile.embedUrl}
+                      src={displayFile.embedUrl}
+                      title={displayFileTitle}
+                      style={{
+                        width: '100%',
+                        height: 520,
+                        border: 'none',
+                        display: 'block',
+                        background: PALETTE.white,
+                      }}
+                      allow="autoplay"
+                    />
                     <div style={{
-                      padding: '11px 13px',
-                      fontSize: 13.5,
-                      lineHeight: 1.75,
-                      color: expText ? PALETTE.text : PALETTE.mutedLight,
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'keep-all',
+                      padding: '7px 12px',
+                      background: PALETTE.white,
+                      borderTop: `1px solid ${PALETTE.borderSoft}`,
+                      fontSize: 11.5, color: PALETTE.muted,
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6,
                     }}>
-                      {expText || '등록된 해설이 없습니다.'}
+                      <span>화면이 보이지 않거나 글자가 작으면 오른쪽 버튼으로 크게 열어보세요.</span>
+                      <a
+                        href={displayFile.openUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ fontFamily: FONT_D, fontWeight: 600, color: PALETTE.navy, textDecoration: 'underline' }}
+                      >
+                        원본 파일 열기 &#8599;
+                      </a>
                     </div>
                   </div>
-                );
-              })
+                ) : (
+                  /* 네이버 MYBOX(N드라이브) 등 외부 클라우드 링크 카드 */
+                  <div style={{ padding: '18px 16px', background: PALETTE.white }}>
+                    <div style={{ fontSize: 13, color: PALETTE.text, lineHeight: 1.65, marginBottom: 12 }}>
+                      {displayFile.helperNote}
+                      {activePage && (
+                        <span style={{ display: 'block', marginTop: 4, fontFamily: FONT_D, fontWeight: 700, color: PALETTE.navy }}>
+                          선택한 {String(selectedQ).padStart(2, '0')}번 문항은 해설지 {activePage}쪽에서 확인하세요.
+                        </span>
+                      )}
+                    </div>
+                    <a
+                      href={displayFile.openUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 6,
+                        fontFamily: FONT_D, fontSize: 13, fontWeight: 600,
+                        padding: '9px 16px', borderRadius: 7,
+                        background: PALETTE.navy, color: PALETTE.white,
+                        textDecoration: 'none',
+                      }}
+                    >
+                      {displayFile.providerLabel}에서 정답·해설 열기 &#8599;
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* C. 문항별 텍스트/개별 링크 해설 카드 (왼쪽 선 없이 깔끔한 1px 테두리) */}
+            {(!parsedExamFile || perQuestionDetailCount > 0) && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {parsedExamFile && perQuestionDetailCount > 0 && (
+                  <div style={{ fontFamily: FONT_D, fontSize: 12, fontWeight: 700, color: PALETTE.navySub, paddingTop: 4 }}>
+                    문항별 상세 해설
+                  </div>
+                )}
+                {visibleExplanations.length === 0 ? (
+                  <div style={{ padding: '20px 12px', textAlign: 'center', fontSize: 12.5, color: PALETTE.muted }}>
+                    {filterMode === 'wrong'
+                      ? '틀린 문항이 없습니다. 전체 문항을 모두 맞혔습니다.'
+                      : '표시할 문항이 없습니다.'}
+                  </div>
+                ) : (
+                  visibleExplanations
+                    .filter(r => !parsedExamFile || (typeof r.explanation === 'string' && r.explanation.trim()) || Boolean(r.explanationUrl))
+                    .map(r => {
+                      const qNum = r.num || r.questionNum;
+                      const isHighlighted = highlightedQ === qNum;
+                      const changedOnRetry = r.firstStudent !== undefined && r.firstStudent !== '' && String(r.firstStudent) !== String(r.student);
+                      const expText = typeof r.explanation === 'string' ? r.explanation.trim() : '';
+                      const qFile = r.explanationUrl ? parseExplanationFileUrl(r.explanationUrl, r.explanationPage) : null;
+
+                      return (
+                        <div
+                          key={qNum}
+                          ref={el => { expRefs.current[qNum] = el; }}
+                          style={{
+                            borderRadius: 8,
+                            border: isHighlighted ? `1.5px solid ${PALETTE.navy}` : `1px solid ${PALETTE.border}`,
+                            background: PALETTE.white,
+                            boxShadow: isHighlighted ? '0 0 0 3px rgba(16, 32, 68, 0.10)' : 'none',
+                            transition: 'box-shadow 0.25s ease, border-color 0.25s ease',
+                            overflow: 'hidden',
+                            scrollMarginTop: 20,
+                          }}
+                        >
+                          {/* 문항 헤더 바 */}
+                          <div style={{
+                            padding: '8px 12px',
+                            background: isHighlighted ? PALETTE.headerBg : PALETTE.surface,
+                            borderBottom: `1px solid ${PALETTE.borderSoft}`,
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8,
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
+                              <span style={{
+                                fontFamily: FONT_D, fontSize: 13, fontWeight: 700,
+                                color: PALETTE.navy, fontVariantNumeric: 'tabular-nums',
+                              }}>
+                                {String(qNum).padStart(2, '0')}번
+                              </span>
+                              <span style={{
+                                fontFamily: FONT_D, fontSize: 11, fontWeight: 600,
+                                padding: '1px 7px', borderRadius: 4,
+                                background: r.isCorrect ? PALETTE.sageBg : PALETTE.brickBg,
+                                color: r.isCorrect ? PALETTE.sageText : PALETTE.brickText,
+                                border: `1px solid ${r.isCorrect ? PALETTE.sageBorder : PALETTE.brickBorder}`,
+                              }}>
+                                {r.isCorrect ? '정답' : '오답'}
+                              </span>
+                              {r.maxPoints !== undefined && (
+                                <span style={{ fontFamily: FONT_D, fontSize: 11, color: PALETTE.muted }}>
+                                  {r.maxPoints}점
+                                </span>
+                              )}
+                              <span style={{ color: PALETTE.border }}>|</span>
+                              <span style={{ fontFamily: FONT_D, fontSize: 12.5, fontWeight: 700, color: PALETTE.navy }}>
+                                정답 {formatChoice(r.correct)}
+                              </span>
+                              <span style={{ fontFamily: FONT_D, fontSize: 12, color: r.isCorrect ? PALETTE.sageText : PALETTE.brickText }}>
+                                {changedOnRetry
+                                  ? `1차 ${formatChoice(r.firstStudent)} → 재제출 ${formatChoice(r.student)}`
+                                  : `내 답 ${formatChoice(r.student)}`}
+                              </span>
+                              {r.explanationPage && (
+                                <span style={{
+                                  fontFamily: FONT_D, fontSize: 10.5, fontWeight: 600,
+                                  padding: '1px 6px', borderRadius: 4,
+                                  background: PALETTE.white, color: PALETTE.navySub, border: `1px solid ${PALETTE.border}`,
+                                }}>
+                                  {r.explanationPage}쪽
+                                </span>
+                              )}
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                              {qFile && (
+                                <a
+                                  href={qFile.openUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    fontFamily: FONT_D, fontSize: 11, fontWeight: 600,
+                                    padding: '3px 8px', borderRadius: 5,
+                                    border: `1px solid ${PALETTE.navy}`,
+                                    background: PALETTE.navy, color: PALETTE.white,
+                                    textDecoration: 'none',
+                                  }}
+                                >
+                                  {qFile.providerLabel} 열기 &#8599;
+                                </a>
+                              )}
+                              <button
+                                type="button"
+                                onClick={scrollBackToQuickAnswer}
+                                style={{
+                                  fontFamily: FONT_D, fontSize: 11, fontWeight: 600,
+                                  padding: '3px 8px', borderRadius: 5,
+                                  border: `1px solid ${PALETTE.border}`,
+                                  background: PALETTE.white, color: PALETTE.muted,
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                &uarr; 빠른 정답
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* 해설 본문 */}
+                          <div style={{
+                            padding: '11px 13px',
+                            fontSize: 13.5,
+                            lineHeight: 1.75,
+                            color: expText ? PALETTE.text : PALETTE.mutedLight,
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'keep-all',
+                          }}>
+                            {expText || (qFile ? `${qFile.providerLabel}에 연동된 문항 해설 파일에서 확인하세요.` : '등록된 해설이 없습니다.')}
+                          </div>
+                        </div>
+                      );
+                    })
+                )}
+              </div>
             )}
           </div>
         )}

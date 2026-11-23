@@ -419,6 +419,34 @@ function serializeAnswersArray(ansMap, numQuestions) {
   return arr;
 }
 
+// 해설 파일 URL 안전 검증 (http/https만 허용)
+function sanitizeExplanationUrl(rawUrl) {
+  if (typeof rawUrl !== 'string') return '';
+  const trimmed = rawUrl.trim();
+  if (!trimmed) return '';
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return '';
+    return parsed.toString();
+  } catch {
+    return '';
+  }
+}
+
+// 시험 단위 연동 해설 파일(구글 드라이브 / 네이버 MYBOX·N드라이브 / PDF) 추출
+function extractExplanationFile(parsedKey) {
+  if (!parsedKey || typeof parsedKey !== 'object') return null;
+  const raw = parsedKey.explanationFile;
+  if (!raw || typeof raw !== 'object') return null;
+  const safeUrl = sanitizeExplanationUrl(raw.url);
+  if (!safeUrl) return null;
+  return {
+    url: safeUrl,
+    title: typeof raw.title === 'string' ? raw.title.trim() : '',
+    provider: typeof raw.provider === 'string' ? raw.provider.trim() : '',
+  };
+}
+
 // 자동 채점 함수
 function gradeAnswers(studentAnswers, parsedKey, pointConfig, maxScore) {
   const questions = parsedKey.questions || [];
@@ -452,6 +480,10 @@ function gradeAnswers(studentAnswers, parsedKey, pointConfig, maxScore) {
 
     const earnedPoints = isCorrect ? qPoint : 0;
     const rawExplanation = typeof q.explanation === 'string' ? q.explanation.trim() : '';
+    const rawExplanationUrl = sanitizeExplanationUrl(q.explanationUrl);
+    const parsedPage = q.explanationPage !== undefined && q.explanationPage !== null && q.explanationPage !== ''
+      ? Math.max(1, parseInt(q.explanationPage, 10) || 0) || null
+      : null;
     totalScore += earnedPoints;
     results.push({
       questionNum: q.num,
@@ -461,7 +493,9 @@ function gradeAnswers(studentAnswers, parsedKey, pointConfig, maxScore) {
       points: Math.round(earnedPoints * 100) / 100,
       maxPoints: Math.round(qPoint * 100) / 100,
       explanation: rawExplanation,
-      hasExplanation: rawExplanation.length > 0,
+      explanationPage: parsedPage,
+      explanationUrl: rawExplanationUrl,
+      hasExplanation: rawExplanation.length > 0 || rawExplanationUrl.length > 0 || parsedPage !== null,
     });
   });
 
@@ -739,6 +773,7 @@ router.get('/student/omr-exams', authenticateToken, async (req, res) => {
     let lockedQuestions = {};
     let previousWrongAnswers = {};
     let lastGradedResults = null;
+    const explanationFile = extractExplanationFile(parsedKey);
 
     if (sub && sub.answers) {
       const graded = gradeAnswers(sub.answers, parsedKey, row.point_config, effMaxScore);
@@ -759,6 +794,8 @@ router.get('/student/omr-exams', authenticateToken, async (req, res) => {
         points: r.points,
         maxPoints: r.maxPoints,
         explanation: statusInfo.canRevealAnswers ? r.explanation : null,
+        explanationPage: statusInfo.canRevealAnswers ? r.explanationPage : null,
+        explanationUrl: statusInfo.canRevealAnswers ? r.explanationUrl : null,
         hasExplanation: Boolean(r.hasExplanation),
       }));
     }
@@ -778,6 +815,8 @@ router.get('/student/omr-exams', authenticateToken, async (req, res) => {
       studentOmrEnabled: Boolean(row.student_omr_enabled),
       questionMeta,
       ...statusInfo,
+      explanationFile: statusInfo.canRevealAnswers ? explanationFile : null,
+      hasExplanationFile: Boolean(explanationFile?.url),
       firstScore: sub?.first_score ?? null,
       firstCorrectCount: sub?.first_correct_count ?? null,
       firstSubmittedAt: sub?.first_submitted_at ?? null,
@@ -1052,12 +1091,15 @@ router.post('/exams/:examId/submit-answers', authenticateToken, async (req, res)
   const postStatus = computeOmrSessionStatus(key, updatedSub, parsedKey);
   const revealNow = isStaff || postStatus.canRevealAnswers;
   const firstMap = updatedSub?.first_answers ? normalizeAnswerMap(updatedSub.first_answers) : normalizeAnswerMap(serializedAnswers);
+  const explanationFile = extractExplanationFile(parsedKey);
 
   const maskedResults = graded.results.map(r => ({
     ...r,
     firstStudent: firstMap[r.questionNum] !== undefined ? firstMap[r.questionNum] : r.student,
     correct: revealNow ? r.correct : null,
     explanation: revealNow ? r.explanation : null,
+    explanationPage: revealNow ? r.explanationPage : null,
+    explanationUrl: revealNow ? r.explanationUrl : null,
     hasExplanation: Boolean(r.hasExplanation),
   }));
 
@@ -1075,6 +1117,8 @@ router.post('/exams/:examId/submit-answers', authenticateToken, async (req, res)
     maxAttempts: postStatus.maxAttempts,
     isFinalized: postStatus.isFinalized,
     canRevealAnswers: revealNow,
+    explanationFile: revealNow ? explanationFile : null,
+    hasExplanationFile: Boolean(explanationFile?.url),
     cooldownRemainingSeconds: postStatus.cooldownRemainingSeconds,
     nextRetryAvailableAt: postStatus.nextRetryAvailableAt,
     myStatus: postStatus.myStatus,
@@ -1279,6 +1323,7 @@ router.get('/exams/:examId/my-submission', authenticateToken, async (req, res) =
   const parsedKey = parseAnswerKey(key.answer_key);
   const statusInfo = computeOmrSessionStatus(key, submission, parsedKey);
   const revealNow = isStaff || statusInfo.canRevealAnswers;
+  const explanationFile = extractExplanationFile(parsedKey);
 
   const latestGraded = gradeAnswers(submission.answers, parsedKey, key.point_config, exam?.max_score || 100);
   const firstMap = submission.first_answers ? normalizeAnswerMap(submission.first_answers) : normalizeAnswerMap(submission.answers);
@@ -1293,6 +1338,8 @@ router.get('/exams/:examId/my-submission', authenticateToken, async (req, res) =
     points: r.points,
     maxPoints: r.maxPoints,
     explanation: revealNow ? r.explanation : null,
+    explanationPage: revealNow ? r.explanationPage : null,
+    explanationUrl: revealNow ? r.explanationUrl : null,
     hasExplanation: Boolean(r.hasExplanation),
   }));
 
@@ -1318,6 +1365,8 @@ router.get('/exams/:examId/my-submission', authenticateToken, async (req, res) =
     choiceCount: Number(key.choice_count) || parsedKey.numChoices || 5,
     ...statusInfo,
     canRevealAnswers: revealNow,
+    explanationFile: revealNow ? explanationFile : null,
+    hasExplanationFile: Boolean(explanationFile?.url),
     results,
     attempts,
   });

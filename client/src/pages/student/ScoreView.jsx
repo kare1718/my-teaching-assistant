@@ -515,6 +515,8 @@ export default function ScoreView() {
                       questionCount: exam.questionCount,
                       attemptCount: exam.attemptCount,
                       canRevealAnswers: exam.canRevealAnswers,
+                      explanationFile: exam.explanationFile || null,
+                      hasExplanationFile: Boolean(exam.hasExplanationFile),
                       results: exam.lastGradedResults,
                     }
                   : null;
