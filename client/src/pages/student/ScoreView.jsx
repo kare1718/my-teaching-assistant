@@ -51,79 +51,84 @@ function OmrResultCard({ data, maxScore = 100 }) {
   const canReveal = Boolean(data.canRevealAnswers);
   const hasRetest = (data.attemptCount || 1) >= 2 && data.firstScore !== null && data.firstScore !== undefined;
 
+  const FONT_D = "var(--font-display, 'Paperlogy', 'KoPub Dotum', sans-serif)";
+  const FONT_B = "var(--font-body, 'KoPub Dotum', 'Paperlogy', sans-serif)";
+
   return (
     <div style={{
+      fontFamily: FONT_B,
       marginTop: 'var(--space-3)', padding: 'var(--space-3)',
-      background: 'var(--warm-50)', borderRadius: 'var(--radius)', border: '1px solid var(--warm-200)'
+      background: '#F8F9FB', borderRadius: 10, border: '1px solid #DCE2EC'
     }}>
       {/* 1차 vs 재제출 점수 요약 헤더 */}
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8,
-        marginBottom: 'var(--space-3)', padding: 'var(--space-2) var(--space-3)',
-        background: 'var(--card)', borderRadius: 'var(--radius)', border: '1px solid var(--warm-200)',
+        marginBottom: 'var(--space-3)', padding: '10px 12px',
+        background: '#FFFFFF', borderRadius: 8, border: '1px solid #E5EAF1',
       }}>
         <div>
           {hasRetest ? (
-            <div style={{ fontSize: 'var(--text-sm)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-              <span style={{ color: 'var(--warm-500)' }}>1차 <strong>{data.firstScore}점</strong></span>
-              <span>&rarr;</span>
-              <span style={{ color: 'var(--accent)', fontSize: 'var(--text-base)' }}>
+            <div style={{ fontFamily: FONT_D, fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <span style={{ color: '#64748B' }}>1차 <strong>{data.firstScore}점</strong></span>
+              <span style={{ color: '#94A3B8' }}>&rarr;</span>
+              <span style={{ color: '#102044', fontSize: 15 }}>
                 재제출 <strong>{data.score}점</strong>/{maxScore}점
               </span>
               {data.score - data.firstScore >= 0 && (
                 <span style={{
-                  fontSize: 11, padding: '2px 7px', borderRadius: 12,
-                  background: 'oklch(0.93 0.08 155)', color: 'oklch(0.38 0.14 155)', fontWeight: 800
+                  fontSize: 11, padding: '2px 7px', borderRadius: 5,
+                  background: '#F1F6F3', color: '#335B48', border: '1px solid #CADAD1', fontWeight: 600
                 }}>
-                  +{Math.round((data.score - data.firstScore) * 10) / 10}점 상승
+                  +{Math.round((data.score - data.firstScore) * 10) / 10}점
                 </span>
               )}
             </div>
           ) : (
-            <div style={{ fontSize: 'var(--text-sm)', fontWeight: 700 }}>
-              점수 <span style={{ color: 'var(--accent)', fontSize: 'var(--text-lg)' }}>{data.score ?? '-'}</span>
-              <span style={{ color: 'var(--warm-500)' }}>/{maxScore}점</span>
+            <div style={{ fontFamily: FONT_D, fontSize: 14, fontWeight: 600, color: '#102044' }}>
+              점수 <span style={{ fontSize: 18, fontWeight: 700 }}>{data.score ?? '-'}</span>
+              <span style={{ color: '#64748B', fontWeight: 500 }}> / {maxScore}점</span>
             </div>
           )}
-          <div style={{ fontSize: 12, color: 'var(--warm-500)', marginTop: 2 }}>
-            정답 <strong style={{ color: 'var(--foreground)' }}>{correctCount}</strong> / {questionCount}문항 ({percentage}%)
+          <div style={{ fontSize: 12, color: '#64748B', marginTop: 3 }}>
+            정답 <strong style={{ fontFamily: FONT_D, color: '#102044' }}>{correctCount}</strong> / {questionCount}문항 ({percentage}%)
             {!canReveal && (
-              <span style={{ marginLeft: 8, color: 'var(--warning)', fontWeight: 600 }}>
-                🔒 실제 정답 번호는 재제출 완료 후 공개됩니다
+              <span style={{ marginLeft: 8, color: '#7F5C24', fontWeight: 600 }}>
+                · 실제 정답 번호는 재제출 완료 후 공개됩니다
               </span>
             )}
           </div>
         </div>
 
-        <div style={{ width: 90, height: 8, background: 'var(--warm-200)', borderRadius: 4, overflow: 'hidden' }}>
+        <div style={{ width: 88, height: 6, background: '#E5EAF1', borderRadius: 999, overflow: 'hidden' }}>
           <div style={{
-            width: `${percentage}%`, height: '100%', borderRadius: 4,
-            background: percentage >= 80 ? 'var(--success)' : percentage >= 50 ? 'var(--warning)' : 'var(--destructive)',
+            width: `${percentage}%`, height: '100%', borderRadius: 999,
+            background: percentage >= 80 ? '#3D6854' : percentage >= 50 ? '#9B7635' : '#913E43',
             transition: 'width 0.4s ease',
           }} />
         </div>
       </div>
 
-      {/* 문항별 O/X 그리드 */}
+      {/* 문항별 O/X 그리드 (차분한 세이지 / 브릭 톤) */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(58px, 1fr))',
-        gap: 4,
+        gap: 5,
       }}>
         {results.map(r => {
           const qNum = r.num || r.questionNum;
           const changedOnRetry = r.firstStudent !== undefined && String(r.firstStudent) !== String(r.student);
           return (
             <div key={qNum} style={{
-              textAlign: 'center', padding: '5px 3px', borderRadius: 'var(--radius-sm)',
-              background: r.isCorrect ? 'oklch(0.95 0.05 160)' : 'oklch(0.95 0.05 25)',
-              border: `1px solid ${r.isCorrect ? 'oklch(0.8 0.1 160)' : 'oklch(0.8 0.1 25)'}`,
+              textAlign: 'center', padding: '6px 3px', borderRadius: 7,
+              background: r.isCorrect ? '#F1F6F3' : '#FAF3F3',
+              border: `1px solid ${r.isCorrect ? '#CADAD1' : '#E0C8CA'}`,
               position: 'relative',
             }}>
-              <div style={{ fontSize: 10, color: 'var(--warm-500)', fontWeight: 600, lineHeight: 1.2 }}>{qNum}번</div>
+              <div style={{ fontFamily: FONT_D, fontSize: 10, color: '#64748B', fontWeight: 500, lineHeight: 1.2 }}>{qNum}번</div>
               <div style={{
-                fontSize: 'var(--text-sm)', fontWeight: 800, lineHeight: 1.3,
-                color: r.isCorrect ? 'oklch(0.45 0.15 160)' : 'oklch(0.45 0.15 25)',
+                fontFamily: FONT_D,
+                fontSize: 14, fontWeight: 700, lineHeight: 1.35,
+                color: r.isCorrect ? '#335B48' : '#913E43',
               }}>
                 {changedOnRetry ? (
                   <span style={{ fontSize: 11 }}>{CHOICE_SYMBOLS[r.firstStudent] || r.firstStudent}&rarr;{CHOICE_SYMBOLS[r.student] || r.student}</span>
@@ -132,13 +137,14 @@ function OmrResultCard({ data, maxScore = 100 }) {
                 )}
               </div>
               {!r.isCorrect && (
-                <div style={{ fontSize: 9, color: canReveal ? 'oklch(0.45 0.12 160)' : 'var(--warm-500)', lineHeight: 1.2, fontWeight: 700 }}>
-                  {canReveal && r.correct ? `정답 ${CHOICE_SYMBOLS[r.correct] || r.correct}` : '오답'}
+                <div style={{ fontFamily: FONT_D, fontSize: 9.5, color: canReveal ? '#335B48' : '#7F5C24', lineHeight: 1.2, fontWeight: 600 }}>
+                  {canReveal && r.correct ? `정답 ${CHOICE_SYMBOLS[r.correct] || r.correct}` : '비공개'}
                 </div>
               )}
               <div style={{
-                position: 'absolute', top: 2, right: 4, fontSize: 9, fontWeight: 900,
-                color: r.isCorrect ? 'oklch(0.5 0.15 250)' : 'oklch(0.5 0.2 25)',
+                fontFamily: FONT_D,
+                position: 'absolute', top: 3, right: 4, fontSize: 9.5, fontWeight: 700,
+                color: r.isCorrect ? '#335B48' : '#913E43',
               }}>
                 {r.isCorrect ? 'O' : 'X'}
               </div>
@@ -553,15 +559,17 @@ export default function ScoreView() {
       {/* ══════════════════════════════════════════════════════════════════ */}
       {/* 2. 학생 직접 OMR 응시 가능 시험 카드 섹션 */}
       {/* ══════════════════════════════════════════════════════════════════ */}
-      <div className="s-card" style={{ padding: 'var(--space-3) var(--space-4)', marginBottom: 'var(--space-3)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: omrExams.length > 0 ? 'var(--space-2)' : 0, flexWrap: 'wrap', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 'var(--text-lg)' }}>📝</span>
-            <span className="s-section-title">OMR 카드 직접 입력</span>
+      <div className="s-card" style={{ padding: '16px 18px', marginBottom: 'var(--space-3)', fontFamily: "var(--font-body, 'KoPub Dotum', sans-serif)" }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: omrExams.length > 0 ? 12 : 0, flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 15.5, fontWeight: 700, color: '#102044', letterSpacing: '-0.01em' }}>
+              OMR 답안지 직접 입력
+            </span>
             <span style={{
-              fontSize: 11, padding: '2px 8px', borderRadius: 12,
-              background: omrExams.length > 0 ? 'var(--accent)' : 'var(--warm-200)',
-              color: omrExams.length > 0 ? 'white' : 'var(--warm-800)', fontWeight: 700
+              fontFamily: "var(--font-display, 'Paperlogy', sans-serif)",
+              fontSize: 11, padding: '2px 8px', borderRadius: 5,
+              background: omrExams.length > 0 ? '#102044' : '#F1F5F9',
+              color: omrExams.length > 0 ? '#FFFFFF' : '#475569', fontWeight: 600
             }}>
               {omrExams.length}건
             </span>
@@ -571,34 +579,34 @@ export default function ScoreView() {
               type="button"
               onClick={() => setShowOmrGuide(true)}
               style={{
-                fontSize: 11, padding: '4px 10px', borderRadius: 8,
-                border: '1px solid var(--warm-200)', background: 'var(--warm-50)',
-                color: 'var(--foreground)', fontWeight: 700, cursor: 'pointer'
+                fontFamily: "var(--font-display, 'Paperlogy', sans-serif)",
+                fontSize: 11.5, padding: '4px 10px', borderRadius: 6,
+                border: '1px solid #DCE2EC', background: '#F8F9FB',
+                color: '#1E293B', fontWeight: 600, cursor: 'pointer'
               }}
             >
-              ❓ OMR 사용법 안내
+              사용법 안내
             </button>
             <button type="button" onClick={() => refetchOmrExams()}
-              style={{ fontSize: 11, color: 'var(--warm-500)', background: 'none', border: 'none', cursor: 'pointer' }}>
-              🔄 새로고침
+              style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 11.5, color: '#64748B', background: 'none', border: 'none', cursor: 'pointer' }}>
+              새로고침
             </button>
           </div>
         </div>
 
         {omrExams.length === 0 && (
           <div style={{
-            marginTop: 8, padding: '10px 12px', borderRadius: 8,
-            background: 'var(--warm-50)', border: '1px dashed var(--warm-200)',
-            fontSize: 12, color: 'var(--warm-500)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8
+            marginTop: 10, padding: '12px 14px', borderRadius: 8,
+            background: '#F8F9FB', border: '1px dashed #DCE2EC',
+            fontSize: 12.5, color: '#64748B', lineHeight: 1.5
           }}>
-            <span>현재 열려 있는 OMR 시험이 없습니다. 선생님이 시험 OMR 입력을 오픈하면 이곳에 자동으로 표시됩니다.</span>
+            현재 열려 있는 OMR 시험이 없습니다. 선생님이 시험 OMR 입력을 오픈하면 이곳에 자동으로 표시됩니다.
           </div>
         )}
 
         {omrExams.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {omrExams.map(exam => {
-              // 실시간 남은 쿨타임(초) & 남은 응시시간(초) 계산
               const liveCooldownSec = exam.nextRetryAvailableAt
                 ? Math.max(0, Math.ceil((new Date(exam.nextRetryAvailableAt).getTime() - nowTick) / 1000))
                 : 0;
@@ -629,65 +637,67 @@ export default function ScoreView() {
 
               return (
                 <div key={exam.examId} style={{
-                  padding: '12px 14px', borderRadius: 10,
-                  background: 'var(--warm-50)', border: '1px solid var(--warm-200)'
+                  padding: '13px 15px', borderRadius: 10,
+                  background: '#FFFFFF', border: '1px solid #DCE2EC'
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 10 }}>
                     <div style={{ flex: 1, minWidth: 200 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
-                        <span style={{ fontWeight: 800, fontSize: 'var(--text-sm)' }}>{exam.name}</span>
-                        <span style={{ fontSize: 11, padding: '1px 6px', borderRadius: 6, background: 'var(--muted)', color: 'var(--warm-500)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 5 }}>
+                        <span style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontWeight: 700, fontSize: 14.5, color: '#102044' }}>
+                          {exam.name}
+                        </span>
+                        <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 4, background: '#F4F6FA', color: '#64748B', border: '1px solid #EAEFF5' }}>
                           {exam.examType}
                         </span>
                         {effectiveStatus === 'not_started' && (
-                          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: 'oklch(0.93 0.08 155)', color: 'oklch(0.35 0.14 155)', fontWeight: 700 }}>
+                          <span style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 11, padding: '2px 7px', borderRadius: 4, background: '#F1F6F3', color: '#335B48', border: '1px solid #CADAD1', fontWeight: 600 }}>
                             응시 가능
                           </span>
                         )}
                         {effectiveStatus === 'in_progress' && (
-                          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: 'oklch(0.92 0.06 240)', color: 'oklch(0.38 0.14 240)', fontWeight: 700 }}>
-                            ⏱ 응시 중 {liveTimerSec !== null ? `(${formatDurationMMSS(liveTimerSec)})` : ''}
+                          <span style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 11, padding: '2px 7px', borderRadius: 4, background: '#F4F6FA', color: '#102044', border: '1px solid #CBD5E1', fontWeight: 600 }}>
+                            응시 중 {liveTimerSec !== null ? `(${formatDurationMMSS(liveTimerSec)})` : ''}
                           </span>
                         )}
                         {effectiveStatus === 'cooldown' && (
-                          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: 'var(--warning-light)', color: 'var(--warning)', fontWeight: 700 }}>
-                            ⏳ 재제출 대기 중
+                          <span style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 11, padding: '2px 7px', borderRadius: 4, background: '#FAF6EE', color: '#7F5C24', border: '1px solid #E3D5BA', fontWeight: 600 }}>
+                            재제출 대기 중
                           </span>
                         )}
                         {effectiveStatus === 'retry_available' && (
-                          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: 'oklch(0.93 0.08 290)', color: 'oklch(0.4 0.16 290)', fontWeight: 700 }}>
-                            🔄 오답 재도전 가능
+                          <span style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 11, padding: '2px 7px', borderRadius: 4, background: '#F4F6FA', color: '#1E3159', border: '1px solid #BCC6D6', fontWeight: 600 }}>
+                            오답 재도전 가능
                           </span>
                         )}
                         {effectiveStatus === 'completed' && (
-                          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: 'var(--warm-200)', color: 'var(--warm-800)', fontWeight: 700 }}>
-                            ✅ 최종 제출 완료
+                          <span style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 11, padding: '2px 7px', borderRadius: 4, background: '#F1F5F9', color: '#475569', border: '1px solid #DCE2EC', fontWeight: 600 }}>
+                            제출 완료
                           </span>
                         )}
                       </div>
 
-                      <div style={{ fontSize: 12, color: 'var(--warm-500)', display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                        <span>📋 {exam.questionCount}문항 ({exam.choiceCount}지선다)</span>
-                        <span>⏱ 제한시간: {exam.timeLimitMinutes ? `${exam.timeLimitMinutes}분` : '제한 없음'}</span>
+                      <div style={{ fontSize: 12, color: '#64748B', display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                        <span>{exam.questionCount}문항 ({exam.choiceCount}지선다)</span>
+                        <span>· 제한시간 {exam.timeLimitMinutes ? `${exam.timeLimitMinutes}분` : '없음'}</span>
                         <span>
-                          🔄 재제출: {exam.allowResubmit
+                          · 재제출 {exam.allowResubmit
                             ? `${exam.cooldownMinutes}분 대기 후 가능 (최대 ${exam.maxAttempts === 0 ? '무제한' : `${exam.maxAttempts}회`})`
-                            : '1회만 제출 가능'}
+                            : '1회만 제출'}
                         </span>
                       </div>
 
                       {/* 1차 점수 / 재제출 점수 표시 */}
                       {exam.attemptCount >= 1 && (
-                        <div style={{ marginTop: 6, fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <div style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", marginTop: 6, fontSize: 12.5, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                           {exam.attemptCount >= 2 && exam.firstScore !== null ? (
                             <>
-                              <span style={{ color: 'var(--warm-500)' }}>1차 점수: {exam.firstScore}점 ({exam.firstCorrectCount}/{exam.questionCount})</span>
-                              <span>&rarr;</span>
-                              <span style={{ color: 'var(--accent)' }}>재제출 점수: {exam.latestScore}점 ({exam.latestCorrectCount}/{exam.questionCount})</span>
+                              <span style={{ color: '#64748B' }}>1차 {exam.firstScore}점 ({exam.firstCorrectCount}/{exam.questionCount})</span>
+                              <span style={{ color: '#94A3B8' }}>&rarr;</span>
+                              <span style={{ color: '#102044' }}>재제출 {exam.latestScore}점 ({exam.latestCorrectCount}/{exam.questionCount})</span>
                             </>
                           ) : (
-                            <span style={{ color: 'var(--accent)' }}>
-                              1차 제출 점수: {exam.latestScore}점 / {exam.maxScore}점 ({exam.latestCorrectCount}/{exam.questionCount}문항 정답 · 오답 {wrongCount}문항)
+                            <span style={{ color: '#102044' }}>
+                              1차 {exam.latestScore}점 / {exam.maxScore}점 ({exam.latestCorrectCount}/{exam.questionCount} 정답 · 오답 {wrongCount}문항)
                             </span>
                           )}
                         </div>
@@ -700,10 +710,11 @@ export default function ScoreView() {
                         <button type="button"
                           onClick={() => handleOpenOmrMarking(exam)}
                           style={{
+                            fontFamily: "var(--font-display, 'Paperlogy', sans-serif)",
                             padding: '8px 16px', borderRadius: 8, border: 'none',
-                            background: 'var(--accent)', color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer'
+                            background: '#102044', color: '#FFFFFF', fontSize: 12.5, fontWeight: 600, cursor: 'pointer'
                           }}>
-                          ✏️ OMR 시험 시작하기
+                          OMR 시험 시작
                         </button>
                       )}
 
@@ -711,28 +722,30 @@ export default function ScoreView() {
                         <button type="button"
                           onClick={() => handleOpenOmrMarking(exam)}
                           style={{
+                            fontFamily: "var(--font-display, 'Paperlogy', sans-serif)",
                             padding: '8px 16px', borderRadius: 8, border: 'none',
-                            background: 'var(--accent)', color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer'
+                            background: '#102044', color: '#FFFFFF', fontSize: 12.5, fontWeight: 600, cursor: 'pointer'
                           }}>
-                          ✏️ 이어서 마킹하기
+                          이어서 마킹하기
                         </button>
                       )}
 
                       {effectiveStatus === 'cooldown' && (
                         <div style={{ textAlign: 'right' }}>
                           <div style={{
-                            padding: '6px 12px', borderRadius: 8,
-                            background: 'var(--card)', border: '1px solid var(--warning)',
-                            color: 'var(--warning)', fontSize: 12, fontWeight: 800,
+                            fontFamily: "var(--font-display, 'Paperlogy', sans-serif)",
+                            padding: '6px 12px', borderRadius: 7,
+                            background: '#FAF6EE', border: '1px solid #E3D5BA',
+                            color: '#7F5C24', fontSize: 12, fontWeight: 700,
                             fontVariantNumeric: 'tabular-nums'
                           }}>
-                            ⏳ {formatDurationMMSS(liveCooldownSec)} 후 재제출 가능
+                            {formatDurationMMSS(liveCooldownSec)} 후 재제출 가능
                           </div>
                           {!selectedStudent && !exam.canRevealAnswers && (
                             <button type="button"
                               onClick={() => handleFinalizeEarly(exam)}
                               style={{
-                                marginTop: 4, fontSize: 11, color: 'var(--warm-500)',
+                                marginTop: 4, fontSize: 11, color: '#64748B',
                                 background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline'
                               }}>
                               재제출 포기하고 정답 확인
@@ -742,20 +755,21 @@ export default function ScoreView() {
                       )}
 
                       {effectiveStatus === 'retry_available' && !selectedStudent && (
-                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                           <button type="button"
                             onClick={() => handleOpenOmrMarking(exam)}
                             style={{
+                              fontFamily: "var(--font-display, 'Paperlogy', sans-serif)",
                               padding: '8px 16px', borderRadius: 8, border: 'none',
-                              background: 'oklch(0.52 0.18 290)', color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer'
+                              background: '#102044', color: '#FFFFFF', fontSize: 12.5, fontWeight: 600, cursor: 'pointer'
                             }}>
-                            🔄 틀린 {wrongCount}문항 재도전하기
+                            틀린 {wrongCount}문항 재도전
                           </button>
                           {!exam.canRevealAnswers && (
                             <button type="button"
                               onClick={() => handleFinalizeEarly(exam)}
                               style={{
-                                fontSize: 11, color: 'var(--warm-500)',
+                                fontSize: 11, color: '#64748B',
                                 background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline'
                               }}>
                               최종 확정
@@ -768,12 +782,13 @@ export default function ScoreView() {
                         <button type="button"
                           onClick={() => setPreviewResultExamId(isShowingResult ? null : exam.examId)}
                           style={{
-                            padding: '5px 10px', borderRadius: 6, border: '1px solid var(--warm-200)',
-                            background: isShowingResult ? 'var(--accent)' : 'var(--card)',
-                            color: isShowingResult ? 'white' : 'var(--foreground)',
+                            fontFamily: "var(--font-display, 'Paperlogy', sans-serif)",
+                            padding: '5px 11px', borderRadius: 6, border: '1px solid #DCE2EC',
+                            background: isShowingResult ? '#102044' : '#F8F9FB',
+                            color: isShowingResult ? '#FFFFFF' : '#1E293B',
                             fontSize: 12, fontWeight: 600, cursor: 'pointer'
                           }}>
-                          {exam.canRevealAnswers ? '📋 내 정오표 & 정답 보기' : '🔍 1차 정오표(O/X) 보기'}
+                          {exam.canRevealAnswers ? '정오표 및 정답 보기' : '1차 정오표(O/X) 보기'}
                         </button>
                       )}
                     </div>
