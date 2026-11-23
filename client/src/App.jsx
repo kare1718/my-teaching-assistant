@@ -299,6 +299,7 @@ function AppLayout() {
             <Route path="/student" element={<ProtectedRoute role="student"><MyPage /></ProtectedRoute>} />
             <Route path="/student/notices" element={<ProtectedRoute role="student"><Notices /></ProtectedRoute>} />
             <Route path="/student/scores" element={<ProtectedRoute role="student"><ScoreView /></ProtectedRoute>} />
+            <Route path="/student/omr" element={<ProtectedRoute role="student"><ScoreView /></ProtectedRoute>} />
             <Route path="/student/materials" element={<ProtectedRoute role="student"><Materials /></ProtectedRoute>} />
             <Route path="/student/reviews" element={<ProtectedRoute role="student"><Reviews /></ProtectedRoute>} />
             <Route path="/student/qna" element={<ProtectedRoute role="student"><QnA /></ProtectedRoute>} />

@@ -141,7 +141,7 @@ const superadminPages = [
 const studentPages = [
   { path: '/student', label: '홈', icon: Icons.home },
   { path: '/student/attendance', label: '출석 체크', icon: Icons.checkCircle },
-  { path: '/student/scores', label: '성적', icon: Icons.barChart },
+  { path: '/student/scores', label: '성적 · OMR 입력', icon: Icons.barChart },
   { path: '/student/qna', label: '질문', icon: Icons.message },
   { path: '/student/notices', label: '안내', icon: Icons.bell },
   { path: '/student/materials', label: '자료', icon: Icons.book },

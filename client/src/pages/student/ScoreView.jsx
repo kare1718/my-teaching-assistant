@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { getUser } from '../../api';
 import { useTenantConfig } from '../../contexts/TenantContext';
 import {
@@ -8,6 +9,7 @@ import {
 } from 'recharts';
 import { SkeletonPage, ErrorState, EmptyState } from '../../components/StudentStates';
 import BottomTabBar from '../../components/BottomTabBar';
+import StudentOmrGuideModal from '../../components/StudentOmrGuideModal';
 import { askConfirm } from '../../lib/feedback';
 import {
   useMyScores,
@@ -149,6 +151,7 @@ function OmrResultCard({ data, maxScore = 100 }) {
 
 export default function ScoreView() {
   const { config } = useTenantConfig();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState('all');
   const [showDist, setShowDist] = useState(null);
   const [expandedTrends, setExpandedTrends] = useState({});
@@ -162,8 +165,10 @@ export default function ScoreView() {
   const [omrErrorMsg, setOmrErrorMsg] = useState('');
   const [previewResultExamId, setPreviewResultExamId] = useState(null);
   const [lastSubmitResult, setLastSubmitResult] = useState(null);
+  const [showOmrGuide, setShowOmrGuide] = useState(false);
   const [nowTick, setNowTick] = useState(() => Date.now());
   const autoSubmittedRef = useRef({});
+  const handledDeepLinkRef = useRef(false);
 
   const user = getUser();
   const isStaff = user?.role === 'admin' || user?.school === '조교' || user?.school === '선생님';
@@ -180,6 +185,27 @@ export default function ScoreView() {
   const saveDraftMutation = useSaveOmrDraft();
   const submitOmrMutation = useSubmitOmrAnswers();
   const finalizeOmrMutation = useFinalizeOmrSubmission();
+
+  // 홈 화면(MyPage) 등에서 ?omrExamId=123&start=1 또는 ?guide=1 로 넘어온 경우 자연스럽게 연결
+  useEffect(() => {
+    if (searchParams.get('guide') === '1') {
+      setShowOmrGuide(true);
+    }
+    const targetOmrId = searchParams.get('omrExamId');
+    const shouldStart = searchParams.get('start') === '1';
+    if (!targetOmrId || handledDeepLinkRef.current || omrExams.length === 0) return;
+
+    const targetExam = omrExams.find(e => String(e.examId) === String(targetOmrId));
+    if (!targetExam) return;
+
+    handledDeepLinkRef.current = true;
+    if (shouldStart && ['not_started', 'in_progress', 'retry_available'].includes(targetExam.myStatus)) {
+      handleOpenOmrMarking(targetExam);
+    } else {
+      setPreviewResultExamId(targetExam.examId);
+    }
+    setSearchParams({}, { replace: true });
+  }, [searchParams, omrExams]);
 
   // 1초 주기 타이머 틱 (응시 제한 시간 카운트다운 & 재제출 쿨타임 카운트다운 공통)
   useEffect(() => {
@@ -730,25 +756,49 @@ export default function ScoreView() {
       {/* ══════════════════════════════════════════════════════════════════ */}
       {/* 2. 학생 직접 OMR 응시 가능 시험 카드 섹션 */}
       {/* ══════════════════════════════════════════════════════════════════ */}
-      {omrExams.length > 0 && (
-        <div className="s-card" style={{ padding: 'var(--space-3) var(--space-4)', marginBottom: 'var(--space-3)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 'var(--text-lg)' }}>📝</span>
-              <span className="s-section-title">OMR 카드 직접 입력</span>
-              <span style={{
-                fontSize: 11, padding: '2px 8px', borderRadius: 12,
-                background: 'var(--accent)', color: 'white', fontWeight: 700
-              }}>
-                {omrExams.length}건
-              </span>
-            </div>
+      <div className="s-card" style={{ padding: 'var(--space-3) var(--space-4)', marginBottom: 'var(--space-3)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: omrExams.length > 0 ? 'var(--space-2)' : 0, flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 'var(--text-lg)' }}>📝</span>
+            <span className="s-section-title">OMR 카드 직접 입력</span>
+            <span style={{
+              fontSize: 11, padding: '2px 8px', borderRadius: 12,
+              background: omrExams.length > 0 ? 'var(--accent)' : 'var(--warm-200)',
+              color: omrExams.length > 0 ? 'white' : 'var(--warm-800)', fontWeight: 700
+            }}>
+              {omrExams.length}건
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <button
+              type="button"
+              onClick={() => setShowOmrGuide(true)}
+              style={{
+                fontSize: 11, padding: '4px 10px', borderRadius: 8,
+                border: '1px solid var(--warm-200)', background: 'var(--warm-50)',
+                color: 'var(--foreground)', fontWeight: 700, cursor: 'pointer'
+              }}
+            >
+              ❓ OMR 사용법 안내
+            </button>
             <button type="button" onClick={() => refetchOmrExams()}
               style={{ fontSize: 11, color: 'var(--warm-500)', background: 'none', border: 'none', cursor: 'pointer' }}>
               🔄 새로고침
             </button>
           </div>
+        </div>
 
+        {omrExams.length === 0 && (
+          <div style={{
+            marginTop: 8, padding: '10px 12px', borderRadius: 8,
+            background: 'var(--warm-50)', border: '1px dashed var(--warm-200)',
+            fontSize: 12, color: 'var(--warm-500)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8
+          }}>
+            <span>현재 열려 있는 OMR 시험이 없습니다. 선생님이 시험 OMR 입력을 오픈하면 이곳에 자동으로 표시됩니다.</span>
+          </div>
+        )}
+
+        {omrExams.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {omrExams.map(exam => {
               // 실시간 남은 쿨타임(초) & 남은 응시시간(초) 계산
@@ -940,8 +990,8 @@ export default function ScoreView() {
               );
             })}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* 요약 카드 */}
       {scores.length > 0 && (
@@ -1204,6 +1254,7 @@ export default function ScoreView() {
         );
       })}
 
+      <StudentOmrGuideModal forceOpen={showOmrGuide} onClose={() => setShowOmrGuide(false)} />
       <BottomTabBar />
     </div>
   );

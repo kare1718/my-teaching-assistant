@@ -5,6 +5,7 @@ import { useTenantConfig } from '../../contexts/TenantContext';
 import BottomTabBar from '../../components/BottomTabBar';
 import InstallBanner from '../../components/InstallBanner';
 import AvatarSVG from '../../components/AvatarSVG';
+import StudentOmrGuideModal from '../../components/StudentOmrGuideModal';
 import { getLevelInfo, getStageInfo, getXpPercent, getAllStages } from '../../utils/gamification';
 import { reportError } from '../../lib/errorReporter';
 import { askConfirm } from '../../lib/feedback';
@@ -23,6 +24,8 @@ export default function MyPage() {
   const [info, setInfo] = useState(null);
   const [notices, setNotices] = useState([]);
   const [scores, setScores] = useState([]);
+  const [omrExams, setOmrExams] = useState([]);
+  const [showOmrGuide, setShowOmrGuide] = useState(false);
   const [bestReviews, setBestReviews] = useState([]);
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
@@ -85,6 +88,7 @@ export default function MyPage() {
     });
     api('/students/my-notices').then((n) => setNotices(n.slice(0, 3))).catch((err) => reportError(err, { src: 'MyPage', api: '/students/my-notices' }));
     api('/scores/my-scores').then((s) => setScores(s.slice(-3))).catch((err) => reportError(err, { src: 'MyPage', api: '/scores/my-scores' }));
+    api('/scores/student/omr-exams').then((list) => setOmrExams(Array.isArray(list) ? list : [])).catch(() => {});
     api('/students/my-edit-requests').then(setEditRequests).catch((err) => reportError(err, { src: 'MyPage', api: '/students/my-edit-requests' }));
     api('/students/reviews').then((r) => setBestReviews(r.filter(rv => rv.is_best))).catch((err) => reportError(err, { src: 'MyPage', api: '/students/reviews' }));
     api('/gamification/my-character').then(setCharData).catch(() => {});
@@ -416,6 +420,131 @@ export default function MyPage() {
           })}
         </div>
       )}
+
+      {/* ── OMR 카드 직접 입력 바로가기 & 진행 중인 시험 ── */}
+      {(() => {
+        const actionableOmr = omrExams.filter(e => e.myStatus !== 'completed');
+        return (
+          <div className="card floating-card" style={{
+            padding: '14px 16px',
+            background: actionableOmr.length > 0
+              ? 'linear-gradient(135deg, oklch(95% 0.04 260), var(--card))'
+              : 'var(--card)',
+            border: actionableOmr.length > 0
+              ? '1.5px solid var(--accent, #2563eb)'
+              : '1px solid var(--border)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <div
+                onClick={() => navigate('/student/scores?focus=omr')}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', flex: 1 }}
+              >
+                <span style={{ fontSize: 28 }}>✏️</span>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <span style={{ fontWeight: 800, fontSize: 15 }}>OMR 카드 직접 입력 & 채점</span>
+                    <span style={{
+                      fontSize: 10, fontWeight: 800, padding: '2px 7px', borderRadius: 10,
+                      background: 'var(--accent, #2563eb)', color: 'white'
+                    }}>
+                      NEW
+                    </span>
+                    {actionableOmr.length > 0 && (
+                      <span style={{
+                        fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 10,
+                        background: 'oklch(0.93 0.08 155)', color: 'oklch(0.35 0.14 155)'
+                      }}>
+                        진행 가능 {actionableOmr.length}건
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 2 }}>
+                    {actionableOmr.length > 0
+                      ? '현재 응시하거나 오답 재도전할 수 있는 OMR 시험이 열려 있어요!'
+                      : '시험 답안을 직접 마킹하고 점수와 오답(O/X)을 바로 확인하세요'}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowOmrGuide(true)}
+                  style={{
+                    padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)',
+                    background: 'var(--card)', color: 'var(--foreground)',
+                    fontSize: 11, fontWeight: 700, cursor: 'pointer'
+                  }}
+                >
+                  ❓ 사용법 안내
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/student/scores?focus=omr')}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, border: 'none',
+                    background: 'var(--accent, #2563eb)', color: 'white',
+                    fontSize: 12, fontWeight: 700, cursor: 'pointer'
+                  }}
+                >
+                  OMR 이동 &gt;
+                </button>
+              </div>
+            </div>
+
+            {actionableOmr.length > 0 && (
+              <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {actionableOmr.slice(0, 3).map(exam => {
+                  const statusBadge =
+                    exam.myStatus === 'in_progress'
+                      ? { label: '⏱ 응시 중', bg: 'oklch(0.92 0.06 240)', color: 'oklch(0.38 0.14 240)', btn: '이어서 마킹' }
+                      : exam.myStatus === 'cooldown'
+                        ? { label: `⏳ 재제출 대기 (${Math.ceil((exam.cooldownRemainingSeconds || 0) / 60)}분 남음)`, bg: 'var(--warning-light)', color: 'var(--warning)', btn: '1차 결과 보기' }
+                        : exam.myStatus === 'retry_available'
+                          ? { label: '🔄 오답 재도전 가능', bg: 'oklch(0.93 0.08 290)', color: 'oklch(0.4 0.16 290)', btn: '오답 재도전' }
+                          : { label: '🟢 응시 가능', bg: 'oklch(0.93 0.08 155)', color: 'oklch(0.35 0.14 155)', btn: '지금 응시하기' };
+
+                  const shouldAutoStart = exam.myStatus === 'not_started' || exam.myStatus === 'in_progress' || exam.myStatus === 'retry_available';
+                  return (
+                    <div
+                      key={exam.examId}
+                      onClick={() => navigate(`/student/scores?omrExamId=${exam.examId}${shouldAutoStart ? '&start=1' : '&focus=omr'}`)}
+                      style={{
+                        padding: '10px 12px', borderRadius: 10, background: 'var(--card)',
+                        border: '1px solid var(--border)', cursor: 'pointer',
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap'
+                      }}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                          <span style={{ fontWeight: 700, fontSize: 13 }}>{exam.name}</span>
+                          <span style={{
+                            fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 8,
+                            background: statusBadge.bg, color: statusBadge.color
+                          }}>
+                            {statusBadge.label}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginTop: 2 }}>
+                          {exam.questionCount}문항 ({exam.choiceCount}지선다)
+                          {exam.timeLimitMinutes ? ` · 제한시간 ${exam.timeLimitMinutes}분` : ''}
+                          {exam.latestScore !== null ? ` · 현재 ${exam.latestScore}점` : ''}
+                        </div>
+                      </div>
+                      <span style={{
+                        fontSize: 12, fontWeight: 800, color: 'var(--accent, #2563eb)',
+                        padding: '5px 10px', borderRadius: 8, background: 'oklch(95% 0.03 260)'
+                      }}>
+                        {statusBadge.btn} &rarr;
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* 클리닉 신청 바로가기 */}
       <div className="card floating-card" onClick={() => navigate('/student/clinic')}
@@ -762,17 +891,37 @@ export default function MyPage() {
         </div>
         <div className="card floating-card">
           <h2 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            📊 최근 성적
+            📊 최근 성적 · OMR
             <button className="btn btn-ghost btn-sm" onClick={() => navigate('/student/scores')}>전체 보기 &gt;</button>
           </h2>
           {scores.length === 0 ? <p style={{ color: 'var(--muted-foreground)', fontSize: 13 }}>등록된 성적이 없습니다.</p> : (
             <table><thead><tr><th>시험</th><th>점수</th></tr></thead><tbody>
-              {scores.map((s, i) => (<tr key={i}><td>{s.exam_name}</td><td style={{ fontWeight: 600 }}>{s.score}점</td></tr>))}
+              {scores.map((s, i) => {
+                const firstVal = s.first_score ?? s.omr_first_score ?? null;
+                const retestVal = s.retest_score ?? ((s.omr_attempt_count || 0) >= 2 ? s.omr_latest_score : null);
+                const hasDual = firstVal !== null && retestVal !== null;
+                return (
+                  <tr key={i} onClick={() => navigate('/student/scores')} style={{ cursor: 'pointer' }}>
+                    <td>{s.exam_name}</td>
+                    <td style={{ fontWeight: 700 }}>
+                      {hasDual ? (
+                        <span>
+                          <span style={{ color: 'var(--muted-foreground)', fontSize: 12, fontWeight: 500 }}>1차 {firstVal}점 &rarr; </span>
+                          <span style={{ color: 'var(--accent, #2563eb)' }}>{retestVal}점</span>
+                        </span>
+                      ) : (
+                        `${s.score}점`
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody></table>
           )}
         </div>
       </div>
 
+      <StudentOmrGuideModal forceOpen={showOmrGuide} onClose={() => setShowOmrGuide(false)} />
       <BottomTabBar />
       </div>
     </div>

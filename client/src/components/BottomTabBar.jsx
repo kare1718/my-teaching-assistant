@@ -11,8 +11,8 @@ const OXIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
 const tabs = [
   { path: '/student', label: '홈', Icon: HomeIcon },
   {
-    path: '/student/scores', label: '성적', Icon: ChartIcon,
-    matchPaths: ['/student/scores', '/student/attendance'],
+    path: '/student/scores', label: '성적·OMR', Icon: ChartIcon,
+    matchPaths: ['/student/scores', '/student/omr', '/student/attendance'],
   },
   { path: '/student/qna', label: '질문', Icon: QuestionIcon },
   { path: '/student/ox-quiz', label: 'O/X', Icon: OXIcon },
