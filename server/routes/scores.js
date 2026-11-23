@@ -451,6 +451,7 @@ function gradeAnswers(studentAnswers, parsedKey, pointConfig, maxScore) {
     }
 
     const earnedPoints = isCorrect ? qPoint : 0;
+    const rawExplanation = typeof q.explanation === 'string' ? q.explanation.trim() : '';
     totalScore += earnedPoints;
     results.push({
       questionNum: q.num,
@@ -459,6 +460,8 @@ function gradeAnswers(studentAnswers, parsedKey, pointConfig, maxScore) {
       isCorrect,
       points: Math.round(earnedPoints * 100) / 100,
       maxPoints: Math.round(qPoint * 100) / 100,
+      explanation: rawExplanation,
+      hasExplanation: rawExplanation.length > 0,
     });
   });
 
@@ -739,6 +742,7 @@ router.get('/student/omr-exams', authenticateToken, async (req, res) => {
 
     if (sub && sub.answers) {
       const graded = gradeAnswers(sub.answers, parsedKey, row.point_config, effMaxScore);
+      const firstMap = sub.first_answers ? normalizeAnswerMap(sub.first_answers) : normalizeAnswerMap(sub.answers);
       graded.results.forEach(r => {
         if (r.isCorrect) {
           lockedQuestions[r.questionNum] = r.student;
@@ -749,10 +753,13 @@ router.get('/student/omr-exams', authenticateToken, async (req, res) => {
       lastGradedResults = graded.results.map(r => ({
         questionNum: r.questionNum,
         student: r.student,
+        firstStudent: firstMap[r.questionNum] !== undefined ? firstMap[r.questionNum] : r.student,
         correct: statusInfo.canRevealAnswers ? r.correct : null,
         isCorrect: r.isCorrect,
         points: r.points,
         maxPoints: r.maxPoints,
+        explanation: statusInfo.canRevealAnswers ? r.explanation : null,
+        hasExplanation: Boolean(r.hasExplanation),
       }));
     }
 
@@ -1044,10 +1051,14 @@ router.post('/exams/:examId/submit-answers', authenticateToken, async (req, res)
   const updatedSub = await getOne('SELECT * FROM student_answers WHERE exam_id = ? AND student_id = ? AND academy_id = ?', [examId, targetStudentId, req.academyId]);
   const postStatus = computeOmrSessionStatus(key, updatedSub, parsedKey);
   const revealNow = isStaff || postStatus.canRevealAnswers;
+  const firstMap = updatedSub?.first_answers ? normalizeAnswerMap(updatedSub.first_answers) : normalizeAnswerMap(serializedAnswers);
 
   const maskedResults = graded.results.map(r => ({
     ...r,
+    firstStudent: firstMap[r.questionNum] !== undefined ? firstMap[r.questionNum] : r.student,
     correct: revealNow ? r.correct : null,
+    explanation: revealNow ? r.explanation : null,
+    hasExplanation: Boolean(r.hasExplanation),
   }));
 
   res.json({
@@ -1281,6 +1292,8 @@ router.get('/exams/:examId/my-submission', authenticateToken, async (req, res) =
     isCorrect: r.isCorrect,
     points: r.points,
     maxPoints: r.maxPoints,
+    explanation: revealNow ? r.explanation : null,
+    hasExplanation: Boolean(r.hasExplanation),
   }));
 
   const attempts = await getAll(

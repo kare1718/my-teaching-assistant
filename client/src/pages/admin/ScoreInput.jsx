@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api, apiPost, apiPut, apiDelete } from '../../api';
 import { useTenantConfig, getAllGrades } from '../../contexts/TenantContext';
@@ -311,6 +311,10 @@ export default function ScoreInput() {
   const [akDefaultPoints, setAkDefaultPoints] = useState(5);
   const [akAnswers, setAkAnswers] = useState({});
   const [akPoints, setAkPoints] = useState({});
+  const [akExplanations, setAkExplanations] = useState({});
+  const [akShowExplanations, setAkShowExplanations] = useState(false);
+  const [akShowBulkExplanation, setAkShowBulkExplanation] = useState(false);
+  const [akBulkExplanationText, setAkBulkExplanationText] = useState('');
   const [akQuickString, setAkQuickString] = useState('');
   const [akStudentOmrEnabled, setAkStudentOmrEnabled] = useState(false);
   const [akTimeLimitMinutes, setAkTimeLimitMinutes] = useState('');
@@ -321,6 +325,7 @@ export default function ScoreInput() {
   const [akRevealAnswersPolicy, setAkRevealAnswersPolicy] = useState('after_final');
   const [akLoading, setAkLoading] = useState(false);
   const [akExistingKey, setAkExistingKey] = useState(false);
+  const akExplanationRefs = useRef({});
 
   // === OMR state ===
   const [omrExams, setOmrExams] = useState([]);
@@ -354,10 +359,16 @@ export default function ScoreInput() {
         setAkMaxAttempts(data.max_attempts ?? key.maxAttempts ?? 2);
         setAkResubmitMode(data.resubmit_mode || key.resubmitMode || 'wrong_only');
         setAkRevealAnswersPolicy(data.reveal_answers_policy || key.revealAnswersPolicy || 'after_final');
-        const ans = {}, pts = {};
-        (key.questions || []).forEach(q => { ans[q.num] = q.answer; if (q.points !== undefined) pts[q.num] = q.points; });
+        const ans = {}, pts = {}, exps = {};
+        (key.questions || []).forEach(q => {
+          ans[q.num] = q.answer;
+          if (q.points !== undefined) pts[q.num] = q.points;
+          if (typeof q.explanation === 'string' && q.explanation.trim()) exps[q.num] = q.explanation;
+        });
         setAkAnswers(ans);
         setAkPoints(pts);
+        setAkExplanations(exps);
+        setAkShowExplanations(Object.keys(exps).length > 0);
         setAkQuickString((key.questions || []).map(q => q.answer).join(''));
         setAkExistingKey(true);
       } else { resetAnswerKeyForm(); setAkExistingKey(false); }
@@ -366,7 +377,9 @@ export default function ScoreInput() {
   };
 
   const resetAnswerKeyForm = () => {
-    setAkAnswers({}); setAkPoints({}); setAkQuickString('');
+    setAkAnswers({}); setAkPoints({}); setAkExplanations({});
+    setAkShowExplanations(false); setAkShowBulkExplanation(false); setAkBulkExplanationText('');
+    setAkQuickString('');
     setAkNumQuestions(20); setAkNumChoices(5);
     setAkScoringType('equal'); setAkMaxScore(100); setAkDefaultPoints(5);
     setAkStudentOmrEnabled(false); setAkTimeLimitMinutes('');
@@ -385,6 +398,60 @@ export default function ScoreInput() {
     setAkAnswers(next);
   };
 
+  // 해설 일괄 붙여넣기 자동 분리 (예: "1. 해설...", "[2번] 해설...", "3) 해설...")
+  const applyBulkExplanations = () => {
+    if (!akBulkExplanationText.trim()) return;
+    const lines = akBulkExplanationText.replace(/\r\n/g, '\n').split('\n');
+    const parsed = {};
+    let currentQ = null;
+    const headerRe = /^\s*\[?(\d{1,3})\s*(?:번|[.)\]:])\s*(.*)$/;
+
+    for (const line of lines) {
+      const m = line.match(headerRe);
+      if (m) {
+        const qNum = parseInt(m[1], 10);
+        if (qNum >= 1 && qNum <= akNumQuestions) {
+          currentQ = qNum;
+          parsed[currentQ] = m[2] ? [m[2]] : [];
+          continue;
+        }
+      }
+      if (currentQ !== null) {
+        parsed[currentQ].push(line);
+      }
+    }
+
+    const entries = Object.entries(parsed);
+    if (entries.length === 0) {
+      setMsg('문항 번호(예: 1. 해설 내용 / 2번 해설 내용)를 인식하지 못했습니다.');
+      return;
+    }
+
+    setAkExplanations(prev => {
+      const next = { ...prev };
+      entries.forEach(([qNum, contentLines]) => {
+        next[Number(qNum)] = contentLines.join('\n').trim();
+      });
+      return next;
+    });
+    setAkShowExplanations(true);
+    setAkShowBulkExplanation(false);
+    setAkBulkExplanationText('');
+    setMsg(`${entries.length}개 문항의 해설이 자동 분리되어 입력되었습니다.`);
+    setTimeout(() => setMsg(''), 2500);
+  };
+
+  const jumpToAdminExplanation = (qNum) => {
+    setAkShowExplanations(true);
+    setTimeout(() => {
+      const el = akExplanationRefs.current[qNum];
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.focus();
+      }
+    }, 40);
+  };
+
   const saveAnswerKey = async () => {
     if (!akExamId) { setMsg('시험을 선택하세요.'); return; }
     const questions = [];
@@ -392,6 +459,9 @@ export default function ScoreInput() {
       if (!akAnswers[i]) { setMsg(`${i}번 문항의 정답을 선택하세요.`); return; }
       const q = { num: i, answer: akAnswers[i] };
       if (akScoringType === 'individual') q.points = akPoints[i] !== undefined ? parseFloat(akPoints[i]) : akDefaultPoints;
+      if (typeof akExplanations[i] === 'string' && akExplanations[i].trim()) {
+        q.explanation = akExplanations[i].trim();
+      }
       questions.push(q);
     }
     try {
@@ -410,7 +480,7 @@ export default function ScoreInput() {
         resubmitMode: akResubmitMode,
         revealAnswersPolicy: akRevealAnswersPolicy,
       });
-      setMsg('정답키 및 학생 OMR 설정이 저장되었습니다.'); setAkExistingKey(true);
+      setMsg('정답키·해설 및 학생 OMR 설정이 저장되었습니다.'); setAkExistingKey(true);
       loadExams();
       setTimeout(() => setMsg(''), 2500);
     } catch (err) { setMsg(err.message); }
@@ -1553,11 +1623,14 @@ export default function ScoreInput() {
                   </div>
                 </div>
 
-                {/* 정답 입력 영역 */}
+                {/* 정답 입력 영역 (빠른 정답) */}
                 <div style={{ marginBottom: 14 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', gap: 6 }}>
                     <label style={{ fontSize: 12, fontWeight: 700 }}>
-                      정답 마킹 ({Object.keys(akAnswers).filter(k => Number(k) <= akNumQuestions && akAnswers[k]).length}/{akNumQuestions}문항 입력됨)
+                      빠른 정답 마킹 ({Object.keys(akAnswers).filter(k => Number(k) <= akNumQuestions && akAnswers[k]).length}/{akNumQuestions}문항 입력됨)
+                      <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 500, color: 'var(--muted-foreground)' }}>
+                        문항 번호 클릭 시 아래 해설 입력란으로 이동
+                      </span>
                     </label>
                     <button type="button" onClick={() => { setAkAnswers({}); setAkQuickString(''); }}
                       style={{ fontSize: 11, color: 'var(--muted-foreground)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
@@ -1571,9 +1644,22 @@ export default function ScoreInput() {
                       for (let col = 0; col < 5; col++) {
                         const qNum = row * 5 + col + 1;
                         if (qNum > akNumQuestions) break;
+                        const hasExp = Boolean(typeof akExplanations[qNum] === 'string' && akExplanations[qNum].trim());
                         items.push(
                           <div key={qNum} style={{ display: 'flex', alignItems: 'center', gap: 3, minWidth: 0 }}>
-                            <span style={{ fontSize: 11, fontWeight: 600, width: 24, textAlign: 'right', flexShrink: 0 }}>{qNum}.</span>
+                            <button
+                              type="button"
+                              onClick={() => jumpToAdminExplanation(qNum)}
+                              title={`${qNum}번 해설 입력으로 이동`}
+                              style={{
+                                fontSize: 11, fontWeight: 700, width: 28, textAlign: 'right', flexShrink: 0,
+                                background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                                color: hasExp ? '#335B48' : '#102044',
+                                textDecoration: hasExp ? 'underline' : 'none',
+                              }}
+                            >
+                              {qNum}.
+                            </button>
                             <div style={{ display: 'flex', gap: 2 }}>
                               {Array.from({ length: akNumChoices }, (_, i) => i + 1).map(n => {
                                 const symbols = ['', '\u2460', '\u2461', '\u2462', '\u2463', '\u2464'];
@@ -1581,9 +1667,9 @@ export default function ScoreInput() {
                                   <button key={n} type="button" onClick={() => setAkAnswers(prev => ({ ...prev, [qNum]: n }))}
                                     style={{
                                       width: 26, height: 26, borderRadius: '50%', border: '1.5px solid',
-                                      borderColor: akAnswers[qNum] === n ? 'var(--primary-light)' : 'var(--border)',
-                                      background: akAnswers[qNum] === n ? 'var(--primary-light)' : 'var(--card)',
-                                      color: akAnswers[qNum] === n ? 'var(--card)' : 'var(--foreground)',
+                                      borderColor: akAnswers[qNum] === n ? '#102044' : 'var(--border)',
+                                      background: akAnswers[qNum] === n ? '#102044' : 'var(--card)',
+                                      color: akAnswers[qNum] === n ? '#FFFFFF' : 'var(--foreground)',
                                       fontSize: 12, fontWeight: 600, cursor: 'pointer',
                                       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0
                                     }}>{symbols[n]}</button>
@@ -1600,7 +1686,7 @@ export default function ScoreInput() {
                         );
                       }
                       rows.push(
-                        <div key={row} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 6, marginBottom: 4 }}>
+                        <div key={row} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(185px, 1fr))', gap: 6, marginBottom: 4 }}>
                           {items}
                         </div>
                       );
@@ -1609,8 +1695,136 @@ export default function ScoreInput() {
                   })()}
                 </div>
 
+                {/* 정답과 해설 입력 영역 */}
+                <div style={{
+                  marginBottom: 16, borderRadius: 10,
+                  border: '1px solid #DCE2EC', background: '#F8F9FB', overflow: 'hidden',
+                }}>
+                  <div style={{
+                    padding: '10px 14px', background: '#F4F6FA', borderBottom: akShowExplanations || akShowBulkExplanation ? '1px solid #DCE2EC' : 'none',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8,
+                  }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#102044' }}>
+                        문항별 정답과 해설 입력
+                        <span style={{
+                          marginLeft: 8, fontSize: 11, fontWeight: 600, padding: '2px 7px', borderRadius: 4,
+                          background: '#FFFFFF', color: '#335B48', border: '1px solid #CADAD1',
+                        }}>
+                          {Object.keys(akExplanations).filter(k => Number(k) <= akNumQuestions && (akExplanations[k] || '').trim()).length} / {akNumQuestions}문항 작성
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>
+                        학생 결과 화면의 빠른 정답 아래에 문항별 해설로 표시되며, 문항 클릭 시 해당 해설로 바로 이동합니다.
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => setAkShowBulkExplanation(prev => !prev)}
+                        style={{
+                          fontSize: 11.5, fontWeight: 600, padding: '5px 10px', borderRadius: 6, cursor: 'pointer',
+                          border: '1px solid #DCE2EC', background: akShowBulkExplanation ? '#102044' : '#FFFFFF',
+                          color: akShowBulkExplanation ? '#FFFFFF' : '#102044',
+                        }}
+                      >
+                        해설 일괄 붙여넣기
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAkShowExplanations(prev => !prev)}
+                        style={{
+                          fontSize: 11.5, fontWeight: 600, padding: '5px 10px', borderRadius: 6, cursor: 'pointer',
+                          border: '1px solid #DCE2EC', background: '#FFFFFF', color: '#1E293B',
+                        }}
+                      >
+                        {akShowExplanations ? '해설 접기' : '문항별 해설 펼치기'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 해설 일괄 붙여넣기 자동 분리 박스 */}
+                  {akShowBulkExplanation && (
+                    <div style={{ padding: 12, background: '#FFFFFF', borderBottom: akShowExplanations ? '1px solid #DCE2EC' : 'none' }}>
+                      <div style={{ fontSize: 11.5, color: '#475569', marginBottom: 6 }}>
+                        한글/워드/PDF 해설지를 그대로 붙여넣으면 <code style={{ background: '#F4F6FA', padding: '1px 4px', borderRadius: 3 }}>1. ...</code>, <code style={{ background: '#F4F6FA', padding: '1px 4px', borderRadius: 3 }}>2번 ...</code>, <code style={{ background: '#F4F6FA', padding: '1px 4px', borderRadius: 3 }}>[3번] ...</code> 형식을 자동 인식해 문항별로 나눠 입력합니다.
+                      </div>
+                      <textarea
+                        rows={6}
+                        value={akBulkExplanationText}
+                        onChange={e => setAkBulkExplanationText(e.target.value)}
+                        placeholder={'1. 화자는 자연물에 빗대어 정서를 드러내고 있습니다.\n2. ③번 선지는 본문의 인과 관계를 반대로 서술하여 적절하지 않습니다.\n3. ...'}
+                        style={{
+                          width: '100%', padding: '8px 10px', border: '1px solid #DCE2EC', borderRadius: 6,
+                          fontSize: 12.5, lineHeight: 1.6, fontFamily: 'inherit', boxSizing: 'border-box', resize: 'vertical',
+                        }}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, marginTop: 8 }}>
+                        <button type="button" onClick={() => { setAkShowBulkExplanation(false); setAkBulkExplanationText(''); }}
+                          style={{ fontSize: 11.5, padding: '5px 10px', borderRadius: 6, border: '1px solid #DCE2EC', background: '#FFFFFF', color: '#64748B', cursor: 'pointer' }}>
+                          취소
+                        </button>
+                        <button type="button" onClick={applyBulkExplanations}
+                          style={{ fontSize: 11.5, fontWeight: 600, padding: '5px 12px', borderRadius: 6, border: 'none', background: '#102044', color: '#FFFFFF', cursor: 'pointer' }}>
+                          문항별 자동 분리 적용
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 문항별 해설 입력 리스트 */}
+                  {akShowExplanations && (
+                    <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 420, overflowY: 'auto' }}>
+                      {Array.from({ length: akNumQuestions }, (_, i) => i + 1).map(qNum => {
+                        const symbols = ['', '\u2460', '\u2461', '\u2462', '\u2463', '\u2464'];
+                        const ansVal = akAnswers[qNum];
+                        return (
+                          <div key={qNum} style={{
+                            background: '#FFFFFF', border: '1px solid #E5EAF1', borderRadius: 7, padding: '8px 10px',
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <span style={{ fontSize: 12, fontWeight: 700, color: '#102044' }}>
+                                  {String(qNum).padStart(2, '0')}번
+                                </span>
+                                <span style={{
+                                  fontSize: 11, fontWeight: 600, padding: '1px 6px', borderRadius: 4,
+                                  background: ansVal ? '#F4F6FA' : '#FAF3F3',
+                                  color: ansVal ? '#102044' : '#913E43',
+                                }}>
+                                  {ansVal ? `정답 ${symbols[ansVal] || ansVal}` : '정답 미선택'}
+                                </span>
+                              </div>
+                              {(akExplanations[qNum] || '').trim() && (
+                                <button
+                                  type="button"
+                                  onClick={() => setAkExplanations(prev => ({ ...prev, [qNum]: '' }))}
+                                  style={{ fontSize: 10.5, color: '#94A3B8', background: 'none', border: 'none', cursor: 'pointer' }}
+                                >
+                                  지우기
+                                </button>
+                              )}
+                            </div>
+                            <textarea
+                              ref={el => { akExplanationRefs.current[qNum] = el; }}
+                              rows={2}
+                              value={akExplanations[qNum] || ''}
+                              onChange={e => setAkExplanations(prev => ({ ...prev, [qNum]: e.target.value }))}
+                              placeholder={`${qNum}번 문항의 해설을 입력하세요 (선택)`}
+                              style={{
+                                width: '100%', padding: '6px 8px', border: '1px solid #DCE2EC', borderRadius: 5,
+                                fontSize: 12.5, lineHeight: 1.55, fontFamily: 'inherit', boxSizing: 'border-box', resize: 'vertical',
+                              }}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <button className="btn btn-primary" onClick={saveAnswerKey}>정답키 및 OMR 설정 저장</button>
+                  <button className="btn btn-primary" onClick={saveAnswerKey}>정답키·해설 및 OMR 설정 저장</button>
                   {akExistingKey && (
                     <button className="btn btn-outline" onClick={() => regradeAllSubmissions(akExamId)}>
                       🔄 기존 제출자 일괄 재채점

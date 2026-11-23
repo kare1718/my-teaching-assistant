@@ -11,6 +11,7 @@ import { SkeletonPage, ErrorState, EmptyState } from '../../components/StudentSt
 import BottomTabBar from '../../components/BottomTabBar';
 import StudentOmrGuideModal from '../../components/StudentOmrGuideModal';
 import StudentOmrSheet from '../../components/StudentOmrSheet';
+import StudentOmrResult from '../../components/StudentOmrResult';
 import { askConfirm } from '../../lib/feedback';
 import {
   useMyScores,
@@ -31,129 +32,12 @@ const DEFAULT_CAT_COLORS = [
 ];
 
 const DEFAULT_CAT_ICONS = ['📝', '📋', '🌸', '☀️', '🍂', '❄️', '📚', '✏️'];
-const CHOICE_SYMBOLS = ['', '①', '②', '③', '④', '⑤'];
 
 function formatDurationMMSS(totalSeconds) {
   const sec = Math.max(0, Math.floor(totalSeconds || 0));
   const m = Math.floor(sec / 60);
   const s = sec % 60;
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-}
-
-// ── OMR 정오표 결과 그리드 (1차 직후 정답 마스킹 & 최종 완료 후 정답 공개 모두 지원) ──
-function OmrResultCard({ data, maxScore = 100 }) {
-  if (!data || !Array.isArray(data.results) || data.results.length === 0) return null;
-
-  const results = data.results;
-  const questionCount = data.questionCount || results.length;
-  const correctCount = data.correctCount ?? results.filter(r => r.isCorrect).length;
-  const percentage = questionCount > 0 ? Math.round((correctCount / questionCount) * 100) : 0;
-  const canReveal = Boolean(data.canRevealAnswers);
-  const hasRetest = (data.attemptCount || 1) >= 2 && data.firstScore !== null && data.firstScore !== undefined;
-
-  const FONT_D = "var(--font-display, 'Paperlogy', 'KoPub Dotum', sans-serif)";
-  const FONT_B = "var(--font-body, 'KoPub Dotum', 'Paperlogy', sans-serif)";
-
-  return (
-    <div style={{
-      fontFamily: FONT_B,
-      marginTop: 'var(--space-3)', padding: 'var(--space-3)',
-      background: '#F8F9FB', borderRadius: 10, border: '1px solid #DCE2EC'
-    }}>
-      {/* 1차 vs 재제출 점수 요약 헤더 */}
-      <div style={{
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8,
-        marginBottom: 'var(--space-3)', padding: '10px 12px',
-        background: '#FFFFFF', borderRadius: 8, border: '1px solid #E5EAF1',
-      }}>
-        <div>
-          {hasRetest ? (
-            <div style={{ fontFamily: FONT_D, fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-              <span style={{ color: '#64748B' }}>1차 <strong>{data.firstScore}점</strong></span>
-              <span style={{ color: '#94A3B8' }}>&rarr;</span>
-              <span style={{ color: '#102044', fontSize: 15 }}>
-                재제출 <strong>{data.score}점</strong>/{maxScore}점
-              </span>
-              {data.score - data.firstScore >= 0 && (
-                <span style={{
-                  fontSize: 11, padding: '2px 7px', borderRadius: 5,
-                  background: '#F1F6F3', color: '#335B48', border: '1px solid #CADAD1', fontWeight: 600
-                }}>
-                  +{Math.round((data.score - data.firstScore) * 10) / 10}점
-                </span>
-              )}
-            </div>
-          ) : (
-            <div style={{ fontFamily: FONT_D, fontSize: 14, fontWeight: 600, color: '#102044' }}>
-              점수 <span style={{ fontSize: 18, fontWeight: 700 }}>{data.score ?? '-'}</span>
-              <span style={{ color: '#64748B', fontWeight: 500 }}> / {maxScore}점</span>
-            </div>
-          )}
-          <div style={{ fontSize: 12, color: '#64748B', marginTop: 3 }}>
-            정답 <strong style={{ fontFamily: FONT_D, color: '#102044' }}>{correctCount}</strong> / {questionCount}문항 ({percentage}%)
-            {!canReveal && (
-              <span style={{ marginLeft: 8, color: '#7F5C24', fontWeight: 600 }}>
-                · 실제 정답 번호는 재제출 완료 후 공개됩니다
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div style={{ width: 88, height: 6, background: '#E5EAF1', borderRadius: 999, overflow: 'hidden' }}>
-          <div style={{
-            width: `${percentage}%`, height: '100%', borderRadius: 999,
-            background: percentage >= 80 ? '#3D6854' : percentage >= 50 ? '#9B7635' : '#913E43',
-            transition: 'width 0.4s ease',
-          }} />
-        </div>
-      </div>
-
-      {/* 문항별 O/X 그리드 (차분한 세이지 / 브릭 톤) */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(58px, 1fr))',
-        gap: 5,
-      }}>
-        {results.map(r => {
-          const qNum = r.num || r.questionNum;
-          const changedOnRetry = r.firstStudent !== undefined && String(r.firstStudent) !== String(r.student);
-          return (
-            <div key={qNum} style={{
-              textAlign: 'center', padding: '6px 3px', borderRadius: 7,
-              background: r.isCorrect ? '#F1F6F3' : '#FAF3F3',
-              border: `1px solid ${r.isCorrect ? '#CADAD1' : '#E0C8CA'}`,
-              position: 'relative',
-            }}>
-              <div style={{ fontFamily: FONT_D, fontSize: 10, color: '#64748B', fontWeight: 500, lineHeight: 1.2 }}>{qNum}번</div>
-              <div style={{
-                fontFamily: FONT_D,
-                fontSize: 14, fontWeight: 700, lineHeight: 1.35,
-                color: r.isCorrect ? '#335B48' : '#913E43',
-              }}>
-                {changedOnRetry ? (
-                  <span style={{ fontSize: 11 }}>{CHOICE_SYMBOLS[r.firstStudent] || r.firstStudent}&rarr;{CHOICE_SYMBOLS[r.student] || r.student}</span>
-                ) : (
-                  CHOICE_SYMBOLS[r.student] || r.student || '-'
-                )}
-              </div>
-              {!r.isCorrect && (
-                <div style={{ fontFamily: FONT_D, fontSize: 9.5, color: canReveal ? '#335B48' : '#7F5C24', lineHeight: 1.2, fontWeight: 600 }}>
-                  {canReveal && r.correct ? `정답 ${CHOICE_SYMBOLS[r.correct] || r.correct}` : '비공개'}
-                </div>
-              )}
-              <div style={{
-                fontFamily: FONT_D,
-                position: 'absolute', top: 3, right: 4, fontSize: 9.5, fontWeight: 700,
-                color: r.isCorrect ? '#335B48' : '#913E43',
-              }}>
-                {r.isCorrect ? 'O' : 'X'}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
 }
 
 export default function ScoreView() {
@@ -788,15 +672,15 @@ export default function ScoreView() {
                             color: isShowingResult ? '#FFFFFF' : '#1E293B',
                             fontSize: 12, fontWeight: 600, cursor: 'pointer'
                           }}>
-                          {exam.canRevealAnswers ? '정오표 및 정답 보기' : '1차 정오표(O/X) 보기'}
+                          {exam.canRevealAnswers ? '빠른 정답 · 해설 보기' : '1차 정오표(O/X) 보기'}
                         </button>
                       )}
                     </div>
                   </div>
 
-                  {/* 인라인 정오표 결과 표시 */}
+                  {/* 인라인 빠른 정답 & 정답과 해설 표시 */}
                   {isShowingResult && resultPayload && (
-                    <OmrResultCard data={resultPayload} maxScore={exam.maxScore} />
+                    <StudentOmrResult data={resultPayload} maxScore={exam.maxScore} />
                   )}
                 </div>
               );
@@ -1048,9 +932,9 @@ export default function ScoreView() {
                     </div>
                   )}
 
-                  {/* OMR 답안 확인 (표준화된 omrData.results 렌더링) */}
+                  {/* OMR 답안 확인 (빠른 정답 + 정답과 해설 렌더링) */}
                   {selectedOmrExamId === s.exam_id && !omrLoading && omrData && Array.isArray(omrData.results) && (
-                    <OmrResultCard data={omrData} maxScore={s.max_score || 100} />
+                    <StudentOmrResult data={omrData} maxScore={s.max_score || 100} />
                   )}
 
                   {/* OMR 데이터 없음 */}
