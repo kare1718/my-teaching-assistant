@@ -10,6 +10,7 @@ import {
 import { SkeletonPage, ErrorState, EmptyState } from '../../components/StudentStates';
 import BottomTabBar from '../../components/BottomTabBar';
 import StudentOmrGuideModal from '../../components/StudentOmrGuideModal';
+import StudentOmrSheet from '../../components/StudentOmrSheet';
 import { askConfirm } from '../../lib/feedback';
 import {
   useMyScores,
@@ -533,225 +534,21 @@ export default function ScoreView() {
       )}
 
       {/* ══════════════════════════════════════════════════════════════════ */}
-      {/* 1. 활성화된 OMR 마킹 시트 (학생이 시험 시작 / 오답 재도전을 눌렀을 때) */}
+      {/* 1. 활성화된 OMR 마킹 시트 (실제 OMR 답안지 디자인 + 타이머·미니맵) */}
       {/* ══════════════════════════════════════════════════════════════════ */}
-      {activeOmrExam && (() => {
-        const numQ = activeOmrExam.questionCount || 20;
-        const numC = activeOmrExam.choiceCount || 5;
-        const locked = activeOmrExam.lockedQuestions || {};
-        const prevWrong = activeOmrExam.previousWrongAnswers || {};
-        const isRetryWrongOnly = (activeOmrExam.attemptNum || 1) >= 2 && activeOmrExam.resubmitMode === 'wrong_only' && Object.keys(locked).length > 0;
-        const pointsByNum = {};
-        (activeOmrExam.questionMeta || []).forEach(q => { pointsByNum[q.num] = q.points; });
-
-        const markedCount = Array.from({ length: numQ }, (_, i) => i + 1)
-          .filter(qNum => locked[qNum] !== undefined || markingAnswers[qNum]).length;
-        const lockedCount = Object.keys(locked).length;
-        const targetQuestions = Array.from({ length: numQ }, (_, i) => i + 1)
-          .filter(qNum => !isRetryWrongOnly || !showWrongOnlyFilter || locked[qNum] === undefined);
-
-        return (
-          <div className="s-card" style={{
-            padding: 0, overflow: 'hidden', marginBottom: 'var(--space-3)',
-            border: '2px solid var(--accent)'
-          }}>
-            {/* 상단 고정 헤더 (시험명 · 타이머 · 진행률) */}
-            <div style={{
-              position: 'sticky', top: 0, zIndex: 10,
-              padding: '12px 16px', background: 'var(--card)',
-              borderBottom: '1px solid var(--warm-200)',
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10
-            }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{
-                    fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 12,
-                    background: isRetryWrongOnly ? 'oklch(0.93 0.08 290)' : 'var(--accent)',
-                    color: isRetryWrongOnly ? 'oklch(0.4 0.16 290)' : 'white',
-                  }}>
-                    {activeOmrExam.attemptNum}차 {isRetryWrongOnly ? '오답 재도전' : 'OMR 응시'}
-                  </span>
-                  <span style={{ fontWeight: 800, fontSize: 'var(--text-base)' }}>{activeOmrExam.name}</span>
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--warm-500)', marginTop: 2 }}>
-                  총 {numQ}문항 · {numC}지선다 · 만점 {activeOmrExam.maxScore}점
-                  {isRetryWrongOnly && ` · 맞힌 ${lockedCount}문항 잠금 유지`}
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                {/* 실시간 응시 타이머 */}
-                {activeTimerRemainingSec !== null && (
-                  <div style={{
-                    padding: '6px 12px', borderRadius: 10, fontWeight: 900, fontSize: 15,
-                    fontVariantNumeric: 'tabular-nums',
-                    background: activeTimerRemainingSec <= 60
-                      ? 'oklch(0.93 0.08 25)'
-                      : activeTimerRemainingSec <= 300
-                        ? 'var(--warning-light)'
-                        : 'var(--warm-100)',
-                    color: activeTimerRemainingSec <= 60
-                      ? 'var(--destructive)'
-                      : activeTimerRemainingSec <= 300
-                        ? 'var(--warning)'
-                        : 'var(--foreground)',
-                    border: '1px solid var(--warm-200)',
-                  }}>
-                    ⏱ {formatDurationMMSS(activeTimerRemainingSec)}
-                  </div>
-                )}
-
-                <div style={{ fontSize: 12, fontWeight: 700, color: markedCount === numQ ? 'var(--success)' : 'var(--accent)' }}>
-                  {markedCount}/{numQ} 마킹
-                </div>
-
-                <button type="button"
-                  onClick={() => setActiveOmrExam(null)}
-                  style={{
-                    padding: '5px 10px', borderRadius: 8, border: '1px solid var(--warm-200)',
-                    background: 'var(--warm-100)', fontSize: 12, cursor: 'pointer', fontWeight: 600
-                  }}>
-                  접기
-                </button>
-              </div>
-            </div>
-
-            {/* 오답 재도전 안내 & 필터 토글 */}
-            {isRetryWrongOnly && (
-              <div style={{
-                padding: '10px 16px', background: 'oklch(0.96 0.03 290)',
-                borderBottom: '1px solid var(--warm-200)',
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8,
-                fontSize: 12
-              }}>
-                <span>
-                  🔒 <strong>1차에 맞힌 {lockedCount}문항</strong>은 정답으로 고정되어 있습니다. <strong>틀린 {numQ - lockedCount}문항</strong>만 다시 마킹하세요!
-                </span>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', fontWeight: 700 }}>
-                  <input type="checkbox" checked={showWrongOnlyFilter} onChange={e => setShowWrongOnlyFilter(e.target.checked)} />
-                  틀린 문항만 모아보기
-                </label>
-              </div>
-            )}
-
-            {/* OMR 버블 리스트 (5문항 단위 구분) */}
-            <div style={{ padding: '12px 14px', maxHeight: '62vh', overflowY: 'auto' }}>
-              {targetQuestions.map((qNum, idx) => {
-                const isLocked = isRetryWrongOnly && locked[qNum] !== undefined;
-                const selectedChoice = isLocked ? Number(locked[qNum]) : Number(markingAnswers[qNum] || 0);
-                const prevWrongChoice = prevWrong[qNum] !== undefined ? Number(prevWrong[qNum]) : null;
-                const qPoints = pointsByNum[qNum];
-                const isGroupDivider = !showWrongOnlyFilter && qNum % 5 === 0 && qNum < numQ;
-
-                return (
-                  <div key={qNum}>
-                    <div style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '8px 10px', marginBottom: 4, borderRadius: 8,
-                      background: isLocked
-                        ? 'oklch(0.96 0.03 155)'
-                        : selectedChoice
-                          ? 'var(--warm-50)'
-                          : 'var(--card)',
-                      border: isLocked
-                        ? '1px solid oklch(0.85 0.08 155)'
-                        : prevWrongChoice
-                          ? '1px solid oklch(0.85 0.08 25)'
-                          : '1px solid var(--warm-200)',
-                      opacity: isLocked ? 0.78 : 1,
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 85 }}>
-                        <span style={{ fontWeight: 800, fontSize: 14, width: 28 }}>{qNum}.</span>
-                        {qPoints !== undefined && activeOmrExam.scoringType === 'individual' && (
-                          <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 6, background: 'var(--warm-100)', color: 'var(--warm-500)', fontWeight: 600 }}>
-                            {qPoints}점
-                          </span>
-                        )}
-                        {isLocked && (
-                          <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 8, background: 'oklch(0.9 0.08 155)', color: 'oklch(0.35 0.14 155)', fontWeight: 700 }}>
-                            ⭕ 정답 잠금
-                          </span>
-                        )}
-                        {!isLocked && prevWrongChoice && (
-                          <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 8, background: 'oklch(0.93 0.06 25)', color: 'oklch(0.45 0.15 25)', fontWeight: 700 }}>
-                            1차 오답: {CHOICE_SYMBOLS[prevWrongChoice] || prevWrongChoice}
-                          </span>
-                        )}
-                      </div>
-
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        {Array.from({ length: numC }, (_, i) => i + 1).map(choiceNum => {
-                          const isSelected = selectedChoice === choiceNum;
-                          const wasPrevWrong = !isLocked && prevWrongChoice === choiceNum;
-                          return (
-                            <button
-                              key={choiceNum}
-                              type="button"
-                              disabled={isLocked}
-                              onClick={() => handleSelectBubble(qNum, choiceNum)}
-                              style={{
-                                width: 38, height: 38, borderRadius: '50%',
-                                border: isSelected
-                                  ? `2px solid ${isLocked ? 'var(--success)' : 'var(--accent)'}`
-                                  : wasPrevWrong
-                                    ? '1.5px dashed oklch(0.75 0.12 25)'
-                                    : '1.5px solid var(--warm-200)',
-                                background: isSelected
-                                  ? (isLocked ? 'var(--success)' : 'var(--accent)')
-                                  : wasPrevWrong
-                                    ? 'oklch(0.96 0.03 25)'
-                                    : 'var(--card)',
-                                color: isSelected
-                                  ? 'white'
-                                  : wasPrevWrong
-                                    ? 'oklch(0.55 0.12 25)'
-                                    : 'var(--foreground)',
-                                fontSize: 15, fontWeight: 800,
-                                cursor: isLocked ? 'not-allowed' : 'pointer',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                padding: 0, transition: 'all 0.12s ease',
-                                textDecoration: wasPrevWrong && !isSelected ? 'line-through' : 'none',
-                              }}
-                              title={wasPrevWrong ? `1차에서 선택했던 오답(${choiceNum}번)` : `${qNum}번 문항 ${choiceNum}번 선택`}
-                            >
-                              {choiceNum}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    {isGroupDivider && (
-                      <div style={{ height: 2, background: 'var(--warm-200)', margin: '8px 0 10px', borderRadius: 2 }} />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* 하단 제출 버튼 바 */}
-            <div style={{
-              padding: '12px 16px', background: 'var(--warm-50)', borderTop: '1px solid var(--warm-200)',
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10
-            }}>
-              <div style={{ fontSize: 12, color: 'var(--warm-500)' }}>
-                미마킹: <strong style={{ color: numQ - markedCount > 0 ? 'var(--destructive)' : 'var(--success)' }}>{numQ - markedCount}문항</strong>
-              </div>
-              <button
-                type="button"
-                onClick={handleSubmitOmr}
-                disabled={submitOmrMutation.isPending}
-                style={{
-                  padding: '10px 24px', borderRadius: 10, border: 'none',
-                  background: 'var(--accent)', color: 'white',
-                  fontSize: 14, fontWeight: 800, cursor: 'pointer',
-                  opacity: submitOmrMutation.isPending ? 0.6 : 1,
-                }}>
-                {submitOmrMutation.isPending ? '채점 및 제출 중...' : `✅ ${activeOmrExam.attemptNum}차 OMR 제출하기`}
-              </button>
-            </div>
-          </div>
-        );
-      })()}
+      {activeOmrExam && (
+        <StudentOmrSheet
+          exam={activeOmrExam}
+          markingAnswers={markingAnswers}
+          onSelectBubble={handleSelectBubble}
+          onSubmit={handleSubmitOmr}
+          onClose={() => setActiveOmrExam(null)}
+          isSubmitting={submitOmrMutation.isPending}
+          remainingSeconds={activeTimerRemainingSec}
+          showWrongOnlyFilter={showWrongOnlyFilter}
+          onToggleWrongOnlyFilter={setShowWrongOnlyFilter}
+        />
+      )}
 
       {/* ══════════════════════════════════════════════════════════════════ */}
       {/* 2. 학생 직접 OMR 응시 가능 시험 카드 섹션 */}

@@ -22,26 +22,32 @@ const GUIDE_STEPS = [
     ],
     visual: (
       <div style={{
-        padding: '12px 14px', borderRadius: 12, background: 'var(--warm-50, #f8fafc)',
-        border: '1px solid var(--warm-200, #e2e8f0)', fontSize: 12, textAlign: 'left'
+        borderRadius: 12, background: '#ffffff', overflow: 'hidden',
+        border: '1.5px solid #e7b8be', fontSize: 12, textAlign: 'left'
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <span style={{ fontWeight: 800, color: 'var(--foreground)' }}>📝 주간 모의고사 1회</span>
-          <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: 'oklch(0.93 0.08 155)', color: 'oklch(0.35 0.14 155)', fontWeight: 700 }}>
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '6px 12px', background: '#fdf2f4', borderBottom: '1px solid #e7b8be', color: '#9f1239'
+        }}>
+          <span style={{ fontWeight: 800 }}>📝 주간 모의고사 1회 · OMR 카드</span>
+          <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 10, background: '#dcfce7', color: '#15803d', fontWeight: 800 }}>
             응시 가능
           </span>
         </div>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontWeight: 800 }}>1.</span>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 4, height: 11, borderRadius: 1, background: '#141824' }} />
+            <span style={{ fontWeight: 800, color: '#9f1239', background: '#fdf2f4', padding: '2px 7px', borderRadius: 5 }}>1</span>
+          </div>
           <div style={{ display: 'flex', gap: 6 }}>
             {[1, 2, 3, 4, 5].map(n => (
               <span key={n} style={{
-                width: 28, height: 28, borderRadius: '50%',
+                width: 26, height: 33, borderRadius: 999,
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 fontWeight: 800, fontSize: 12,
-                background: n === 3 ? 'var(--accent, #2563eb)' : 'white',
-                color: n === 3 ? 'white' : 'var(--foreground)',
-                border: n === 3 ? '2px solid var(--accent, #2563eb)' : '1.5px solid #cbd5e1',
+                background: n === 3 ? '#141824' : '#ffffff',
+                color: n === 3 ? '#ffffff' : '#be123c',
+                border: n === 3 ? '2px solid #141824' : '1.5px solid #df8c96',
               }}>{n}</span>
             ))}
           </div>
