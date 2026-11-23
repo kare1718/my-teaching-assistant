@@ -302,7 +302,7 @@ export default function ScoreInput() {
     { value: 'retest', label: '재시험', color: 'var(--warning)' },
   ];
 
-  // === 정답키 state ===
+  // === 정답키 & 학생 OMR 설정 state ===
   const [akExamId, setAkExamId] = useState('');
   const [akNumQuestions, setAkNumQuestions] = useState(20);
   const [akNumChoices, setAkNumChoices] = useState(5);
@@ -311,6 +311,14 @@ export default function ScoreInput() {
   const [akDefaultPoints, setAkDefaultPoints] = useState(5);
   const [akAnswers, setAkAnswers] = useState({});
   const [akPoints, setAkPoints] = useState({});
+  const [akQuickString, setAkQuickString] = useState('');
+  const [akStudentOmrEnabled, setAkStudentOmrEnabled] = useState(false);
+  const [akTimeLimitMinutes, setAkTimeLimitMinutes] = useState('');
+  const [akAllowResubmit, setAkAllowResubmit] = useState(true);
+  const [akResubmitCooldownMinutes, setAkResubmitCooldownMinutes] = useState(30);
+  const [akMaxAttempts, setAkMaxAttempts] = useState(2);
+  const [akResubmitMode, setAkResubmitMode] = useState('wrong_only');
+  const [akRevealAnswersPolicy, setAkRevealAnswersPolicy] = useState('after_final');
   const [akLoading, setAkLoading] = useState(false);
   const [akExistingKey, setAkExistingKey] = useState(false);
 
@@ -334,15 +342,23 @@ export default function ScoreInput() {
       const data = await api(`/scores/exams/${examId}/answer-key`);
       if (data && data.answer_key) {
         const key = typeof data.answer_key === 'string' ? JSON.parse(data.answer_key) : data.answer_key;
-        setAkNumQuestions(key.numQuestions || 20);
-        setAkNumChoices(key.numChoices || 5);
+        setAkNumQuestions(data.question_count || key.numQuestions || 20);
+        setAkNumChoices(data.choice_count || key.numChoices || 5);
         setAkScoringType(key.scoringType || 'equal');
         setAkMaxScore(key.maxScore || 100);
         setAkDefaultPoints(key.defaultPoints || 5);
+        setAkStudentOmrEnabled(Boolean(data.student_omr_enabled ?? key.studentOmrEnabled));
+        setAkTimeLimitMinutes(data.time_limit_minutes ?? key.timeLimitMinutes ?? '');
+        setAkAllowResubmit(data.allow_resubmit !== undefined ? Boolean(data.allow_resubmit) : (key.allowResubmit ?? true));
+        setAkResubmitCooldownMinutes(data.resubmit_cooldown_minutes ?? key.resubmitCooldownMinutes ?? 30);
+        setAkMaxAttempts(data.max_attempts ?? key.maxAttempts ?? 2);
+        setAkResubmitMode(data.resubmit_mode || key.resubmitMode || 'wrong_only');
+        setAkRevealAnswersPolicy(data.reveal_answers_policy || key.revealAnswersPolicy || 'after_final');
         const ans = {}, pts = {};
         (key.questions || []).forEach(q => { ans[q.num] = q.answer; if (q.points !== undefined) pts[q.num] = q.points; });
         setAkAnswers(ans);
         setAkPoints(pts);
+        setAkQuickString((key.questions || []).map(q => q.answer).join(''));
         setAkExistingKey(true);
       } else { resetAnswerKeyForm(); setAkExistingKey(false); }
     } catch (e) { resetAnswerKeyForm(); setAkExistingKey(false); }
@@ -350,9 +366,23 @@ export default function ScoreInput() {
   };
 
   const resetAnswerKeyForm = () => {
-    setAkAnswers({}); setAkPoints({});
+    setAkAnswers({}); setAkPoints({}); setAkQuickString('');
     setAkNumQuestions(20); setAkNumChoices(5);
     setAkScoringType('equal'); setAkMaxScore(100); setAkDefaultPoints(5);
+    setAkStudentOmrEnabled(false); setAkTimeLimitMinutes('');
+    setAkAllowResubmit(true); setAkResubmitCooldownMinutes(30);
+    setAkMaxAttempts(2); setAkResubmitMode('wrong_only'); setAkRevealAnswersPolicy('after_final');
+  };
+
+  const applyQuickAnswerString = (rawStr) => {
+    setAkQuickString(rawStr);
+    const digits = (rawStr.match(/\d/g) || []).map(Number).filter(n => n >= 1 && n <= akNumChoices);
+    if (digits.length === 0) return;
+    const next = { ...akAnswers };
+    digits.slice(0, akNumQuestions).forEach((ans, idx) => {
+      next[idx + 1] = ans;
+    });
+    setAkAnswers(next);
   };
 
   const saveAnswerKey = async () => {
@@ -366,11 +396,44 @@ export default function ScoreInput() {
     }
     try {
       await apiPost(`/scores/exams/${akExamId}/answer-key`, {
-        numQuestions: akNumQuestions, numChoices: akNumChoices, scoringType: akScoringType,
-        maxScore: akMaxScore, defaultPoints: akDefaultPoints, questions
+        numQuestions: akNumQuestions,
+        numChoices: akNumChoices,
+        scoringType: akScoringType,
+        maxScore: akMaxScore,
+        defaultPoints: akDefaultPoints,
+        questions,
+        studentOmrEnabled: akStudentOmrEnabled,
+        timeLimitMinutes: akTimeLimitMinutes === '' || Number(akTimeLimitMinutes) <= 0 ? null : parseInt(akTimeLimitMinutes),
+        allowResubmit: akAllowResubmit,
+        resubmitCooldownMinutes: parseInt(akResubmitCooldownMinutes) || 0,
+        maxAttempts: akAllowResubmit ? (parseInt(akMaxAttempts) ?? 2) : 1,
+        resubmitMode: akResubmitMode,
+        revealAnswersPolicy: akRevealAnswersPolicy,
       });
-      setMsg('정답키가 저장되었습니다.'); setAkExistingKey(true);
-      setTimeout(() => setMsg(''), 2000);
+      setMsg('정답키 및 학생 OMR 설정이 저장되었습니다.'); setAkExistingKey(true);
+      loadExams();
+      setTimeout(() => setMsg(''), 2500);
+    } catch (err) { setMsg(err.message); }
+  };
+
+  const regradeAllSubmissions = async (targetExamId) => {
+    const id = targetExamId || akExamId || omrExamId;
+    if (!id) return;
+    try {
+      const res = await apiPost(`/scores/exams/${id}/regrade-all`, {});
+      setMsg(res.message || '재채점이 완료되었습니다.');
+      if (omrExamId && String(omrExamId) === String(id)) loadOmrData(id);
+      setTimeout(() => setMsg(''), 2500);
+    } catch (err) { setMsg('재채점 실패: ' + err.message); }
+  };
+
+  const resetStudentCooldown = async (studentId, action = 'clear_cooldown') => {
+    if (!omrExamId) return;
+    try {
+      const res = await apiPost(`/scores/exams/${omrExamId}/reset-cooldown`, { studentId, action });
+      setMsg(res.message || '처리되었습니다.');
+      loadOmrData(omrExamId);
+      setTimeout(() => setMsg(''), 2500);
     } catch (err) { setMsg(err.message); }
   };
 
@@ -401,7 +464,16 @@ export default function ScoreInput() {
       ]);
       if (keyData && keyData.answer_key) {
         const key = typeof keyData.answer_key === 'string' ? JSON.parse(keyData.answer_key) : keyData.answer_key;
-        setOmrAnswerKey(key);
+        setOmrAnswerKey({
+          ...key,
+          studentOmrEnabled: Boolean(keyData.student_omr_enabled ?? key.studentOmrEnabled),
+          timeLimitMinutes: keyData.time_limit_minutes ?? key.timeLimitMinutes ?? null,
+          allowResubmit: keyData.allow_resubmit !== undefined ? Boolean(keyData.allow_resubmit) : true,
+          resubmitCooldownMinutes: keyData.resubmit_cooldown_minutes ?? 30,
+          maxAttempts: keyData.max_attempts ?? 2,
+          resubmitMode: keyData.resubmit_mode || 'wrong_only',
+          revealAnswersPolicy: keyData.reveal_answers_policy || 'after_final',
+        });
       }
       const subs = {}, studentAnswerMap = {};
       (subsData || []).forEach(sub => {
@@ -409,11 +481,20 @@ export default function ScoreInput() {
         if (sub.answers) {
           const ans = typeof sub.answers === 'string' ? JSON.parse(sub.answers) : sub.answers;
           const mapped = {};
-          (ans || []).forEach(a => { mapped[a.num] = a.answer; });
+          if (Array.isArray(ans)) {
+            ans.forEach((a, idx) => {
+              if (a && typeof a === 'object' && a.num !== undefined) mapped[a.num] = a.answer;
+              else mapped[idx + 1] = a;
+            });
+          } else if (ans && typeof ans === 'object') {
+            Object.entries(ans).forEach(([k, v]) => { mapped[Number(k)] = v; });
+          }
           studentAnswerMap[sub.student_id] = mapped;
         }
       });
-      setOmrSubmissions(subs); setOmrStudentAnswers(studentAnswerMap); setOmrQuestionStats(statsData || []);
+      setOmrSubmissions(subs);
+      setOmrStudentAnswers(studentAnswerMap);
+      setOmrQuestionStats(Array.isArray(statsData) ? statsData : (statsData?.stats || []));
     } catch (err) { setMsg('OMR 데이터 로드 실패: ' + err.message); }
     setOmrLoading(false);
   };
@@ -431,9 +512,9 @@ export default function ScoreInput() {
     const equalPoints = numQ > 0 ? (key.maxScore || 100) / numQ : 0;
     for (let i = 1; i <= numQ; i++) {
       const keyQ = (key.questions || []).find(q => q.num === i);
-      if (keyQ && answers[i] === keyQ.answer) {
+      if (keyQ && Number(answers[i]) === Number(keyQ.answer)) {
         correct++;
-        totalScore += key.scoringType === 'individual' ? (keyQ.points !== undefined ? keyQ.points : (key.defaultPoints || 0)) : equalPoints;
+        totalScore += key.scoringType === 'individual' ? (keyQ.points !== undefined ? Number(keyQ.points) : (Number(key.defaultPoints) || 0)) : equalPoints;
       }
     }
     return { correct, total: numQ, score: Math.round(totalScore * 100) / 100 };
@@ -1208,14 +1289,25 @@ export default function ScoreInput() {
       )}
 
       {/* ═══════════════════════════════════════════════ */}
-      {/* 탭 2: 정답키 설정 */}
+      {/* 탭 2: 정답키 & 학생 OMR 세부 설정 */}
       {/* ═══════════════════════════════════════════════ */}
       {mainTab === 'answerKey' && (
-        <div style={{ maxWidth: 900 }}>
-          <div className="card" style={{ padding: 16 }}>
-            <h3 style={{ fontSize: 16, margin: '0 0 12px' }}>📝 정답키 설정</h3>
+        <div style={{ maxWidth: 940 }}>
+          <div className="card" style={{ padding: 18 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
+              <h3 style={{ fontSize: 16, margin: 0 }}>📝 정답키 & 학생 OMR 설정</h3>
+              {akExamId && akExistingKey && (
+                <span style={{
+                  fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20,
+                  background: akStudentOmrEnabled ? 'oklch(0.93 0.08 155)' : 'var(--neutral-100)',
+                  color: akStudentOmrEnabled ? 'oklch(0.38 0.14 155)' : 'var(--muted-foreground)',
+                }}>
+                  {akStudentOmrEnabled ? '🟢 학생 앱 OMR 오픈 중' : '⚪ 학생 앱 OMR 비공개'}
+                </span>
+              )}
+            </div>
 
-            <div style={{ marginBottom: 14 }}>
+            <div style={{ marginBottom: 16 }}>
               <label style={{ fontSize: 12, fontWeight: 600, marginBottom: 4, display: 'block' }}>시험 선택</label>
               <select value={akExamId}
                 onChange={e => {
@@ -1223,62 +1315,255 @@ export default function ScoreInput() {
                   if (id) { const ex = exams.find(x => x.id === parseInt(id)); if (ex) setAkMaxScore(ex.max_score || 100); loadAnswerKey(id); }
                   else { resetAnswerKeyForm(); setAkExistingKey(false); }
                 }}
-                style={{ width: '100%', padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 13 }}>
+                style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 13 }}>
                 <option value="">시험을 선택하세요</option>
-                {exams.map(e => <option key={e.id} value={e.id}>{e.name} ({e.exam_type})</option>)}
+                {exams.map(e => <option key={e.id} value={e.id}>{e.name} ({e.exam_type}) {e.school ? `- ${e.school}` : ''} {e.grade || ''}</option>)}
               </select>
             </div>
 
             {akExamId && !akLoading && (
               <>
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
-                  <div style={{ flex: '1 1 100px' }}>
-                    <label style={{ fontSize: 11, fontWeight: 600, display: 'block', marginBottom: 3 }}>문제 수</label>
-                    <input type="number" min="1" max="100" value={akNumQuestions}
-                      onChange={e => setAkNumQuestions(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
+                {/* 1. 학생 직접 OMR & 타이머·재제출 세팅 패널 */}
+                <div style={{
+                  marginBottom: 16, padding: 14, borderRadius: 10,
+                  background: 'var(--neutral-50)', border: '1px solid var(--border)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 700 }}>⚙️ 학생 앱 직접 OMR 입력 & 시간/재제출 세팅</div>
+                      <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
+                        문항 수, 응시 제한 시간(분), 1회 제출 후 재제출 대기 시간(쿨타임)을 시험별로 자유롭게 설정합니다.
+                      </div>
+                    </div>
+                    <label style={{
+                      display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
+                      padding: '6px 12px', borderRadius: 8,
+                      background: akStudentOmrEnabled ? 'var(--primary)' : 'var(--card)',
+                      color: akStudentOmrEnabled ? 'white' : 'var(--foreground)',
+                      border: '1px solid var(--border)', fontWeight: 700, fontSize: 12,
+                    }}>
+                      <input type="checkbox" checked={akStudentOmrEnabled}
+                        onChange={e => setAkStudentOmrEnabled(e.target.checked)} />
+                      학생 앱에서 직접 OMR 입력 허용
+                    </label>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
+                    {/* 시험 응시 제한 시간 */}
+                    <div style={{ background: 'var(--card)', padding: 12, borderRadius: 8, border: '1px solid var(--border)' }}>
+                      <label style={{ fontSize: 12, fontWeight: 700, display: 'block', marginBottom: 6 }}>
+                        ⏱ 시험 응시 제한 시간 (타이머)
+                      </label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                        <input type="number" min="0" max="300" placeholder="제한 없음"
+                          value={akTimeLimitMinutes}
+                          onChange={e => setAkTimeLimitMinutes(e.target.value === '' ? '' : Math.max(0, parseInt(e.target.value) || 0))}
+                          style={{ width: 90, padding: '5px 8px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 13 }} />
+                        <span style={{ fontSize: 12 }}>분 (비워두거나 0이면 무제한)</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                        {[
+                          { label: '무제한', val: '' },
+                          { label: '15분', val: 15 },
+                          { label: '20분', val: 20 },
+                          { label: '30분', val: 30 },
+                          { label: '45분', val: 45 },
+                          { label: '50분', val: 50 },
+                          { label: '80분', val: 80 },
+                        ].map(p => (
+                          <button key={p.label} type="button"
+                            onClick={() => setAkTimeLimitMinutes(p.val)}
+                            style={{
+                              fontSize: 11, padding: '3px 8px', borderRadius: 6, cursor: 'pointer',
+                              border: String(akTimeLimitMinutes) === String(p.val) ? '1px solid var(--primary)' : '1px solid var(--border)',
+                              background: String(akTimeLimitMinutes) === String(p.val) ? 'var(--primary-lighter)' : 'var(--neutral-50)',
+                              color: String(akTimeLimitMinutes) === String(p.val) ? 'var(--primary)' : 'var(--foreground)',
+                              fontWeight: 600,
+                            }}>
+                            {p.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 재제출 대기 시간 (쿨타임) */}
+                    <div style={{ background: 'var(--card)', padding: 12, borderRadius: 8, border: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                        <label style={{ fontSize: 12, fontWeight: 700 }}>
+                          ⏳ 1회 제출 후 재제출 시간 제한 (쿨타임)
+                        </label>
+                        <label style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontWeight: 600 }}>
+                          <input type="checkbox" checked={akAllowResubmit} onChange={e => setAkAllowResubmit(e.target.checked)} />
+                          재제출 허용
+                        </label>
+                      </div>
+                      {akAllowResubmit ? (
+                        <>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                            <input type="number" min="0" max="1440"
+                              value={akResubmitCooldownMinutes}
+                              onChange={e => setAkResubmitCooldownMinutes(Math.max(0, parseInt(e.target.value) || 0))}
+                              style={{ width: 80, padding: '5px 8px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 13 }} />
+                            <span style={{ fontSize: 12 }}>분 대기 후 재제출 가능</span>
+                          </div>
+                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                            {[
+                              { label: '즉시(0분)', val: 0 },
+                              { label: '5분', val: 5 },
+                              { label: '10분', val: 10 },
+                              { label: '20분', val: 20 },
+                              { label: '30분', val: 30 },
+                              { label: '60분', val: 60 },
+                            ].map(p => (
+                              <button key={p.label} type="button"
+                                onClick={() => setAkResubmitCooldownMinutes(p.val)}
+                                style={{
+                                  fontSize: 11, padding: '3px 8px', borderRadius: 6, cursor: 'pointer',
+                                  border: Number(akResubmitCooldownMinutes) === p.val ? '1px solid var(--primary)' : '1px solid var(--border)',
+                                  background: Number(akResubmitCooldownMinutes) === p.val ? 'var(--primary-lighter)' : 'var(--neutral-50)',
+                                  color: Number(akResubmitCooldownMinutes) === p.val ? 'var(--primary)' : 'var(--foreground)',
+                                  fontWeight: 600,
+                                }}>
+                                {p.label}
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        <div style={{ fontSize: 12, color: 'var(--muted-foreground)', padding: '8px 0' }}>
+                          재제출 비활성화됨 — 학생은 1회만 최종 제출할 수 있습니다.
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 재제출 횟수·방식 & 정답 공개 정책 */}
+                    <div style={{ background: 'var(--card)', padding: 12, borderRadius: 8, border: '1px solid var(--border)', gridColumn: '1 / -1' }}>
+                      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                        {akAllowResubmit && (
+                          <>
+                            <div style={{ flex: '1 1 160px' }}>
+                              <label style={{ fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 4 }}>총 제출 가능 횟수</label>
+                              <select value={akMaxAttempts} onChange={e => setAkMaxAttempts(parseInt(e.target.value))}
+                                style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }}>
+                                <option value={2}>총 2회 (1차 제출 + 재제출 1회)</option>
+                                <option value={3}>총 3회 (1차 제출 + 재제출 2회)</option>
+                                <option value={4}>총 4회 (1차 제출 + 재제출 3회)</option>
+                                <option value={0}>횟수 제한 없음 (쿨타임마다 재도전)</option>
+                              </select>
+                            </div>
+                            <div style={{ flex: '1 1 220px' }}>
+                              <label style={{ fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 4 }}>재제출 시 마킹 방식</label>
+                              <select value={akResubmitMode} onChange={e => setAkResubmitMode(e.target.value)}
+                                style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }}>
+                                <option value="wrong_only">틀린 문항만 다시 마킹 (맞힌 문항은 잠금 유지)</option>
+                                <option value="all">전체 문항 다시 마킹 허용</option>
+                              </select>
+                            </div>
+                          </>
+                        )}
+                        <div style={{ flex: '1 1 240px' }}>
+                          <label style={{ fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 4 }}>정답 번호 공개 시점 (베끼기 방지)</label>
+                          <select value={akRevealAnswersPolicy} onChange={e => setAkRevealAnswersPolicy(e.target.value)}
+                            style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }}>
+                            <option value="after_final">재제출 모두 완료 후 공개 (1차 후에는 점수·O/X만 표시)</option>
+                            <option value="immediate">1차 제출 즉시 정답 번호까지 공개</option>
+                            <option value="never">학생에게 정답 번호 비공개 (점수·O/X만 표시)</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. 문항 수 · 선택지 · 만점 · 배점 방식 */}
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
+                  <div style={{ flex: '1 1 130px' }}>
+                    <label style={{ fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 4 }}>문제 수 (1~100)</label>
+                    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                      <input type="number" min="1" max="100" value={akNumQuestions}
+                        onChange={e => setAkNumQuestions(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
+                        style={{ width: 70, padding: '5px 8px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 13 }} />
+                      {[10, 20, 25, 30, 45].map(n => (
+                        <button key={n} type="button" onClick={() => setAkNumQuestions(n)}
+                          style={{
+                            fontSize: 11, padding: '4px 6px', borderRadius: 5, cursor: 'pointer',
+                            border: akNumQuestions === n ? '1px solid var(--primary)' : '1px solid var(--border)',
+                            background: akNumQuestions === n ? 'var(--primary-lighter)' : 'var(--card)',
+                            color: akNumQuestions === n ? 'var(--primary)' : 'var(--foreground)', fontWeight: 600,
+                          }}>{n}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{ flex: '1 1 160px' }}>
+                    <label style={{ fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 4 }}>선택지 수</label>
+                    <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
+                      {[3, 4, 5].map(c => (
+                        <label key={c} style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
+                          <input type="radio" name="akChoices" checked={akNumChoices === c} onChange={() => setAkNumChoices(c)} /> {c}지선다
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{ flex: '0 1 90px' }}>
+                    <label style={{ fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 4 }}>만점</label>
+                    <input type="number" min="1" max="1000" value={akMaxScore}
+                      onChange={e => setAkMaxScore(Math.max(1, parseInt(e.target.value) || 100))}
                       style={{ width: '100%', padding: '5px 8px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 13, boxSizing: 'border-box' }} />
                   </div>
                   <div style={{ flex: '1 1 140px' }}>
-                    <label style={{ fontSize: 11, fontWeight: 600, display: 'block', marginBottom: 3 }}>선택지</label>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <label style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 3 }}>
-                        <input type="radio" name="akChoices" checked={akNumChoices === 4} onChange={() => setAkNumChoices(4)} /> 4지선다
+                    <label style={{ fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 4 }}>배점 방식</label>
+                    <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
+                      <label style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
+                        <input type="radio" name="akScoring" checked={akScoringType === 'equal'} onChange={() => setAkScoringType('equal')} /> 균등 배점
                       </label>
-                      <label style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 3 }}>
-                        <input type="radio" name="akChoices" checked={akNumChoices === 5} onChange={() => setAkNumChoices(5)} /> 5지선다
-                      </label>
-                    </div>
-                  </div>
-                  <div style={{ flex: '1 1 140px' }}>
-                    <label style={{ fontSize: 11, fontWeight: 600, display: 'block', marginBottom: 3 }}>배점</label>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <label style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 3 }}>
-                        <input type="radio" name="akScoring" checked={akScoringType === 'equal'} onChange={() => setAkScoringType('equal')} /> 균등
-                      </label>
-                      <label style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 3 }}>
-                        <input type="radio" name="akScoring" checked={akScoringType === 'individual'} onChange={() => setAkScoringType('individual')} /> 개별
+                      <label style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
+                        <input type="radio" name="akScoring" checked={akScoringType === 'individual'} onChange={() => setAkScoringType('individual')} /> 문항별 배점
                       </label>
                     </div>
                   </div>
                 </div>
 
-                <div style={{ marginBottom: 14, padding: 8, background: 'var(--neutral-50)', borderRadius: 6, fontSize: 12 }}>
+                <div style={{ marginBottom: 14, padding: '8px 12px', background: 'var(--neutral-50)', borderRadius: 6, fontSize: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                   {akScoringType === 'equal' ? (
-                    <span>균등배점: {akMaxScore}점 / {akNumQuestions}문항 = <strong>{Math.round((akMaxScore / akNumQuestions) * 100) / 100}점</strong></span>
+                    <span>균등배점: {akMaxScore}점 / {akNumQuestions}문항 = 문항당 <strong>{Math.round((akMaxScore / akNumQuestions) * 100) / 100}점</strong></span>
                   ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                       <span>기본 배점:</span>
                       <input type="number" min="0" step="0.5" value={akDefaultPoints}
                         onChange={e => setAkDefaultPoints(parseFloat(e.target.value) || 0)}
-                        style={{ width: 50, padding: '3px 6px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 12, textAlign: 'center' }} />
+                        style={{ width: 55, padding: '3px 6px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 12, textAlign: 'center' }} />
                       <span>점</span>
+                      <span style={{ color: 'var(--muted-foreground)' }}>
+                        (현재 총합: <strong>
+                          {Array.from({ length: akNumQuestions }, (_, i) => akPoints[i + 1] !== undefined ? Number(akPoints[i + 1]) : Number(akDefaultPoints)).reduce((a, b) => a + b, 0)}점
+                        </strong>)
+                      </span>
                     </div>
                   )}
+
+                  {/* 빠른 정답 문자열 일괄 입력 */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)' }}>⚡ 빠른 정답 입력:</span>
+                    <input
+                      value={akQuickString}
+                      onChange={e => applyQuickAnswerString(e.target.value)}
+                      placeholder="예: 3142512345..."
+                      style={{ width: 170, padding: '4px 8px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12, fontFamily: 'monospace' }}
+                    />
+                  </div>
                 </div>
 
                 {/* 정답 입력 영역 */}
                 <div style={{ marginBottom: 14 }}>
-                  <label style={{ fontSize: 12, fontWeight: 600, marginBottom: 6, display: 'block' }}>정답 입력</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <label style={{ fontSize: 12, fontWeight: 700 }}>
+                      정답 마킹 ({Object.keys(akAnswers).filter(k => Number(k) <= akNumQuestions && akAnswers[k]).length}/{akNumQuestions}문항 입력됨)
+                    </label>
+                    <button type="button" onClick={() => { setAkAnswers({}); setAkQuickString(''); }}
+                      style={{ fontSize: 11, color: 'var(--muted-foreground)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+                      정답 초기화
+                    </button>
+                  </div>
                   {(() => {
                     const rows = [];
                     for (let row = 0; row < Math.ceil(akNumQuestions / 5); row++) {
@@ -1293,7 +1578,7 @@ export default function ScoreInput() {
                               {Array.from({ length: akNumChoices }, (_, i) => i + 1).map(n => {
                                 const symbols = ['', '\u2460', '\u2461', '\u2462', '\u2463', '\u2464'];
                                 return (
-                                  <button key={n} onClick={() => setAkAnswers(prev => ({ ...prev, [qNum]: n }))}
+                                  <button key={n} type="button" onClick={() => setAkAnswers(prev => ({ ...prev, [qNum]: n }))}
                                     style={{
                                       width: 26, height: 26, borderRadius: '50%', border: '1.5px solid',
                                       borderColor: akAnswers[qNum] === n ? 'var(--primary-light)' : 'var(--border)',
@@ -1325,12 +1610,17 @@ export default function ScoreInput() {
                 </div>
 
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <button className="btn btn-primary" onClick={saveAnswerKey}>정답키 저장</button>
+                  <button className="btn btn-primary" onClick={saveAnswerKey}>정답키 및 OMR 설정 저장</button>
+                  {akExistingKey && (
+                    <button className="btn btn-outline" onClick={() => regradeAllSubmissions(akExamId)}>
+                      🔄 기존 제출자 일괄 재채점
+                    </button>
+                  )}
                   {akExistingKey && <button className="btn btn-danger" onClick={deleteAnswerKey}>삭제</button>}
                   {akExistingKey && (
                     <button className="btn btn-outline" onClick={() => { setMainTab('omrInput'); loadOmrExams(); setOmrExamId(akExamId); setTimeout(() => loadOmrData(akExamId), 300); }}
                       style={{ marginLeft: 'auto' }}>
-                      OMR 채점으로 이동 &rarr;
+                      OMR 제출 현황 / 채점으로 이동 &rarr;
                     </button>
                   )}
                 </div>
@@ -1342,12 +1632,19 @@ export default function ScoreInput() {
       )}
 
       {/* ═══════════════════════════════════════════════ */}
-      {/* 탭 3: OMR 입력 */}
+      {/* 탭 3: OMR 제출 현황 & 대리 입력 */}
       {/* ═══════════════════════════════════════════════ */}
       {mainTab === 'omrInput' && (
-        <div style={{ maxWidth: 900 }}>
-          <div className="card" style={{ padding: 16 }}>
-            <h3 style={{ fontSize: 16, margin: '0 0 12px' }}>📋 OMR 답안 입력</h3>
+        <div style={{ maxWidth: 940 }}>
+          <div className="card" style={{ padding: 18 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+              <h3 style={{ fontSize: 16, margin: 0 }}>📋 OMR 제출 현황 & 답안 관리</h3>
+              {omrExamId && (
+                <button className="btn btn-outline btn-sm" onClick={() => loadOmrData(omrExamId)} style={{ fontSize: 12 }}>
+                  🔄 현황 새로고침
+                </button>
+              )}
+            </div>
 
             <div style={{ marginBottom: 14 }}>
               <label style={{ fontSize: 12, fontWeight: 600, marginBottom: 4, display: 'block' }}>시험 선택 (정답키 설정된 시험)</label>
@@ -1359,7 +1656,11 @@ export default function ScoreInput() {
                 }}
                 style={{ width: '100%', padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 13 }}>
                 <option value="">시험을 선택하세요</option>
-                {omrExams.map(e => <option key={e.id} value={e.id}>{e.name} ({e.exam_type})</option>)}
+                {omrExams.map(e => (
+                  <option key={e.id} value={e.id}>
+                    {e.name} ({e.exam_type}) — {e.question_count}문항 {e.student_omr_enabled ? '· [학생OMR 오픈]' : '· [비공개]'}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -1373,8 +1674,34 @@ export default function ScoreInput() {
                 if (omrFilterGrade && s.grade !== omrFilterGrade) return false;
                 return true;
               });
+              const submittedCount = omrStudentList.filter(s => omrSubmissions[s.id]?.answers?.length > 0).length;
               return (
                 <>
+                  {/* 현재 시험의 OMR 세팅 요약 바 */}
+                  <div style={{
+                    marginBottom: 12, padding: '8px 12px', borderRadius: 8,
+                    background: 'var(--neutral-50)', border: '1px solid var(--border)',
+                    display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', fontSize: 12
+                  }}>
+                    <span style={{ fontWeight: 700, color: omrAnswerKey.studentOmrEnabled ? 'var(--success)' : 'var(--muted-foreground)' }}>
+                      {omrAnswerKey.studentOmrEnabled ? '🟢 학생 앱 OMR 오픈' : '⚪ 학생 앱 비공개'}
+                    </span>
+                    <span>문항: <strong>{omrAnswerKey.numQuestions}문항</strong> ({omrAnswerKey.numChoices || 5}지선다)</span>
+                    <span>제한시간: <strong>{omrAnswerKey.timeLimitMinutes ? `${omrAnswerKey.timeLimitMinutes}분` : '무제한'}</strong></span>
+                    <span>
+                      재제출: <strong>
+                        {omrAnswerKey.allowResubmit
+                          ? `쿨타임 ${omrAnswerKey.resubmitCooldownMinutes}분 · 최대 ${omrAnswerKey.maxAttempts === 0 ? '무제한' : `${omrAnswerKey.maxAttempts}회`} (${omrAnswerKey.resubmitMode === 'wrong_only' ? '오답만' : '전체'})`
+                          : '불가(1회만)'}
+                      </strong>
+                    </span>
+                    <button type="button"
+                      onClick={() => { setMainTab('answerKey'); setAkExamId(omrExamId); loadAnswerKey(omrExamId); }}
+                      style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}>
+                      ⚙️ 설정 변경 &rarr;
+                    </button>
+                  </div>
+
                   <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
                     <select value={omrFilterSchool} onChange={e => { setOmrFilterSchool(e.target.value); setOmrFilterGrade(''); }}
                       style={{ flex: 1, padding: '6px 8px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }}>
@@ -1391,7 +1718,7 @@ export default function ScoreInput() {
                   {/* 문항별 정답률 */}
                   {omrQuestionStats.length > 0 && (
                     <div style={{ marginBottom: 14, padding: 10, background: 'var(--neutral-50)', borderRadius: 8, border: '1px solid var(--border)' }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>문항별 정답률</div>
+                      <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>📊 문항별 정답률</div>
                       <ResponsiveContainer width="100%" height={140}>
                         <BarChart data={omrQuestionStats}>
                           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -1409,31 +1736,110 @@ export default function ScoreInput() {
                     </div>
                   )}
 
-                  <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 6 }}>학생 {omrStudentList.length}명</div>
+                  <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 6, display: 'flex', justifyContent: 'space-between' }}>
+                    <span>대상 학생 {omrStudentList.length}명 (제출 완료: <strong>{submittedCount}명</strong>)</span>
+                    <span>학생 이름을 클릭하면 답안 수정 및 쿨타임 제어가 가능합니다.</span>
+                  </div>
                   <div style={{ maxHeight: 600, overflowY: 'auto' }}>
                     {omrStudentList.map(s => {
                       const isExpanded = omrExpandedStudent === s.id;
-                      const hasSubmission = !!omrSubmissions[s.id];
+                      const sub = omrSubmissions[s.id];
+                      const hasSubmission = !!(sub && sub.answers && sub.answers.length > 0);
                       const hasAnswers = omrStudentAnswers[s.id] && Object.keys(omrStudentAnswers[s.id]).length > 0;
                       const result = hasAnswers ? calculateOmrScore(s.id) : null;
+                      const firstScore = sub?.first_score ?? null;
+                      const latestScore = sub?.score ?? null;
+                      const attemptCount = sub?.attempt_count || (hasSubmission ? 1 : 0);
+                      const hasRetest = attemptCount >= 2 && firstScore !== null && latestScore !== null;
+
                       return (
-                        <div key={s.id} style={{ marginBottom: 3, border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
+                        <div key={s.id} style={{ marginBottom: 4, border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
                           <div onClick={() => setOmrExpandedStudent(isExpanded ? null : s.id)}
                             style={{
-                              display: 'flex', alignItems: 'center', padding: '8px 10px', gap: 6,
+                              display: 'flex', alignItems: 'center', padding: '8px 10px', gap: 6, flexWrap: 'wrap',
                               cursor: 'pointer', background: isExpanded ? 'var(--primary-lighter)' : 'var(--card)', fontSize: 12,
                             }}>
-                            <span style={{ fontWeight: 600, minWidth: 50 }}>{s.name}</span>
+                            <span style={{ fontWeight: 700, minWidth: 55 }}>{s.name}</span>
                             <span style={{ color: 'var(--muted-foreground)', fontSize: 11 }}>{s.school} {s.grade}</span>
                             <div style={{ flex: 1 }} />
-                            {hasSubmission && <span style={{ fontSize: 10, color: 'var(--success)', fontWeight: 600 }}>제출</span>}
-                            {hasAnswers && result && (
-                              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--primary-light)' }}>{result.correct}/{result.total} ({result.score}점)</span>
+
+                            {/* 응시 상태 배지 */}
+                            {sub?.myStatus === 'in_progress' && (
+                              <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 10, background: 'oklch(0.92 0.06 240)', color: 'oklch(0.4 0.14 240)', fontWeight: 700 }}>
+                                ⏱ 응시중 {sub.timerRemainingSeconds != null ? `(${Math.ceil(sub.timerRemainingSeconds / 60)}분 남음)` : ''}
+                              </span>
+                            )}
+                            {sub?.myStatus === 'cooldown' && (
+                              <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 10, background: 'var(--warning-light)', color: 'var(--warning)', fontWeight: 700 }}>
+                                ⏳ 재제출 대기 ({Math.ceil((sub.cooldownRemainingSeconds || 0) / 60)}분 남음)
+                              </span>
+                            )}
+                            {sub?.myStatus === 'retry_available' && (
+                              <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 10, background: 'oklch(0.93 0.08 290)', color: 'oklch(0.42 0.16 290)', fontWeight: 700 }}>
+                                🔄 오답 재도전 가능
+                              </span>
+                            )}
+                            {hasSubmission && (
+                              <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 10, background: 'oklch(0.93 0.08 155)', color: 'oklch(0.38 0.14 155)', fontWeight: 700 }}>
+                                {attemptCount}회 제출
+                              </span>
+                            )}
+
+                            {/* 1차 vs 재제출 점수 표시 */}
+                            {hasRetest ? (
+                              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--primary)' }}>
+                                1차 {firstScore}점 &rarr; 재제출 {latestScore}점
+                                {latestScore - firstScore >= 0 && (
+                                  <span style={{ color: 'var(--success)', marginLeft: 3 }}>(+{Math.round((latestScore - firstScore) * 10) / 10})</span>
+                                )}
+                              </span>
+                            ) : (
+                              hasAnswers && result && (
+                                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--primary-light)' }}>
+                                  {result.correct}/{result.total} ({result.score}점)
+                                </span>
+                              )
                             )}
                             <span style={{ fontSize: 10, color: 'var(--neutral-400)' }}>{isExpanded ? '▲' : '▼'}</span>
                           </div>
                           {isExpanded && (
                             <div style={{ padding: 10, background: 'var(--neutral-50)', borderTop: '1px solid var(--border)' }}>
+                              {/* 관리자용 학생 타이머/쿨타임 제어 바 */}
+                              {sub && (
+                                <div style={{
+                                  display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center',
+                                  marginBottom: 10, padding: '6px 10px', background: 'var(--card)', borderRadius: 6, border: '1px solid var(--border)', fontSize: 11
+                                }}>
+                                  <span style={{ fontWeight: 600, color: 'var(--muted-foreground)' }}>관리자 제어:</span>
+                                  {sub.myStatus === 'cooldown' && (
+                                    <button type="button" className="btn btn-outline btn-sm"
+                                      onClick={() => resetStudentCooldown(s.id, 'clear_cooldown')}
+                                      style={{ fontSize: 11, padding: '2px 8px' }}>
+                                      ⚡ 재제출 대기시간(쿨타임) 즉시 해제
+                                    </button>
+                                  )}
+                                  {sub.isFinalized && (
+                                    <button type="button" className="btn btn-outline btn-sm"
+                                      onClick={() => resetStudentCooldown(s.id, 'grant_retry')}
+                                      style={{ fontSize: 11, padding: '2px 8px' }}>
+                                      🔄 추가 재제출 기회 1회 부여
+                                    </button>
+                                  )}
+                                  {sub.myStatus === 'in_progress' && (
+                                    <button type="button" className="btn btn-outline btn-sm"
+                                      onClick={() => resetStudentCooldown(s.id, 'reset_timer')}
+                                      style={{ fontSize: 11, padding: '2px 8px' }}>
+                                      ⏱ 응시 타이머 초기화
+                                    </button>
+                                  )}
+                                  {firstScore !== null && (
+                                    <span style={{ marginLeft: 'auto', color: 'var(--muted-foreground)' }}>
+                                      1차 원점수: <strong>{firstScore}점</strong> ({sub.first_correct_count}/{omrAnswerKey.numQuestions})
+                                      {hasRetest && <> · 최종 재제출: <strong>{latestScore}점</strong> ({sub.correct_count}/{omrAnswerKey.numQuestions})</>}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                               {(() => {
                                 const numQ = omrAnswerKey.numQuestions || 0;
                                 const numC = omrAnswerKey.numChoices || 5;
@@ -1447,8 +1853,8 @@ export default function ScoreInput() {
                                     if (qNum > numQ) break;
                                     const correctAns = keyQuestions.find(q => q.num === qNum)?.answer;
                                     const selectedAns = studentAns[qNum];
-                                    const isCorrect = selectedAns && selectedAns === correctAns;
-                                    const isWrong = selectedAns && selectedAns !== correctAns;
+                                    const isCorrect = selectedAns && Number(selectedAns) === Number(correctAns);
+                                    const isWrong = selectedAns && Number(selectedAns) !== Number(correctAns);
                                     items.push(
                                       <div key={qNum} style={{ display: 'flex', alignItems: 'center', gap: 3, minWidth: 0 }}>
                                         <span style={{
@@ -1458,12 +1864,12 @@ export default function ScoreInput() {
                                         <div style={{ display: 'flex', gap: 2 }}>
                                           {Array.from({ length: numC }, (_, i) => i + 1).map(n => {
                                             const symbols = ['', '\u2460', '\u2461', '\u2462', '\u2463', '\u2464'];
-                                            const isSelected = selectedAns === n;
+                                            const isSelected = Number(selectedAns) === n;
                                             let bg = 'var(--card)', borderC = 'var(--border)', textC = 'var(--foreground)';
                                             if (isSelected && isCorrect) { bg = 'var(--primary-light)'; borderC = 'var(--primary-light)'; textC = 'var(--card)'; }
                                             else if (isSelected && isWrong) { bg = 'var(--destructive)'; borderC = 'var(--destructive)'; textC = 'var(--card)'; }
                                             return (
-                                              <button key={n} onClick={() => setOmrAnswer(s.id, qNum, n)}
+                                              <button key={n} type="button" onClick={() => setOmrAnswer(s.id, qNum, n)}
                                                 style={{
                                                   width: 26, height: 26, borderRadius: '50%', border: `1.5px solid ${borderC}`,
                                                   background: bg, color: textC, fontSize: 12, fontWeight: 600, cursor: 'pointer',
@@ -1498,8 +1904,9 @@ export default function ScoreInput() {
                       );
                     })}
                   </div>
-                  <div style={{ marginTop: 14 }}>
+                  <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
                     <button className="btn btn-primary" onClick={saveOmrAnswers}>답안 일괄 저장</button>
+                    <button className="btn btn-outline" onClick={() => regradeAllSubmissions(omrExamId)}>🔄 전체 재채점</button>
                   </div>
                 </>
               );
