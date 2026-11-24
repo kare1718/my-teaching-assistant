@@ -21,6 +21,7 @@ import {
   useStudentOmrExams,
   useStartOmr,
   useSaveOmrDraft,
+  useResetOmrDraft,
   useSubmitOmrAnswers,
   useFinalizeOmrSubmission,
 } from '../../hooks/queries/useScores';
@@ -62,7 +63,7 @@ export default function ScoreView() {
   const handledDeepLinkRef = useRef(false);
 
   const user = getUser();
-  const isStaff = user?.role === 'admin' || user?.school === '조교' || user?.school === '선생님';
+  const isStaff = ['admin', 'superadmin', 'assistant', 'teacher'].includes(user?.role) || ['조교', '선생님'].includes(user?.school);
   const [selectedStudent, setSelectedStudent] = useState('');
   const [filterSchool, setFilterSchool] = useState('');
 
@@ -74,6 +75,7 @@ export default function ScoreView() {
 
   const startOmrMutation = useStartOmr();
   const saveDraftMutation = useSaveOmrDraft();
+  const resetDraftMutation = useResetOmrDraft();
   const submitOmrMutation = useSubmitOmrAnswers();
   const finalizeOmrMutation = useFinalizeOmrSubmission();
 
@@ -234,6 +236,28 @@ export default function ScoreView() {
       setOmrBannerMsg(`${res.message} — ${res.score}점 (${res.correctCount}/${res.totalQuestions}문항 정답)`);
     } catch (err) {
       setOmrErrorMsg(err.message || '답안 제출에 실패했습니다.');
+    }
+  };
+
+  const handleResetDraft = async () => {
+    if (!activeOmrExam) return;
+    const locked = activeOmrExam.lockedQuestions || {};
+    const ok = await askConfirm(
+      Object.keys(locked).length > 0
+        ? '재도전 문항에 마킹한 답안을 모두 초기화하시겠습니까?\n(1차 정답 잠금 문항과 남은 시간은 그대로 유지됩니다.)'
+        : '현재 마킹한 답안을 모두 초기화하시겠습니까?\n(시험 남은 시간은 그대로 유지됩니다.)'
+    );
+    if (!ok) return;
+
+    const resetMap = { ...locked };
+    setMarkingAnswers(resetMap);
+    const localKey = `omr_draft_${activeOmrExam.examId}_${activeOmrExam.attemptNum || 1}`;
+    try { localStorage.removeItem(localKey); } catch {}
+    try {
+      await resetDraftMutation.mutateAsync(activeOmrExam.examId);
+      setOmrBannerMsg('마킹이 초기화되었습니다.');
+    } catch (err) {
+      setOmrErrorMsg(err.message || '초기화에 실패했습니다.');
     }
   };
 
@@ -431,6 +455,7 @@ export default function ScoreView() {
           exam={activeOmrExam}
           markingAnswers={markingAnswers}
           onSelectBubble={handleSelectBubble}
+          onResetDraft={handleResetDraft}
           onSubmit={handleSubmitOmr}
           onClose={() => setActiveOmrExam(null)}
           isSubmitting={submitOmrMutation.isPending}
@@ -506,17 +531,19 @@ export default function ScoreView() {
               const wrongCount = exam.questionCount - (exam.latestCorrectCount || 0);
               const isShowingResult = previewResultExamId === exam.examId;
               const resultPayload = lastSubmitResult?.examId === exam.examId
-                ? lastSubmitResult
+                ? { choiceCount: exam.choiceCount, ...lastSubmitResult }
                 : exam.lastGradedResults
                   ? {
                       score: exam.latestScore,
                       firstScore: exam.firstScore,
                       correctCount: exam.latestCorrectCount,
                       questionCount: exam.questionCount,
+                      choiceCount: exam.choiceCount,
                       attemptCount: exam.attemptCount,
                       canRevealAnswers: exam.canRevealAnswers,
                       explanationFile: exam.explanationFile || null,
                       hasExplanationFile: Boolean(exam.hasExplanationFile),
+                      statsSummary: exam.statsSummary || null,
                       results: exam.lastGradedResults,
                     }
                   : null;

@@ -43,6 +43,7 @@ export default function StudentOmrSheet({
   exam,
   markingAnswers,
   onSelectBubble,
+  onResetDraft,
   onSubmit,
   onClose,
   isSubmitting,
@@ -600,26 +601,48 @@ export default function StudentOmrSheet({
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={onSubmit}
-          disabled={isSubmitting}
-          style={{
-            fontFamily: FONT_DISPLAY,
-            padding: '10px 22px',
-            borderRadius: 8,
-            border: 'none',
-            background: P.navy,
-            color: '#FFFFFF',
-            fontSize: 13.5,
-            fontWeight: 600,
-            letterSpacing: '-0.01em',
-            cursor: 'pointer',
-            opacity: isSubmitting ? 0.6 : 1,
-          }}
-        >
-          {isSubmitting ? '채점 및 제출 중...' : `${exam.attemptNum}차 OMR 답안 제출`}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          {onResetDraft && (
+            <button
+              type="button"
+              onClick={onResetDraft}
+              disabled={isSubmitting}
+              style={{
+                fontFamily: FONT_DISPLAY,
+                padding: '9px 13px',
+                borderRadius: 8,
+                border: `1px solid ${P.border}`,
+                background: P.paper,
+                color: P.muted,
+                fontSize: 12.5,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              마킹 초기화
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onSubmit}
+            disabled={isSubmitting}
+            style={{
+              fontFamily: FONT_DISPLAY,
+              padding: '10px 22px',
+              borderRadius: 8,
+              border: 'none',
+              background: P.navy,
+              color: '#FFFFFF',
+              fontSize: 13.5,
+              fontWeight: 600,
+              letterSpacing: '-0.01em',
+              cursor: 'pointer',
+              opacity: isSubmitting ? 0.6 : 1,
+            }}
+          >
+            {isSubmitting ? '채점 및 제출 중...' : `${exam.attemptNum}차 OMR 답안 제출`}
+          </button>
+        </div>
       </div>
 
       <style>{`

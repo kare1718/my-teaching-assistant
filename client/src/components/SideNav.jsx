@@ -172,7 +172,7 @@ export default function SideNav() {
 
   const isSuperAdminPage = location.pathname.startsWith('/superadmin');
   const isAdminPage = location.pathname.startsWith('/admin') || isSuperAdminPage;
-  const isAdminUser = user.role === 'admin' || user.role === 'superadmin' || user.school === '조교';
+  const isAdminUser = ['admin', 'superadmin', 'assistant', 'teacher'].includes(user.role) || ['조교', '선생님'].includes(user.school);
 
   /* ── Screen size ── */
   const isLg = useMediaQuery('(min-width: 1600px)');

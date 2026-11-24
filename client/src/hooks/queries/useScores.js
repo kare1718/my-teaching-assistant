@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, apiPost, apiPut } from '../../api';
+import { api, apiPost, apiPut, apiDelete } from '../../api';
 
 export function useMyScores(studentId) {
   const url = studentId ? `/scores/my-scores?studentId=${studentId}` : '/scores/my-scores';
@@ -64,6 +64,16 @@ export function useStartOmr() {
 export function useSaveOmrDraft() {
   return useMutation({
     mutationFn: ({ examId, answers }) => apiPut(`/scores/exams/${examId}/draft-answers`, { answers }),
+  });
+}
+
+export function useResetOmrDraft() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (examId) => apiDelete(`/scores/exams/${examId}/draft-answers`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scores', 'student-omr-exams'] });
+    },
   });
 }
 
