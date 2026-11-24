@@ -239,7 +239,7 @@ export default function AdminOmrStatsPanel({ statsData, examName = '시험', fil
                           </span>
                         )}
                       </div>
-                      <div style={{ fontSize: 11, color: P.muted, display: 'flex', justifyContent: 'space-between' }}>
+                      <div style={{ fontFamily: FONT_D, fontSize: 11, fontWeight: 600, color: P.muted, display: 'flex', justifyContent: 'space-between', fontVariantNumeric: 'tabular-nums' }}>
                         <span>최종 {q.latestCorrectRate}%{delta > 0 ? ` (+${delta}%p)` : ''}</span>
                         <span>오답 {q.firstWrongCount}명</span>
                       </div>
@@ -274,16 +274,16 @@ export default function AdminOmrStatsPanel({ statsData, examName = '시험', fil
             <ResponsiveContainer width="100%" height={156}>
               <BarChart data={stats}>
                 <CartesianGrid strokeDasharray="3 3" stroke={P.borderSoft} />
-                <XAxis dataKey="questionNum" fontSize={10} stroke={P.muted} tickFormatter={v => `${v}번`} />
-                <YAxis domain={[0, 100]} fontSize={10} stroke={P.muted} tickFormatter={v => `${v}%`} width={36} />
+                <XAxis dataKey="questionNum" fontSize={10} stroke={P.muted} tick={{ fontFamily: FONT_D }} tickFormatter={v => `${v}번`} />
+                <YAxis domain={[0, 100]} fontSize={10} stroke={P.muted} tick={{ fontFamily: FONT_D }} tickFormatter={v => `${v}%`} width={36} />
                 <Tooltip
                   formatter={(v, name) => [`${v}%`, name === 'firstCorrectRate' ? '1차 정답률' : name === 'latestCorrectRate' ? '최종 정답률' : '정답률']}
                   labelFormatter={v => `${v}번 문항`}
-                  contentStyle={{ background: P.white, border: `1px solid ${P.border}`, borderRadius: 8, fontSize: 12 }}
+                  contentStyle={{ fontFamily: FONT_D, background: P.white, border: `1px solid ${P.border}`, borderRadius: 8, fontSize: 12 }}
                 />
                 {basis === 'compare' ? (
                   <>
-                    <Legend formatter={v => (v === 'firstCorrectRate' ? '1차 정답률' : '최종 정답률')} wrapperStyle={{ fontSize: 11 }} />
+                    <Legend formatter={v => (v === 'firstCorrectRate' ? '1차 정답률' : '최종 정답률')} wrapperStyle={{ fontFamily: FONT_D, fontSize: 11 }} />
                     <Bar dataKey="firstCorrectRate" fill={P.navy} radius={[3, 3, 0, 0]} />
                     <Bar dataKey="latestCorrectRate" fill={P.sageFill} radius={[3, 3, 0, 0]} />
                   </>

@@ -154,7 +154,7 @@ export default function StudentOmrSheet({
               >
                 {exam.attemptNum}차 {isRetryWrongOnly ? '오답 재도전' : 'OMR 답안지'}
               </span>
-              <span style={{ fontSize: 11.5, color: 'rgba(241, 245, 249, 0.68)', fontWeight: 500 }}>
+              <span style={{ fontFamily: FONT_DISPLAY, fontSize: 11.5, color: 'rgba(241, 245, 249, 0.72)', fontWeight: 500 }}>
                 {numQ}문항 · {numC}지선다 · {exam.maxScore}점 만점
               </span>
             </div>
@@ -365,8 +365,8 @@ export default function StudentOmrSheet({
           }}
         >
           <span>
-            1차에 맞힌 <strong>{lockedCount}문항은 정답 잠금</strong> 상태이며,{' '}
-            <strong>틀린 {numQ - lockedCount}문항</strong>만 다시 마킹합니다.
+            1차에 맞힌 <strong style={{ fontFamily: FONT_DISPLAY }}>{lockedCount}문항은 정답 잠금</strong> 상태이며,{' '}
+            <strong style={{ fontFamily: FONT_DISPLAY }}>틀린 {numQ - lockedCount}문항</strong>만 다시 마킹합니다.
           </span>
           <label style={{ fontFamily: FONT_DISPLAY, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
             <input
@@ -592,7 +592,7 @@ export default function StudentOmrSheet({
         }}
       >
         <div style={{ fontSize: 12.5, color: P.muted }}>
-          <span style={{ color: P.text, fontWeight: 500 }}>자동 임시저장 중</span>
+          <span style={{ fontFamily: FONT_DISPLAY, color: P.text, fontWeight: 600 }}>자동 임시저장 중</span>
           <span style={{ marginLeft: 10 }}>
             미마킹{' '}
             <strong style={{ fontFamily: FONT_DISPLAY, color: unmarkedQuestions.length > 0 ? P.brickText : P.sageText }}>

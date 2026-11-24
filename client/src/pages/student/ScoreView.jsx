@@ -426,24 +426,26 @@ export default function ScoreView() {
       {/* 알림 배너 */}
       {omrBannerMsg && (
         <div style={{
-          marginBottom: 'var(--space-2)', padding: '10px 14px', borderRadius: 'var(--radius)',
-          background: 'oklch(0.94 0.06 155)', border: '1px solid oklch(0.82 0.1 155)',
-          color: 'oklch(0.32 0.12 155)', fontSize: 'var(--text-sm)', fontWeight: 700,
+          fontFamily: "var(--font-display, 'Paperlogy', 'KoPub Dotum', sans-serif)",
+          marginBottom: 'var(--space-2)', padding: '10px 14px', borderRadius: 8,
+          background: '#F1F6F3', border: '1px solid #CADAD1',
+          color: '#335B48', fontSize: 13, fontWeight: 700,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center'
         }}>
-          <span>✅ {omrBannerMsg}</span>
-          <button onClick={() => setOmrBannerMsg('')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14 }}>✕</button>
+          <span>{omrBannerMsg}</span>
+          <button onClick={() => setOmrBannerMsg('')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#335B48' }}>✕</button>
         </div>
       )}
       {omrErrorMsg && (
         <div style={{
-          marginBottom: 'var(--space-2)', padding: '10px 14px', borderRadius: 'var(--radius)',
-          background: 'oklch(0.95 0.05 25)', border: '1px solid oklch(0.82 0.1 25)',
-          color: 'oklch(0.4 0.16 25)', fontSize: 'var(--text-sm)', fontWeight: 700,
+          fontFamily: "var(--font-display, 'Paperlogy', 'KoPub Dotum', sans-serif)",
+          marginBottom: 'var(--space-2)', padding: '10px 14px', borderRadius: 8,
+          background: '#FAF3F3', border: '1px solid #E0C8CA',
+          color: '#913E43', fontSize: 13, fontWeight: 700,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center'
         }}>
-          <span>⚠️ {omrErrorMsg}</span>
-          <button onClick={() => setOmrErrorMsg('')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14 }}>✕</button>
+          <span>{omrErrorMsg}</span>
+          <button onClick={() => setOmrErrorMsg('')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#913E43' }}>✕</button>
         </div>
       )}
 
@@ -559,7 +561,7 @@ export default function ScoreView() {
                         <span style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontWeight: 700, fontSize: 14.5, color: '#102044' }}>
                           {exam.name}
                         </span>
-                        <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 4, background: '#F4F6FA', color: '#64748B', border: '1px solid #EAEFF5' }}>
+                        <span style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 11, fontWeight: 600, padding: '2px 7px', borderRadius: 4, background: '#F4F6FA', color: '#475569', border: '1px solid #EAEFF5' }}>
                           {exam.examType}
                         </span>
                         {effectiveStatus === 'not_started' && (
@@ -721,13 +723,17 @@ export default function ScoreView() {
       {/* 요약 카드 */}
       {scores.length > 0 && (
         <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
-          <div style={{ flex: 1, background: 'linear-gradient(135deg, var(--accent), var(--accent-lighter))', borderRadius: 'var(--radius)', padding: 'var(--space-3) var(--space-4)', color: 'white' }}>
-            <div style={{ fontSize: 'var(--text-xs)', opacity: 0.8 }}>총 시험 수</div>
-            <div style={{ fontSize: 'var(--text-xl)', fontWeight: 800 }}>{totalExams}<span style={{ fontSize: 'var(--text-sm)', fontWeight: 400 }}>회</span></div>
+          <div style={{ flex: 1, background: '#102044', borderRadius: 10, padding: '14px 16px', color: 'white', border: '1px solid #102044' }}>
+            <div style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 11.5, opacity: 0.8 }}>총 시험 수</div>
+            <div style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 22, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+              {totalExams}<span style={{ fontSize: 13, fontWeight: 500, marginLeft: 2 }}>회</span>
+            </div>
           </div>
-          <div style={{ flex: 1, background: 'linear-gradient(135deg, var(--success), var(--success))', borderRadius: 'var(--radius)', padding: 'var(--space-3) var(--space-4)', color: 'white' }}>
-            <div style={{ fontSize: 'var(--text-xs)', opacity: 0.8 }}>평균 환산 점수</div>
-            <div style={{ fontSize: 'var(--text-xl)', fontWeight: 800 }}>{avgScore}<span style={{ fontSize: 'var(--text-sm)', fontWeight: 400 }}>점</span></div>
+          <div style={{ flex: 1, background: '#FFFFFF', borderRadius: 10, padding: '14px 16px', color: '#102044', border: '1px solid #DCE2EC' }}>
+            <div style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 11.5, color: '#64748B' }}>평균 환산 점수</div>
+            <div style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 22, fontWeight: 700, color: '#335B48', fontVariantNumeric: 'tabular-nums' }}>
+              {avgScore}<span style={{ fontSize: 13, fontWeight: 500, color: '#64748B', marginLeft: 2 }}>점</span>
+            </div>
           </div>
         </div>
       )}
@@ -803,14 +809,15 @@ export default function ScoreView() {
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: 'var(--text-sm)', marginBottom: 3 }}>{s.exam_name}</div>
+                      <div style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontWeight: 700, fontSize: 14, color: '#102044', marginBottom: 3 }}>{s.exam_name}</div>
                       <div style={{ display: 'flex', gap: 'var(--space-3)', fontSize: 'var(--text-xs)', color: 'var(--warm-500)', flexWrap: 'wrap' }}>
                         <span>📅 {s.exam_date || '-'}</span>
-                        <span style={{ color: 'var(--warm-500)', fontSize: 'var(--text-xs)', background: 'var(--muted)', padding: '1px 6px', borderRadius: 'var(--radius-sm)' }}>{s.exam_type}</span>
+                        <span style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", color: 'var(--warm-500)', fontSize: 'var(--text-xs)', background: 'var(--muted)', padding: '1px 6px', borderRadius: 'var(--radius-sm)' }}>{s.exam_type}</span>
                         {hasDualScores && (
                           <span style={{
-                            fontSize: 11, padding: '1px 7px', borderRadius: 8,
-                            background: 'oklch(0.94 0.05 260)', color: 'var(--accent)', fontWeight: 700
+                            fontFamily: "var(--font-display, 'Paperlogy', sans-serif)",
+                            fontSize: 11, padding: '1px 7px', borderRadius: 6,
+                            background: '#F4F6FA', color: '#102044', border: '1px solid #DCE2EC', fontWeight: 700
                           }}>
                             1차 {firstScoreVal}점 &rarr; 재제출 {retestScoreVal}점
                           </span>
@@ -818,11 +825,11 @@ export default function ScoreView() {
                       </div>
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: 'var(--space-3)' }}>
-                      <div style={{ fontSize: 'var(--text-lg)', fontWeight: 800, color }}>
-                        {s.score}<span style={{ fontSize: 'var(--text-sm)', color: 'var(--warm-500)', fontWeight: 400 }}>/{s.max_score}</span>
+                      <div style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 18, fontWeight: 700, color, fontVariantNumeric: 'tabular-nums' }}>
+                        {s.score}<span style={{ fontSize: 12.5, color: 'var(--warm-500)', fontWeight: 500 }}>/{s.max_score}</span>
                       </div>
                       {s.rank_num && (
-                        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--warm-500)' }}>
+                        <div style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 'var(--text-xs)', color: 'var(--warm-500)', fontVariantNumeric: 'tabular-nums' }}>
                           {s.rank_num}등 / {s.total_students}명
                         </div>
                       )}
@@ -831,12 +838,12 @@ export default function ScoreView() {
                         const pctile = (s.rank_num / s.total_students) * 100;
                         if (isNaesin) {
                           const g = pctile <= 10 ? 1 : pctile <= 34 ? 2 : pctile <= 66 ? 3 : pctile <= 90 ? 4 : 5;
-                          const gc = g === 1 ? 'var(--success)' : g === 2 ? 'var(--accent)' : g === 3 ? 'var(--warning)' : g === 4 ? 'var(--destructive)' : 'oklch(35% 0.15 25)';
-                          return <div style={{ fontSize: 'var(--text-xs)', fontWeight: 700, color: gc }}>{g}등급</div>;
+                          const gc = g === 1 ? '#335B48' : g === 2 ? '#102044' : g === 3 ? '#7F5C24' : '#913E43';
+                          return <div style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 'var(--text-xs)', fontWeight: 700, color: gc }}>{g}등급</div>;
                         }
                         const g = pctile <= 4 ? 1 : pctile <= 11 ? 2 : pctile <= 23 ? 3 : pctile <= 40 ? 4 : pctile <= 60 ? 5 : pctile <= 77 ? 6 : pctile <= 89 ? 7 : pctile <= 96 ? 8 : 9;
-                        const gc = g <= 2 ? 'var(--success)' : g <= 4 ? 'var(--accent)' : g <= 6 ? 'var(--warning)' : 'var(--destructive)';
-                        return <div style={{ fontSize: 'var(--text-xs)', fontWeight: 700, color: gc }}>{g}등급</div>;
+                        const gc = g <= 2 ? '#335B48' : g <= 4 ? '#102044' : g <= 6 ? '#7F5C24' : '#913E43';
+                        return <div style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 'var(--text-xs)', fontWeight: 700, color: gc }}>{g}등급</div>;
                       })()}
                     </div>
                   </div>
@@ -848,20 +855,22 @@ export default function ScoreView() {
                   <div style={{ marginTop: 'var(--space-1)', display: 'flex', gap: 'var(--space-1)', flexWrap: 'wrap' }}>
                     <button onClick={() => loadDistribution(s.exam_id)}
                       style={{
-                        fontSize: 'var(--text-xs)', padding: '3px var(--space-2)', borderRadius: 'var(--radius-sm)',
-                        border: '1px solid var(--warm-200)', cursor: 'pointer',
-                        background: showDist === s.exam_id ? 'var(--accent)' : 'var(--warm-100)',
-                        color: showDist === s.exam_id ? 'white' : 'var(--warm-800)',
+                        fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontWeight: 600,
+                        fontSize: 'var(--text-xs)', padding: '4px var(--space-2)', borderRadius: 6,
+                        border: '1px solid #DCE2EC', cursor: 'pointer',
+                        background: showDist === s.exam_id ? '#102044' : '#F8F9FB',
+                        color: showDist === s.exam_id ? 'white' : '#1E293B',
                       }}>
                       📊 분포 보기
                     </button>
                     {s.has_answer_key === 1 && s.has_submission === 1 && (
                       <button onClick={() => loadOmrData(s.exam_id)}
                         style={{
-                          fontSize: 'var(--text-xs)', padding: '3px var(--space-2)', borderRadius: 'var(--radius-sm)',
-                          border: '1px solid var(--warm-200)', cursor: 'pointer',
-                          background: selectedOmrExamId === s.exam_id ? 'var(--accent)' : 'var(--warm-100)',
-                          color: selectedOmrExamId === s.exam_id ? 'white' : 'var(--warm-800)',
+                          fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontWeight: 600,
+                          fontSize: 'var(--text-xs)', padding: '4px var(--space-2)', borderRadius: 6,
+                          border: '1px solid #DCE2EC', cursor: 'pointer',
+                          background: selectedOmrExamId === s.exam_id ? '#102044' : '#F8F9FB',
+                          color: selectedOmrExamId === s.exam_id ? 'white' : '#1E293B',
                         }}>
                         {omrLoading && selectedOmrExamId === s.exam_id ? '...' : '📝 답안 확인'}
                       </button>
@@ -870,29 +879,29 @@ export default function ScoreView() {
 
                   {/* 분포 차트 - 인라인 */}
                   {showDist === s.exam_id && distribution && (
-                    <div style={{ marginTop: 'var(--space-3)', padding: 'var(--space-3)', background: 'var(--warm-50)', borderRadius: 'var(--radius)', border: '1px solid var(--warm-200)' }}>
+                    <div style={{ marginTop: 'var(--space-3)', padding: 'var(--space-3)', background: '#F8F9FB', borderRadius: 8, border: '1px solid #DCE2EC' }}>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: 'var(--space-2)', marginBottom: 'var(--space-4)' }}>
                         {distribution.myScore !== null && (
-                          <div style={{ textAlign: 'center', padding: 'var(--space-2)', background: 'var(--card)', borderRadius: 'var(--radius)', border: '1px solid var(--accent-lighter)' }}>
-                            <div style={{ fontSize: 10, color: 'var(--warm-500)' }}>내 점수</div>
-                            <div style={{ fontSize: 'var(--text-lg)', fontWeight: 800, color: 'var(--accent)' }}>{distribution.myScore}</div>
+                          <div style={{ textAlign: 'center', padding: 'var(--space-2)', background: '#FFFFFF', borderRadius: 8, border: '1px solid #DCE2EC' }}>
+                            <div style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 10.5, color: '#64748B' }}>내 점수</div>
+                            <div style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 18, fontWeight: 700, color: '#102044', fontVariantNumeric: 'tabular-nums' }}>{distribution.myScore}</div>
                           </div>
                         )}
-                        <div style={{ textAlign: 'center', padding: 'var(--space-2)', background: 'var(--card)', borderRadius: 'var(--radius)', border: '1px solid var(--warm-200)' }}>
-                          <div style={{ fontSize: 10, color: 'var(--warm-500)' }}>평균</div>
-                          <div style={{ fontSize: 'var(--text-lg)', fontWeight: 800 }}>{distribution.average}</div>
+                        <div style={{ textAlign: 'center', padding: 'var(--space-2)', background: '#FFFFFF', borderRadius: 8, border: '1px solid #DCE2EC' }}>
+                          <div style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 10.5, color: '#64748B' }}>평균</div>
+                          <div style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 18, fontWeight: 700, color: '#1E293B', fontVariantNumeric: 'tabular-nums' }}>{distribution.average}</div>
                         </div>
-                        <div style={{ textAlign: 'center', padding: 'var(--space-2)', background: 'var(--card)', borderRadius: 'var(--radius)', border: '1px solid var(--success-light)' }}>
-                          <div style={{ fontSize: 10, color: 'var(--warm-500)' }}>최고</div>
-                          <div style={{ fontSize: 'var(--text-lg)', fontWeight: 800, color: 'var(--success)' }}>{distribution.highest}</div>
+                        <div style={{ textAlign: 'center', padding: 'var(--space-2)', background: '#FFFFFF', borderRadius: 8, border: '1px solid #CADAD1' }}>
+                          <div style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 10.5, color: '#64748B' }}>최고</div>
+                          <div style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 18, fontWeight: 700, color: '#335B48', fontVariantNumeric: 'tabular-nums' }}>{distribution.highest}</div>
                         </div>
-                        <div style={{ textAlign: 'center', padding: 'var(--space-2)', background: 'var(--card)', borderRadius: 'var(--radius)', border: '1px solid var(--destructive-light)' }}>
-                          <div style={{ fontSize: 10, color: 'var(--warm-500)' }}>최저</div>
-                          <div style={{ fontSize: 'var(--text-lg)', fontWeight: 800, color: 'var(--destructive)' }}>{distribution.lowest}</div>
+                        <div style={{ textAlign: 'center', padding: 'var(--space-2)', background: '#FFFFFF', borderRadius: 8, border: '1px solid #E0C8CA' }}>
+                          <div style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 10.5, color: '#64748B' }}>최저</div>
+                          <div style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 18, fontWeight: 700, color: '#913E43', fontVariantNumeric: 'tabular-nums' }}>{distribution.lowest}</div>
                         </div>
-                        <div style={{ textAlign: 'center', padding: 'var(--space-2)', background: 'var(--card)', borderRadius: 'var(--radius)', border: '1px solid var(--warm-200)' }}>
-                          <div style={{ fontSize: 10, color: 'var(--warm-500)' }}>응시</div>
-                          <div style={{ fontSize: 'var(--text-lg)', fontWeight: 800 }}>{distribution.totalStudents}명</div>
+                        <div style={{ textAlign: 'center', padding: 'var(--space-2)', background: '#FFFFFF', borderRadius: 8, border: '1px solid #DCE2EC' }}>
+                          <div style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 10.5, color: '#64748B' }}>응시</div>
+                          <div style={{ fontFamily: "var(--font-display, 'Paperlogy', sans-serif)", fontSize: 18, fontWeight: 700, color: '#1E293B', fontVariantNumeric: 'tabular-nums' }}>{distribution.totalStudents}명</div>
                         </div>
                       </div>
 

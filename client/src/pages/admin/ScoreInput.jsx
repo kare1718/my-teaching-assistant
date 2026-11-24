@@ -7,6 +7,8 @@ import { askConfirm } from '../../lib/feedback';
 import { parseExplanationFileUrl } from '../../lib/explanationFile';
 import AdminOmrStatsPanel from '../../components/AdminOmrStatsPanel';
 
+const FONT_D = "var(--font-display, 'Paperlogy', 'KoPub Dotum', sans-serif)";
+
 // === 시험 유형 에디터 (인라인 컴포넌트) ===
 function ExamTypeEditor() {
   const { config, setConfig } = useTenantConfig();
@@ -958,11 +960,11 @@ export default function ScoreInput() {
       {/* 상위 탭: 시험/성적 관리 | 시험 유형 설정 */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
         <button onClick={() => setPageTab('scores')}
-          style={{ padding: '9px 20px', borderRadius: 10, border: pageTab === 'scores' ? 'none' : '1px solid #e2e8f0', fontSize: 14, fontWeight: 700, cursor: 'pointer', background: pageTab === 'scores' ? '#102044' : 'white', color: pageTab === 'scores' ? 'white' : '#334155', transition: 'all .15s' }}>
+          style={{ fontFamily: FONT_D, padding: '9px 20px', borderRadius: 10, border: pageTab === 'scores' ? 'none' : '1px solid #e2e8f0', fontSize: 14, fontWeight: 700, cursor: 'pointer', background: pageTab === 'scores' ? '#102044' : 'white', color: pageTab === 'scores' ? 'white' : '#334155', transition: 'all .15s' }}>
           시험/성적 관리
         </button>
         <button onClick={() => setPageTab('exam-types')}
-          style={{ padding: '9px 20px', borderRadius: 10, border: pageTab === 'exam-types' ? 'none' : '1px solid #e2e8f0', fontSize: 14, fontWeight: 700, cursor: 'pointer', background: pageTab === 'exam-types' ? '#102044' : 'white', color: pageTab === 'exam-types' ? 'white' : '#334155', transition: 'all .15s' }}>
+          style={{ fontFamily: FONT_D, padding: '9px 20px', borderRadius: 10, border: pageTab === 'exam-types' ? 'none' : '1px solid #e2e8f0', fontSize: 14, fontWeight: 700, cursor: 'pointer', background: pageTab === 'exam-types' ? '#102044' : 'white', color: pageTab === 'exam-types' ? 'white' : '#334155', transition: 'all .15s' }}>
           시험 유형 설정
         </button>
       </div>
@@ -971,22 +973,25 @@ export default function ScoreInput() {
 
       {pageTab === 'scores' && <>
       {/* 하위 탭: 3개 */}
-      <div className="tabs" style={{ marginBottom: 12 }}>
+      <div className="tabs" style={{ marginBottom: 12, fontFamily: FONT_D }}>
         <button className={`tab ${mainTab === 'examScore' ? 'active' : ''}`}
+          style={{ fontFamily: FONT_D }}
           onClick={() => setMainTab('examScore')}>
           시험 & 성적
         </button>
         <button className={`tab ${mainTab === 'answerKey' ? 'active' : ''}`}
+          style={{ fontFamily: FONT_D }}
           onClick={() => setMainTab('answerKey')}>
           정답키 설정
         </button>
         <button className={`tab ${mainTab === 'omrInput' ? 'active' : ''}`}
+          style={{ fontFamily: FONT_D }}
           onClick={() => { setMainTab('omrInput'); loadOmrExams(); }}>
           OMR 입력
         </button>
       </div>
 
-      {msg && <div className="alert alert-success" style={{ marginBottom: 12 }}>{msg}</div>}
+      {msg && <div className="alert alert-success" style={{ marginBottom: 12, fontFamily: FONT_D, fontWeight: 600 }}>{msg}</div>}
 
       {/* ═══════════════════════════════════════════════ */}
       {/* 탭 1: 시험 & 성적 — 가로 2열 */}
@@ -1572,20 +1577,21 @@ export default function ScoreInput() {
         <div style={{ maxWidth: 940 }}>
           <div className="card" style={{ padding: 18 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
-              <h3 style={{ fontSize: 16, margin: 0 }}>📝 정답키 & 학생 OMR 설정</h3>
+              <h3 style={{ fontFamily: FONT_D, fontSize: 16, fontWeight: 700, color: '#102044', margin: 0 }}>📝 정답키 & 학생 OMR 설정</h3>
               {akExamId && akExistingKey && (
                 <span style={{
-                  fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20,
-                  background: akStudentOmrEnabled ? 'oklch(0.93 0.08 155)' : 'var(--neutral-100)',
-                  color: akStudentOmrEnabled ? 'oklch(0.38 0.14 155)' : 'var(--muted-foreground)',
+                  fontFamily: FONT_D, fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20,
+                  background: akStudentOmrEnabled ? '#F1F6F3' : '#F4F6FA',
+                  color: akStudentOmrEnabled ? '#335B48' : '#64748B',
+                  border: `1px solid ${akStudentOmrEnabled ? '#CADAD1' : '#DCE2EC'}`,
                 }}>
-                  {akStudentOmrEnabled ? '🟢 학생 앱 OMR 오픈 중' : '⚪ 학생 앱 OMR 비공개'}
+                  {akStudentOmrEnabled ? '학생 앱 OMR 오픈 중' : '학생 앱 OMR 비공개'}
                 </span>
               )}
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, marginBottom: 4, display: 'block' }}>시험 선택</label>
+              <label style={{ fontFamily: FONT_D, fontSize: 12, fontWeight: 700, color: '#102044', marginBottom: 4, display: 'block' }}>시험 선택</label>
               <select value={akExamId}
                 onChange={e => {
                   const id = e.target.value; setAkExamId(id);
@@ -1603,21 +1609,22 @@ export default function ScoreInput() {
                 {/* 1. 학생 직접 OMR & 타이머·재제출 세팅 패널 */}
                 <div style={{
                   marginBottom: 16, padding: 14, borderRadius: 10,
-                  background: 'var(--neutral-50)', border: '1px solid var(--border)'
+                  background: '#F8F9FB', border: '1px solid #DCE2EC'
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 700 }}>⚙️ 학생 앱 직접 OMR 입력 & 시간/재제출 세팅</div>
-                      <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
+                      <div style={{ fontFamily: FONT_D, fontSize: 14, fontWeight: 700, color: '#102044' }}>⚙️ 학생 앱 직접 OMR 입력 & 시간/재제출 세팅</div>
+                      <div style={{ fontSize: 11, color: '#64748B' }}>
                         문항 수, 응시 제한 시간(분), 1회 제출 후 재제출 대기 시간(쿨타임)을 시험별로 자유롭게 설정합니다.
                       </div>
                     </div>
                     <label style={{
+                      fontFamily: FONT_D,
                       display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
                       padding: '6px 12px', borderRadius: 8,
-                      background: akStudentOmrEnabled ? 'var(--primary)' : 'var(--card)',
-                      color: akStudentOmrEnabled ? 'white' : 'var(--foreground)',
-                      border: '1px solid var(--border)', fontWeight: 700, fontSize: 12,
+                      background: akStudentOmrEnabled ? '#102044' : '#FFFFFF',
+                      color: akStudentOmrEnabled ? 'white' : '#1E293B',
+                      border: `1px solid ${akStudentOmrEnabled ? '#102044' : '#DCE2EC'}`, fontWeight: 700, fontSize: 12,
                     }}>
                       <input type="checkbox" checked={akStudentOmrEnabled}
                         onChange={e => setAkStudentOmrEnabled(e.target.checked)} />
@@ -1627,15 +1634,15 @@ export default function ScoreInput() {
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
                     {/* 시험 응시 제한 시간 */}
-                    <div style={{ background: 'var(--card)', padding: 12, borderRadius: 8, border: '1px solid var(--border)' }}>
-                      <label style={{ fontSize: 12, fontWeight: 700, display: 'block', marginBottom: 6 }}>
+                    <div style={{ background: '#FFFFFF', padding: 12, borderRadius: 8, border: '1px solid #DCE2EC' }}>
+                      <label style={{ fontFamily: FONT_D, fontSize: 12, fontWeight: 700, color: '#102044', display: 'block', marginBottom: 6 }}>
                         ⏱ 시험 응시 제한 시간 (타이머)
                       </label>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                         <input type="number" min="0" max="300" placeholder="제한 없음"
                           value={akTimeLimitMinutes}
                           onChange={e => setAkTimeLimitMinutes(e.target.value === '' ? '' : Math.max(0, parseInt(e.target.value) || 0))}
-                          style={{ width: 90, padding: '5px 8px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 13 }} />
+                          style={{ fontFamily: FONT_D, width: 90, padding: '5px 8px', border: '1px solid #DCE2EC', borderRadius: 6, fontSize: 13 }} />
                         <span style={{ fontSize: 12 }}>분 (비워두거나 0이면 무제한)</span>
                       </div>
                       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
@@ -1651,10 +1658,10 @@ export default function ScoreInput() {
                           <button key={p.label} type="button"
                             onClick={() => setAkTimeLimitMinutes(p.val)}
                             style={{
-                              fontSize: 11, padding: '3px 8px', borderRadius: 6, cursor: 'pointer',
-                              border: String(akTimeLimitMinutes) === String(p.val) ? '1px solid var(--primary)' : '1px solid var(--border)',
-                              background: String(akTimeLimitMinutes) === String(p.val) ? 'var(--primary-lighter)' : 'var(--neutral-50)',
-                              color: String(akTimeLimitMinutes) === String(p.val) ? 'var(--primary)' : 'var(--foreground)',
+                              fontFamily: FONT_D, fontSize: 11, padding: '3px 8px', borderRadius: 6, cursor: 'pointer',
+                              border: String(akTimeLimitMinutes) === String(p.val) ? '1px solid #102044' : '1px solid #DCE2EC',
+                              background: String(akTimeLimitMinutes) === String(p.val) ? '#102044' : '#F8F9FB',
+                              color: String(akTimeLimitMinutes) === String(p.val) ? '#FFFFFF' : '#1E293B',
                               fontWeight: 600,
                             }}>
                             {p.label}
@@ -1664,12 +1671,12 @@ export default function ScoreInput() {
                     </div>
 
                     {/* 재제출 대기 시간 (쿨타임) */}
-                    <div style={{ background: 'var(--card)', padding: 12, borderRadius: 8, border: '1px solid var(--border)' }}>
+                    <div style={{ background: '#FFFFFF', padding: 12, borderRadius: 8, border: '1px solid #DCE2EC' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                        <label style={{ fontSize: 12, fontWeight: 700 }}>
+                        <label style={{ fontFamily: FONT_D, fontSize: 12, fontWeight: 700, color: '#102044' }}>
                           ⏳ 1회 제출 후 재제출 시간 제한 (쿨타임)
                         </label>
-                        <label style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontWeight: 600 }}>
+                        <label style={{ fontFamily: FONT_D, fontSize: 11, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontWeight: 600 }}>
                           <input type="checkbox" checked={akAllowResubmit} onChange={e => setAkAllowResubmit(e.target.checked)} />
                           재제출 허용
                         </label>
@@ -1680,7 +1687,7 @@ export default function ScoreInput() {
                             <input type="number" min="0" max="1440"
                               value={akResubmitCooldownMinutes}
                               onChange={e => setAkResubmitCooldownMinutes(Math.max(0, parseInt(e.target.value) || 0))}
-                              style={{ width: 80, padding: '5px 8px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 13 }} />
+                              style={{ fontFamily: FONT_D, width: 80, padding: '5px 8px', border: '1px solid #DCE2EC', borderRadius: 6, fontSize: 13 }} />
                             <span style={{ fontSize: 12 }}>분 대기 후 재제출 가능</span>
                           </div>
                           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
@@ -1695,10 +1702,10 @@ export default function ScoreInput() {
                               <button key={p.label} type="button"
                                 onClick={() => setAkResubmitCooldownMinutes(p.val)}
                                 style={{
-                                  fontSize: 11, padding: '3px 8px', borderRadius: 6, cursor: 'pointer',
-                                  border: Number(akResubmitCooldownMinutes) === p.val ? '1px solid var(--primary)' : '1px solid var(--border)',
-                                  background: Number(akResubmitCooldownMinutes) === p.val ? 'var(--primary-lighter)' : 'var(--neutral-50)',
-                                  color: Number(akResubmitCooldownMinutes) === p.val ? 'var(--primary)' : 'var(--foreground)',
+                                  fontFamily: FONT_D, fontSize: 11, padding: '3px 8px', borderRadius: 6, cursor: 'pointer',
+                                  border: Number(akResubmitCooldownMinutes) === p.val ? '1px solid #102044' : '1px solid #DCE2EC',
+                                  background: Number(akResubmitCooldownMinutes) === p.val ? '#102044' : '#F8F9FB',
+                                  color: Number(akResubmitCooldownMinutes) === p.val ? '#FFFFFF' : '#1E293B',
                                   fontWeight: 600,
                                 }}>
                                 {p.label}
@@ -1707,21 +1714,21 @@ export default function ScoreInput() {
                           </div>
                         </>
                       ) : (
-                        <div style={{ fontSize: 12, color: 'var(--muted-foreground)', padding: '8px 0' }}>
+                        <div style={{ fontSize: 12, color: '#64748B', padding: '8px 0' }}>
                           재제출 비활성화됨 — 학생은 1회만 최종 제출할 수 있습니다.
                         </div>
                       )}
                     </div>
 
                     {/* 재제출 횟수·방식 & 정답 공개 정책 */}
-                    <div style={{ background: 'var(--card)', padding: 12, borderRadius: 8, border: '1px solid var(--border)', gridColumn: '1 / -1' }}>
+                    <div style={{ background: '#FFFFFF', padding: 12, borderRadius: 8, border: '1px solid #DCE2EC', gridColumn: '1 / -1' }}>
                       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                         {akAllowResubmit && (
                           <>
                             <div style={{ flex: '1 1 160px' }}>
-                              <label style={{ fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 4 }}>총 제출 가능 횟수</label>
+                              <label style={{ fontFamily: FONT_D, fontSize: 11.5, fontWeight: 700, color: '#102044', display: 'block', marginBottom: 4 }}>총 제출 가능 횟수</label>
                               <select value={akMaxAttempts} onChange={e => setAkMaxAttempts(parseInt(e.target.value))}
-                                style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }}>
+                                style={{ width: '100%', padding: '6px 8px', border: '1px solid #DCE2EC', borderRadius: 6, fontSize: 12 }}>
                                 <option value={2}>총 2회 (1차 제출 + 재제출 1회)</option>
                                 <option value={3}>총 3회 (1차 제출 + 재제출 2회)</option>
                                 <option value={4}>총 4회 (1차 제출 + 재제출 3회)</option>
@@ -1729,9 +1736,9 @@ export default function ScoreInput() {
                               </select>
                             </div>
                             <div style={{ flex: '1 1 220px' }}>
-                              <label style={{ fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 4 }}>재제출 시 마킹 방식</label>
+                              <label style={{ fontFamily: FONT_D, fontSize: 11.5, fontWeight: 700, color: '#102044', display: 'block', marginBottom: 4 }}>재제출 시 마킹 방식</label>
                               <select value={akResubmitMode} onChange={e => setAkResubmitMode(e.target.value)}
-                                style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }}>
+                                style={{ width: '100%', padding: '6px 8px', border: '1px solid #DCE2EC', borderRadius: 6, fontSize: 12 }}>
                                 <option value="wrong_only">틀린 문항만 다시 마킹 (맞힌 문항은 잠금 유지)</option>
                                 <option value="all">전체 문항 다시 마킹 허용</option>
                               </select>
@@ -1739,9 +1746,9 @@ export default function ScoreInput() {
                           </>
                         )}
                         <div style={{ flex: '1 1 240px' }}>
-                          <label style={{ fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 4 }}>정답 번호 공개 시점 (베끼기 방지)</label>
+                          <label style={{ fontFamily: FONT_D, fontSize: 11.5, fontWeight: 700, color: '#102044', display: 'block', marginBottom: 4 }}>정답 번호 공개 시점 (베끼기 방지)</label>
                           <select value={akRevealAnswersPolicy} onChange={e => setAkRevealAnswersPolicy(e.target.value)}
-                            style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }}>
+                            style={{ width: '100%', padding: '6px 8px', border: '1px solid #DCE2EC', borderRadius: 6, fontSize: 12 }}>
                             <option value="after_final">재제출 모두 완료 후 공개 (1차 후에는 점수·O/X만 표시)</option>
                             <option value="immediate">1차 제출 즉시 정답 번호까지 공개</option>
                             <option value="never">학생에게 정답 번호 비공개 (점수·O/X만 표시)</option>
@@ -1750,28 +1757,28 @@ export default function ScoreInput() {
                       </div>
 
                       {/* 문항별 정답률 · 선지 분포 공개 설정 */}
-                      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 12, paddingTop: 10, borderTop: '1px solid #EAEFF5' }}>
                         <div style={{ flex: '1 1 220px' }}>
-                          <label style={{ fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 4 }}>학생 정답률 · 선지 분포 공개</label>
+                          <label style={{ fontFamily: FONT_D, fontSize: 11.5, fontWeight: 700, color: '#102044', display: 'block', marginBottom: 4 }}>학생 정답률 · 선지 분포 공개</label>
                           <select value={akStatsRevealPolicy} onChange={e => setAkStatsRevealPolicy(e.target.value)}
-                            style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }}>
+                            style={{ width: '100%', padding: '6px 8px', border: '1px solid #DCE2EC', borderRadius: 6, fontSize: 12 }}>
                             <option value="after_final">최종 완료 후 정답률 + 선지 분포 공개 (추천)</option>
                             <option value="rate_only_first">1차 직후부터 정답률(%)만 공개 (선지 분포는 최종 후)</option>
                             <option value="off">학생에게 정답률 비공개 (관리자·조교만 열람)</option>
                           </select>
                         </div>
                         <div style={{ flex: '1 1 180px' }}>
-                          <label style={{ fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 4 }}>학생 표시 정답률 기준</label>
+                          <label style={{ fontFamily: FONT_D, fontSize: 11.5, fontWeight: 700, color: '#102044', display: 'block', marginBottom: 4 }}>학생 표시 정답률 기준</label>
                           <select value={akStatsBasis} onChange={e => setAkStatsBasis(e.target.value)}
-                            style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }}>
+                            style={{ width: '100%', padding: '6px 8px', border: '1px solid #DCE2EC', borderRadius: 6, fontSize: 12 }}>
                             <option value="first">1차 제출 기준 (실제 난이도 · 추천)</option>
                             <option value="latest">최종 제출 기준 (재제출 반영)</option>
                           </select>
                         </div>
                         <div style={{ flex: '0 1 170px' }}>
-                          <label style={{ fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 4 }}>정답률 최소 공개 인원</label>
+                          <label style={{ fontFamily: FONT_D, fontSize: 11.5, fontWeight: 700, color: '#102044', display: 'block', marginBottom: 4 }}>정답률 최소 공개 인원</label>
                           <select value={akMinStatsSample} onChange={e => setAkMinStatsSample(parseInt(e.target.value))}
-                            style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }}>
+                            style={{ width: '100%', padding: '6px 8px', border: '1px solid #DCE2EC', borderRadius: 6, fontSize: 12 }}>
                             <option value={5}>5명 이상 응시 시 공개 (기본)</option>
                             <option value={3}>3명 이상 응시 시 공개</option>
                             <option value={10}>10명 이상 응시 시 공개</option>
@@ -1786,63 +1793,63 @@ export default function ScoreInput() {
                 {/* 2. 문항 수 · 선택지 · 만점 · 배점 방식 */}
                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
                   <div style={{ flex: '1 1 130px' }}>
-                    <label style={{ fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 4 }}>문제 수 (1~100)</label>
+                    <label style={{ fontFamily: FONT_D, fontSize: 11.5, fontWeight: 700, color: '#102044', display: 'block', marginBottom: 4 }}>문제 수 (1~100)</label>
                     <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                       <input type="number" min="1" max="100" value={akNumQuestions}
                         onChange={e => setAkNumQuestions(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
-                        style={{ width: 70, padding: '5px 8px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 13 }} />
+                        style={{ fontFamily: FONT_D, width: 70, padding: '5px 8px', border: '1px solid #DCE2EC', borderRadius: 6, fontSize: 13 }} />
                       {[10, 20, 25, 30, 45].map(n => (
                         <button key={n} type="button" onClick={() => setAkNumQuestions(n)}
                           style={{
-                            fontSize: 11, padding: '4px 6px', borderRadius: 5, cursor: 'pointer',
-                            border: akNumQuestions === n ? '1px solid var(--primary)' : '1px solid var(--border)',
-                            background: akNumQuestions === n ? 'var(--primary-lighter)' : 'var(--card)',
-                            color: akNumQuestions === n ? 'var(--primary)' : 'var(--foreground)', fontWeight: 600,
+                            fontFamily: FONT_D, fontSize: 11, padding: '4px 7px', borderRadius: 5, cursor: 'pointer',
+                            border: akNumQuestions === n ? '1px solid #102044' : '1px solid #DCE2EC',
+                            background: akNumQuestions === n ? '#102044' : '#FFFFFF',
+                            color: akNumQuestions === n ? '#FFFFFF' : '#1E293B', fontWeight: 600,
                           }}>{n}</button>
                       ))}
                     </div>
                   </div>
                   <div style={{ flex: '1 1 160px' }}>
-                    <label style={{ fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 4 }}>선택지 수</label>
+                    <label style={{ fontFamily: FONT_D, fontSize: 11.5, fontWeight: 700, color: '#102044', display: 'block', marginBottom: 4 }}>선택지 수</label>
                     <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
                       {[3, 4, 5].map(c => (
-                        <label key={c} style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
+                        <label key={c} style={{ fontFamily: FONT_D, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
                           <input type="radio" name="akChoices" checked={akNumChoices === c} onChange={() => setAkNumChoices(c)} /> {c}지선다
                         </label>
                       ))}
                     </div>
                   </div>
                   <div style={{ flex: '0 1 90px' }}>
-                    <label style={{ fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 4 }}>만점</label>
+                    <label style={{ fontFamily: FONT_D, fontSize: 11.5, fontWeight: 700, color: '#102044', display: 'block', marginBottom: 4 }}>만점</label>
                     <input type="number" min="1" max="1000" value={akMaxScore}
                       onChange={e => setAkMaxScore(Math.max(1, parseInt(e.target.value) || 100))}
-                      style={{ width: '100%', padding: '5px 8px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 13, boxSizing: 'border-box' }} />
+                      style={{ fontFamily: FONT_D, width: '100%', padding: '5px 8px', border: '1px solid #DCE2EC', borderRadius: 6, fontSize: 13, boxSizing: 'border-box' }} />
                   </div>
                   <div style={{ flex: '1 1 140px' }}>
-                    <label style={{ fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 4 }}>배점 방식</label>
+                    <label style={{ fontFamily: FONT_D, fontSize: 11.5, fontWeight: 700, color: '#102044', display: 'block', marginBottom: 4 }}>배점 방식</label>
                     <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
-                      <label style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
+                      <label style={{ fontFamily: FONT_D, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
                         <input type="radio" name="akScoring" checked={akScoringType === 'equal'} onChange={() => setAkScoringType('equal')} /> 균등 배점
                       </label>
-                      <label style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
+                      <label style={{ fontFamily: FONT_D, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
                         <input type="radio" name="akScoring" checked={akScoringType === 'individual'} onChange={() => setAkScoringType('individual')} /> 문항별 배점
                       </label>
                     </div>
                   </div>
                 </div>
 
-                <div style={{ marginBottom: 14, padding: '8px 12px', background: 'var(--neutral-50)', borderRadius: 6, fontSize: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                <div style={{ marginBottom: 14, padding: '8px 12px', background: '#F8F9FB', border: '1px solid #EAEFF5', borderRadius: 6, fontSize: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                   {akScoringType === 'equal' ? (
-                    <span>균등배점: {akMaxScore}점 / {akNumQuestions}문항 = 문항당 <strong>{Math.round((akMaxScore / akNumQuestions) * 100) / 100}점</strong></span>
+                    <span>균등배점: <strong style={{ fontFamily: FONT_D, color: '#102044' }}>{akMaxScore}점 / {akNumQuestions}문항 = 문항당 {Math.round((akMaxScore / akNumQuestions) * 100) / 100}점</strong></span>
                   ) : (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                       <span>기본 배점:</span>
                       <input type="number" min="0" step="0.5" value={akDefaultPoints}
                         onChange={e => setAkDefaultPoints(parseFloat(e.target.value) || 0)}
-                        style={{ width: 55, padding: '3px 6px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 12, textAlign: 'center' }} />
+                        style={{ fontFamily: FONT_D, width: 55, padding: '3px 6px', border: '1px solid #DCE2EC', borderRadius: 4, fontSize: 12, textAlign: 'center' }} />
                       <span>점</span>
-                      <span style={{ color: 'var(--muted-foreground)' }}>
-                        (현재 총합: <strong>
+                      <span style={{ color: '#64748B' }}>
+                        (현재 총합: <strong style={{ fontFamily: FONT_D, color: '#102044' }}>
                           {Array.from({ length: akNumQuestions }, (_, i) => akPoints[i + 1] !== undefined ? Number(akPoints[i + 1]) : Number(akDefaultPoints)).reduce((a, b) => a + b, 0)}점
                         </strong>)
                       </span>
@@ -1851,12 +1858,12 @@ export default function ScoreInput() {
 
                   {/* 빠른 정답 문자열 일괄 입력 */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)' }}>⚡ 빠른 정답 입력:</span>
+                    <span style={{ fontFamily: FONT_D, fontSize: 11.5, fontWeight: 700, color: '#102044' }}>⚡ 빠른 정답 입력:</span>
                     <input
                       value={akQuickString}
                       onChange={e => applyQuickAnswerString(e.target.value)}
                       placeholder="예: 3142512345..."
-                      style={{ width: 170, padding: '4px 8px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12, fontFamily: 'monospace' }}
+                      style={{ width: 170, padding: '4px 8px', border: '1px solid #DCE2EC', borderRadius: 6, fontSize: 12, fontFamily: 'monospace' }}
                     />
                   </div>
                 </div>
@@ -1864,14 +1871,14 @@ export default function ScoreInput() {
                 {/* 정답 입력 영역 (빠른 정답) */}
                 <div style={{ marginBottom: 14 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', gap: 6 }}>
-                    <label style={{ fontSize: 12, fontWeight: 700 }}>
+                    <label style={{ fontFamily: FONT_D, fontSize: 12.5, fontWeight: 700, color: '#102044' }}>
                       빠른 정답 마킹 ({Object.keys(akAnswers).filter(k => Number(k) <= akNumQuestions && akAnswers[k]).length}/{akNumQuestions}문항 입력됨)
-                      <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 500, color: 'var(--muted-foreground)' }}>
+                      <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 500, color: '#64748B' }}>
                         문항 번호 클릭 시 아래 해설 입력란으로 이동
                       </span>
                     </label>
                     <button type="button" onClick={() => { setAkAnswers({}); setAkQuickString(''); }}
-                      style={{ fontSize: 11, color: 'var(--muted-foreground)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+                      style={{ fontFamily: FONT_D, fontSize: 11, color: '#64748B', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
                       정답 초기화
                     </button>
                   </div>
@@ -1894,7 +1901,7 @@ export default function ScoreInput() {
                               onClick={() => jumpToAdminExplanation(qNum)}
                               title={`${qNum}번 해설 쪽수·링크 설정으로 이동`}
                               style={{
-                                fontSize: 11, fontWeight: 700, width: 28, textAlign: 'right', flexShrink: 0,
+                                fontFamily: FONT_D, fontSize: 11.5, fontWeight: 700, width: 28, textAlign: 'right', flexShrink: 0,
                                 background: 'none', border: 'none', padding: 0, cursor: 'pointer',
                                 color: hasExp ? '#335B48' : '#102044',
                                 textDecoration: hasExp ? 'underline' : 'none',
@@ -1908,10 +1915,11 @@ export default function ScoreInput() {
                                 return (
                                   <button key={n} type="button" onClick={() => setAkAnswers(prev => ({ ...prev, [qNum]: n }))}
                                     style={{
+                                      fontFamily: FONT_D,
                                       width: 26, height: 26, borderRadius: '50%', border: '1.5px solid',
-                                      borderColor: akAnswers[qNum] === n ? '#102044' : 'var(--border)',
-                                      background: akAnswers[qNum] === n ? '#102044' : 'var(--card)',
-                                      color: akAnswers[qNum] === n ? '#FFFFFF' : 'var(--foreground)',
+                                      borderColor: akAnswers[qNum] === n ? '#102044' : '#CBD5E1',
+                                      background: akAnswers[qNum] === n ? '#102044' : '#FFFFFF',
+                                      color: akAnswers[qNum] === n ? '#FFFFFF' : '#1E293B',
                                       fontSize: 12, fontWeight: 600, cursor: 'pointer',
                                       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0
                                     }}>{symbols[n]}</button>
@@ -1922,7 +1930,7 @@ export default function ScoreInput() {
                               <input type="number" min="0" step="0.5"
                                 value={akPoints[qNum] !== undefined ? akPoints[qNum] : akDefaultPoints}
                                 onChange={e => setAkPoints(prev => ({ ...prev, [qNum]: parseFloat(e.target.value) || 0 }))}
-                                style={{ width: 38, padding: '2px 4px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 10, textAlign: 'center' }} />
+                                style={{ fontFamily: FONT_D, width: 38, padding: '2px 4px', border: '1px solid #DCE2EC', borderRadius: 4, fontSize: 10, textAlign: 'center' }} />
                             )}
                           </div>
                         );
@@ -1957,11 +1965,11 @@ export default function ScoreInput() {
                         display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8,
                       }}>
                         <div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: '#102044', display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
+                          <div style={{ fontFamily: FONT_D, fontSize: 13.5, fontWeight: 700, color: '#102044', display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
                             <span>정답과 해설 파일 연동 (Google Drive · 네이버 MYBOX / N드라이브)</span>
                             {parsedPreview && (
                               <span style={{
-                                fontSize: 11, fontWeight: 600, padding: '2px 7px', borderRadius: 4,
+                                fontFamily: FONT_D, fontSize: 11, fontWeight: 600, padding: '2px 7px', borderRadius: 4,
                                 background: '#F1F6F3', color: '#335B48', border: '1px solid #CADAD1',
                               }}>
                                 {parsedPreview.providerLabel} 연결됨
@@ -1977,7 +1985,7 @@ export default function ScoreInput() {
                             type="button"
                             onClick={() => setAkShowExplanations(prev => !prev)}
                             style={{
-                              fontSize: 11.5, fontWeight: 600, padding: '5px 10px', borderRadius: 6, cursor: 'pointer',
+                              fontFamily: FONT_D, fontSize: 11.5, fontWeight: 600, padding: '5px 10px', borderRadius: 6, cursor: 'pointer',
                               border: '1px solid #DCE2EC', background: akShowExplanations ? '#102044' : '#FFFFFF',
                               color: akShowExplanations ? '#FFFFFF' : '#1E293B',
                             }}
@@ -1991,7 +1999,7 @@ export default function ScoreInput() {
                       <div style={{ padding: 13, background: '#FFFFFF', borderBottom: akShowExplanations || akShowBulkExplanation ? '1px solid #DCE2EC' : 'none' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 8, marginBottom: 8 }}>
                           <div>
-                            <label style={{ fontSize: 11, fontWeight: 700, color: '#102044', display: 'block', marginBottom: 4 }}>
+                            <label style={{ fontFamily: FONT_D, fontSize: 11.5, fontWeight: 700, color: '#102044', display: 'block', marginBottom: 4 }}>
                               해설 파일 공유 링크 (Google Drive · 네이버 MYBOX / N드라이브 · PDF)
                             </label>
                             <div style={{ display: 'flex', gap: 6 }}>
@@ -2011,7 +2019,7 @@ export default function ScoreInput() {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   style={{
-                                    padding: '7px 10px', borderRadius: 6, border: '1px solid #DCE2EC',
+                                    fontFamily: FONT_D, padding: '7px 10px', borderRadius: 6, border: '1px solid #DCE2EC',
                                     background: '#F8F9FB', color: '#102044', fontSize: 11.5, fontWeight: 600,
                                     textDecoration: 'none', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center',
                                   }}
@@ -2022,7 +2030,7 @@ export default function ScoreInput() {
                             </div>
                           </div>
                           <div>
-                            <label style={{ fontSize: 11, fontWeight: 700, color: '#102044', display: 'block', marginBottom: 4 }}>
+                            <label style={{ fontFamily: FONT_D, fontSize: 11.5, fontWeight: 700, color: '#102044', display: 'block', marginBottom: 4 }}>
                               파일 표시 제목 (선택)
                             </label>
                             <input
@@ -2039,7 +2047,7 @@ export default function ScoreInput() {
                         </div>
 
                         {akExpFileUrl.trim() && !parsedPreview ? (
-                          <div style={{ fontSize: 11.5, color: '#913E43', fontWeight: 600 }}>
+                          <div style={{ fontFamily: FONT_D, fontSize: 11.5, color: '#913E43', fontWeight: 600 }}>
                             유효한 웹 링크(https://...)를 입력해 주세요.
                           </div>
                         ) : (
@@ -2061,7 +2069,7 @@ export default function ScoreInput() {
                           }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', flex: 1 }}>
-                                <span style={{ fontSize: 11.5, fontWeight: 700, color: '#102044', whiteSpace: 'nowrap' }}>
+                                <span style={{ fontFamily: FONT_D, fontSize: 11.5, fontWeight: 700, color: '#102044', whiteSpace: 'nowrap' }}>
                                   해설지 쪽수:
                                 </span>
                                 <input
@@ -2078,7 +2086,7 @@ export default function ScoreInput() {
                                   type="button"
                                   onClick={applyPageRangeMap}
                                   style={{
-                                    fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 5,
+                                    fontFamily: FONT_D, fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 5,
                                     border: 'none', background: '#102044', color: '#FFFFFF', cursor: 'pointer',
                                   }}
                                 >
@@ -2086,7 +2094,7 @@ export default function ScoreInput() {
                                 </button>
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', flex: 1 }}>
-                                <span style={{ fontSize: 11.5, fontWeight: 700, color: '#102044', whiteSpace: 'nowrap' }}>
+                                <span style={{ fontFamily: FONT_D, fontSize: 11.5, fontWeight: 700, color: '#102044', whiteSpace: 'nowrap' }}>
                                   영역 태그:
                                 </span>
                                 <input
@@ -2103,7 +2111,7 @@ export default function ScoreInput() {
                                   type="button"
                                   onClick={applyCategoryRangeMap}
                                   style={{
-                                    fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 5,
+                                    fontFamily: FONT_D, fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 5,
                                     border: '1px solid #102044', background: '#FFFFFF', color: '#102044', cursor: 'pointer',
                                   }}
                                 >
@@ -2114,7 +2122,7 @@ export default function ScoreInput() {
                                 type="button"
                                 onClick={() => setAkShowBulkExplanation(prev => !prev)}
                                 style={{
-                                  fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 5, cursor: 'pointer',
+                                  fontFamily: FONT_D, fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 5, cursor: 'pointer',
                                   border: '1px solid #DCE2EC', background: akShowBulkExplanation ? '#102044' : '#F8F9FB',
                                   color: akShowBulkExplanation ? '#FFFFFF' : '#475569',
                                 }}
@@ -2142,11 +2150,11 @@ export default function ScoreInput() {
                               />
                               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, marginTop: 6 }}>
                                 <button type="button" onClick={() => { setAkShowBulkExplanation(false); setAkBulkExplanationText(''); }}
-                                  style={{ fontSize: 11, padding: '4px 9px', borderRadius: 5, border: '1px solid #DCE2EC', background: '#FFFFFF', color: '#64748B', cursor: 'pointer' }}>
+                                  style={{ fontFamily: FONT_D, fontSize: 11, padding: '4px 9px', borderRadius: 5, border: '1px solid #DCE2EC', background: '#FFFFFF', color: '#64748B', cursor: 'pointer' }}>
                                   취소
                                 </button>
                                 <button type="button" onClick={applyBulkExplanations}
-                                  style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 5, border: 'none', background: '#102044', color: '#FFFFFF', cursor: 'pointer' }}>
+                                  style={{ fontFamily: FONT_D, fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 5, border: 'none', background: '#102044', color: '#FFFFFF', cursor: 'pointer' }}>
                                   자동 분리 적용
                                 </button>
                               </div>
@@ -2163,11 +2171,11 @@ export default function ScoreInput() {
                                   background: '#FFFFFF', border: '1px solid #DCE2EC', borderRadius: 7, padding: '8px 10px',
                                 }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
-                                    <span style={{ fontSize: 12, fontWeight: 700, color: '#102044', width: 32 }}>
+                                    <span style={{ fontFamily: FONT_D, fontSize: 12, fontWeight: 700, color: '#102044', width: 32 }}>
                                       {String(qNum).padStart(2, '0')}번
                                     </span>
                                     <span style={{
-                                      fontSize: 11, fontWeight: 600, padding: '1px 6px', borderRadius: 4,
+                                      fontFamily: FONT_D, fontSize: 11, fontWeight: 600, padding: '1px 6px', borderRadius: 4,
                                       background: ansVal ? '#F4F6FA' : '#FAF3F3',
                                       color: ansVal ? '#102044' : '#913E43',
                                     }}>
@@ -2194,7 +2202,7 @@ export default function ScoreInput() {
                                         onChange={e => setAkExpPages(prev => ({ ...prev, [qNum]: e.target.value ? parseInt(e.target.value, 10) : '' }))}
                                         placeholder="쪽"
                                         style={{
-                                          width: 52, padding: '3px 6px', border: '1px solid #DCE2EC', borderRadius: 5,
+                                          fontFamily: FONT_D, width: 52, padding: '3px 6px', border: '1px solid #DCE2EC', borderRadius: 5,
                                           fontSize: 12, textAlign: 'center',
                                         }}
                                       />
@@ -2232,16 +2240,16 @@ export default function ScoreInput() {
                 })()}
 
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <button className="btn btn-primary" onClick={saveAnswerKey}>정답키·해설 파일 연동 및 OMR 설정 저장</button>
+                  <button className="btn btn-primary" style={{ fontFamily: FONT_D }} onClick={saveAnswerKey}>정답키·해설 파일 연동 및 OMR 설정 저장</button>
                   {akExistingKey && (
-                    <button className="btn btn-outline" onClick={() => regradeAllSubmissions(akExamId)}>
+                    <button className="btn btn-outline" style={{ fontFamily: FONT_D }} onClick={() => regradeAllSubmissions(akExamId)}>
                       🔄 기존 제출자 일괄 재채점
                     </button>
                   )}
-                  {akExistingKey && <button className="btn btn-danger" onClick={deleteAnswerKey}>삭제</button>}
+                  {akExistingKey && <button className="btn btn-danger" style={{ fontFamily: FONT_D }} onClick={deleteAnswerKey}>삭제</button>}
                   {akExistingKey && (
                     <button className="btn btn-outline" onClick={() => { setMainTab('omrInput'); loadOmrExams(); setOmrExamId(akExamId); setTimeout(() => loadOmrData(akExamId), 300); }}
-                      style={{ marginLeft: 'auto' }}>
+                      style={{ marginLeft: 'auto', fontFamily: FONT_D }}>
                       OMR 제출 현황 / 채점으로 이동 &rarr;
                     </button>
                   )}
@@ -2260,16 +2268,16 @@ export default function ScoreInput() {
         <div style={{ maxWidth: 940 }}>
           <div className="card" style={{ padding: 18 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
-              <h3 style={{ fontSize: 16, margin: 0 }}>📋 OMR 제출 현황 & 답안 관리</h3>
+              <h3 style={{ fontFamily: FONT_D, fontSize: 16, fontWeight: 700, color: '#102044', margin: 0 }}>📋 OMR 제출 현황 & 답안 관리</h3>
               {omrExamId && (
-                <button className="btn btn-outline btn-sm" onClick={() => loadOmrData(omrExamId, omrFilterSchool, omrFilterGrade)} style={{ fontSize: 12 }}>
+                <button className="btn btn-outline btn-sm" onClick={() => loadOmrData(omrExamId, omrFilterSchool, omrFilterGrade)} style={{ fontFamily: FONT_D, fontSize: 12 }}>
                   🔄 현황 새로고침
                 </button>
               )}
             </div>
 
             <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, marginBottom: 4, display: 'block' }}>시험 선택 (정답키 설정된 시험)</label>
+              <label style={{ fontFamily: FONT_D, fontSize: 12, fontWeight: 700, color: '#102044', marginBottom: 4, display: 'block' }}>시험 선택 (정답키 설정된 시험)</label>
               <select value={omrExamId}
                 onChange={e => {
                   const id = e.target.value; setOmrExamId(id);
@@ -2277,7 +2285,7 @@ export default function ScoreInput() {
                   setOmrSubmissions({}); setOmrQuestionStats([]); setOmrStatsData(null); setOmrQuickInputByStudent({});
                   if (id) loadOmrData(id, omrFilterSchool, omrFilterGrade);
                 }}
-                style={{ width: '100%', padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 13 }}>
+                style={{ width: '100%', padding: '7px 10px', border: '1px solid #DCE2EC', borderRadius: 8, fontSize: 13 }}>
                 <option value="">시험을 선택하세요</option>
                 {omrExams.map(e => (
                   <option key={e.id} value={e.id}>
@@ -2303,16 +2311,16 @@ export default function ScoreInput() {
                   {/* 현재 시험의 OMR 세팅 요약 바 */}
                   <div style={{
                     marginBottom: 12, padding: '8px 12px', borderRadius: 8,
-                    background: 'var(--neutral-50)', border: '1px solid var(--border)',
+                    background: '#F8F9FB', border: '1px solid #DCE2EC',
                     display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', fontSize: 12
                   }}>
-                    <span style={{ fontWeight: 700, color: omrAnswerKey.studentOmrEnabled ? 'var(--success)' : 'var(--muted-foreground)' }}>
-                      {omrAnswerKey.studentOmrEnabled ? '🟢 학생 앱 OMR 오픈' : '⚪ 학생 앱 비공개'}
+                    <span style={{ fontFamily: FONT_D, fontWeight: 700, color: omrAnswerKey.studentOmrEnabled ? '#335B48' : '#64748B' }}>
+                      {omrAnswerKey.studentOmrEnabled ? '학생 앱 OMR 오픈' : '학생 앱 비공개'}
                     </span>
-                    <span>문항: <strong>{omrAnswerKey.numQuestions}문항</strong> ({omrAnswerKey.numChoices || 5}지선다)</span>
-                    <span>제한시간: <strong>{omrAnswerKey.timeLimitMinutes ? `${omrAnswerKey.timeLimitMinutes}분` : '무제한'}</strong></span>
+                    <span>문항: <strong style={{ fontFamily: FONT_D, color: '#102044' }}>{omrAnswerKey.numQuestions}문항</strong> ({omrAnswerKey.numChoices || 5}지선다)</span>
+                    <span>제한시간: <strong style={{ fontFamily: FONT_D, color: '#102044' }}>{omrAnswerKey.timeLimitMinutes ? `${omrAnswerKey.timeLimitMinutes}분` : '무제한'}</strong></span>
                     <span>
-                      재제출: <strong>
+                      재제출: <strong style={{ fontFamily: FONT_D, color: '#102044' }}>
                         {omrAnswerKey.allowResubmit
                           ? `쿨타임 ${omrAnswerKey.resubmitCooldownMinutes}분 · 최대 ${omrAnswerKey.maxAttempts === 0 ? '무제한' : `${omrAnswerKey.maxAttempts}회`} (${omrAnswerKey.resubmitMode === 'wrong_only' ? '오답만' : '전체'})`
                           : '불가(1회만)'}
@@ -2320,7 +2328,7 @@ export default function ScoreInput() {
                     </span>
                     <button type="button"
                       onClick={() => { setMainTab('answerKey'); setAkExamId(omrExamId); loadAnswerKey(omrExamId); }}
-                      style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}>
+                      style={{ fontFamily: FONT_D, marginLeft: 'auto', fontSize: 11.5, color: '#102044', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}>
                       ⚙️ 설정 변경 &rarr;
                     </button>
                   </div>
@@ -2332,7 +2340,7 @@ export default function ScoreInput() {
                       setOmrFilterGrade('');
                       reloadOmrQuestionStats(omrExamId, nextSchool, '');
                     }}
-                      style={{ flex: 1, padding: '6px 8px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }}>
+                      style={{ flex: 1, padding: '6px 8px', border: '1px solid #DCE2EC', borderRadius: 6, fontSize: 12 }}>
                       <option value="">전체 학교</option>
                       {schools.filter(s => s.name !== '조교' && s.name !== '선생님').map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
                     </select>
@@ -2341,7 +2349,7 @@ export default function ScoreInput() {
                       setOmrFilterGrade(nextGrade);
                       reloadOmrQuestionStats(omrExamId, omrFilterSchool, nextGrade);
                     }} disabled={!omrFilterSchool}
-                      style={{ flex: 1, padding: '6px 8px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }}>
+                      style={{ flex: 1, padding: '6px 8px', border: '1px solid #DCE2EC', borderRadius: 6, fontSize: 12 }}>
                       <option value="">전체 학년</option>
                       {omrGradeOptions.map(g => <option key={g} value={g}>{g}</option>)}
                     </select>
@@ -2355,8 +2363,8 @@ export default function ScoreInput() {
                     filterGrade={omrFilterGrade}
                   />
 
-                  <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 6, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
-                    <span>대상 학생 {omrStudentList.length}명 (제출 완료: <strong>{submittedCount}명</strong>)</span>
+                  <div style={{ fontSize: 12, color: '#64748B', marginBottom: 6, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
+                    <span style={{ fontFamily: FONT_D }}>대상 학생 <strong style={{ color: '#102044' }}>{omrStudentList.length}명</strong> (제출 완료: <strong style={{ color: '#335B48' }}>{submittedCount}명</strong>)</span>
                     <span>학생 이름을 클릭하면 조교·관리자 OMR 입력·수정·삭제 및 쿨타임 제어가 가능합니다.</span>
                   </div>
                   <div style={{ maxHeight: 620, overflowY: 'auto' }}>
@@ -2382,17 +2390,17 @@ export default function ScoreInput() {
                             : null;
 
                       return (
-                        <div key={s.id} style={{ marginBottom: 4, border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
+                        <div key={s.id} style={{ marginBottom: 4, border: '1px solid #DCE2EC', borderRadius: 6, overflow: 'hidden' }}>
                           <div onClick={() => setOmrExpandedStudent(isExpanded ? null : s.id)}
                             style={{
                               display: 'flex', alignItems: 'center', padding: '8px 10px', gap: 6, flexWrap: 'wrap',
-                              cursor: 'pointer', background: isExpanded ? '#F4F6FA' : 'var(--card)', fontSize: 12,
+                              cursor: 'pointer', background: isExpanded ? '#F4F6FA' : '#FFFFFF', fontSize: 12,
                             }}>
-                            <span style={{ fontWeight: 700, minWidth: 55 }}>{s.name}</span>
-                            <span style={{ color: 'var(--muted-foreground)', fontSize: 11 }}>{s.school} {s.grade}</span>
+                            <span style={{ fontFamily: FONT_D, fontWeight: 700, color: '#102044', minWidth: 55 }}>{s.name}</span>
+                            <span style={{ color: '#64748B', fontSize: 11 }}>{s.school} {s.grade}</span>
                             {actorBadge && (
                               <span style={{
-                                fontSize: 10.5, padding: '2px 7px', borderRadius: 999,
+                                fontFamily: FONT_D, fontSize: 10.5, padding: '2px 7px', borderRadius: 999,
                                 background: actorBadge.bg, border: `1px solid ${actorBadge.border}`,
                                 color: actorBadge.color, fontWeight: 700,
                               }}>
@@ -2403,29 +2411,29 @@ export default function ScoreInput() {
 
                             {/* 응시 상태 배지 */}
                             {sub?.myStatus === 'in_progress' && (
-                              <span style={{ fontSize: 10.5, padding: '2px 7px', borderRadius: 999, background: '#F4F6FA', border: '1px solid #C7D3E6', color: '#102044', fontWeight: 700 }}>
+                              <span style={{ fontFamily: FONT_D, fontSize: 10.5, padding: '2px 7px', borderRadius: 999, background: '#F4F6FA', border: '1px solid #C7D3E6', color: '#102044', fontWeight: 700 }}>
                                 응시중 {sub.timerRemainingSeconds != null ? `(${Math.ceil(sub.timerRemainingSeconds / 60)}분 남음)` : ''}
                               </span>
                             )}
                             {sub?.myStatus === 'cooldown' && (
-                              <span style={{ fontSize: 10.5, padding: '2px 7px', borderRadius: 999, background: '#FAF6EE', border: '1px solid #E3D5BA', color: '#7F5C24', fontWeight: 700 }}>
+                              <span style={{ fontFamily: FONT_D, fontSize: 10.5, padding: '2px 7px', borderRadius: 999, background: '#FAF6EE', border: '1px solid #E3D5BA', color: '#7F5C24', fontWeight: 700 }}>
                                 재제출 대기 ({Math.ceil((sub.cooldownRemainingSeconds || 0) / 60)}분 남음)
                               </span>
                             )}
                             {sub?.myStatus === 'retry_available' && (
-                              <span style={{ fontSize: 10.5, padding: '2px 7px', borderRadius: 999, background: '#F4F6FA', border: '1px solid #CBD5E1', color: '#1E3159', fontWeight: 700 }}>
+                              <span style={{ fontFamily: FONT_D, fontSize: 10.5, padding: '2px 7px', borderRadius: 999, background: '#F4F6FA', border: '1px solid #CBD5E1', color: '#1E3159', fontWeight: 700 }}>
                                 오답 재도전 가능
                               </span>
                             )}
                             {hasSubmission && (
-                              <span style={{ fontSize: 10.5, padding: '2px 7px', borderRadius: 999, background: '#F1F6F3', border: '1px solid #CADAD1', color: '#335B48', fontWeight: 700 }}>
+                              <span style={{ fontFamily: FONT_D, fontSize: 10.5, padding: '2px 7px', borderRadius: 999, background: '#F1F6F3', border: '1px solid #CADAD1', color: '#335B48', fontWeight: 700 }}>
                                 {attemptCount}회 제출
                               </span>
                             )}
 
                             {/* 1차 vs 재제출 점수 표시 */}
                             {hasRetest ? (
-                              <span style={{ fontSize: 11, fontWeight: 700, color: '#102044' }}>
+                              <span style={{ fontFamily: FONT_D, fontSize: 11.5, fontWeight: 700, color: '#102044', fontVariantNumeric: 'tabular-nums' }}>
                                 1차 {firstScore}점 &rarr; 재제출 {latestScore}점
                                 {latestScore - firstScore >= 0 && (
                                   <span style={{ color: '#335B48', marginLeft: 3 }}>(+{Math.round((latestScore - firstScore) * 10) / 10})</span>
@@ -2433,19 +2441,19 @@ export default function ScoreInput() {
                               </span>
                             ) : (
                               hasAnswers && result && (
-                                <span style={{ fontSize: 11, fontWeight: 700, color: '#102044' }}>
+                                <span style={{ fontFamily: FONT_D, fontSize: 11.5, fontWeight: 700, color: '#102044', fontVariantNumeric: 'tabular-nums' }}>
                                   {result.correct}/{result.total} ({result.score}점)
                                 </span>
                               )
                             )}
-                            <span style={{ fontSize: 10, color: 'var(--neutral-400)' }}>{isExpanded ? '▲' : '▼'}</span>
+                            <span style={{ fontSize: 10, color: '#94A3B8' }}>{isExpanded ? '▲' : '▼'}</span>
                           </div>
                           {isExpanded && (
                             <div style={{ padding: 12, background: '#F8F9FB', borderTop: '1px solid #DCE2EC' }}>
                               {/* 학생 응시 중 동시 편집 충돌 경고 */}
                               {sub?.myStatus === 'in_progress' && (
                                 <div style={{
-                                  marginBottom: 10, padding: '8px 10px', borderRadius: 6,
+                                  fontFamily: FONT_D, marginBottom: 10, padding: '8px 10px', borderRadius: 6,
                                   background: '#FAF6EE', border: '1px solid #E3D5BA',
                                   fontSize: 11.5, color: '#7F5C24', fontWeight: 600,
                                 }}>
@@ -2459,30 +2467,30 @@ export default function ScoreInput() {
                                   display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center',
                                   marginBottom: 10, padding: '6px 10px', background: '#FFFFFF', borderRadius: 6, border: '1px solid #DCE2EC', fontSize: 11
                                 }}>
-                                  <span style={{ fontWeight: 700, color: '#475569' }}>관리자·조교 제어:</span>
+                                  <span style={{ fontFamily: FONT_D, fontWeight: 700, color: '#475569' }}>관리자·조교 제어:</span>
                                   {sub.myStatus === 'cooldown' && (
                                     <button type="button" className="btn btn-outline btn-sm"
                                       onClick={() => resetStudentCooldown(s.id, 'clear_cooldown')}
-                                      style={{ fontSize: 11, padding: '2px 8px' }}>
+                                      style={{ fontFamily: FONT_D, fontSize: 11, padding: '2px 8px' }}>
                                       ⚡ 재제출 대기시간(쿨타임) 즉시 해제
                                     </button>
                                   )}
                                   {sub.isFinalized && (
                                     <button type="button" className="btn btn-outline btn-sm"
                                       onClick={() => resetStudentCooldown(s.id, 'grant_retry')}
-                                      style={{ fontSize: 11, padding: '2px 8px' }}>
+                                      style={{ fontFamily: FONT_D, fontSize: 11, padding: '2px 8px' }}>
                                       🔄 추가 재제출 기회 1회 부여
                                     </button>
                                   )}
                                   {sub.myStatus === 'in_progress' && (
                                     <button type="button" className="btn btn-outline btn-sm"
                                       onClick={() => resetStudentCooldown(s.id, 'reset_timer')}
-                                      style={{ fontSize: 11, padding: '2px 8px' }}>
+                                      style={{ fontFamily: FONT_D, fontSize: 11, padding: '2px 8px' }}>
                                       ⏱ 응시 타이머 초기화
                                     </button>
                                   )}
                                   {firstScore !== null && (
-                                    <span style={{ marginLeft: 'auto', color: '#64748B' }}>
+                                    <span style={{ fontFamily: FONT_D, marginLeft: 'auto', color: '#64748B', fontVariantNumeric: 'tabular-nums' }}>
                                       1차 원점수: <strong style={{ color: '#102044' }}>{firstScore}점</strong> ({sub.first_correct_count}/{omrAnswerKey.numQuestions})
                                       {hasRetest && <> · 최종 재제출: <strong style={{ color: '#102044' }}>{latestScore}점</strong> ({sub.correct_count}/{omrAnswerKey.numQuestions})</>}
                                     </span>
@@ -2496,7 +2504,7 @@ export default function ScoreInput() {
                                 marginBottom: 10, padding: '7px 10px', background: '#FFFFFF',
                                 border: '1px solid #DCE2EC', borderRadius: 6,
                               }}>
-                                <span style={{ fontSize: 11.5, fontWeight: 700, color: '#102044', whiteSpace: 'nowrap' }}>
+                                <span style={{ fontFamily: FONT_D, fontSize: 11.5, fontWeight: 700, color: '#102044', whiteSpace: 'nowrap' }}>
                                   빠른 답안 입력
                                 </span>
                                 <input
@@ -2509,7 +2517,7 @@ export default function ScoreInput() {
                                     border: '1px solid #DCE2EC', borderRadius: 6, background: '#F8F9FB',
                                   }}
                                 />
-                                <span style={{ fontSize: 11, color: '#64748B' }}>
+                                <span style={{ fontFamily: FONT_D, fontSize: 11, fontWeight: 600, color: '#64748B', fontVariantNumeric: 'tabular-nums' }}>
                                   {Object.keys(omrStudentAnswers[s.id] || {}).length}/{omrAnswerKey.numQuestions || 0}문항 입력됨
                                 </span>
                               </div>
@@ -2532,7 +2540,7 @@ export default function ScoreInput() {
                                     items.push(
                                       <div key={qNum} style={{ display: 'flex', alignItems: 'center', gap: 3, minWidth: 0 }}>
                                         <span style={{
-                                          fontSize: 11, fontWeight: 600, width: 24, textAlign: 'right', flexShrink: 0,
+                                          fontFamily: FONT_D, fontSize: 11.5, fontWeight: 700, width: 24, textAlign: 'right', flexShrink: 0,
                                           color: isCorrect ? '#335B48' : isWrong ? '#913E43' : '#1E293B'
                                         }}>{qNum}.</span>
                                         <div style={{ display: 'flex', gap: 2 }}>
@@ -2545,6 +2553,7 @@ export default function ScoreInput() {
                                             return (
                                               <button key={n} type="button" onClick={() => setOmrAnswer(s.id, qNum, n)}
                                                 style={{
+                                                  fontFamily: FONT_D,
                                                   width: 26, height: 26, borderRadius: '50%', border: `1.5px solid ${borderC}`,
                                                   background: bg, color: textC, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                                                   display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0
@@ -2570,7 +2579,7 @@ export default function ScoreInput() {
                                 border: '1px solid #DCE2EC', fontSize: 12, display: 'flex',
                                 alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8,
                               }}>
-                                <div style={{ display: 'flex', gap: 12, fontWeight: 600 }}>
+                                <div style={{ fontFamily: FONT_D, display: 'flex', gap: 12, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
                                   {result ? (
                                     <>
                                       <span>예상 정답: <span style={{ color: '#102044' }}>{result.correct}/{result.total}</span></span>
@@ -2586,7 +2595,7 @@ export default function ScoreInput() {
                                     onClick={() => saveSingleStudentOmr(s.id, s.name, 'latest')}
                                     disabled={!hasAnswers}
                                     style={{
-                                      padding: '5px 11px', borderRadius: 6, fontSize: 11.5, fontWeight: 700,
+                                      fontFamily: FONT_D, padding: '5px 11px', borderRadius: 6, fontSize: 11.5, fontWeight: 700,
                                       border: '1px solid #102044', background: hasAnswers ? '#102044' : '#E2E8F0',
                                       color: hasAnswers ? '#FFFFFF' : '#94A3B8', cursor: hasAnswers ? 'pointer' : 'not-allowed',
                                     }}
@@ -2599,7 +2608,7 @@ export default function ScoreInput() {
                                       onClick={() => saveSingleStudentOmr(s.id, s.name, 'first')}
                                       disabled={!hasAnswers}
                                       style={{
-                                        padding: '5px 10px', borderRadius: 6, fontSize: 11.5, fontWeight: 700,
+                                        fontFamily: FONT_D, padding: '5px 10px', borderRadius: 6, fontSize: 11.5, fontWeight: 700,
                                         border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#102044',
                                         cursor: hasAnswers ? 'pointer' : 'not-allowed',
                                       }}
@@ -2612,7 +2621,7 @@ export default function ScoreInput() {
                                       type="button"
                                       onClick={() => deleteSingleStudentOmr(s.id, s.name)}
                                       style={{
-                                        padding: '5px 10px', borderRadius: 6, fontSize: 11.5, fontWeight: 700,
+                                        fontFamily: FONT_D, padding: '5px 10px', borderRadius: 6, fontSize: 11.5, fontWeight: 700,
                                         border: '1px solid #E0C8CA', background: '#FAF3F3', color: '#913E43',
                                         cursor: 'pointer',
                                       }}
@@ -2629,8 +2638,8 @@ export default function ScoreInput() {
                     })}
                   </div>
                   <div style={{ marginTop: 14, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <button className="btn btn-primary" onClick={saveOmrAnswers}>답안 일괄 저장</button>
-                    <button className="btn btn-outline" onClick={() => regradeAllSubmissions(omrExamId)}>🔄 전체 재채점</button>
+                    <button className="btn btn-primary" style={{ fontFamily: FONT_D }} onClick={saveOmrAnswers}>답안 일괄 저장</button>
+                    <button className="btn btn-outline" style={{ fontFamily: FONT_D }} onClick={() => regradeAllSubmissions(omrExamId)}>🔄 전체 재채점</button>
                   </div>
                 </>
               );
