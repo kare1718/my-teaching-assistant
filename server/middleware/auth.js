@@ -28,6 +28,22 @@ function authenticateToken(req, res, next) {
   });
 }
 
+function isStaffUser(user) {
+  if (!user) return false;
+  return (
+    ['admin', 'superadmin', 'assistant', 'teacher'].includes(user.role) ||
+    ['조교', '선생님'].includes(user.school)
+  );
+}
+
+// 관리자·조교·선생님 공용 권한 (OMR 정답키·학생 답안 CRUD 및 정답률 분석)
+function requireStaff(req, res, next) {
+  if (isStaffUser(req.user)) {
+    return next();
+  }
+  return res.status(403).json({ error: '관리자 또는 조교 권한이 필요합니다.' });
+}
+
 function requireAdmin(req, res, next) {
   if (req.user.role === 'admin' || req.user.role === 'superadmin') {
     return next();
@@ -50,4 +66,4 @@ function requireSuperAdmin(req, res, next) {
   return res.status(403).json({ error: '플랫폼 관리자 권한이 필요합니다.' });
 }
 
-module.exports = { authenticateToken, requireAdmin, requireAdminOnly, requireSuperAdmin, JWT_SECRET };
+module.exports = { authenticateToken, isStaffUser, requireStaff, requireAdmin, requireAdminOnly, requireSuperAdmin, JWT_SECRET };

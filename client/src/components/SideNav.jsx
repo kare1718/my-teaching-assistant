@@ -141,7 +141,7 @@ const superadminPages = [
 const studentPages = [
   { path: '/student', label: '홈', icon: Icons.home },
   { path: '/student/attendance', label: '출석 체크', icon: Icons.checkCircle },
-  { path: '/student/scores', label: '성적', icon: Icons.barChart },
+  { path: '/student/scores', label: '성적 · OMR 입력', icon: Icons.barChart },
   { path: '/student/qna', label: '질문', icon: Icons.message },
   { path: '/student/notices', label: '안내', icon: Icons.bell },
   { path: '/student/materials', label: '자료', icon: Icons.book },
@@ -172,7 +172,7 @@ export default function SideNav() {
 
   const isSuperAdminPage = location.pathname.startsWith('/superadmin');
   const isAdminPage = location.pathname.startsWith('/admin') || isSuperAdminPage;
-  const isAdminUser = user.role === 'admin' || user.role === 'superadmin' || user.school === '조교';
+  const isAdminUser = ['admin', 'superadmin', 'assistant', 'teacher'].includes(user.role) || ['조교', '선생님'].includes(user.school);
 
   /* ── Screen size ── */
   const isLg = useMediaQuery('(min-width: 1600px)');

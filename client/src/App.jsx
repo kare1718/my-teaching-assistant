@@ -125,21 +125,23 @@ function Navbar() {
 
   if (!user) return null;
 
+  const isStaff = ['admin', 'superadmin', 'assistant', 'teacher'].includes(user.role) || ['조교', '선생님'].includes(user.school);
+
   return (
     <nav className="navbar">
       <h1
         style={{ cursor: 'pointer' }}
-        onClick={() => navigate(user.role === 'superadmin' ? '/superadmin' : user.role === 'parent' ? '/parent' : (user.role === 'admin' || user.school === '조교' || user.school === '선생님') ? '/admin' : '/student')}
+        onClick={() => navigate(user.role === 'superadmin' ? '/superadmin' : user.role === 'parent' ? '/parent' : isStaff ? '/admin' : '/student')}
       >
         {config?.siteTitle || '나만의 조교'}
       </h1>
       <div className="nav-right" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        {(user.role === 'admin' || user.school === '조교') && (
+        {isStaff && (
           <Suspense fallback={null}>
             <PlatformNotificationBell />
           </Suspense>
         )}
-        <span>{user.name}님 ({user.role === 'superadmin' ? '플랫폼 관리자' : user.role === 'admin' ? '관리자' : user.role === 'parent' ? '보호자' : user.school === '조교' ? '조교' : user.school === '선생님' ? '선생님' : '학생'})</span>
+        <span>{user.name}님 ({user.role === 'superadmin' ? '플랫폼 관리자' : user.role === 'admin' ? '관리자' : user.role === 'parent' ? '보호자' : (user.school === '조교' || user.role === 'assistant') ? '조교' : (user.school === '선생님' || user.role === 'teacher') ? '선생님' : '학생'})</span>
         <ThemeToggle />
         <button onClick={handleLogout}>로그아웃</button>
       </div>
@@ -150,7 +152,7 @@ function Navbar() {
 function ProtectedRoute({ children, role }) {
   const user = getUser();
   if (!isLoggedIn() || !user) return <Navigate to="/login" />;
-  const isAssistant = user.school === '조교';
+  const isAssistant = ['assistant', 'teacher'].includes(user.role) || ['조교', '선생님'].includes(user.school);
   if (user.role === 'superadmin') return children;
   if (role && user.role !== role) {
     if (user.role === 'admin' && role === 'student') return children;
@@ -166,7 +168,7 @@ function RedirectIfLoggedIn({ children }) {
   if (isLoggedIn() && user) {
     if (user.role === 'superadmin') return <Navigate to="/superadmin" />;
     if (user.role === 'parent') return <Navigate to="/parent" />;
-    const isAssistant = user.school === '조교';
+    const isAssistant = ['assistant', 'teacher'].includes(user.role) || ['조교', '선생님'].includes(user.school);
     return <Navigate to={(user.role === 'admin' || isAssistant) ? '/admin' : '/student'} />;
   }
   return children;
@@ -299,6 +301,7 @@ function AppLayout() {
             <Route path="/student" element={<ProtectedRoute role="student"><MyPage /></ProtectedRoute>} />
             <Route path="/student/notices" element={<ProtectedRoute role="student"><Notices /></ProtectedRoute>} />
             <Route path="/student/scores" element={<ProtectedRoute role="student"><ScoreView /></ProtectedRoute>} />
+            <Route path="/student/omr" element={<ProtectedRoute role="student"><ScoreView /></ProtectedRoute>} />
             <Route path="/student/materials" element={<ProtectedRoute role="student"><Materials /></ProtectedRoute>} />
             <Route path="/student/reviews" element={<ProtectedRoute role="student"><Reviews /></ProtectedRoute>} />
             <Route path="/student/qna" element={<ProtectedRoute role="student"><QnA /></ProtectedRoute>} />

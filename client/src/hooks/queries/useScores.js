@@ -1,12 +1,12 @@
-import { useQuery } from '@tanstack/react-query';
-import { api } from '../../api';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api, apiPost, apiPut, apiDelete } from '../../api';
 
 export function useMyScores(studentId) {
   const url = studentId ? `/scores/my-scores?studentId=${studentId}` : '/scores/my-scores';
   return useQuery({
     queryKey: ['scores', 'my-scores', studentId || ''],
     queryFn: () => api(url),
-    staleTime: 2 * 60_000,
+    staleTime: 30_000,
   });
 }
 
@@ -36,6 +36,69 @@ export function useOmrSubmission(examId, studentId) {
     queryKey: ['scores', 'omr', examId, studentId || ''],
     queryFn: () => api(url),
     enabled: !!examId,
-    staleTime: 5 * 60_000,
+    staleTime: 10_000,
   });
 }
+
+export function useStudentOmrExams(studentId) {
+  const url = studentId
+    ? `/scores/student/omr-exams?studentId=${studentId}`
+    : '/scores/student/omr-exams';
+  return useQuery({
+    queryKey: ['scores', 'student-omr-exams', studentId || ''],
+    queryFn: () => api(url),
+    staleTime: 15_000,
+  });
+}
+
+export function useStartOmr() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (examId) => apiPost(`/scores/exams/${examId}/start-omr`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scores', 'student-omr-exams'] });
+    },
+  });
+}
+
+export function useSaveOmrDraft() {
+  return useMutation({
+    mutationFn: ({ examId, answers }) => apiPut(`/scores/exams/${examId}/draft-answers`, { answers }),
+  });
+}
+
+export function useResetOmrDraft() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (examId) => apiDelete(`/scores/exams/${examId}/draft-answers`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scores', 'student-omr-exams'] });
+    },
+  });
+}
+
+export function useSubmitOmrAnswers() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ examId, answers, autoSubmittedByTimer }) =>
+      apiPost(`/scores/exams/${examId}/submit-answers`, { answers, autoSubmittedByTimer }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['scores', 'student-omr-exams'] });
+      queryClient.invalidateQueries({ queryKey: ['scores', 'my-scores'] });
+      queryClient.invalidateQueries({ queryKey: ['scores', 'omr', variables.examId] });
+    },
+  });
+}
+
+export function useFinalizeOmrSubmission() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (examId) => apiPost(`/scores/exams/${examId}/finalize-submission`, {}),
+    onSuccess: (_, examId) => {
+      queryClient.invalidateQueries({ queryKey: ['scores', 'student-omr-exams'] });
+      queryClient.invalidateQueries({ queryKey: ['scores', 'my-scores'] });
+      queryClient.invalidateQueries({ queryKey: ['scores', 'omr', examId] });
+    },
+  });
+}
+
