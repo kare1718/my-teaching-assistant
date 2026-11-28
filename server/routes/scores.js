@@ -1,8 +1,29 @@
 const express = require('express');
+const multer = require('multer');
 const { runQuery, runInsert, getOne, getAll } = require('../db/database');
 const { authenticateToken, isStaffUser, requireStaff, requireAdmin } = require('../middleware/auth');
 const { addEvent } = require('../services/timeline');
 const { logAction } = require('../services/audit');
+const {
+  MAX_FILE_BYTES,
+  fetchGoogleDrivePdfBuffer,
+  parseAnswerKeyFromFile,
+} = require('../services/omrPdfParser');
+
+const answerKeyUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_FILE_BYTES },
+  fileFilter: (req, file, cb) => {
+    const mime = String(file.mimetype || '').toLowerCase();
+    const name = String(file.originalname || '').toLowerCase();
+    const ok =
+      mime === 'application/pdf' ||
+      mime.startsWith('image/') ||
+      /\.(pdf|png|jpe?g|webp)$/i.test(name);
+    if (ok) cb(null, true);
+    else cb(new Error('PDF 또는 이미지 파일(PNG, JPG, WebP)만 업로드할 수 있습니다.'), false);
+  },
+});
 
 const router = express.Router();
 
@@ -910,6 +931,62 @@ function buildStudentQuestionStats(statsResult, keyRow, canRevealAnswers, isStaf
     byQuestion,
   };
 }
+
+// PDF / 이미지 정답표 AI 자동 인식 (파일 업로드 또는 Google Drive 공유 링크 — 관리자·조교 공용)
+router.post('/answer-key/parse-pdf', authenticateToken, requireStaff, (req, res, next) => {
+  const ct = String(req.headers['content-type'] || '').toLowerCase();
+  if (ct.includes('multipart/form-data')) {
+    answerKeyUpload.single('file')(req, res, (err) => {
+      if (err) {
+        const msg = err.code === 'LIMIT_FILE_SIZE'
+          ? '파일 크기는 최대 15MB까지 업로드할 수 있습니다.'
+          : (err.message || '파일 업로드 처리 중 오류가 발생했습니다.');
+        return res.status(400).json({ error: msg });
+      }
+      next();
+    });
+  } else {
+    next();
+  }
+}, async (req, res) => {
+  try {
+    const expectedNumQuestions = req.body?.expectedNumQuestions ? parseInt(req.body.expectedNumQuestions, 10) : null;
+    const expectedNumChoices = req.body?.expectedNumChoices ? parseInt(req.body.expectedNumChoices, 10) : null;
+
+    let buffer = null;
+    let mimeType = '';
+    let sourceLabel = '';
+
+    if (req.file && req.file.buffer) {
+      buffer = req.file.buffer;
+      mimeType = req.file.mimetype;
+      sourceLabel = req.file.originalname || '업로드 파일';
+    } else if (req.body?.url && typeof req.body.url === 'string' && req.body.url.trim()) {
+      const fetched = await fetchGoogleDrivePdfBuffer(req.body.url.trim());
+      buffer = fetched.buffer;
+      mimeType = fetched.mimeType;
+      sourceLabel = 'Google Drive 연동 파일';
+    } else {
+      return res.status(400).json({ error: 'PDF 또는 이미지 파일을 업로드하거나 Google Drive 공유 링크를 입력해 주세요.' });
+    }
+
+    const parsed = await parseAnswerKeyFromFile({
+      buffer,
+      mimeType,
+      expectedNumQuestions,
+      expectedNumChoices,
+    });
+
+    res.json({
+      source: sourceLabel,
+      ...parsed,
+    });
+  } catch (err) {
+    console.error('[OMR PDF Parser] 인식 오류:', err.message);
+    const status = err.statusCode || 400;
+    res.status(status).json({ error: err.message || 'PDF 정답표 자동 인식에 실패했습니다.' });
+  }
+});
 
 // 정답키 등록/수정 (OMR 세부 설정 + 정답률 공개 정책 포함 — 관리자·조교 공용)
 router.post('/exams/:examId/answer-key', authenticateToken, requireStaff, async (req, res) => {
