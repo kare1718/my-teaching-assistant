@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { api, apiPost, apiPut, apiDelete, getUser } from '../../api';
+import { api, apiPost, apiPut, apiDelete, apiUpload, getUser } from '../../api';
 import { useTenantConfig, getAllGrades } from '../../contexts/TenantContext';
 import { BarChart, Bar, AreaChart, Area, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine, ZAxis } from 'recharts';
 import { askConfirm } from '../../lib/feedback';
@@ -341,6 +341,11 @@ export default function ScoreInput() {
   const [akMinStatsSample, setAkMinStatsSample] = useState(5);
   const [akLoading, setAkLoading] = useState(false);
   const [akExistingKey, setAkExistingKey] = useState(false);
+  const [akPdfParsing, setAkPdfParsing] = useState(false);
+  const [akPdfResult, setAkPdfResult] = useState(null);
+  const [akPdfError, setAkPdfError] = useState('');
+  const [akPdfDragging, setAkPdfDragging] = useState(false);
+  const akPdfInputRef = useRef(null);
   const akExplanationRefs = useRef({});
 
   // === OMR state ===
@@ -411,12 +416,100 @@ export default function ScoreInput() {
     setAkPageRangeStr(''); setAkCategoryRangeStr('');
     setAkShowExplanations(false); setAkShowBulkExplanation(false); setAkBulkExplanationText('');
     setAkQuickString('');
+    setAkPdfResult(null); setAkPdfError('');
     setAkNumQuestions(20); setAkNumChoices(5);
     setAkScoringType('equal'); setAkMaxScore(100); setAkDefaultPoints(5);
     setAkStudentOmrEnabled(false); setAkTimeLimitMinutes('');
     setAkAllowResubmit(true); setAkResubmitCooldownMinutes(30);
     setAkMaxAttempts(2); setAkResubmitMode('wrong_only'); setAkRevealAnswersPolicy('after_final');
     setAkStatsRevealPolicy('after_final'); setAkStatsBasis('first'); setAkMinStatsSample(5);
+  };
+
+  const applyParsedPdfAnswerKey = (parsed) => {
+    if (!parsed || !Array.isArray(parsed.questions) || parsed.questions.length === 0) return;
+    const nextNumQ = parsed.numQuestions || parsed.questions.length;
+    const nextNumC = parsed.numChoices || 5;
+    const nextAns = {};
+    const nextPts = {};
+    const nextPages = { ...akExpPages };
+    const nextCats = { ...akCategories };
+    const nextExps = { ...akExplanations };
+
+    parsed.questions.forEach(q => {
+      nextAns[q.num] = q.answer;
+      if (q.points !== undefined && q.points !== null) nextPts[q.num] = q.points;
+      if (q.page) nextPages[q.num] = q.page;
+      if (q.category) nextCats[q.num] = q.category;
+      if (q.explanation) nextExps[q.num] = q.explanation;
+    });
+
+    setAkNumQuestions(nextNumQ);
+    setAkNumChoices(nextNumC);
+    if (parsed.maxScore) setAkMaxScore(parsed.maxScore);
+    setAkScoringType(parsed.scoringType === 'individual' ? 'individual' : 'equal');
+    if (parsed.scoringType === 'individual') {
+      const firstPt = parsed.questions.find(q => q.points !== undefined)?.points;
+      if (firstPt !== undefined) setAkDefaultPoints(firstPt);
+      setAkPoints(nextPts);
+    } else {
+      setAkPoints({});
+    }
+    setAkAnswers(nextAns);
+    setAkQuickString(Array.from({ length: nextNumQ }, (_, i) => nextAns[i + 1] || '').join(''));
+    setAkExpPages(nextPages);
+    setAkCategories(nextCats);
+    setAkExplanations(nextExps);
+    if (parsed.pagesDetectedCount > 0 || parsed.categoriesDetectedCount > 0) {
+      setAkShowExplanations(true);
+    }
+    setAkPdfResult(parsed);
+    setAkPdfError('');
+    setMsg(`PDF에서 ${parsed.recognizedCount}문항의 정답을 자동 인식했습니다. 확인 후 아래 저장 버튼을 눌러주세요.`);
+    setTimeout(() => setMsg(''), 4000);
+  };
+
+  const handleParseAnswerKeyPdfFile = async (file) => {
+    if (!file) return;
+    if (file.size > 15 * 1024 * 1024) {
+      setAkPdfError('파일 크기는 최대 15MB까지 업로드할 수 있습니다.');
+      return;
+    }
+    setAkPdfParsing(true);
+    setAkPdfError('');
+    setAkPdfResult(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      if (akNumChoices) formData.append('expectedNumChoices', String(akNumChoices));
+      const data = await apiUpload('/scores/answer-key/parse-pdf', formData);
+      applyParsedPdfAnswerKey(data);
+    } catch (err) {
+      setAkPdfError(err.message || 'PDF 정답표 자동 인식에 실패했습니다.');
+    } finally {
+      setAkPdfParsing(false);
+      if (akPdfInputRef.current) akPdfInputRef.current.value = '';
+    }
+  };
+
+  const handleParseAnswerKeyFromDrive = async () => {
+    if (!akExpFileUrl.trim()) {
+      setAkPdfError('먼저 아래 해설 파일 공유 링크 칸에 Google Drive 링크를 입력해 주세요.');
+      return;
+    }
+    setAkPdfParsing(true);
+    setAkPdfError('');
+    setAkPdfResult(null);
+    try {
+      const data = await apiPost('/scores/answer-key/parse-pdf', {
+        url: akExpFileUrl.trim(),
+        expectedNumChoices: akNumChoices,
+      });
+      applyParsedPdfAnswerKey(data);
+    } catch (err) {
+      setAkPdfError(err.message || 'Google Drive PDF 자동 인식에 실패했습니다.');
+    } finally {
+      setAkPdfParsing(false);
+    }
   };
 
   const applyCategoryRangeMap = () => {
@@ -976,12 +1069,25 @@ export default function ScoreInput() {
       <div className="tabs" style={{ marginBottom: 12, fontFamily: FONT_D }}>
         <button className={`tab ${mainTab === 'examScore' ? 'active' : ''}`}
           style={{ fontFamily: FONT_D }}
-          onClick={() => setMainTab('examScore')}>
+          onClick={() => {
+            setMainTab('examScore');
+            loadExams();
+            if (selectedExam) selectExam(selectedExam);
+          }}>
           시험 & 성적
         </button>
         <button className={`tab ${mainTab === 'answerKey' ? 'active' : ''}`}
           style={{ fontFamily: FONT_D }}
-          onClick={() => setMainTab('answerKey')}>
+          onClick={() => {
+            setMainTab('answerKey');
+            if (!akExamId && selectedExam) {
+              const id = String(selectedExam);
+              setAkExamId(id);
+              const ex = exams.find(x => x.id === selectedExam);
+              if (ex) setAkMaxScore(ex.max_score || 100);
+              loadAnswerKey(id);
+            }
+          }}>
           정답키 설정
         </button>
         <button className={`tab ${mainTab === 'omrInput' ? 'active' : ''}`}
@@ -1186,8 +1292,44 @@ export default function ScoreInput() {
                 {/* 성적 입력 영역 */}
                 <div className="card" style={{ padding: 16, flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
-                    <h3 style={{ margin: 0, fontSize: 16 }}>{exam?.name} - 성적 입력</h3>
-                    <span style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>만점: {exam?.max_score}점 · 대상: {filteredStudents.length}명</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <h3 style={{ fontFamily: FONT_D, margin: 0, fontSize: 16, fontWeight: 700, color: '#102044' }}>{exam?.name} - 성적 입력</h3>
+                      <span style={{ fontFamily: FONT_D, fontSize: 12, color: '#64748B' }}>만점: {exam?.max_score}점 · 대상: {filteredStudents.length}명</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const id = String(selectedExam);
+                          setMainTab('answerKey');
+                          setAkExamId(id);
+                          if (exam) setAkMaxScore(exam.max_score || 100);
+                          loadAnswerKey(id);
+                        }}
+                        style={{
+                          fontFamily: FONT_D, fontSize: 11.5, fontWeight: 700, padding: '5px 10px', borderRadius: 6,
+                          border: '1px solid #102044', background: '#102044', color: '#FFFFFF', cursor: 'pointer',
+                        }}
+                      >
+                        정답키 · PDF 자동인식 &rarr;
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const id = String(selectedExam);
+                          setMainTab('omrInput');
+                          loadOmrExams();
+                          setOmrExamId(id);
+                          loadOmrData(id, omrFilterSchool, omrFilterGrade);
+                        }}
+                        style={{
+                          fontFamily: FONT_D, fontSize: 11.5, fontWeight: 700, padding: '5px 10px', borderRadius: 6,
+                          border: '1px solid #DCE2EC', background: '#F8F9FB', color: '#102044', cursor: 'pointer',
+                        }}
+                      >
+                        OMR 입력 · 정답률 &rarr;
+                      </button>
+                    </div>
                   </div>
 
                   {filteredStudents.length === 0 ? (
@@ -1788,6 +1930,143 @@ export default function ScoreInput() {
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* 1.5 PDF · 이미지 정답표 AI 자동 인식 패널 */}
+                <div
+                  onDragOver={e => { e.preventDefault(); setAkPdfDragging(true); }}
+                  onDragLeave={() => setAkPdfDragging(false)}
+                  onDrop={e => {
+                    e.preventDefault();
+                    setAkPdfDragging(false);
+                    const file = e.dataTransfer?.files?.[0];
+                    if (file) handleParseAnswerKeyPdfFile(file);
+                  }}
+                  style={{
+                    marginBottom: 16, padding: 14, borderRadius: 10,
+                    background: akPdfDragging ? '#F4F6FA' : '#FFFFFF',
+                    border: akPdfDragging ? '1.5px dashed #102044' : '1px solid #DCE2EC',
+                    transition: 'background 0.15s ease, border-color 0.15s ease',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <div style={{ minWidth: 0, flex: '1 1 260px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
+                        <span style={{ fontFamily: FONT_D, fontSize: 13.5, fontWeight: 700, color: '#102044' }}>
+                          PDF · 이미지 정답표 자동 인식
+                        </span>
+                        <span style={{
+                          fontFamily: FONT_D, fontSize: 10.5, fontWeight: 700, padding: '2px 7px', borderRadius: 4,
+                          background: '#F4F6FA', color: '#102044', border: '1px solid #DCE2EC',
+                        }}>
+                          AI 자동 입력
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 3, lineHeight: 1.5 }}>
+                        정답표·해설지 PDF 또는 캡처 사진을 올리면 문항 수, 객관식 정답(①~⑤), 배점, 영역, 해설 쪽수를 자동으로 인식해 아래에 채워줍니다. (드래그앤드롭 가능 · 최대 15MB)
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <input
+                        ref={akPdfInputRef}
+                        type="file"
+                        accept="application/pdf,.pdf,image/png,image/jpeg,image/webp"
+                        style={{ display: 'none' }}
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) handleParseAnswerKeyPdfFile(file);
+                        }}
+                      />
+                      <button
+                        type="button"
+                        disabled={akPdfParsing}
+                        onClick={() => akPdfInputRef.current?.click()}
+                        style={{
+                          fontFamily: FONT_D, fontSize: 12, fontWeight: 700,
+                          padding: '7px 14px', borderRadius: 7, cursor: akPdfParsing ? 'wait' : 'pointer',
+                          border: '1px solid #102044', background: '#102044', color: '#FFFFFF',
+                          opacity: akPdfParsing ? 0.65 : 1,
+                        }}
+                      >
+                        {akPdfParsing ? 'PDF 분석 중...' : 'PDF / 사진 올리기'}
+                      </button>
+
+                      {akExpFileUrl.trim() && /drive\.google\.com|docs\.google\.com/i.test(akExpFileUrl) && (
+                        <button
+                          type="button"
+                          disabled={akPdfParsing}
+                          onClick={handleParseAnswerKeyFromDrive}
+                          style={{
+                            fontFamily: FONT_D, fontSize: 11.5, fontWeight: 700,
+                            padding: '7px 11px', borderRadius: 7, cursor: akPdfParsing ? 'wait' : 'pointer',
+                            border: '1px solid #DCE2EC', background: '#F8F9FB', color: '#102044',
+                            opacity: akPdfParsing ? 0.65 : 1,
+                          }}
+                        >
+                          연동된 Drive PDF에서 자동 인식
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {akPdfParsing && (
+                    <div style={{
+                      marginTop: 10, padding: '9px 11px', borderRadius: 7,
+                      background: '#F4F6FA', border: '1px solid #DCE2EC',
+                      fontFamily: FONT_D, fontSize: 12, fontWeight: 600, color: '#102044',
+                    }}>
+                      PDF에서 문항 번호 · 정답(①~⑤) · 배점 · 영역을 읽고 있습니다... (문서 크기에 따라 5~20초 소요)
+                    </div>
+                  )}
+
+                  {akPdfError && (
+                    <div style={{
+                      marginTop: 10, padding: '9px 11px', borderRadius: 7,
+                      background: '#FAF3F3', border: '1px solid #E0C8CA',
+                      fontFamily: FONT_D, fontSize: 12, fontWeight: 600, color: '#913E43',
+                    }}>
+                      {akPdfError}
+                    </div>
+                  )}
+
+                  {akPdfResult && (
+                    <div style={{
+                      marginTop: 10, padding: '10px 12px', borderRadius: 7,
+                      background: '#F1F6F3', border: '1px solid #CADAD1',
+                      display: 'flex', flexDirection: 'column', gap: 6,
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+                        <span style={{ fontFamily: FONT_D, fontSize: 12.5, fontWeight: 700, color: '#335B48' }}>
+                          자동 인식 완료: {akPdfResult.recognizedCount}문항 입력됨
+                          {akPdfResult.scoringType === 'individual' ? ' · 문항별 배점 반영' : ''}
+                          {akPdfResult.categoriesDetectedCount > 0 ? ` · 영역 ${akPdfResult.categoriesDetectedCount}문항` : ''}
+                          {akPdfResult.pagesDetectedCount > 0 ? ` · 해설 쪽수 ${akPdfResult.pagesDetectedCount}문항` : ''}
+                        </span>
+                        <span style={{ fontFamily: FONT_D, fontSize: 11, color: '#64748B' }}>
+                          {akPdfResult.source}
+                        </span>
+                      </div>
+                      {akPdfResult.summaryNote && (
+                        <div style={{ fontSize: 11.5, color: '#1E293B' }}>{akPdfResult.summaryNote}</div>
+                      )}
+                      {Array.isArray(akPdfResult.warnings) && akPdfResult.warnings.length > 0 && (
+                        <div style={{
+                          padding: '7px 10px', borderRadius: 6,
+                          background: '#FAF6EE', border: '1px solid #E3D5BA',
+                          fontSize: 11.5, color: '#7F5C24', fontWeight: 600,
+                          display: 'flex', flexDirection: 'column', gap: 2,
+                        }}>
+                          {akPdfResult.warnings.map((w, idx) => (
+                            <div key={idx}>· {w}</div>
+                          ))}
+                        </div>
+                      )}
+                      <div style={{ fontSize: 11, color: '#335B48' }}>
+                        아래 <strong>빠른 정답 마킹</strong>에서 오인식된 번호가 없는지 확인한 뒤 맨 아래 <strong>저장</strong> 버튼을 눌러주세요.
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* 2. 문항 수 · 선택지 · 만점 · 배점 방식 */}
